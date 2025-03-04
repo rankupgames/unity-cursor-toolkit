@@ -1,0 +1,75 @@
+{
+  "name": "unity-cursor-toolkit",
+  "displayName": "Unity Cursor Toolkit",
+  "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
+  "version": "0.1.0",
+  "publisher": "rankupgames",
+  "icon": "icon.png",
+  "engines": {
+    "vscode": "^1.60.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "workspaceContains:Assets/",
+    "workspaceContains:*.unity",
+    "workspaceContains:*.cs"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "unity-cursor-toolkit.enableHotReload",
+        "title": "Unity Toolkit: Enable Hot Reload"
+      },
+      {
+        "command": "unity-cursor-toolkit.disableHotReload",
+        "title": "Unity Toolkit: Disable Hot Reload"
+      },
+      {
+        "command": "unity-cursor-toolkit.installUnityScript",
+        "title": "Unity Toolkit: Install Unity Script"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile",
+    "test": "node ./out/test/runTest.js",
+    "install-unity": "node install-unity-script.js",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.7",
+    "@types/vscode": "^1.60.0",
+    "@vscode/vsce": "^2.22.0",
+    "typescript": "^4.5.5"
+  },
+  "keywords": [
+    "unity",
+    "cursor",
+    "toolkit",
+    "hot reload",
+    "live reload",
+    "csharp",
+    "unity3d"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/username/better-unity-rideralt"
+  },
+  "bugs": {
+    "url": "https://github.com/username/better-unity-rideralt/issues"
+  },
+  "homepage": "https://github.com/username/better-unity-rideralt#readme",
+  "galleryBanner": {
+    "color": "#2C2C2C",
+    "theme": "dark"
+  }
+}

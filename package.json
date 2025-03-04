@@ -1,0 +1,29 @@
+{
+  "name": "better-unity-rideralt",
+  "version": "0.1.0",
+  "description": "Better Unity VS Code integration with Cursor toolkit functionality",
+  "private": true,
+  "workspaces": [
+    "unity-cursor-toolkit"
+  ],
+  "scripts": {
+    "install:extension": "cd unity-cursor-toolkit && npm install",
+    "build": "cd unity-cursor-toolkit && npm run compile",
+    "watch": "cd unity-cursor-toolkit && npm run watch",
+    "install:unity": "cd unity-cursor-toolkit && node install-unity-script.js",
+    "package": "cd unity-cursor-toolkit && vsce package",
+    "publish": "cd unity-cursor-toolkit && vsce publish"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/username/better-unity-rideralt.git"
+  },
+  "keywords": [
+    "unity",
+    "vs-code",
+    "cursor",
+    "toolkit"
+  ],
+  "author": "",
+  "license": "MIT"
+} 

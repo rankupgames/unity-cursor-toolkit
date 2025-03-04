@@ -1,0 +1,33 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "npm",
+      "script": "build",
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": "$tsc"
+    },
+    {
+      "type": "npm",
+      "script": "watch",
+      "isBackground": true,
+      "group": "build",
+      "problemMatcher": "$tsc-watch"
+    },
+    {
+      "type": "npm",
+      "script": "install:extension",
+      "group": "none",
+      "problemMatcher": []
+    },
+    {
+      "type": "npm",
+      "script": "install:unity",
+      "group": "none",
+      "problemMatcher": []
+    }
+  ]
+} 
