@@ -55,7 +55,7 @@ In Unity, you can verify the hot reload server is running by checking the consol
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-Copyright (c) 2024 Rank Up Games LLC
+Copyright (c) 2025 Rank Up Games LLC
 
 ## Contributing
 
