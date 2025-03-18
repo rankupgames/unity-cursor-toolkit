@@ -2,17 +2,23 @@
 
 An extension for Visual Studio Code and Cursor that provides enhanced Unity development tools, including hot reload functionality similar to JetBrains Rider's integration with Unity.
 
+> **Disclaimer:** This extension is not affiliated with, endorsed by, or an official product of Unity Technologies. Unity and the Unity logo are trademarks or registered trademarks of Unity Technologies or its affiliates in the U.S. and elsewhere.
+
 ## Features
 
-- Automatically refreshes Unity when C# scripts are modified in VS Code/Cursor
-- Monitors solution and project files for changes
-- Auto-detects Unity projects in your workspace
-- Simple TCP-based communication with the Unity Editor
-- Status bar buttons for quick access to key functionality
+- **Hot Reload**: Automatically refreshes Unity when C# scripts are modified in VS Code/Cursor
+- **Project Monitoring**: Tracks changes to solution and project files for seamless integration
+- **Auto-Detection**: Automatically detects Unity projects in your workspace without manual configuration
+- **Efficient Communication**: Uses lightweight TCP-based protocol to communicate with the Unity Editor
+- **Accessible Controls**: Status bar buttons for quick access to all toolkit functionality
 
-## Installation
+## Future Planned Features
 
-Please navigate to the [unity-cursor-toolkit](./unity-cursor-toolkit) directory for complete installation instructions.
+- **Unity Log Integration**: Direct access to Unity console logs within VS Code/Cursor
+- **Enhanced Error Handling**: Improved error detection and reporting for Unity compilation issues
+- **Custom Script Templates**: Create new scripts using configurable templates
+- **Performance Metrics**: Monitor Unity Editor performance from within VS Code/Cursor
+- **Multi-Project Support**: Better handling of workspaces with multiple Unity projects
 
 ### Quick Start
 1. Navigate to the `unity-cursor-toolkit` directory
