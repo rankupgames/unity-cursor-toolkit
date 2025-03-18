@@ -4,6 +4,8 @@ An extension for Visual Studio Code and Cursor that provides enhanced Unity deve
 
 > **Disclaimer:** This extension is not affiliated with, endorsed by, or an official product of Unity Technologies. Unity and the Unity logo are trademarks or registered trademarks of Unity Technologies or its affiliates in the U.S. and elsewhere.
 
+> **Developer's Note:** This extension is still in active development. We welcome contributions, feedback, and feature requests to help improve its functionality and stability.
+
 ## Features
 
 - **Hot Reload**: Automatically refreshes Unity when C# scripts are modified in VS Code/Cursor
