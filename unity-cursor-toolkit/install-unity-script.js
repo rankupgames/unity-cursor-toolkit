@@ -13,8 +13,18 @@ console.log('Unity Hot Reload - Unity Script Installer');
 console.log('=========================================');
 console.log('This script will copy the HotReloadHandler.cs file to your Unity project.');
 console.log('');
+console.log('NOTE: In VS Code or Cursor, you can use the UI to select a project by running:');
+console.log('      "Unity Toolkit: Select Unity Project" from the Command Palette (Ctrl+Shift+P / Cmd+Shift+P)');
+console.log('');
 
-rl.question('Enter the path to your Unity project root folder: ', (unityProjectPath) => {
+rl.question('Enter the path to your Unity project root folder (or type "ui" to cancel and use the UI instead): ', (unityProjectPath) => {
+  // Check if user wants to use the UI instead
+  if (unityProjectPath.toLowerCase() === 'ui') {
+    console.log('Cancelled. Please use the Command Palette in VS Code/Cursor to select a Unity project via the UI.');
+    rl.close();
+    return;
+  }
+
   // Check if the path exists
   if (!fs.existsSync(unityProjectPath)) {
     console.error(`Error: The path "${unityProjectPath}" does not exist.`);

@@ -2,9 +2,14 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.1.0",
+  "version": "0.1.20250319",
   "publisher": "rankupgames",
   "icon": "icon.png",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rankupgamesllc/unity-cursor-toolkit"
+  },
   "engines": {
     "vscode": "^1.60.0"
   },
@@ -28,8 +33,16 @@
         "title": "Unity Toolkit: Disable Hot Reload"
       },
       {
+        "command": "unity-cursor-toolkit.toggleHotReload",
+        "title": "Unity Toolkit: Toggle Hot Reload"
+      },
+      {
         "command": "unity-cursor-toolkit.installUnityScript",
         "title": "Unity Toolkit: Install Unity Script"
+      },
+      {
+        "command": "unity-cursor-toolkit.selectUnityProject",
+        "title": "Unity Toolkit: Select Unity Project"
       }
     ]
   },
@@ -41,7 +54,11 @@
     "test": "node ./out/test/runTest.js",
     "install-unity": "node install-unity-script.js",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    
+    "install:extension": "npm install",
+    "build": "npm run compile",
+    "install:unity": "node install-unity-script.js"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
@@ -56,18 +73,17 @@
     "hot reload",
     "live reload",
     "csharp",
-    "unity3d"
+    "unity3d",
+    "vs-code"
   ],
-  "author": "",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/username/better-unity-rideralt"
+  "author": {
+    "name": "Rank Up Games LLC",
+    "url": "https://github.com/rankupgamesllc"
   },
   "bugs": {
-    "url": "https://github.com/username/better-unity-rideralt/issues"
+    "url": "https://github.com/rankupgamesllc/unity-cursor-toolkit/issues"
   },
-  "homepage": "https://github.com/username/better-unity-rideralt#readme",
+  "homepage": "https://github.com/rankupgamesllc/unity-cursor-toolkit#readme",
   "galleryBanner": {
     "color": "#2C2C2C",
     "theme": "dark"

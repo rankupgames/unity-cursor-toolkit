@@ -73,4 +73,8 @@ ExportedObj/
 *.VC.db
 
 # Unity3D local packages
-/[Aa]ssets/[Pp]ackages/ 
+/[Aa]ssets/[Pp]ackages/
+
+# Root package files (no longer needed)
+/package.json
+/package-lock.json 
