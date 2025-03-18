@@ -1,9 +1,10 @@
-out
-node_modules
-.vscode-test/
+*/out
+*/node_modules
+*/.vscode-test/
 *.vsix 
 *.cursorrules
 *.cursorignore
-.context/
+*.context/*
+*.context
 
 

@@ -16,7 +16,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/rankupgamesllc/unity-cursor-toolkit.git"
+    "url": "git+https://github.com/rankupgames/unity-cursor-toolkit.git"
   },
   "keywords": [
     "unity",
@@ -26,11 +26,11 @@
   ],
   "author": {
     "name": "Rank Up Games LLC",
-    "url": "https://github.com/rankupgamesllc"
+    "url": "https://github.com/rankupgames"
   },
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rankupgamesllc/unity-cursor-toolkit/issues"
+    "url": "https://github.com/rankupgames/unity-cursor-toolkit/issues"
   },
-  "homepage": "https://github.com/rankupgamesllc/unity-cursor-toolkit#readme"
+  "homepage": "https://github.com/rankupgames/unity-cursor-toolkit#readme"
 } 
