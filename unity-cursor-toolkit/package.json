@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.1.20250319",
+  "version": "0.1.20250320",
   "publisher": "rankupgames",
   "icon": "icon.png",
   "license": "MIT",

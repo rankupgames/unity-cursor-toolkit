@@ -52,11 +52,11 @@ Check the Unity console for "Unity Hot Reload server listening on port 55500" to
 
 ## License
 
-MIT License - Copyright (c) 2024 Rank Up Games LLC
+MIT License - Copyright (c) 2025 Rank Up Games LLC
 
 ## Release Notes
 
-### 0.1.20240318
+### 0.1.20250320
 - Updated GitHub repository links
 - Added multi-port support to handle socket binding issues
 - Added disclaimer about unofficial status
