@@ -2,8 +2,6 @@
 
 An extension for Visual Studio Code and Cursor that provides enhanced Unity development tools, including hot reload functionality similar to JetBrains Rider's integration with Unity.
 
-> **IMPORTANT**: All development now happens in the [unity-cursor-toolkit](./unity-cursor-toolkit) directory. Please see [MIGRATION.md](./unity-cursor-toolkit/MIGRATION.md) for details about the project restructuring.
-
 ## Features
 
 - Automatically refreshes Unity when C# scripts are modified in VS Code/Cursor
