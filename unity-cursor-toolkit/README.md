@@ -1,6 +1,6 @@
 # Unity Cursor Toolkit
 
-![Unity Cursor Toolkit Icon](icon.png)
+![Unity Cursor Toolkit Icon](TempIcon.png)
 
 A VS Code/Cursor extension providing hot reload functionality for Unity projects. Edit your C# scripts and see changes immediately reflected in Unity without manual refresh.
 
@@ -18,15 +18,18 @@ A VS Code/Cursor extension providing hot reload functionality for Unity projects
 ## Installation
 
 ### VS Code/Cursor Extension
+
 - Install from VS Code Marketplace: Search for "Unity Cursor Toolkit"
 
 ### Unity Script
+
 - Run "Unity Toolkit: Install Unity Script" from the Command Palette
 - Or select an external project with "Unity Toolkit: Select Unity Project"
 
 ## Usage
 
 The extension activates automatically with Unity projects. Use the status bar buttons:
+
 - **Hot Reload: On/Off** - Toggle hot reload functionality
 - **Select Unity Project** - Choose an external Unity project
 - **Install Unity Script** - Install the required Unity script
@@ -38,17 +41,20 @@ Check the Unity console for "Unity Hot Reload server listening on port 55500" to
 ## Troubleshooting
 
 ### No connection to Unity
+
 - Ensure Unity is running with the project open
 - Verify the Hot Reload script is installed
 - Check for firewall blocking port 55500
 - Restart VS Code/Cursor and Unity
 
 ### Script not working
+
 - Check Unity console for errors
 - Reinstall the Unity script
 - Verify no compilation errors in your project
 
 ## Known Issues
+
 - Connection may be lost temporarily during script compilation
 - Hot reload doesn't apply to changes requiring domain reload
 
@@ -59,6 +65,7 @@ MIT License - Copyright (c) 2025 Rank Up Games LLC
 ## Release Notes
 
 ### 0.1.20250320
+
 - Updated GitHub repository links
 - Added multi-port support to handle socket binding issues
 - Added disclaimer about unofficial status
@@ -66,7 +73,8 @@ MIT License - Copyright (c) 2025 Rank Up Games LLC
 - Simplified documentation
 
 ### 0.1.0
+
 - Initial release
 - Hot reload functionality
 - Unity script installation command
-- Status bar controls 
+- Status bar controls

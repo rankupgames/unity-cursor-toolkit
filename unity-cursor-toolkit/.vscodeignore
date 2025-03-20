@@ -15,4 +15,5 @@ images/**
 *.vsix
 **/*.map
 **/.DS_Store
-../** 
+../**
+!unity-assets/**

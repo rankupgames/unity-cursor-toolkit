@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.1.202503201",
+  "version": "0.2.20250320",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
   "license": "MIT",
@@ -33,32 +33,32 @@
         "title": "Unity Toolkit: Disable Hot Reload"
       },
       {
-        "command": "unity-cursor-toolkit.toggleHotReload",
-        "title": "Unity Toolkit: Toggle Hot Reload"
+        "command": "unity-cursor-toolkit.forceReload",
+        "title": "Unity Toolkit: Force Reload Unity"
       },
       {
-        "command": "unity-cursor-toolkit.installUnityScript",
-        "title": "Unity Toolkit: Install Unity Script"
+        "command": "unity-cursor-toolkit.showContextMenu",
+        "title": "Unity Toolkit: Show Context Menu"
       },
       {
-        "command": "unity-cursor-toolkit.selectUnityProject",
+        "command": "unity-cursor-toolkit.attachUnityProject",
         "title": "Unity Toolkit: Select Unity Project"
       }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && npm run copy-assets",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js",
     "install-unity": "node install-unity-script.js",
     "package": "vsce package",
     "publish": "vsce publish",
-    
     "install:extension": "npm install",
     "build": "npm run compile",
-    "install:unity": "node install-unity-script.js"
+    "install:unity": "node install-unity-script.js",
+    "copy-assets": "node scripts/copy-assets.js"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
