@@ -1,32 +1,64 @@
-using UnityEngine;
-using UnityEditor;
+/*
+ * HotReloadHandler.cs
+ * 
+ * This script provides hot reload functionality between a Unity project and VS Code/Cursor.
+ * It creates a TCP server that listens for messages from the VS Code extension,
+ * then triggers Unity's asset database to refresh when code changes are detected.
+ * 
+ * The handler automatically starts when Unity loads and supports multiple port fallbacks
+ * if the default port is in use. Debug logs can be toggled through the Tools menu.
+ *
+ * Copyright (c) 2025 Rank Up Games LLC
+ */
+
 using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Threading;
 using System.Text;
 using System.Collections.Generic;
+
+using UnityEngine;
+
+#if UNITY_EDITOR
+using UnityEditor;
+
 #if UNITY_2019_1_OR_NEWER
 using UnityEditor.Compilation;
 #endif
 
+/// <summary>
+/// Editor window that handles hot reload functionality between Unity and VS Code/Cursor.
+/// Implements a TCP server to listen for file change notifications.
+/// </summary>
 [InitializeOnLoad]
 public class HotReloadHandler : EditorWindow
 {
+    // TCP server and communication components
     private static TcpListener server;
     private static Thread listenerThread;
     private static bool shouldRequestRefresh = false;
-    private static int port = 55500;
+    private static int port = 55500; // Default port, will try alternatives if unavailable
     private static readonly Queue<string> messageQueue = new Queue<string>();
     private static bool isInitialized = false;
     private static bool isServerRunning = false;
     
+    // Debug control flag - determines whether connection logs are shown
+    private static bool showDebugLogs = false;
+    private const string debugPrefKey = "UnityHotReloadHandler_ShowDebugLogs";
+    
     // Used to check if we're already running
     private static Mutex instanceMutex;
 
-    // Static constructor called when Unity editor loads
+    /// <summary>
+    /// Static constructor called when Unity editor loads.
+    /// Initializes the server and registers for editor events.
+    /// </summary>
     static HotReloadHandler()
     {
+        // Load debug setting from EditorPrefs
+        showDebugLogs = EditorPrefs.GetBool(debugPrefKey, false);
+        
         // Register for domain reload completion to restart the server
         EditorApplication.update += OnEditorUpdate;
         
@@ -37,6 +69,10 @@ public class HotReloadHandler : EditorWindow
         Initialize();
     }
 
+    /// <summary>
+    /// Initializes the hot reload server if not already running.
+    /// Creates a mutex to ensure only one instance is active.
+    /// </summary>
     [MenuItem("Tools/Hot Reload/Start Server")]
     public static void Initialize()
     {
@@ -62,6 +98,9 @@ public class HotReloadHandler : EditorWindow
         isInitialized = true;
     }
 
+    /// <summary>
+    /// Stops the hot reload server and releases resources.
+    /// </summary>
     [MenuItem("Tools/Hot Reload/Stop Server")]
     public static void Shutdown()
     {
@@ -86,6 +125,32 @@ public class HotReloadHandler : EditorWindow
         isInitialized = false;
     }
 
+    /// <summary>
+    /// Toggles whether debug logs are shown in the console.
+    /// Setting is persisted between editor sessions.
+    /// </summary>
+    [MenuItem("Tools/Hot Reload/Toggle Debug Logs")]
+    public static void ToggleDebugLogs()
+    {
+        showDebugLogs = !showDebugLogs;
+        EditorPrefs.SetBool(debugPrefKey, showDebugLogs);
+        Debug.Log($"Hot Reload: Debug logs are now {(showDebugLogs ? "enabled" : "disabled")}");
+    }
+    
+    /// <summary>
+    /// Validates the Toggle Debug Logs menu item and sets its checked state.
+    /// </summary>
+    [MenuItem("Tools/Hot Reload/Toggle Debug Logs", true)]
+    public static bool ValidateToggleDebugLogs()
+    {
+        Menu.SetChecked("Tools/Hot Reload/Toggle Debug Logs", showDebugLogs);
+        return true;
+    }
+
+    /// <summary>
+    /// Starts the listener thread for TCP communication.
+    /// Ensures any existing thread is stopped first.
+    /// </summary>
     private static void StartListenerThread()
     {
         // Stop any existing thread first
@@ -100,6 +165,9 @@ public class HotReloadHandler : EditorWindow
         listenerThread.Start();
     }
     
+    /// <summary>
+    /// Stops the TCP server and cleans up the listener thread.
+    /// </summary>
     private static void StopServer()
     {
         isServerRunning = false;
@@ -127,7 +195,7 @@ public class HotReloadHandler : EditorWindow
                 
                 if (listenerThread.IsAlive)
                 {
-                    listenerThread.Abort();
+                    listenerThread.Abort(); // Force abort if thread doesn't exit gracefully
                 }
             }
             catch (Exception ex)
@@ -139,18 +207,28 @@ public class HotReloadHandler : EditorWindow
         }
     }
 
-    // Clean up when Unity is about to reload scripts
+    /// <summary>
+    /// Called before Unity reloads assemblies.
+    /// Stops the server to prevent threading issues during domain reload.
+    /// </summary>
     private static void OnBeforeAssemblyReload()
     {
         StopServer();
     }
     
-    // Clean up when Unity is quitting
+    /// <summary>
+    /// Called when Unity editor is quitting.
+    /// Performs cleanup of resources.
+    /// </summary>
     private static void OnEditorQuitting()
     {
         Shutdown();
     }
 
+    /// <summary>
+    /// Called every editor update frame.
+    /// Processes any queued messages from the TCP listener and triggers refreshes.
+    /// </summary>
     private static void OnEditorUpdate()
     {
         // Process any queued messages
@@ -171,12 +249,17 @@ public class HotReloadHandler : EditorWindow
         }
     }
 
+    /// <summary>
+    /// Thread function that listens for TCP connections.
+    /// Tries multiple ports if the default port is unavailable.
+    /// </summary>
     private static void ListenerThreadFunction()
     {
         // Try multiple ports if necessary
         int[] portsToTry = new int[] { port, 55501, 55502, 55503, 55504 };
         bool serverStarted = false;
         
+        // Try each port until we find one that works
         foreach (int currentPort in portsToTry)
         {
             try
@@ -220,6 +303,7 @@ public class HotReloadHandler : EditorWindow
 
         isServerRunning = true;
         
+        // Main server loop
         try
         {
             // Buffer for reading data
@@ -229,10 +313,16 @@ public class HotReloadHandler : EditorWindow
             {
                 try
                 {
+                    // Wait for a client connection
                     using (TcpClient client = server.AcceptTcpClient())
                     {
-                        Debug.Log("VS Code connected to Unity Hot Reload server");
+                        // Only log connection if debug logs are enabled
+                        if (showDebugLogs)
+                        {
+                            Debug.Log("VS Code connected to Unity Hot Reload server");
+                        }
                         
+                        // Handle client communication
                         using (NetworkStream stream = client.GetStream())
                         {
                             int length;
@@ -266,14 +356,20 @@ public class HotReloadHandler : EditorWindow
         }
         catch (ThreadAbortException)
         {
-            Debug.Log("Unity Hot Reload server thread aborted");
+            if (showDebugLogs)
+            {
+                Debug.Log("Unity Hot Reload server thread aborted");
+            }
         }
         catch (Exception e)
         {
             if (!isServerRunning)
             {
                 // Server is shutting down, this is expected
-                Debug.Log("Unity Hot Reload server stopped");
+                if (showDebugLogs)
+                {
+                    Debug.Log("Unity Hot Reload server stopped");
+                }
             }
             else
             {
@@ -298,14 +394,26 @@ public class HotReloadHandler : EditorWindow
         }
     }
 
+    /// <summary>
+    /// Processes messages received from the TCP client.
+    /// Currently, any message will trigger a refresh.
+    /// </summary>
+    /// <param name="message">The message received from the client</param>
     private static void ProcessMessage(string message)
     {
-        Debug.Log($"Received message: {message}");
+        if (showDebugLogs)
+        {
+            Debug.Log($"Received message: {message}");
+        }
         
         // Simple protocol - any message triggers a refresh
         shouldRequestRefresh = true;
     }
 
+    /// <summary>
+    /// Refreshes Unity's asset database and triggers script compilation.
+    /// Called when changes are detected from VS Code/Cursor.
+    /// </summary>
     private static void RefreshAssets()
     {
         try
@@ -320,7 +428,10 @@ public class HotReloadHandler : EditorWindow
             CompilationPipeline.RequestScriptCompilation();
             #endif
             
-            Debug.Log("Hot Reload: Refresh complete");
+            if (showDebugLogs)
+            {
+                Debug.Log("Hot Reload: Refresh complete");
+            }
         }
         catch (Exception e)
         {
@@ -328,9 +439,15 @@ public class HotReloadHandler : EditorWindow
         }
     }
     
-    // Helper method to get the active port - can be useful for other parts of the system
+    /// <summary>
+    /// Returns the current port being used by the hot reload server.
+    /// Useful for other components that need to communicate with VS Code.
+    /// </summary>
+    /// <returns>The current port number</returns>
     public static int GetPort()
     {
         return port;
     }
-} 
+}
+
+#endif // UNITY_EDITOR 

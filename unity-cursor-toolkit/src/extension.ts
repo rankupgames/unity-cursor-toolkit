@@ -33,19 +33,19 @@ let hotReloadEnabled = false;
  * @param context Extension context
  */
 export function activate(context: vscode.ExtensionContext) {
-    vscode.window.showInformationMessage('Unity Cursor Toolkit extension is now active');
-
     // Register commands
     registerCommands(context);
 
     // Create status bar items
-	createStatusBarItems(context);
+    createStatusBarItems(context);
 
-	// Set up socket communication
+    // Set up socket communication
     setSocketNeededCallback(() => hotReloadEnabled);
 
     // Auto-detect Unity projects
     autoDetectUnityProjects();
+
+    vscode.window.showInformationMessage('Unity Cursor Toolkit extension is now active');
 }
 
 /**
@@ -57,9 +57,12 @@ function registerCommands(context: vscode.ExtensionContext) {
     const enableHotReloadCommand = vscode.commands.registerCommand(
         'unity-cursor-toolkit.enableHotReload',
         () => {
-            enableHotReload();
-            vscode.window.showInformationMessage('Unity Toolkit: Hot Reload Enabled');
-            updateStatusBarItems(hotReloadEnabled);
+			enableHotReload();
+			if (hotReloadEnabled) {
+				vscode.window.showInformationMessage('Unity Toolkit: Hot Reload Enabled');
+			}
+
+			updateStatusBarItems(hotReloadEnabled);
         }
     );
 
@@ -67,7 +70,10 @@ function registerCommands(context: vscode.ExtensionContext) {
         'unity-cursor-toolkit.disableHotReload',
         () => {
             disableHotReload();
-            vscode.window.showInformationMessage('Unity Toolkit: Hot Reload Disabled');
+            if (!hotReloadEnabled) {
+                vscode.window.showInformationMessage('Unity Toolkit: Hot Reload Disabled');
+            }
+
             updateStatusBarItems(hotReloadEnabled);
         }
     );
@@ -103,8 +109,7 @@ function registerCommands(context: vscode.ExtensionContext) {
                 vscode.window.showInformationMessage(`Successfully attached Unity project at: ${projectPath}`);
             }
 
-            // Auto-enable hot reload when attaching to a project
-            enableHotReload();
+            // Force update status bar to show the linked project
             updateStatusBarItems(hotReloadEnabled);
         }
     );
@@ -124,150 +129,18 @@ function registerCommands(context: vscode.ExtensionContext) {
  */
 function createStatusBarItems(context: vscode.ExtensionContext) {
     // Hot Reload status button
-    hotReloadStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	hotReloadStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 101);
     hotReloadStatusBarItem.command = hotReloadEnabled ? 'unity-cursor-toolkit.disableHotReload' : 'unity-cursor-toolkit.enableHotReload';
     context.subscriptions.push(hotReloadStatusBarItem);
 
     // Project status button
-    projectStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+	projectStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 102);
     projectStatusBarItem.command = 'unity-cursor-toolkit.attachUnityProject';
+    projectStatusBarItem.tooltip = "Attach Unity Project";
     context.subscriptions.push(projectStatusBarItem);
-
-    // Register context menu for additional options
-    registerContextMenu(context);
 
     // Initial update of status bar UI
     updateStatusBarItems(hotReloadEnabled);
-}
-
-/**
- * Register context menu for project options
- * @param context Extension context
- */
-function registerContextMenu(context: vscode.ExtensionContext) {
-    const showContextMenuCommand = vscode.commands.registerCommand('unity-cursor-toolkit.showContextMenu', async () => {
-        // Check if we have a linked project and display its status
-        const projectPath = getLinkedProjectPath();
-        const scriptInstalled = isScriptInstalledInLinkedProject();
-        const scriptPath = getScriptPathInLinkedProject();
-
-        // Build menu options
-        const actions = buildContextMenuOptions(projectPath, scriptInstalled, scriptPath);
-
-        // Show quick pick menu
-        const selected = await vscode.window.showQuickPick(actions, {
-            placeHolder: 'Unity Toolkit Options'
-        });
-
-        // Handle selection
-        handleContextMenuSelection(selected);
-    });
-
-    context.subscriptions.push(showContextMenuCommand);
-
-    // Add right-click tooltip to status bar
-    projectStatusBarItem.tooltip = "Unity Toolkit Project. Right-click for project options.";
-}
-
-/**
- * Build context menu options based on current state
- */
-function buildContextMenuOptions(projectPath: string | undefined, scriptInstalled: boolean, scriptPath: string | undefined) {
-    const actions: any[] = [];
-
-    // Project status section
-    if (projectPath) {
-        // Project info
-        actions.push({
-            label: `$(check) Project linked: ${path.basename(projectPath)}`,
-            description: projectPath,
-            action: '' // No action for status item
-        });
-
-        // Script status
-        if (scriptInstalled) {
-            actions.push({
-                label: `$(check) Hot Reload Script: Installed`,
-                description: path.join('Assets', 'Editor', 'HotReloadHandler.cs'),
-                action: '' // No action for status item
-            });
-        } else {
-            actions.push({
-                label: `$(warning) Hot Reload Script: Not installed`,
-                description: 'Script will be installed when attached',
-                action: '' // No action for status item
-            });
-        }
-
-        // Connection status
-        actions.push({
-            label: hotReloadEnabled ?
-                `$(plug) Connection: Active` :
-                `$(circle-slash) Connection: Inactive`,
-            description: hotReloadEnabled ?
-                'Editor connection established' :
-                'Click "Hot Reload: Off" to enable',
-            action: '' // No action for status item
-        });
-    } else {
-        actions.push({
-            label: `$(warning) No Unity project linked`,
-            description: 'Attach a project to enable hot reload',
-            action: '' // No action for status item
-        });
-    }
-
-    // Separator
-    actions.push({
-        label: '$(dash) $(dash) $(dash) $(dash) $(dash) $(dash) $(dash) $(dash) $(dash) $(dash) $(dash) $(dash)',
-        action: '' // No action for separator
-    });
-
-    // Action items
-    actions.push(
-        { label: "$(plug) Attach Unity Project", action: 'attachUnityProject' },
-        { label: "$(refresh) Force Reload Unity", action: 'forceReload' }
-    );
-
-    // Project management options
-    if (projectPath) {
-        actions.push({
-            label: "$(folder-opened) Open Project Folder",
-            action: 'openProjectFolder',
-            projectPath: projectPath
-        });
-
-        // Script options
-        if (scriptPath) {
-            actions.push({
-                label: "$(file-code) Open Hot Reload Script",
-                action: 'openHotReloadScript',
-                scriptPath: scriptPath
-            });
-        }
-    }
-
-    return actions;
-}
-
-/**
- * Handle selection from context menu
- */
-async function handleContextMenuSelection(selected: any) {
-    if (!selected || !selected.action) {
-        return;
-    }
-
-    if (selected.action === 'openProjectFolder' && selected.projectPath) {
-        // Open the project folder in the system file explorer
-        vscode.env.openExternal(vscode.Uri.file(selected.projectPath));
-    } else if (selected.action === 'openHotReloadScript' && selected.scriptPath) {
-        // Open the script file in the editor
-        const document = await vscode.workspace.openTextDocument(selected.scriptPath);
-        await vscode.window.showTextDocument(document);
-    } else {
-        vscode.commands.executeCommand(`unity-cursor-toolkit.${selected.action}`);
-    }
 }
 
 /**
@@ -276,8 +149,7 @@ async function handleContextMenuSelection(selected: any) {
 function autoDetectUnityProjects() {
     // Check for linked Unity project first
     if (hasLinkedUnityProject()) {
-        console.log('Found linked Unity project, auto-enabling hot reload');
-        enableHotReload();
+        console.log('Found linked Unity project');
         updateStatusBarItems(hotReloadEnabled);
         return;
     }
@@ -291,14 +163,15 @@ function autoDetectUnityProjects() {
     let unityProjectFound = false;
     for (const folder of workspaceFolders) {
         const assetsPath = path.join(folder.uri.fsPath, 'Assets');
-        if (fs.existsSync(assetsPath)) {
-            unityProjectFound = true;
-            break;
+        if (fs.existsSync(assetsPath) === false) {
+            continue;
         }
+
+		unityProjectFound = true;
+		break;
     }
 
     if (unityProjectFound) {
-        enableHotReload();
         updateStatusBarItems(hotReloadEnabled);
     }
 }
@@ -307,21 +180,32 @@ function autoDetectUnityProjects() {
  * Update status bar appearance based on current state
  */
 function updateStatusBarItems(hotReloadEnabled: boolean) {
+    // Update Hot Reload status item
     if (hotReloadEnabled) {
         hotReloadStatusBarItem.text = "$(sync) Unity Hot Reload: On";
         hotReloadStatusBarItem.tooltip = "Unity Hot Reload is enabled. Click to disable.";
-        hotReloadStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+        hotReloadStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.activeBackground');
         hotReloadStatusBarItem.command = 'unity-cursor-toolkit.disableHotReload';
     } else {
         hotReloadStatusBarItem.text = "$(sync-ignored) Unity Hot Reload: Off";
         hotReloadStatusBarItem.tooltip = "Unity Hot Reload is disabled. Click to enable.";
-        hotReloadStatusBarItem.backgroundColor = undefined;
+        hotReloadStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground'); // Orange/red highlight when off
         hotReloadStatusBarItem.command = 'unity-cursor-toolkit.enableHotReload';
     }
 
-    // Show items
-    hotReloadStatusBarItem.show();
+    // Update Project status item
+    const projectPath = getLinkedProjectPath();
+    if (projectPath) {
+        projectStatusBarItem.text = `$(file-directory) Unity Project: ${path.basename(projectPath)}`;
+        projectStatusBarItem.tooltip = `Unity Project: ${projectPath}\nClick to change project`;
+    } else {
+        projectStatusBarItem.text = "$(file-directory-create) Attach Unity Project";
+        projectStatusBarItem.tooltip = "No Unity project attached. Click to attach.";
+    }
+
+    // Ensure items are visible
     projectStatusBarItem.show();
+    hotReloadStatusBarItem.show();
 }
 
 /**
@@ -334,8 +218,7 @@ function enableHotReload() {
 
     // Check if we have a linked project before enabling
     if (!hasLinkedUnityProject()) {
-        vscode.window.showWarningMessage('No Unity project linked. Please attach a Unity project first.');
-        vscode.commands.executeCommand('unity-cursor-toolkit.attachUnityProject');
+        vscode.window.showErrorMessage('No Unity project linked. Please attach a Unity project first before enabling Hot Reload.');
         return;
     }
 

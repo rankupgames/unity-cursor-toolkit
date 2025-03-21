@@ -1,9 +1,8 @@
 /**
- * Unity Project Manager - Handles Unity project selection and script installation
+ * Unity Project Handler - Manages Unity project detection, selection, and linking
  *
  * Author: Miguel A. Lopez
  * Company: Rank Up Games LLC
- * Purpose: Manages project selection and ensures Unity hot reload script is installed
  */
 import * as vscode from 'vscode';
 import * as path from 'path';
@@ -38,7 +37,8 @@ export function hasLinkedUnityProject(): boolean {
 export function getLinkedProjectPath(): string | undefined {
     try {
         const savedProjectUri = getCurrentProjectUri();
-        if (!savedProjectUri) {
+		if (!savedProjectUri) {
+			vscode.window.showErrorMessage('No Unity project linked. Please select a project to link.');
             return undefined;
 		}
 
@@ -46,7 +46,10 @@ export function getLinkedProjectPath(): string | undefined {
         const projectPath = savedProjectUri.fsPath;
 
         // Check if the project still exists and has an Assets folder
-        return fs.existsSync(path.join(projectPath, 'Assets')) ? projectPath : undefined;
+        const assetsPath = path.join(projectPath, 'Assets');
+        const exists = fs.existsSync(assetsPath);
+
+        return exists ? projectPath : undefined;
     } catch (error) {
         console.error('Error getting linked project path:', error);
         return undefined;
@@ -154,43 +157,49 @@ export async function handleUnityProjectSetup(): Promise<boolean> {
  * Helper function to select and install to an external project
  */
 async function selectAndInstallExternalProject(): Promise<vscode.Uri | undefined> {
-    // Show folder picker dialog
-    const options: vscode.OpenDialogOptions = {
-        canSelectMany: false,
-        canSelectFiles: false,
-        canSelectFolders: true,
-        openLabel: 'Select Unity Project Folder',
-        title: 'Select Unity Project Root Folder'
-    };
+    try {
+        // Show folder picker dialog
+        const options: vscode.OpenDialogOptions = {
+            canSelectMany: false,
+            canSelectFiles: false,
+            canSelectFolders: true,
+            openLabel: 'Select Unity Project Folder',
+            title: 'Select Unity Project Root Folder'
+        };
 
-    const folderUri = await vscode.window.showOpenDialog(options);
-    if (!folderUri || folderUri.length === 0) {
-        return undefined; // User cancelled
-    }
-
-    const selectedFolder = folderUri[0];
-    const assetsPath = path.join(selectedFolder.fsPath, 'Assets');
-
-    // Verify it's a Unity project
-    if (!fs.existsSync(assetsPath)) {
-        const tryAnyway = 'Install Anyway';
-        const result = await vscode.window.showWarningMessage(
-            `The selected folder doesn't appear to be a Unity project (no Assets folder found). Do you want to install anyway?`,
-            tryAnyway,
-            'Cancel'
-        );
-
-        if (result !== tryAnyway) {
-            return undefined;
+        const folderUri = await vscode.window.showOpenDialog(options);
+        if (!folderUri || folderUri.length === 0) {
+            return undefined; // User cancelled
         }
+
+        const selectedFolder = folderUri[0];
+        const assetsPath = path.join(selectedFolder.fsPath, 'Assets');
+
+        // Verify it's a Unity project
+        if (!fs.existsSync(assetsPath)) {
+            const tryAnyway = 'Install Anyway';
+            const result = await vscode.window.showWarningMessage(
+                `The selected folder doesn't appear to be a Unity project (no Assets folder found). Do you want to install anyway?`,
+                tryAnyway,
+                'Cancel'
+            );
+
+            if (result !== tryAnyway) {
+                return undefined;
+            }
+        }
+
+        // Save the selected project URI
+        saveCurrentProjectUri(selectedFolder);
+
+        // Install the script to the selected project
+        const success = await installScriptToProject(selectedFolder);
+        return success ? selectedFolder : undefined;
+    } catch (error) {
+        console.error('Error in external project selection:', error);
+        vscode.window.showErrorMessage(`Failed to select external project: ${error instanceof Error ? error.message : String(error)}`);
+        return undefined;
     }
-
-    // Save the selected project URI
-    saveCurrentProjectUri(selectedFolder);
-
-    // Install the script to the selected project
-    const success = await installScriptToProject(selectedFolder);
-    return success ? selectedFolder : undefined;
 }
 
 /**
@@ -200,8 +209,13 @@ function saveCurrentProjectUri(projectUri: vscode.Uri): void {
     try {
         // Save the project URI to configuration
         const config = vscode.workspace.getConfiguration();
-        config.update(CURRENT_PROJECT_KEY, projectUri.toString(), vscode.ConfigurationTarget.Workspace);
-        console.log(`Saved current project URI: ${projectUri.toString()}`);
+        const uriString = projectUri.toString();
+
+        // Use global scope instead of workspace scope to ensure persistence
+        config.update(CURRENT_PROJECT_KEY, uriString, vscode.ConfigurationTarget.Global);
+
+        // Verify it was saved correctly
+        const savedUri = config.get<string>(CURRENT_PROJECT_KEY);
     } catch (error) {
         console.error('Failed to save current project URI:', error);
     }
@@ -215,6 +229,7 @@ export function getCurrentProjectUri(): vscode.Uri | undefined {
         const config = vscode.workspace.getConfiguration();
         const uriString = config.get<string>(CURRENT_PROJECT_KEY);
         if (!uriString) {
+			vscode.window.showErrorMessage('Couldn\'t get current project URI. Please select a project to link.');
             return undefined;
         }
 
