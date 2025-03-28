@@ -20,6 +20,7 @@ import {
 } from './modules/unityProjectHandler';
 import { connectToUnity, closeConnection, setSocketNeededCallback } from './modules/socketConnection';
 import { enableFileWatchers, disableFileWatchers } from './modules/fileWatcher';
+import { RiderBackendConnector } from './modules/riderIntegration';
 
 // Status bar items
 let hotReloadStatusBarItem: vscode.StatusBarItem;
@@ -27,12 +28,16 @@ let projectStatusBarItem: vscode.StatusBarItem;
 
 // Global state
 let hotReloadEnabled = false;
+let riderConnector: RiderBackendConnector;
 
 /**
  * Activate the extension - main entry point
  * @param context Extension context
  */
 export function activate(context: vscode.ExtensionContext) {
+    // Initialize Rider connector
+    riderConnector = new RiderBackendConnector();
+
     // Register commands
     registerCommands(context);
 
@@ -44,6 +49,12 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Auto-detect Unity projects
     autoDetectUnityProjects();
+
+    // Check if Rider integration is enabled in settings
+    const config = vscode.workspace.getConfiguration('unity-cursor-toolkit');
+    if (config.get('riderIntegration')) {
+        riderConnector.connect();
+    }
 
     vscode.window.showInformationMessage('Unity Cursor Toolkit extension is now active');
 }
@@ -114,12 +125,25 @@ function registerCommands(context: vscode.ExtensionContext) {
         }
     );
 
+    // Register Rider Integration command
+    const toggleRiderCommand = vscode.commands.registerCommand(
+        'unity-cursor-toolkit.toggleRiderIntegration',
+        async () => {
+            if (riderConnector.isRiderBackendConnected()) {
+                riderConnector.disconnect();
+            } else {
+                await riderConnector.connect();
+            }
+        }
+    );
+
     // Add all commands to subscriptions
     context.subscriptions.push(
         enableHotReloadCommand,
         disableHotReloadCommand,
         attachToProjectCommand,
-        forceReloadCommand
+        forceReloadCommand,
+        toggleRiderCommand
     );
 }
 
@@ -260,6 +284,11 @@ function disableHotReload() {
 export function deactivate() {
     // Disable hot reload
     disableHotReload();
+
+    // Clean up Rider connector
+    if (riderConnector) {
+        riderConnector.dispose();
+    }
 
     // Clean up status bar items
     if (hotReloadStatusBarItem) {
