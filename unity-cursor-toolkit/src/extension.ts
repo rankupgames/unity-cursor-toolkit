@@ -4,6 +4,7 @@
  *
  * Author: Miguel A. Lopez
  * Company: Rank Up Games LLC
+ * Changes: Refactored project selection to use a single command triggered by the status bar.
  */
 
 import * as vscode from 'vscode';
@@ -12,11 +13,9 @@ import * as fs from 'fs';
 
 // Import modules
 import {
-    handleUnityProjectSetup,
+    selectAndAttachProject,
     hasLinkedUnityProject,
     getLinkedProjectPath,
-    isScriptInstalledInLinkedProject,
-    getScriptPathInLinkedProject
 } from './modules/unityProjectHandler';
 import { connectToUnity, closeConnection, setSocketNeededCallback } from './modules/socketConnection';
 import { enableFileWatchers, disableFileWatchers } from './modules/fileWatcher';
@@ -47,8 +46,8 @@ export function activate(context: vscode.ExtensionContext) {
     // Set up socket communication
     setSocketNeededCallback(() => hotReloadEnabled);
 
-    // Auto-detect Unity projects
-    autoDetectUnityProjects();
+    // Auto-detect Unity projects and update status bar - no longer prompts setup
+    autoDetectAndUpdateStatusBar();
 
     // Check if Rider integration is enabled in settings
     const config = vscode.workspace.getConfiguration('unity-cursor-toolkit');
@@ -105,22 +104,16 @@ function registerCommands(context: vscode.ExtensionContext) {
     );
 
     // Register Project Setup command
-    const attachToProjectCommand = vscode.commands.registerCommand(
-        'unity-cursor-toolkit.attachUnityProject',
+    const selectAttachProjectCommand = vscode.commands.registerCommand(
+        'unity-cursor-toolkit.selectAndAttachUnityProject',
         async () => {
-            const success = await handleUnityProjectSetup();
-            if (!success) {
-                vscode.window.showErrorMessage('Failed to attach Unity project');
-                return;
+            const success = await selectAndAttachProject();
+            if (success) {
+                const projectPath = getLinkedProjectPath();
+                vscode.window.showInformationMessage(`Unity project linked: ${projectPath ? path.basename(projectPath) : 'Unknown'}`);
+            } else {
+                 vscode.window.showWarningMessage('Unity project selection cancelled or failed.');
             }
-
-            // Get the project path to display in the message
-            const projectPath = getLinkedProjectPath();
-            if (projectPath) {
-                vscode.window.showInformationMessage(`Successfully attached Unity project at: ${projectPath}`);
-            }
-
-            // Force update status bar to show the linked project
             updateStatusBarItems(hotReloadEnabled);
         }
     );
@@ -141,7 +134,7 @@ function registerCommands(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         enableHotReloadCommand,
         disableHotReloadCommand,
-        attachToProjectCommand,
+        selectAttachProjectCommand,
         forceReloadCommand,
         toggleRiderCommand
     );
@@ -159,8 +152,8 @@ function createStatusBarItems(context: vscode.ExtensionContext) {
 
     // Project status button
 	projectStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 102);
-    projectStatusBarItem.command = 'unity-cursor-toolkit.attachUnityProject';
-    projectStatusBarItem.tooltip = "Attach Unity Project";
+    projectStatusBarItem.command = 'unity-cursor-toolkit.selectAndAttachUnityProject';
+    projectStatusBarItem.tooltip = "Select/Change Linked Unity Project";
     context.subscriptions.push(projectStatusBarItem);
 
     // Initial update of status bar UI
@@ -168,36 +161,14 @@ function createStatusBarItems(context: vscode.ExtensionContext) {
 }
 
 /**
- * Auto-detect Unity projects in workspace
+ * Check for linked project and update status bar - No longer triggers setup
  */
-function autoDetectUnityProjects() {
-    // Check for linked Unity project first
-    if (hasLinkedUnityProject()) {
-        console.log('Found linked Unity project');
-        updateStatusBarItems(hotReloadEnabled);
-        return;
-    }
-
-    // If no linked project, check for Unity projects in workspace folders
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
-        return;
-    }
-
-    let unityProjectFound = false;
-    for (const folder of workspaceFolders) {
-        const assetsPath = path.join(folder.uri.fsPath, 'Assets');
-        if (fs.existsSync(assetsPath) === false) {
-            continue;
-        }
-
-		unityProjectFound = true;
-		break;
-    }
-
-    if (unityProjectFound) {
-        updateStatusBarItems(hotReloadEnabled);
-    }
+function autoDetectAndUpdateStatusBar() {
+    // Just update the status bar based on whether a project is linked or not
+    // The user explicitly clicks the button to initiate selection now.
+    updateStatusBarItems(hotReloadEnabled);
+    // We could potentially add a check here for workspace projects and show a one-time notification
+    // suggesting the user click the button if no project is linked, but let's keep it simple for now.
 }
 
 /**
@@ -220,11 +191,11 @@ function updateStatusBarItems(hotReloadEnabled: boolean) {
     // Update Project status item
     const projectPath = getLinkedProjectPath();
     if (projectPath) {
-        projectStatusBarItem.text = `$(file-directory) Unity Project: ${path.basename(projectPath)}`;
-        projectStatusBarItem.tooltip = `Unity Project: ${projectPath}\nClick to change project`;
+        projectStatusBarItem.text = `$(folder-active) Unity: ${path.basename(projectPath)}`;
+        projectStatusBarItem.tooltip = `Linked Unity Project: ${projectPath}\nClick to change project`;
     } else {
-        projectStatusBarItem.text = "$(file-directory-create) Attach Unity Project";
-        projectStatusBarItem.tooltip = "No Unity project attached. Click to attach.";
+        projectStatusBarItem.text = "$(folder) Select Unity Project";
+        projectStatusBarItem.tooltip = "No Unity project linked. Click to select one.";
     }
 
     // Ensure items are visible
@@ -242,7 +213,7 @@ function enableHotReload() {
 
     // Check if we have a linked project before enabling
     if (!hasLinkedUnityProject()) {
-        vscode.window.showErrorMessage('No Unity project linked. Please attach a Unity project first before enabling Hot Reload.');
+        vscode.window.showErrorMessage('No Unity project linked. Please select a Unity project using the status bar button first.');
         return;
     }
 
