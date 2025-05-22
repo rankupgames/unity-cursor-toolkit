@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.2.20250320",
+  "version": "0.1.302250521",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
   "license": "MIT",
@@ -23,61 +23,41 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "configuration": {
-      "title": "Unity Cursor Toolkit",
-      "properties": {
-        "unity-cursor-toolkit.riderIntegration": {
-          "type": "boolean",
-          "default": false,
-          "description": "Enable Rider C# intelligence integration"
-        },
-        "unity-cursor-toolkit.riderPath": {
-          "type": "string",
-          "description": "Path to Rider installation"
-        }
-      }
-    },
     "commands": [
       {
-        "command": "unity-cursor-toolkit.enableHotReload",
-        "title": "Unity Toolkit: Enable Hot Reload"
+        "command": "unity-cursor-toolkit.startConnection",
+        "title": "Unity Toolkit: Start/Attach to Project"
       },
       {
-        "command": "unity-cursor-toolkit.disableHotReload",
-        "title": "Unity Toolkit: Disable Hot Reload"
+        "command": "unity-cursor-toolkit.reloadConnection",
+        "title": "Unity Toolkit: Reload Connection"
       },
       {
-        "command": "unity-cursor-toolkit.forceReload",
-        "title": "Unity Toolkit: Force Reload Unity"
-      },
-      {
-        "command": "unity-cursor-toolkit.showContextMenu",
-        "title": "Unity Toolkit: Show Context Menu"
-      },
-      {
-        "command": "unity-cursor-toolkit.attachUnityProject",
-        "title": "Unity Toolkit: Select Unity Project"
-      },
-      {
-        "command": "unity-cursor-toolkit.toggleRiderIntegration",
-        "title": "Unity Toolkit: Toggle Rider Integration"
+        "command": "unity-cursor-toolkit.stopConnection",
+        "title": "Unity Toolkit: Stop Connection"
       }
     ]
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && npm run copy-assets",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js",
+    "install-unity": "node install-unity-script.js",
     "package": "vsce package",
-    "publish": "vsce publish"
+    "publish": "vsce publish",
+    "install:extension": "npm install",
+    "build": "npm run compile",
+    "install:unity": "node install-unity-script.js",
+    "copy-assets": "node scripts/copy-assets.js"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.60.0",
     "@vscode/vsce": "^2.22.0",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "fs-extra": "^10.0.0"
   },
   "keywords": [
     "unity",
