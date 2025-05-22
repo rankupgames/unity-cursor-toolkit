@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.2.20250320",
+  "version": "0.1.302250521",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
   "license": "MIT",
@@ -25,24 +25,16 @@
   "contributes": {
     "commands": [
       {
-        "command": "unity-cursor-toolkit.enableHotReload",
-        "title": "Unity Toolkit: Enable Hot Reload"
+        "command": "unity-cursor-toolkit.startConnection",
+        "title": "Unity Toolkit: Start/Attach to Project"
       },
       {
-        "command": "unity-cursor-toolkit.disableHotReload",
-        "title": "Unity Toolkit: Disable Hot Reload"
+        "command": "unity-cursor-toolkit.reloadConnection",
+        "title": "Unity Toolkit: Reload Connection"
       },
       {
-        "command": "unity-cursor-toolkit.forceReload",
-        "title": "Unity Toolkit: Force Reload Unity"
-      },
-      {
-        "command": "unity-cursor-toolkit.showContextMenu",
-        "title": "Unity Toolkit: Show Context Menu"
-      },
-      {
-        "command": "unity-cursor-toolkit.attachUnityProject",
-        "title": "Unity Toolkit: Select Unity Project"
+        "command": "unity-cursor-toolkit.stopConnection",
+        "title": "Unity Toolkit: Stop Connection"
       }
     ]
   },
@@ -64,7 +56,8 @@
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.60.0",
     "@vscode/vsce": "^2.22.0",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "fs-extra": "^10.0.0"
   },
   "keywords": [
     "unity",

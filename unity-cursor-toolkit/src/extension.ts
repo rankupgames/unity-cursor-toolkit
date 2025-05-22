@@ -15,34 +15,92 @@ import {
     handleUnityProjectSetup,
     hasLinkedUnityProject,
     getLinkedProjectPath,
-    isScriptInstalledInLinkedProject,
-    getScriptPathInLinkedProject
+    initializeUnityProjectHandler,
+    clearLinkedProjectOnExit
 } from './modules/unityProjectHandler';
-import { connectToUnity, closeConnection, setSocketNeededCallback } from './modules/socketConnection';
+import { connectToUnity, closeConnection, triggerUnityRefresh, setSocketNeededCallback } from './modules/socketConnection';
 import { enableFileWatchers, disableFileWatchers } from './modules/fileWatcher';
 
 // Status bar items
-let hotReloadStatusBarItem: vscode.StatusBarItem;
 let projectStatusBarItem: vscode.StatusBarItem;
 
-// Global state
-let hotReloadEnabled = false;
+// Global state for hot reload status
+let hotReloadActive = false;
+let connectedPort: number | null = null; // Store the connected port
+
+// Helper function to encapsulate the connection logic
+async function attemptConnectionSequence(isInitialProjectSetup: boolean) {
+    let projectPath = getLinkedProjectPath();
+
+    if (isInitialProjectSetup || !projectPath) {
+        const setupSuccess = await handleUnityProjectSetup();
+        if (!setupSuccess) {
+            vscode.window.showErrorMessage('Failed to attach Unity project. Please try again.');
+            hotReloadActive = false;
+            connectedPort = null;
+            updateStatusBarItems();
+            return;
+        }
+        projectPath = getLinkedProjectPath(); // Re-fetch after setup
+    }
+
+    if (projectPath) {
+        vscode.window.showInformationMessage(`Attempting to connect to Unity project: ${path.basename(projectPath)}...`);
+        hotReloadActive = true; // Set to true to indicate an attempt is in progress, port is null until connection
+        connectedPort = null;   // Reset port during connection attempt
+        updateStatusBarItems(); // Show spinning icon
+
+        try {
+            const port = await connectToUnity(true); // isInitialAttempt = true
+            if (port) {
+                vscode.window.showInformationMessage(`Successfully connected to Unity project: ${path.basename(projectPath)} on port ${port}`);
+                connectedPort = port;
+                // hotReloadActive is already true
+                enableFileWatchers();
+            } else {
+                // connectToUnity(true) shows an error message if all ports fail
+                hotReloadActive = false;
+                connectedPort = null;
+                disableFileWatchers();
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error connecting to Unity: ${error}`);
+            hotReloadActive = false;
+            connectedPort = null;
+            disableFileWatchers();
+        }
+    } else {
+        vscode.window.showErrorMessage('No Unity project path found. Please attach a project first.');
+        hotReloadActive = false;
+        connectedPort = null;
+    }
+    updateStatusBarItems();
+}
+
+function stopConnectionSequence(showMessages: boolean = true) {
+    if (showMessages) {
+        vscode.window.showInformationMessage('Stopping Unity connection...');
+    }
+    closeConnection();
+    disableFileWatchers();
+    hotReloadActive = false;
+    connectedPort = null;
+    updateStatusBarItems();
+    if (showMessages) {
+        vscode.window.showInformationMessage('Unity connection stopped.');
+    }
+}
 
 /**
  * Activate the extension - main entry point
  * @param context Extension context
  */
 export function activate(context: vscode.ExtensionContext) {
-    // Register commands
+    initializeUnityProjectHandler(context);
+    setSocketNeededCallback(() => hotReloadActive); // Initialize socket needed callback
+
     registerCommands(context);
-
-    // Create status bar items
-    createStatusBarItems(context);
-
-    // Set up socket communication
-    setSocketNeededCallback(() => hotReloadEnabled);
-
-    // Auto-detect Unity projects
+    createStatusBarItems(context); // Create status bar after commands are registered
     autoDetectUnityProjects();
 
     vscode.window.showInformationMessage('Unity Cursor Toolkit extension is now active');
@@ -53,73 +111,49 @@ export function activate(context: vscode.ExtensionContext) {
  * @param context Extension context
  */
 function registerCommands(context: vscode.ExtensionContext) {
-    // Register Hot Reload commands
-    const enableHotReloadCommand = vscode.commands.registerCommand(
-        'unity-cursor-toolkit.enableHotReload',
-        () => {
-			enableHotReload();
-			if (hotReloadEnabled) {
-				vscode.window.showInformationMessage('Unity Toolkit: Hot Reload Enabled');
-			}
-
-			updateStatusBarItems(hotReloadEnabled);
-        }
-    );
-
-    const disableHotReloadCommand = vscode.commands.registerCommand(
-        'unity-cursor-toolkit.disableHotReload',
-        () => {
-            disableHotReload();
-            if (!hotReloadEnabled) {
-                vscode.window.showInformationMessage('Unity Toolkit: Hot Reload Disabled');
-            }
-
-            updateStatusBarItems(hotReloadEnabled);
-        }
-    );
-
-    const forceReloadCommand = vscode.commands.registerCommand(
-        'unity-cursor-toolkit.forceReload',
-        () => {
-            if (!hotReloadEnabled) {
-                vscode.window.showWarningMessage('Unity Toolkit: Hot Reload must be enabled to force reload');
-                return;
-            }
-
-            // Close and reopen connection to force a full reload
-            closeConnection();
-            connectToUnity();
-            vscode.window.showInformationMessage('Unity Toolkit: Force Reload Triggered');
-        }
-    );
-
-    // Register Project Setup command
-    const attachToProjectCommand = vscode.commands.registerCommand(
-        'unity-cursor-toolkit.attachUnityProject',
+    const startConnectionCommand = vscode.commands.registerCommand(
+        'unity-cursor-toolkit.startConnection',
         async () => {
-            const success = await handleUnityProjectSetup();
-            if (!success) {
-                vscode.window.showErrorMessage('Failed to attach Unity project');
-                return;
-            }
-
-            // Get the project path to display in the message
-            const projectPath = getLinkedProjectPath();
-            if (projectPath) {
-                vscode.window.showInformationMessage(`Successfully attached Unity project at: ${projectPath}`);
-            }
-
-            // Force update status bar to show the linked project
-            updateStatusBarItems(hotReloadEnabled);
+            await attemptConnectionSequence(true); // true for initial project setup if needed
         }
     );
 
-    // Add all commands to subscriptions
+    const reloadConnectionCommand = vscode.commands.registerCommand(
+        'unity-cursor-toolkit.reloadConnection',
+        async () => {
+            if (!getLinkedProjectPath()) {
+                vscode.window.showWarningMessage('No Unity project is currently attached. Please use "Start/Attach to Project" first.');
+                // Optionally, directly trigger start sequence or just inform
+                // await attemptConnectionSequence(true);
+                return;
+            }
+            vscode.window.showInformationMessage('Reloading Unity connection...');
+            stopConnectionSequence(false); // Silently stop before reload
+            await attemptConnectionSequence(false); // false for not forcing project re-selection
+        }
+    );
+
+    const stopConnectionCommand = vscode.commands.registerCommand(
+        'unity-cursor-toolkit.stopConnection',
+        () => {
+            stopConnectionSequence(true);
+        }
+    );
+
+    const reportConnectionStatusCommand = vscode.commands.registerCommand('unity-cursor-toolkit.reportConnectionStatus', (port: number | null, isActive: boolean) => {
+        connectedPort = port;
+        hotReloadActive = isActive;
+        if (!isActive && port === null) {
+            console.log('[Extension] Socket reported disconnection. Status bar updated.');
+        }
+        updateStatusBarItems();
+    });
+
     context.subscriptions.push(
-        enableHotReloadCommand,
-        disableHotReloadCommand,
-        attachToProjectCommand,
-        forceReloadCommand
+        startConnectionCommand,
+        reloadConnectionCommand,
+        stopConnectionCommand,
+        reportConnectionStatusCommand
     );
 }
 
@@ -128,144 +162,88 @@ function registerCommands(context: vscode.ExtensionContext) {
  * @param context Extension context
  */
 function createStatusBarItems(context: vscode.ExtensionContext) {
-    // Hot Reload status button
-	hotReloadStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 101);
-    hotReloadStatusBarItem.command = hotReloadEnabled ? 'unity-cursor-toolkit.disableHotReload' : 'unity-cursor-toolkit.enableHotReload';
-    context.subscriptions.push(hotReloadStatusBarItem);
-
-    // Project status button
-	projectStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 102);
-    projectStatusBarItem.command = 'unity-cursor-toolkit.attachUnityProject';
-    projectStatusBarItem.tooltip = "Attach Unity Project";
+    projectStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 102);
+    projectStatusBarItem.command = 'unity-cursor-toolkit.startConnection';
     context.subscriptions.push(projectStatusBarItem);
-
-    // Initial update of status bar UI
-    updateStatusBarItems(hotReloadEnabled);
+    updateStatusBarItems(); // Initial update of text and tooltip
 }
 
 /**
  * Auto-detect Unity projects in workspace
  */
 function autoDetectUnityProjects() {
-    // Check for linked Unity project first
     if (hasLinkedUnityProject()) {
-        console.log('Found linked Unity project');
-        updateStatusBarItems(hotReloadEnabled);
+        console.log('Found linked Unity project from previous session.');
+        // Do not auto-connect, let user click status bar or use command
+        updateStatusBarItems();
         return;
     }
-
-    // If no linked project, check for Unity projects in workspace folders
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (!workspaceFolders) {
+        updateStatusBarItems();
         return;
     }
-
-    let unityProjectFound = false;
     for (const folder of workspaceFolders) {
         const assetsPath = path.join(folder.uri.fsPath, 'Assets');
-        if (fs.existsSync(assetsPath) === false) {
-            continue;
+        if (fs.existsSync(assetsPath)) {
+            console.log(`Auto-detected Unity project in workspace: ${folder.name}. Suggesting to link.`);
+            // We don't auto-link here anymore, just update status bar to show "Attach"
+            // User needs to click to start the process.
+            updateStatusBarItems();
+            return; // Found one, that's enough to update the initial status bar prompt
         }
-
-		unityProjectFound = true;
-		break;
     }
-
-    if (unityProjectFound) {
-        updateStatusBarItems(hotReloadEnabled);
-    }
+    updateStatusBarItems(); // If no Unity project detected
 }
 
 /**
  * Update status bar appearance based on current state
  */
-function updateStatusBarItems(hotReloadEnabled: boolean) {
-    // Update Hot Reload status item
-    if (hotReloadEnabled) {
-        hotReloadStatusBarItem.text = "$(sync) Unity Hot Reload: On";
-        hotReloadStatusBarItem.tooltip = "Unity Hot Reload is enabled. Click to disable.";
-        hotReloadStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.activeBackground');
-        hotReloadStatusBarItem.command = 'unity-cursor-toolkit.disableHotReload';
-    } else {
-        hotReloadStatusBarItem.text = "$(sync-ignored) Unity Hot Reload: Off";
-        hotReloadStatusBarItem.tooltip = "Unity Hot Reload is disabled. Click to enable.";
-        hotReloadStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground'); // Orange/red highlight when off
-        hotReloadStatusBarItem.command = 'unity-cursor-toolkit.enableHotReload';
-    }
+function updateStatusBarItems() {
+    if (!projectStatusBarItem) return; // Guard if called before item is created
 
-    // Update Project status item
     const projectPath = getLinkedProjectPath();
-    if (projectPath) {
-        projectStatusBarItem.text = `$(file-directory) Unity Project: ${path.basename(projectPath)}`;
-        projectStatusBarItem.tooltip = `Unity Project: ${projectPath}\nClick to change project`;
-    } else {
-        projectStatusBarItem.text = "$(file-directory-create) Attach Unity Project";
-        projectStatusBarItem.tooltip = "No Unity project attached. Click to attach.";
-    }
+    const projectName = projectPath ? path.basename(projectPath) : '';
 
-    // Ensure items are visible
+    if (projectPath && hotReloadActive && connectedPort) {
+        projectStatusBarItem.text = `$(circle-filled) Unity (${projectName})`;
+        projectStatusBarItem.tooltip = `Project: ${projectName} (Port: ${connectedPort}). Hot Reload Active. Click to Reload Connection.`;
+        projectStatusBarItem.color = new vscode.ThemeColor('charts.green');
+        projectStatusBarItem.backgroundColor = undefined;
+        projectStatusBarItem.command = 'unity-cursor-toolkit.reloadConnection';
+    } else if (projectPath && hotReloadActive && !connectedPort) { // Connecting state
+        projectStatusBarItem.text = `$(sync~spin) Unity (${projectName})`;
+        projectStatusBarItem.tooltip = `Connecting to: ${projectName}. Hot Reload Pending. Click to Stop Connection.`;
+        projectStatusBarItem.color = undefined;
+        projectStatusBarItem.backgroundColor = undefined;
+        projectStatusBarItem.command = 'unity-cursor-toolkit.stopConnection';
+    } else if (projectPath) { // Disconnected state
+        projectStatusBarItem.text = `$(debug-disconnect) Unity (${projectName})`;
+        projectStatusBarItem.tooltip = `Project: ${projectName}. Disconnected. Click to Start/Attach Project.`;
+        projectStatusBarItem.color = undefined;
+        projectStatusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+        projectStatusBarItem.command = 'unity-cursor-toolkit.startConnection';
+    } else { // No project linked
+        projectStatusBarItem.text = "$(plug) Unity Attach";
+        projectStatusBarItem.tooltip = "No Unity project attached. Click to Start/Attach Project.";
+        projectStatusBarItem.color = undefined;
+        projectStatusBarItem.backgroundColor = undefined;
+        projectStatusBarItem.command = 'unity-cursor-toolkit.startConnection';
+    }
     projectStatusBarItem.show();
-    hotReloadStatusBarItem.show();
-}
-
-/**
- * Enable hot reload functionality
- */
-function enableHotReload() {
-    if (hotReloadEnabled) {
-        return;
-    }
-
-    // Check if we have a linked project before enabling
-    if (!hasLinkedUnityProject()) {
-        vscode.window.showErrorMessage('No Unity project linked. Please attach a Unity project first before enabling Hot Reload.');
-        return;
-    }
-
-    hotReloadEnabled = true;
-
-    // Enable file watchers
-    enableFileWatchers();
-
-    // Connect to Unity
-    connectToUnity();
-
-    // Update status bar
-    updateStatusBarItems(hotReloadEnabled);
-}
-
-/**
- * Disable hot reload functionality
- */
-function disableHotReload() {
-    if (!hotReloadEnabled) {
-        return;
-    }
-
-    hotReloadEnabled = false;
-
-    // Disable file watchers
-    disableFileWatchers();
-
-    // Close Unity connection
-    closeConnection();
-
-    // Update status bar
-    updateStatusBarItems(hotReloadEnabled);
 }
 
 /**
  * Clean up resources when extension is deactivated
  */
 export function deactivate() {
-    // Disable hot reload
-    disableHotReload();
-
-    // Clean up status bar items
-    if (hotReloadStatusBarItem) {
-        hotReloadStatusBarItem.dispose();
+    clearLinkedProjectOnExit();
+    if (hotReloadActive || connectedPort) {
+        closeConnection();
+        disableFileWatchers();
     }
-
+    hotReloadActive = false;
+    connectedPort = null;
     if (projectStatusBarItem) {
         projectStatusBarItem.dispose();
     }

@@ -4,6 +4,7 @@
  * Author: Miguel A. Lopez
  * Company: Rank Up Games LLC
  */
+
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
@@ -11,11 +12,25 @@ import * as fs from 'fs';
 // Configuration key for storing the current project URI
 const CURRENT_PROJECT_KEY = 'unityCursorToolkit.currentProjectUri';
 
+let extensionContext: vscode.ExtensionContext | undefined;
+
+/**
+ * Initialize the module with the extension context.
+ * @param context The extension context.
+ */
+export function initializeUnityProjectHandler(context: vscode.ExtensionContext) {
+    extensionContext = context;
+}
+
 /**
  * Check if we already have a linked Unity project
  * Returns true if a project is linked and still exists with a valid Assets folder
  */
 export function hasLinkedUnityProject(): boolean {
+    if (!extensionContext) {
+        console.error('[UnityProjectHandler] Extension context not initialized.');
+        return false;
+    }
     try {
         const savedProjectUri = getCurrentProjectUri();
         if (!savedProjectUri) {
@@ -25,7 +40,7 @@ export function hasLinkedUnityProject(): boolean {
         // Check if the project still exists and has an Assets folder
         return fs.existsSync(path.join(savedProjectUri.fsPath, 'Assets'));
     } catch (error) {
-        console.error('Error checking linked project:', error);
+        console.error('[UnityProjectHandler] Error checking linked project:', error);
         return false;
     }
 }
@@ -35,10 +50,14 @@ export function hasLinkedUnityProject(): boolean {
  * Returns the project path or undefined if no valid project is linked
  */
 export function getLinkedProjectPath(): string | undefined {
+    if (!extensionContext) {
+        console.error('[UnityProjectHandler] Extension context not initialized for getLinkedProjectPath.');
+        return undefined;
+    }
     try {
         const savedProjectUri = getCurrentProjectUri();
 		if (!savedProjectUri) {
-			vscode.window.showErrorMessage('No Unity project linked. Please select a project to link.');
+			console.log('[UnityProjectHandler] No Unity project currently linked in this session.');
             return undefined;
 		}
 
@@ -51,7 +70,7 @@ export function getLinkedProjectPath(): string | undefined {
 
         return exists ? projectPath : undefined;
     } catch (error) {
-        console.error('Error getting linked project path:', error);
+        console.error('[UnityProjectHandler] Error getting linked project path:', error);
         return undefined;
     }
 }
@@ -62,6 +81,11 @@ export function getLinkedProjectPath(): string | undefined {
  * @returns true if setup was successful, false if there was an error or user cancelled
  */
 export async function handleUnityProjectSetup(): Promise<boolean> {
+    if (!extensionContext) {
+        console.error('[UnityProjectHandler] Extension context not initialized for handleUnityProjectSetup.');
+        vscode.window.showErrorMessage('Unity Toolkit Error: Extension context not available. Please restart VS Code.');
+        return false;
+    }
     try {
         // First try to get the current project from configuration
         const savedProjectUri = getCurrentProjectUri();
@@ -125,12 +149,14 @@ export async function handleUnityProjectSetup(): Promise<boolean> {
             });
 
             if (!selected) {
+                console.log('[UnityProjectHandler] User cancelled project selection from multiple projects.');
                 return false; // User cancelled
             }
 
             if (selected === selectExternal) {
                 // User wants to browse for a project
                 const projectUri = await selectAndInstallExternalProject();
+                if (!projectUri) console.log('[UnityProjectHandler] User cancelled or failed external project selection.');
                 return !!projectUri; // Convert to boolean
             } else {
                 targetFolder = selected.uri;
@@ -138,6 +164,7 @@ export async function handleUnityProjectSetup(): Promise<boolean> {
         }
 
         if (targetFolder) {
+            console.log(`[UnityProjectHandler] Project selected: ${targetFolder.fsPath}`);
             // Save the selected project URI
             saveCurrentProjectUri(targetFolder);
 
@@ -145,9 +172,10 @@ export async function handleUnityProjectSetup(): Promise<boolean> {
             return await installScriptToProject(targetFolder);
         }
 
+        console.log('[UnityProjectHandler] No target folder was ultimately selected in handleUnityProjectSetup.');
         return false; // No target folder selected
     } catch (error) {
-        console.error('Error in Unity project setup:', error);
+        console.error('[UnityProjectHandler] Error in Unity project setup:', error);
         vscode.window.showErrorMessage(`Failed to set up Unity project: ${error instanceof Error ? error.message : String(error)}`);
         return false;
     }
@@ -157,6 +185,11 @@ export async function handleUnityProjectSetup(): Promise<boolean> {
  * Helper function to select and install to an external project
  */
 async function selectAndInstallExternalProject(): Promise<vscode.Uri | undefined> {
+    if (!extensionContext) {
+        console.error('[UnityProjectHandler] Extension context not initialized for selectAndInstallExternalProject.');
+        // No user message here as it's an internal flow, error will be shown by caller.
+        return undefined;
+    }
     try {
         // Show folder picker dialog
         const options: vscode.OpenDialogOptions = {
@@ -169,6 +202,7 @@ async function selectAndInstallExternalProject(): Promise<vscode.Uri | undefined
 
         const folderUri = await vscode.window.showOpenDialog(options);
         if (!folderUri || folderUri.length === 0) {
+            console.log('[UnityProjectHandler] User cancelled external project folder selection dialog.');
             return undefined; // User cancelled
         }
 
@@ -185,6 +219,7 @@ async function selectAndInstallExternalProject(): Promise<vscode.Uri | undefined
             );
 
             if (result !== tryAnyway) {
+                console.log('[UnityProjectHandler] User chose not to install in a folder without an Assets directory.');
                 return undefined;
             }
         }
@@ -194,9 +229,10 @@ async function selectAndInstallExternalProject(): Promise<vscode.Uri | undefined
 
         // Install the script to the selected project
         const success = await installScriptToProject(selectedFolder);
+        if (!success) console.log(`[UnityProjectHandler] Failed to install script to external project: ${selectedFolder.fsPath}`);
         return success ? selectedFolder : undefined;
     } catch (error) {
-        console.error('Error in external project selection:', error);
+        console.error('[UnityProjectHandler] Error in external project selection:', error);
         vscode.window.showErrorMessage(`Failed to select external project: ${error instanceof Error ? error.message : String(error)}`);
         return undefined;
     }
@@ -206,18 +242,26 @@ async function selectAndInstallExternalProject(): Promise<vscode.Uri | undefined
  * Save the current project URI to workspace configuration
  */
 function saveCurrentProjectUri(projectUri: vscode.Uri): void {
+    if (!extensionContext) {
+        console.error('[UnityProjectHandler] Extension context not initialized for saveCurrentProjectUri.');
+        return;
+    }
     try {
         // Save the project URI to configuration
-        const config = vscode.workspace.getConfiguration();
         const uriString = projectUri.toString();
 
         // Use global scope instead of workspace scope to ensure persistence
-        config.update(CURRENT_PROJECT_KEY, uriString, vscode.ConfigurationTarget.Global);
+        extensionContext.workspaceState.update(CURRENT_PROJECT_KEY, uriString);
+
+        console.log(`[UnityProjectHandler] Saved project URI to workspaceState: ${uriString}`);
 
         // Verify it was saved correctly
-        const savedUri = config.get<string>(CURRENT_PROJECT_KEY);
+        const savedUri = extensionContext.workspaceState.get<string>(CURRENT_PROJECT_KEY);
+        if (savedUri !== uriString) {
+            console.warn('[UnityProjectHandler] Project URI may not have saved correctly to workspaceState.');
+        }
     } catch (error) {
-        console.error('Failed to save current project URI:', error);
+        console.error('[UnityProjectHandler] Failed to save current project URI to workspaceState:', error);
     }
 }
 
@@ -225,17 +269,20 @@ function saveCurrentProjectUri(projectUri: vscode.Uri): void {
  * Get the current project URI from configuration
  */
 export function getCurrentProjectUri(): vscode.Uri | undefined {
+    if (!extensionContext) {
+        console.error('[UnityProjectHandler] Extension context not initialized for getCurrentProjectUri.');
+        return undefined;
+    }
     try {
-        const config = vscode.workspace.getConfiguration();
-        const uriString = config.get<string>(CURRENT_PROJECT_KEY);
+        const uriString = extensionContext.workspaceState.get<string>(CURRENT_PROJECT_KEY);
         if (!uriString) {
-			vscode.window.showErrorMessage('Couldn\'t get current project URI. Please select a project to link.');
+            console.log('[UnityProjectHandler] No project URI found in workspaceState.');
             return undefined;
         }
 
         return vscode.Uri.parse(uriString);
     } catch (error) {
-        console.error('Failed to get current project URI:', error);
+        console.error('[UnityProjectHandler] Failed to get current project URI from workspaceState:', error);
         return undefined;
     }
 }
@@ -244,12 +291,13 @@ export function getCurrentProjectUri(): vscode.Uri | undefined {
  * Install the script to a specific Unity project
  */
 async function installScriptToProject(targetFolder: vscode.Uri): Promise<boolean> {
+    console.log(`[UnityProjectHandler] Attempting to install script to: ${targetFolder.fsPath}`);
     // Get the path to the extension's resources
     const extensionPath = vscode.extensions.getExtension('rankupgames.unity-cursor-toolkit')?.extensionPath;
 
     // Try different paths to find the script file
     let sourceScriptPath = '';
-    let possiblePaths = [];
+    let possiblePaths: string[] = []; // Changed const to let
 
     if (extensionPath) {
         // Extension is installed - use extension path
@@ -277,6 +325,7 @@ async function installScriptToProject(targetFolder: vscode.Uri): Promise<boolean
     // Check if we found the script
     if (!sourceScriptPath || !fs.existsSync(sourceScriptPath)) {
         vscode.window.showErrorMessage(`Could not find the Unity script. Searched paths: ${possiblePaths.join(', ')}`);
+        console.error(`[UnityProjectHandler] HotReloadHandler.cs script not found. Searched: ${possiblePaths.join('; ')}`);
         return false;
     }
 
@@ -286,6 +335,7 @@ async function installScriptToProject(targetFolder: vscode.Uri): Promise<boolean
         try {
             fs.mkdirSync(editorPath, { recursive: true });
         } catch (error) {
+            console.error(`[UnityProjectHandler] Failed to create Editor folder at ${editorPath}:`, error);
             vscode.window.showErrorMessage(`Failed to create Editor folder: ${error instanceof Error ? error.message : String(error)}`);
             return false;
         }
@@ -293,6 +343,7 @@ async function installScriptToProject(targetFolder: vscode.Uri): Promise<boolean
 
     // Copy the script file
     const destScriptPath = path.join(editorPath, 'HotReloadHandler.cs');
+    console.log(`[UnityProjectHandler] Copying script from ${sourceScriptPath} to ${destScriptPath}`);
     try {
         fs.copyFileSync(sourceScriptPath, destScriptPath);
         vscode.window.showInformationMessage(
@@ -305,8 +356,10 @@ async function installScriptToProject(targetFolder: vscode.Uri): Promise<boolean
                 });
             }
         });
+        console.log(`[UnityProjectHandler] Successfully installed script to ${destScriptPath}.`);
         return true;
     } catch (error) {
+        console.error(`[UnityProjectHandler] Failed to copy script file to ${destScriptPath}:`, error);
         vscode.window.showErrorMessage(`Failed to copy script file: ${error instanceof Error ? error.message : String(error)}`);
         return false;
     }
@@ -317,6 +370,10 @@ async function installScriptToProject(targetFolder: vscode.Uri): Promise<boolean
  * @returns true if the script is installed, false otherwise
  */
 export function isScriptInstalledInLinkedProject(): boolean {
+    if (!extensionContext) {
+        console.error('[UnityProjectHandler] Extension context not initialized for isScriptInstalledInLinkedProject.');
+        return false;
+    }
     try {
         const projectPath = getLinkedProjectPath();
         if (!projectPath) {
@@ -326,7 +383,7 @@ export function isScriptInstalledInLinkedProject(): boolean {
         const scriptPath = path.join(projectPath, 'Assets', 'Editor', 'HotReloadHandler.cs');
         return fs.existsSync(scriptPath);
     } catch (error) {
-        console.error('Error checking if script is installed:', error);
+        console.error('[UnityProjectHandler] Error checking if script is installed:', error);
         return false;
     }
 }
@@ -336,6 +393,10 @@ export function isScriptInstalledInLinkedProject(): boolean {
  * @returns Path to the script or undefined if not found
  */
 export function getScriptPathInLinkedProject(): string | undefined {
+    if (!extensionContext) {
+        console.error('[UnityProjectHandler] Extension context not initialized for getScriptPathInLinkedProject.');
+        return undefined;
+    }
     try {
         const projectPath = getLinkedProjectPath();
         if (!projectPath) {
@@ -345,7 +406,25 @@ export function getScriptPathInLinkedProject(): string | undefined {
         const scriptPath = path.join(projectPath, 'Assets', 'Editor', 'HotReloadHandler.cs');
         return fs.existsSync(scriptPath) ? scriptPath : undefined;
     } catch (error) {
-        console.error('Error getting script path:', error);
+        console.error('[UnityProjectHandler] Error getting script path:', error);
         return undefined;
+    }
+}
+
+/**
+ * Clear the linked project URI from workspace state.
+ * Called on extension deactivation to ensure session-like behavior if desired,
+ * or can be adapted based on true session needs.
+ */
+export function clearLinkedProjectOnExit(): void {
+    if (!extensionContext) {
+        console.warn('[UnityProjectHandler] Extension context not available during deactivation, cannot clear project URI.');
+        return;
+    }
+    try {
+        extensionContext.workspaceState.update(CURRENT_PROJECT_KEY, undefined);
+        console.log('[UnityProjectHandler] Cleared linked project URI from workspaceState.');
+    } catch (error) {
+        console.error('[UnityProjectHandler] Error clearing linked project URI from workspaceState:', error);
     }
 }
