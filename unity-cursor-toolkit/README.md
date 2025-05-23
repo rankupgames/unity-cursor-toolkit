@@ -75,7 +75,12 @@ MIT License - Copyright (c) 2025 Rank Up Games LLC
 
 ## Release Notes
 
-### 0.1.302250521 (Current)
+### 0.1.306250522 (Current)
+
+- **Fix (HotReloadHandler.cs)**: Resolved "SetInt_Internal can only be called from the main thread" error by deferring EditorPrefs.SetInt calls to the main thread from background listener threads.
+- Ensured that both the source `HotReloadHandler.cs` in `unity-assets` and the in-project copy (e.g., `CursorUnityTool/Assets/Editor`) received this fix.
+
+### 0.1.302250521
 
 - **Major Command Refactor**: Introduced three core commands: `Start/Attach to Project`, `Reload Connection`, and `Stop Connection`.
 - Simplified status bar interaction: Single item dynamically updates and triggers appropriate actions.

@@ -11,6 +11,6 @@ public class TestHotReload : MonoBehaviour
 
     public void Update()
     {
-        
+        Debug.Log("Update");
     }
 }
