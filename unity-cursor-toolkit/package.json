@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.1.306250522",
+  "version": "0.1.507103025",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
   "license": "MIT",
@@ -19,10 +19,53 @@
   "activationEvents": [
     "workspaceContains:Assets/",
     "workspaceContains:*.unity",
-    "workspaceContains:*.cs"
+    "workspaceContains:*.cs",
+    "onCommand:unity-cursor-toolkit.plasticTimeline.refresh",
+    "onCommand:unity-cursor-toolkit.plasticTimeline.showLogs",
+    "onView:plasticTimeline"
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": [
+      {
+        "title": "Unity Cursor Toolkit",
+        "properties": {
+          "unityCursorToolkit.plasticTimeline.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Enable the Plastic SCM Timeline panel and webview."
+          },
+          "unityCursorToolkit.plasticTimeline.source": {
+            "type": "string",
+            "enum": ["cli", "rest", "auto"],
+            "default": "cli",
+            "description": "Primary data source for the Plastic Timeline. 'cli' uses the cm CLI, 'rest' uses the REST API (scaffold), 'auto' tries CLI then REST."
+          },
+          "unityCursorToolkit.plasticTimeline.cliPath": {
+            "type": "string",
+            "description": "Optional explicit path to the 'cm' CLI binary."
+          },
+          "unityCursorToolkit.plasticTimeline.itemsPerPage": {
+            "type": "number",
+            "default": 100,
+            "minimum": 10,
+            "maximum": 1000,
+            "description": "Number of changesets to fetch per page."
+          },
+          "unityCursorToolkit.plasticTimeline.order": {
+            "type": "string",
+            "enum": ["newest-first", "oldest-first"],
+            "default": "newest-first",
+            "description": "Timeline ordering."
+          },
+          "unityCursorToolkit.plasticTimeline.preferXml": {
+            "type": "boolean",
+            "default": false,
+            "description": "Attempt to fetch Plastic log as XML and parse (falls back to text parsing if unavailable)."
+          }
+        }
+      }
+    ],
     "commands": [
       {
         "command": "unity-cursor-toolkit.startConnection",
@@ -35,6 +78,44 @@
       {
         "command": "unity-cursor-toolkit.stopConnection",
         "title": "Unity Toolkit: Stop Connection"
+      },
+      {
+        "command": "unity-cursor-toolkit.plasticTimeline.refresh",
+        "title": "Unity Toolkit: Refresh Plastic Timeline View",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "unity-cursor-toolkit.plasticTimeline.showLogs",
+        "title": "Unity Toolkit: Show Plastic Timeline Logs",
+        "icon": "$(output)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "unityCursorToolkit",
+          "title": "Unity Cursor",
+          "icon": "TempIcon.png",
+          "when": "config.unityCursorToolkit.plasticTimeline.enabled"
+        }
+      ]
+    },
+    "views": {
+      "unityCursorToolkit": [
+        {
+          "id": "plasticTimeline",
+          "name": "Plastic Timeline",
+          "type": "webview",
+          "icon": "TempIcon.png",
+          "when": "config.unityCursorToolkit.plasticTimeline.enabled"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "plasticTimeline",
+        "contents": "Plastic Timeline is disabled. Enable it in Settings.",
+        "when": "config.unityCursorToolkit.plasticTimeline.enabled == false"
       }
     ]
   },
@@ -49,6 +130,9 @@
     "publish": "vsce publish",
     "install:extension": "npm install",
     "build": "npm run compile",
+    "bundle": "node scripts/esbuild-bundle.js",
+    "bundle:watch": "node scripts/esbuild-bundle.js --watch",
+    "mcp:server": "ts-node src/mcp/server.ts",
     "install:unity": "node install-unity-script.js",
     "copy-assets": "node scripts/copy-assets.js"
   },
@@ -57,7 +141,10 @@
     "@types/vscode": "^1.60.0",
     "@vscode/vsce": "^2.22.0",
     "typescript": "^4.5.5",
-    "fs-extra": "^10.0.0"
+    "fs-extra": "^10.0.0",
+    "esbuild": "^0.21.5",
+    "ts-node": "^10.9.2",
+    "@modelcontextprotocol/sdk": "^0.1.4"
   },
   "keywords": [
     "unity",

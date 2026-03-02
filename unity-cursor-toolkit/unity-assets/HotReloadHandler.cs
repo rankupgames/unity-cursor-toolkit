@@ -882,6 +882,43 @@ public class HotReloadHandler : EditorWindow
     }
 
     /// <summary>
+    /// Sends a message to all connected extension clients.
+    /// Used by other Editor scripts (e.g. ConsoleToCursor) to communicate back to the extension.
+    /// </summary>
+    public static bool BroadcastToClients(string message)
+    {
+        if (isServerRunning == false)
+            return false;
+
+        byte[] _data = Encoding.UTF8.GetBytes(message + "\n");
+        int _sent = 0;
+
+        lock (clientListLock)
+        {
+            foreach (var _client in connectedClients.ToList())
+            {
+                try
+                {
+                    if (_client.Connected)
+                    {
+                        _client.GetStream().Write(_data, 0, _data.Length);
+                        _sent++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (showDebugLogs)
+                    {
+                        Debug.LogWarning($"(HotReloadHandler - BroadcastToClients) Failed to send to client: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        return _sent > 0;
+    }
+
+    /// <summary>
     /// Returns the current port being used by the hot reload server.
     /// Returns -1 if the server is not running.
     /// </summary>

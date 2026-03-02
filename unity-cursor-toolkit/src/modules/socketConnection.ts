@@ -15,6 +15,10 @@ let currentPort = DEFAULT_UNITY_HOT_RELOAD_PORT;
 let socketClient: net.Socket | undefined;
 let isConnecting = false; // Prevent multiple concurrent connection attempts
 
+export type IncomingMessageHandler = (command: string, payload: Record<string, unknown>) => void;
+let _incomingMessageHandler: IncomingMessageHandler | undefined;
+let _dataBuffer = '';
+
 /**
  * Connect to Unity via socket
  * @param isInitialAttempt If true, will show error message if all ports fail.
@@ -97,6 +101,26 @@ function tryConnectToPort(portIndex: number, isInitialAttempt: boolean, resolve:
         connectionFailed();
     });
 
+    socketClient.on('data', (data: Buffer) => {
+        _dataBuffer += data.toString();
+        const lines = _dataBuffer.split('\n');
+        _dataBuffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (trimmed.length === 0) continue;
+
+            try {
+                const parsed = JSON.parse(trimmed);
+                if (parsed.command && _incomingMessageHandler) {
+                    _incomingMessageHandler(parsed.command, parsed);
+                }
+            } catch {
+                console.log(`[SocketConnection] Non-JSON data from Unity: ${trimmed.substring(0, 100)}`);
+            }
+        }
+    });
+
     socketClient.connect(port, 'localhost', () => {
         console.log(`[SocketConnection] Connected to Unity Editor on port ${port}`);
         currentPort = port;
@@ -174,4 +198,11 @@ export function closeConnection() {
  */
 export function setSocketNeededCallback(callback: () => boolean) {
     _isSocketNeededCallback = callback;
+}
+
+/**
+ * Register a handler for messages received from Unity (server -> client direction).
+ */
+export function setIncomingMessageHandler(handler: IncomingMessageHandler) {
+    _incomingMessageHandler = handler;
 }

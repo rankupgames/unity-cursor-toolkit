@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "name": "Vault - Unity Cursor Toolkit",
+      "path": "../VAULT-BREACH/VAULT BREACH/WorkspaceVault/Business/Projects/Unity Cursor Toolkit"
+    },
+    {
+      "name": "Agents - UnityCursorToolkit",
+      "path": "../VAULT-BREACH/VAULT BREACH/AgentsVault/UnityCursorToolkit"
+    }
+  ],
+  "settings": {}
+}

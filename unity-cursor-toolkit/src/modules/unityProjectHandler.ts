@@ -287,47 +287,14 @@ export function getCurrentProjectUri(): vscode.Uri | undefined {
     }
 }
 
+const UNITY_SCRIPTS = ['HotReloadHandler.cs', 'ConsoleToCursor.cs'];
+
 /**
  * Install the script to a specific Unity project
  */
 async function installScriptToProject(targetFolder: vscode.Uri): Promise<boolean> {
-    console.log(`[UnityProjectHandler] Attempting to install script to: ${targetFolder.fsPath}`);
-    // Get the path to the extension's resources
+    console.log(`[UnityProjectHandler] Attempting to install scripts to: ${targetFolder.fsPath}`);
     const extensionPath = vscode.extensions.getExtension('rankupgames.unity-cursor-toolkit')?.extensionPath;
-
-    // Try different paths to find the script file
-    let sourceScriptPath = '';
-    let possiblePaths: string[] = []; // Changed const to let
-
-    if (extensionPath) {
-        // Extension is installed - use extension path
-        possiblePaths = [
-            path.join(extensionPath, 'unity-assets', 'HotReloadHandler.cs'),
-            path.join(extensionPath, 'out', 'unity-assets', 'HotReloadHandler.cs')
-        ];
-    } else {
-        // Development environment - use relative paths
-        const basePath = path.join(__dirname, '..', '..');
-        possiblePaths = [
-            path.join(basePath, 'unity-assets', 'HotReloadHandler.cs'),
-            path.join(basePath, '..', 'unity-assets', 'HotReloadHandler.cs')
-        ];
-    }
-
-    // Find the first path that exists
-    for (const testPath of possiblePaths) {
-        if (fs.existsSync(testPath)) {
-            sourceScriptPath = testPath;
-            break;
-        }
-    }
-
-    // Check if we found the script
-    if (!sourceScriptPath || !fs.existsSync(sourceScriptPath)) {
-        vscode.window.showErrorMessage(`Could not find the Unity script. Searched paths: ${possiblePaths.join(', ')}`);
-        console.error(`[UnityProjectHandler] HotReloadHandler.cs script not found. Searched: ${possiblePaths.join('; ')}`);
-        return false;
-    }
 
     // Create Editor folder if it doesn't exist
     const editorPath = path.join(targetFolder.fsPath, 'Assets', 'Editor');
@@ -341,28 +308,68 @@ async function installScriptToProject(targetFolder: vscode.Uri): Promise<boolean
         }
     }
 
-    // Copy the script file
-    const destScriptPath = path.join(editorPath, 'HotReloadHandler.cs');
-    console.log(`[UnityProjectHandler] Copying script from ${sourceScriptPath} to ${destScriptPath}`);
-    try {
-        fs.copyFileSync(sourceScriptPath, destScriptPath);
-        vscode.window.showInformationMessage(
-            `Successfully installed Unity Toolkit script to ${destScriptPath}. Please restart Unity if it's currently running.`,
-            'Open Script'
-        ).then(selection => {
-            if (selection === 'Open Script') {
-                vscode.workspace.openTextDocument(destScriptPath).then(doc => {
-                    vscode.window.showTextDocument(doc);
-                });
-            }
-        });
-        console.log(`[UnityProjectHandler] Successfully installed script to ${destScriptPath}.`);
-        return true;
-    } catch (error) {
-        console.error(`[UnityProjectHandler] Failed to copy script file to ${destScriptPath}:`, error);
-        vscode.window.showErrorMessage(`Failed to copy script file: ${error instanceof Error ? error.message : String(error)}`);
-        return false;
+    let anyInstalled = false;
+    let allSkipped = true;
+
+    for (const scriptName of UNITY_SCRIPTS) {
+        const destPath = path.join(editorPath, scriptName);
+        if (fs.existsSync(destPath)) {
+            console.log(`[UnityProjectHandler] ${scriptName} already present. Skipping.`);
+            continue;
+        }
+
+        allSkipped = false;
+
+        const sourcePath = findAssetSource(extensionPath, scriptName);
+        if (!sourcePath) {
+            console.warn(`[UnityProjectHandler] ${scriptName} not found in extension assets. Skipping.`);
+            continue;
+        }
+
+        try {
+            fs.copyFileSync(sourcePath, destPath);
+            console.log(`[UnityProjectHandler] Installed ${scriptName} to ${destPath}`);
+            anyInstalled = true;
+        } catch (error) {
+            console.error(`[UnityProjectHandler] Failed to copy ${scriptName}:`, error);
+        }
     }
+
+    if (allSkipped) {
+        vscode.window.showInformationMessage('Unity Toolkit scripts already present. Skipping reinstall.');
+        return true;
+    }
+
+    if (anyInstalled) {
+        vscode.window.showInformationMessage(
+            'Successfully installed Unity Toolkit scripts. Please restart Unity if it\'s currently running.'
+        );
+    }
+
+    return true;
+}
+
+function findAssetSource(extensionPath: string | undefined, fileName: string): string | undefined {
+    let possiblePaths: string[];
+
+    if (extensionPath) {
+        possiblePaths = [
+            path.join(extensionPath, 'unity-assets', fileName),
+            path.join(extensionPath, 'out', 'unity-assets', fileName)
+        ];
+    } else {
+        const basePath = path.join(__dirname, '..', '..');
+        possiblePaths = [
+            path.join(basePath, 'unity-assets', fileName),
+            path.join(basePath, '..', 'unity-assets', fileName)
+        ];
+    }
+
+    for (const p of possiblePaths) {
+        if (fs.existsSync(p)) return p;
+    }
+
+    return undefined;
 }
 
 /**

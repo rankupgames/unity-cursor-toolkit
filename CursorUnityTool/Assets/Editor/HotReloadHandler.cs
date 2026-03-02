@@ -48,8 +48,6 @@ public class HotReloadHandler : EditorWindow
     private static bool isServerRunning = false;
     private static readonly List<TcpClient> connectedClients = new List<TcpClient>();
     private static readonly object clientListLock = new object();
-    private static readonly Queue<Action> mainThreadActions = new Queue<Action>();
-    private static readonly object mainThreadActionsLock = new object();
 
     // Port configuration
     private const int DEFAULT_PORT = 55500;
@@ -68,6 +66,9 @@ public class HotReloadHandler : EditorWindow
     private static Mutex instanceMutex;
     private static bool wasRunningBeforeReload = false;
     private const string wasRunningPrefKey = "UnityHotReloadHandler_WasRunning";
+
+    private static readonly Queue<Action> mainThreadActions = new Queue<Action>();
+    private static readonly object mainThreadActionsLock = new object();
 
     /// <summary>
     /// Static constructor called when Unity editor loads.
