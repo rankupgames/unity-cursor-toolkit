@@ -397,7 +397,7 @@ namespace UnityCursorToolkit.MCP
 					else if (obj.valueBool) d["value"] = obj.valueBool;
 				}
 			}
-			catch { }
+			catch (System.Exception ex) { UnityEngine.Debug.LogWarning($"(SceneTools - ParseArgs) JSON parse failed: {ex.Message}"); }
 			return d;
 		}
 

@@ -8,8 +8,9 @@
 
 import * as vscode from 'vscode';
 import * as net from 'net';
-import { ConnectionState, ConnectionInfo, IncomingMessage, safeJsonParse } from './types';
-import { IConnectionManager } from './interfaces';
+import { ConnectionState, safeJsonParse } from './types';
+import type { ConnectionInfo, IncomingMessage } from './types';
+import type { IConnectionManager } from './interfaces';
 
 const PORTS = [55500, 55501, 55502, 55503, 55504];
 const HEARTBEAT_INTERVAL_MS = 10_000;

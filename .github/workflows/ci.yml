@@ -30,7 +30,7 @@ jobs:
           fi
 
           LAST_BUILD=$(date -d '7 days ago' +%Y-%m-%dT%H:%M:%S 2>/dev/null || date -v-7d +%Y-%m-%dT%H:%M:%S)
-          COMMIT_COUNT=$(git log --since="$LAST_BUILD" --oneline -- unity-cursor-toolkit/ | wc -l | tr -d ' ')
+          COMMIT_COUNT=$(git log --since="$LAST_BUILD" --oneline -- unity-cursor-toolkit/ Packages/ | wc -l | tr -d ' ')
 
           if [ "$COMMIT_COUNT" -gt 0 ]; then
             echo "has_changes=true" >> $GITHUB_OUTPUT
@@ -53,7 +53,7 @@ jobs:
             --jq '[.workflow_runs[] | select(.name == "Extension Build")] | length' 2>/dev/null || echo "0")
           DAILY_INCREMENT=${DAILY_RUNS:-0}
 
-          BUILD_VERSION="0.2.${DAILY_INCREMENT}${TODAY}"
+          BUILD_VERSION="0.6.${DAILY_INCREMENT}${TODAY}"
           echo "build_version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${BUILD_VERSION}"
 
@@ -92,6 +92,32 @@ jobs:
           npm audit || true
 
       - run: npm run compile
+
+      - name: Strict type check
+        run: npx tsc --noEmit --strict
+
+      - name: Run tests
+        run: node test/run-tests.js
+
+      - name: Validate UPM package
+        run: |
+          UPM_PKG="../Packages/com.rankupgames.unity-cursor-toolkit/package.json"
+          if [ ! -f "$UPM_PKG" ]; then
+            echo "::error::UPM package.json not found at $UPM_PKG"
+            exit 1
+          fi
+          node -e "
+            const pkg = require('$UPM_PKG');
+            const missing = [];
+            if (!pkg.name) missing.push('name');
+            if (!pkg.version) missing.push('version');
+            if (!pkg.unity) missing.push('unity');
+            if (missing.length > 0) {
+              console.error('UPM package.json missing required fields:', missing.join(', '));
+              process.exit(1);
+            }
+            console.log('UPM package valid:', pkg.name, pkg.version, '(unity >=', pkg.unity + ')');
+          "
 
       - name: Package VSIX
         run: npx vsce package --no-dependencies

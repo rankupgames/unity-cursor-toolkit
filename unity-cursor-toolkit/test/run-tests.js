@@ -1791,6 +1791,10 @@ async function testProjectHandler() {
 		hasLinkedUnityProject,
 		getLinkedProjectPath,
 		isScriptInstalledInLinkedProject,
+		isUpmPackageInstalled,
+		getInstalledUpmVersion,
+		injectUpmPackage,
+		detectLegacyScripts,
 		getCurrentProjectUri,
 		clearLinkedProjectOnExit
 	} = require(path.join(outDir, 'project', 'projectHandler'));
@@ -1831,19 +1835,126 @@ async function testProjectHandler() {
 		assert.strictEqual(hasLinkedUnityProject(), false);
 	});
 
-	await testAsync('isScriptInstalledInLinkedProject checks for HotReloadHandler.cs', async () => {
+	await testAsync('isScriptInstalledInLinkedProject checks manifest.json for UPM package', async () => {
 		const project = path.join(tmpDir, 'ScriptCheck');
-		const editorPath = path.join(project, 'Assets', 'Editor');
-		fs.mkdirSync(editorPath, { recursive: true });
+		const packagesDir = path.join(project, 'Packages');
+		fs.mkdirSync(path.join(project, 'Assets'), { recursive: true });
+		fs.mkdirSync(packagesDir, { recursive: true });
 
 		const ctx = createMockExtensionContext(tmpDir);
 		initializeUnityProjectHandler(ctx);
 		ctx.workspaceState.update('unityCursorToolkit.currentProjectUri', vscode.Uri.file(project).toString());
 
-		assert.strictEqual(isScriptInstalledInLinkedProject(), false, 'No script yet');
+		assert.strictEqual(isScriptInstalledInLinkedProject(), false, 'No manifest yet');
 
-		fs.writeFileSync(path.join(editorPath, 'HotReloadHandler.cs'), '// script');
-		assert.strictEqual(isScriptInstalledInLinkedProject(), true);
+		fs.writeFileSync(path.join(packagesDir, 'manifest.json'), JSON.stringify({
+			dependencies: { 'com.rankupgames.unity-cursor-toolkit': '1.0.0' }
+		}));
+		assert.strictEqual(isScriptInstalledInLinkedProject(), true, 'UPM package detected in manifest');
+	});
+
+	await testAsync('isUpmPackageInstalled returns false for missing manifest', async () => {
+		const noManifest = path.join(tmpDir, 'NoManifest');
+		fs.mkdirSync(noManifest, { recursive: true });
+		assert.strictEqual(isUpmPackageInstalled(noManifest), false);
+	});
+
+	await testAsync('getInstalledUpmVersion extracts version from manifest', async () => {
+		const project = path.join(tmpDir, 'VersionCheck');
+		const packagesDir = path.join(project, 'Packages');
+		fs.mkdirSync(packagesDir, { recursive: true });
+		fs.writeFileSync(path.join(packagesDir, 'manifest.json'), JSON.stringify({
+			dependencies: { 'com.rankupgames.unity-cursor-toolkit': '1.2.3' }
+		}));
+		assert.strictEqual(getInstalledUpmVersion(project), '1.2.3');
+	});
+
+	await testAsync('getInstalledUpmVersion returns null when package missing', async () => {
+		const project = path.join(tmpDir, 'VersionMissing');
+		const packagesDir = path.join(project, 'Packages');
+		fs.mkdirSync(packagesDir, { recursive: true });
+		fs.writeFileSync(path.join(packagesDir, 'manifest.json'), JSON.stringify({
+			dependencies: { 'com.other.package': '2.0.0' }
+		}));
+		assert.strictEqual(getInstalledUpmVersion(project), null);
+	});
+
+	await testAsync('injectUpmPackage adds scoped registry and dependency', async () => {
+		const project = path.join(tmpDir, 'InjectTest');
+		const packagesDir = path.join(project, 'Packages');
+		fs.mkdirSync(packagesDir, { recursive: true });
+		fs.writeFileSync(path.join(packagesDir, 'manifest.json'), JSON.stringify({
+			dependencies: { 'com.unity.textmeshpro': '3.0.0' }
+		}, null, 2));
+
+		const result = injectUpmPackage(project);
+		assert.strictEqual(result, true, 'Inject should succeed');
+
+		const manifest = JSON.parse(fs.readFileSync(path.join(packagesDir, 'manifest.json'), 'utf8'));
+		assert.strictEqual(manifest.dependencies['com.rankupgames.unity-cursor-toolkit'], '1.0.0');
+		assert.ok(Array.isArray(manifest.scopedRegistries), 'Should have scopedRegistries');
+		assert.strictEqual(manifest.scopedRegistries[0].url, 'https://package.openupm.com');
+		assert.ok(manifest.scopedRegistries[0].scopes.includes('com.rankupgames'));
+	});
+
+	await testAsync('injectUpmPackage merges scope into existing OpenUPM registry', async () => {
+		const project = path.join(tmpDir, 'InjectMerge');
+		const packagesDir = path.join(project, 'Packages');
+		fs.mkdirSync(packagesDir, { recursive: true });
+		fs.writeFileSync(path.join(packagesDir, 'manifest.json'), JSON.stringify({
+			scopedRegistries: [{
+				name: 'OpenUPM',
+				url: 'https://package.openupm.com',
+				scopes: ['com.other.package']
+			}],
+			dependencies: {}
+		}, null, 2));
+
+		injectUpmPackage(project);
+
+		const manifest = JSON.parse(fs.readFileSync(path.join(packagesDir, 'manifest.json'), 'utf8'));
+		assert.strictEqual(manifest.scopedRegistries.length, 1, 'Should not duplicate registry');
+		assert.ok(manifest.scopedRegistries[0].scopes.includes('com.rankupgames'), 'Scope merged');
+		assert.ok(manifest.scopedRegistries[0].scopes.includes('com.other.package'), 'Existing scope preserved');
+	});
+
+	await testAsync('injectUpmPackage is idempotent', async () => {
+		const project = path.join(tmpDir, 'InjectIdempotent');
+		const packagesDir = path.join(project, 'Packages');
+		fs.mkdirSync(packagesDir, { recursive: true });
+		fs.writeFileSync(path.join(packagesDir, 'manifest.json'), JSON.stringify({
+			dependencies: { 'com.rankupgames.unity-cursor-toolkit': '1.0.0' }
+		}, null, 2));
+
+		const result = injectUpmPackage(project);
+		assert.strictEqual(result, true, 'Already installed returns true');
+	});
+
+	await testAsync('injectUpmPackage returns false without manifest', async () => {
+		const noManifest = path.join(tmpDir, 'InjectNoManifest');
+		fs.mkdirSync(noManifest, { recursive: true });
+		assert.strictEqual(injectUpmPackage(noManifest), false);
+	});
+
+	await testAsync('detectLegacyScripts finds old scripts in Assets/Editor', async () => {
+		const project = path.join(tmpDir, 'LegacyCheck');
+		const editorPath = path.join(project, 'Assets', 'Editor');
+		fs.mkdirSync(editorPath, { recursive: true });
+		fs.writeFileSync(path.join(editorPath, 'HotReloadHandler.cs'), '// old');
+		fs.writeFileSync(path.join(editorPath, 'ConsoleToCursor.cs'), '// old');
+
+		const legacy = detectLegacyScripts(project);
+		assert.strictEqual(legacy.length, 2);
+		assert.ok(legacy.includes('HotReloadHandler.cs'));
+		assert.ok(legacy.includes('ConsoleToCursor.cs'));
+	});
+
+	await testAsync('detectLegacyScripts returns empty when no legacy scripts', async () => {
+		const project = path.join(tmpDir, 'NoLegacy');
+		fs.mkdirSync(path.join(project, 'Assets', 'Editor'), { recursive: true });
+
+		const legacy = detectLegacyScripts(project);
+		assert.strictEqual(legacy.length, 0);
 	});
 
 	await testAsync('clearLinkedProjectOnExit removes stored URI', async () => {

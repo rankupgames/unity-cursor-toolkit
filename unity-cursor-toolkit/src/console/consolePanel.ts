@@ -7,7 +7,7 @@
 
 import * as vscode from 'vscode';
 import { ConsoleBridge } from './consoleBridge';
-import { ConsoleEntry } from '../core/types';
+import type { ConsoleEntry } from '../core/types';
 
 const DEFAULT_MAX_ENTRIES = 10_000;
 
@@ -187,9 +187,9 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 				const range = new vscode.Range(lineNum, 0, lineNum, 0);
 				await vscode.window.showTextDocument(doc, { selection: range, preview: true });
 				return;
-			} catch {
-				// Try next workspace folder
-			}
+		} catch (error: unknown) {
+			console.debug(`[ConsolePanel] File not found in folder, trying next: ${error instanceof Error ? error.message : String(error)}`);
+		}
 		}
 	}
 

@@ -5,7 +5,7 @@
  * Company: Rank Up Games LLC
  */
 
-import { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
+import type { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
 import { MetaManager } from './metaManager';
 
 export class ProjectMcpTools implements IToolProvider {

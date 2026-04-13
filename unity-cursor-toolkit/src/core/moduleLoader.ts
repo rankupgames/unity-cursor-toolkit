@@ -7,7 +7,7 @@
  */
 
 import * as vscode from 'vscode';
-import { IModule, ModuleContext } from './interfaces';
+import type { IModule, ModuleContext } from './interfaces';
 
 export class ModuleLoader implements vscode.Disposable {
 

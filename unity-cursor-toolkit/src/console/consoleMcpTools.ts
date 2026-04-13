@@ -5,7 +5,7 @@
  * Company: Rank Up Games LLC
  */
 
-import { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
+import type { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
 import { ConsoleBridge } from './consoleBridge';
 
 export class ConsoleMcpTools implements IToolProvider {

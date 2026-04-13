@@ -6,7 +6,7 @@
  */
 
 import * as vscode from 'vscode';
-import { IConnectionManager } from '../core/interfaces';
+import type { IConnectionManager } from '../core/interfaces';
 
 const DEBOUNCE_MS = 300;
 
@@ -15,7 +15,7 @@ export class FileWatcher implements vscode.Disposable {
 	private csWatcher: vscode.FileSystemWatcher | undefined;
 	private solutionWatcher: vscode.FileSystemWatcher | undefined;
 	private debounceTimer: ReturnType<typeof setTimeout> | undefined;
-	private connection: IConnectionManager;
+	private readonly connection: IConnectionManager;
 	private enabled = false;
 	private pendingFiles: Set<string> = new Set();
 

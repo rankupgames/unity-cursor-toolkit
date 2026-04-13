@@ -30,6 +30,9 @@ using UnityEditor;
 using UnityEditor.Compilation;
 #endif
 
+namespace UnityCursorToolkit
+{
+
 /// <summary>
 /// Editor window that handles hot reload functionality between Unity and VS Code/Cursor.
 /// Implements a TCP server to listen for file change notifications.
@@ -97,7 +100,7 @@ public class HotReloadHandler : EditorWindow
 
         // Auto-start on Unity load (always start so extension can connect immediately)
         EditorApplication.delayCall += () => {
-            if (!isInitialized)
+            if (isInitialized == false)
             {
                 EditorPrefs.SetBool(wasRunningPrefKey, false);
                 StartWithoutMutex();
@@ -124,7 +127,7 @@ public class HotReloadHandler : EditorWindow
         {
             instanceMutex = new Mutex(true, "UnityHotReloadHandler", out createdNew);
 
-            if (!createdNew)
+            if (createdNew == false)
             {
                 // Try to get ownership of existing mutex with a timeout
                 try
@@ -135,9 +138,9 @@ public class HotReloadHandler : EditorWindow
                         createdNew = true;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Mutex is abandoned or we can't get it
+                    Debug.LogWarning($"(HotReloadHandler - Start) Mutex acquisition failed: {ex.Message}");
                     createdNew = false;
                 }
             }
@@ -154,10 +157,10 @@ public class HotReloadHandler : EditorWindow
             createdNew = true; // Proceed anyway
         }
 
-        if (!createdNew && instanceMutex != null)
+        if (createdNew == false && instanceMutex != null)
         {
             // Check if a server is actually running on our port
-            if (!IsPortInUse(currentPort))
+            if (IsPortInUse(currentPort) == false)
             {
                 Debug.Log("Previous instance mutex found but port is free. Proceeding with startup.");
                 try
@@ -165,7 +168,7 @@ public class HotReloadHandler : EditorWindow
                     instanceMutex.ReleaseMutex();
                     instanceMutex.Close();
                 }
-                catch { }
+                catch (Exception ex) { Debug.LogWarning($"(HotReloadHandler - Start) Mutex release failed: {ex.Message}"); }
                 instanceMutex = null;
                 createdNew = true;
             }
@@ -212,19 +215,19 @@ public class HotReloadHandler : EditorWindow
     /// </summary>
     private static bool IsPortInUse(int port)
     {
-        System.Net.Sockets.TcpListener tempListener = null;
+        TcpListener tempListener = null;
         try
         {
             // Explicitly qualify TcpListener and IPAddress to ensure correct type resolution
-            tempListener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, port);
+            tempListener = new TcpListener(IPAddress.Any, port);
             tempListener.Start();
             return false; // Port is available if we could start
         }
-        catch (System.Net.Sockets.SocketException ex)
+        catch (SocketException ex)
         {
             // Check if the specific error is "Address already in use"
             // Common error codes for this are 10048 (WSAEADDRINUSE on Windows) or 48/98 on Unix-like systems.
-            if (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse || ex.ErrorCode == 48 || ex.ErrorCode == 98 || ex.ErrorCode == 10048)
+            if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse || ex.ErrorCode == 48 || ex.ErrorCode == 98 || ex.ErrorCode == 10048)
             {
                 return true; // Port is in use
             }
@@ -232,9 +235,9 @@ public class HotReloadHandler : EditorWindow
             // Depending on desired behavior, could return true or re-throw. For IsPortInUse, true is safer.
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            // Any other exception (e.g., security, permissions) likely means port is not usable by us.
+            Debug.LogWarning($"(HotReloadHandler - IsPortInUse) Port check failed: {ex.Message}");
             return true;
         }
         finally
@@ -252,7 +255,7 @@ public class HotReloadHandler : EditorWindow
     [MenuItem("Tools/Hot Reload/Stop")]
     public static void Stop()
     {
-        if (!isInitialized)
+        if (isInitialized == false)
         {
             Debug.Log("Hot Reload server is not running.");
             return;
@@ -270,7 +273,7 @@ public class HotReloadHandler : EditorWindow
                 instanceMutex.ReleaseMutex();
                 instanceMutex.Close();
             }
-            catch { }
+            catch (Exception ex) { Debug.LogWarning($"(HotReloadHandler - Stop) Mutex release failed: {ex.Message}"); }
             instanceMutex = null;
         }
 
@@ -287,7 +290,7 @@ public class HotReloadHandler : EditorWindow
     [MenuItem("Tools/Hot Reload/Reload")]
     public static void Reload()
     {
-        if (!isInitialized)
+        if (isInitialized == false)
         {
             Debug.Log("Hot Reload server is not running. Starting fresh...");
             Start();
@@ -326,7 +329,7 @@ public class HotReloadHandler : EditorWindow
         }
 
         // If we couldn't restart on the same port, start normally
-        if (!restarted)
+        if (restarted == false)
         {
             Debug.LogWarning($"Could not reload on port {portToReuse}, starting on available port...");
             StartListenerThread();
@@ -468,7 +471,7 @@ public class HotReloadHandler : EditorWindow
                 instanceMutex.ReleaseMutex();
                 instanceMutex.Close();
             }
-            catch { }
+            catch (Exception ex) { Debug.LogWarning($"(HotReloadHandler - OnBeforeAssemblyReload) Mutex release failed: {ex.Message}"); }
             instanceMutex = null;
         }
 
@@ -544,7 +547,7 @@ public class HotReloadHandler : EditorWindow
         // Finally, add all alternative ports
         foreach (int port in ALTERNATIVE_PORTS)
         {
-            if (!portsToTry.Contains(port))
+            if (portsToTry.Contains(port) == false)
             {
                 portsToTry.Add(port);
             }
@@ -566,7 +569,7 @@ public class HotReloadHandler : EditorWindow
 
                 try
                 {
-                    server = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, portToTry);
+                    server = new TcpListener(IPAddress.Any, portToTry);
 
                     // Try to set socket options to allow port reuse
                     try
@@ -622,7 +625,7 @@ public class HotReloadHandler : EditorWindow
                 break;
         }
 
-        if (!serverStarted)
+        if (serverStarted == false)
         {
             Debug.LogError("Failed to start Hot Reload server. All ports are in use.");
             return;
@@ -675,7 +678,7 @@ public class HotReloadHandler : EditorWindow
                     // Clean up disconnected clients
                     lock (clientListLock)
                     {
-                        int removedCount = connectedClients.RemoveAll(c => !c.Connected);
+                        int removedCount = connectedClients.RemoveAll(c => c.Connected == false);
                         if (removedCount > 0 && showDebugLogs)
                         {
                             Debug.Log($"Cleaned up {removedCount} disconnected client(s)");
@@ -684,7 +687,7 @@ public class HotReloadHandler : EditorWindow
                 }
                 catch (SocketException ex)
                 {
-                    if (!isServerRunning)
+                    if (isServerRunning == false)
                     {
                         // Server is shutting down, this is expected
                         break;
@@ -703,7 +706,7 @@ public class HotReloadHandler : EditorWindow
         }
         catch (Exception e)
         {
-            if (!isServerRunning)
+            if (isServerRunning == false)
             {
                 // Server is shutting down, this is expected
                 if (showDebugLogs)
@@ -814,7 +817,7 @@ public class HotReloadHandler : EditorWindow
             {
                 client.Close();
             }
-            catch { }
+            catch (Exception ex) { Debug.LogWarning($"(HotReloadHandler - HandleClient) Client close failed: {ex.Message}"); }
 
             if (showDebugLogs)
             {
@@ -1160,7 +1163,7 @@ public class HotReloadHandler : EditorWindow
     {
         try
         {
-            server = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, specificPort);
+            server = new TcpListener(IPAddress.Any, specificPort);
 
             // Try to set socket options to allow port reuse
             try
@@ -1198,5 +1201,7 @@ public class HotReloadHandler : EditorWindow
         }
     }
 }
+
+} // namespace UnityCursorToolkit
 
 #endif // UNITY_EDITOR

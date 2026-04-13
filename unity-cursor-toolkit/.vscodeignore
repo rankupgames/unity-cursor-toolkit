@@ -18,4 +18,3 @@ images/**
 **/.DS_Store
 out-bundle/**
 ../**
-!unity-assets/**

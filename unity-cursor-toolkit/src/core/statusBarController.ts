@@ -8,8 +8,8 @@
  */
 
 import * as vscode from 'vscode';
-import { IStatusBarContributor, QuickAccessAction } from './interfaces';
-import { ConnectionState, ConnectionInfo } from './types';
+import type { IStatusBarContributor } from './interfaces';
+import { ConnectionState } from './types';
 
 export class StatusBarController implements vscode.Disposable {
 

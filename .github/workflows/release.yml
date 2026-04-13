@@ -27,7 +27,15 @@ jobs:
           TAG="${GITHUB_REF#refs/tags/v}"
           echo "version=${TAG}" >> $GITHUB_OUTPUT
 
-      - name: Stamp version
+      - name: Read UPM version
+        id: upm
+        run: |
+          UPM_PKG="../Packages/com.rankupgames.unity-cursor-toolkit/package.json"
+          UPM_VERSION=$(node -e "console.log(require('${UPM_PKG}').version)")
+          echo "upm_version=${UPM_VERSION}" >> $GITHUB_OUTPUT
+          echo "UPM package version: ${UPM_VERSION}"
+
+      - name: Stamp extension version
         run: |
           VERSION="${{ steps.version.outputs.version }}"
           node -e "
@@ -38,6 +46,12 @@ jobs:
 
       - run: npm ci
       - run: npm run compile
+
+      - name: Strict type check
+        run: npx tsc --noEmit --strict
+
+      - name: Run tests
+        run: node test/run-tests.js
 
       - name: Package VSIX
         run: npx vsce package --no-dependencies
@@ -52,23 +66,33 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           VERSION="${{ steps.version.outputs.version }}"
+          UPM_VERSION="${{ steps.upm.outputs.upm_version }}"
           VSIX_FILE=$(ls *.vsix | head -1)
           COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-8)
 
           gh release create "v${VERSION}" \
             --repo "${{ github.repository }}" \
             --title "Unity Cursor Toolkit v${VERSION}" \
-            --notes "$(cat <<EOFNOTES
+            --notes "$(cat <<'EOFNOTES'
           ## Unity Cursor Toolkit v${VERSION}
 
           | Field | Value |
           |-------|-------|
-          | Version | \`${VERSION}\` |
+          | Extension | \`${VERSION}\` |
+          | UPM Package | \`${UPM_VERSION}\` |
           | Commit | \`${COMMIT_SHORT}\` |
-          | Branch | \`${{ github.ref_name }}\` |
 
-          ### Install
-          Download the \`.vsix\` below and install via \`code --install-extension <file>\`.
+          ### Cursor/VS Code Extension
+          Download the \`.vsix\` below or install from the marketplace.
+
+          ### Unity Package (UPM)
+          ```
+          openupm add com.rankupgames.unity-cursor-toolkit
+          ```
+          Or add via git URL in Unity Package Manager:
+          ```
+          https://github.com/${{ github.repository }}.git?path=Packages/com.rankupgames.unity-cursor-toolkit#v${VERSION}
+          ```
           EOFNOTES
           )" \
             "${VSIX_FILE}"

@@ -7,7 +7,7 @@
  */
 
 import * as vscode from 'vscode';
-import { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
+import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { ConsoleBridge } from './consoleBridge';
 import { ConsolePanelProvider } from './consolePanel';
 import { ConsoleMcpTools } from './consoleMcpTools';

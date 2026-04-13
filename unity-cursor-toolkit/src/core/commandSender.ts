@@ -5,18 +5,20 @@
  * Company: Rank Up Games LLC
  */
 
-import { ICommandSender, IConnectionManager } from './interfaces';
-import { IncomingMessage } from './types';
+import type { ICommandSender, IConnectionManager } from './interfaces';
+import type { IncomingMessage } from './types';
 
 const DEFAULT_TIMEOUT_MS = 10_000;
+
+interface PendingRequest {
+	resolve: (value: Record<string, unknown> | null) => void;
+	timer: ReturnType<typeof setTimeout>;
+}
 
 export class CommandSender implements ICommandSender {
 
 	private readonly connection: IConnectionManager;
-	private pendingRequests = new Map<string, {
-		resolve: (value: Record<string, unknown> | null) => void;
-		timer: ReturnType<typeof setTimeout>;
-	}>();
+	private pendingRequests = new Map<string, PendingRequest>();
 	private requestCounter = 0;
 
 	constructor(connection: IConnectionManager) {

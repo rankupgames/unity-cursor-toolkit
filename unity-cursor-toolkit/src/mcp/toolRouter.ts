@@ -6,7 +6,7 @@
  * Company: Rank Up Games LLC
  */
 
-import { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
+import type { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
 
 export class ToolRouter {
 

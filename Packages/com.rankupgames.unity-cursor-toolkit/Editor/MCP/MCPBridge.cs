@@ -15,6 +15,7 @@ using System.Linq;
 using System.Reflection;
 using UnityEngine;
 using UnityEditor;
+using UnityCursorToolkit;
 using UnityCursorToolkit.Core;
 
 namespace UnityCursorToolkit.MCP
@@ -74,9 +75,9 @@ namespace UnityCursorToolkit.MCP
 						}
 					}
 				}
-				catch (ReflectionTypeLoadException)
+				catch (ReflectionTypeLoadException ex)
 				{
-					// Skip assemblies that fail to load
+					Debug.LogWarning($"[MCPBridge] Skipping assembly (ReflectionTypeLoadException): {ex.Message}");
 				}
 			}
 

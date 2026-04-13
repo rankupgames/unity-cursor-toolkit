@@ -10,7 +10,8 @@
 
 import * as vscode from 'vscode';
 import * as net from 'net';
-import { ConnectionState, ConnectionInfo, IncomingMessage, safeJsonParse } from './types';
+import { ConnectionState, safeJsonParse } from './types';
+import type { ConnectionInfo, IncomingMessage } from './types';
 
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const HEARTBEAT_TIMEOUT_MS = 5_000;
@@ -57,7 +58,7 @@ export class IpcTransport {
 		this.destroySocket();
 
 		const success = await this.tryConnect();
-		if (success && !this.disposed) {
+		if (success && this.disposed === false) {
 			this.backoffMs = INITIAL_BACKOFF_MS;
 			this.setState(ConnectionState.Connected);
 			this.startHeartbeat();
@@ -69,7 +70,7 @@ export class IpcTransport {
 	}
 
 	send(command: string, payload?: Record<string, unknown>): void {
-		if (this.state !== ConnectionState.Connected || this.socket == null || !this.socket.writable) {
+		if (this.state !== ConnectionState.Connected || this.socket == null || this.socket.writable === false) {
 			return;
 		}
 
@@ -151,7 +152,7 @@ export class IpcTransport {
 	private handleDisconnect(): void {
 		this.stopHeartbeat();
 
-		if (this.disposed || !this.isNeeded()) {
+		if (this.disposed || this.isNeeded() === false) {
 			this.setState(ConnectionState.Disconnected);
 			return;
 		}
@@ -164,7 +165,7 @@ export class IpcTransport {
 		if (this.reconnectTimer) clearTimeout(this.reconnectTimer);
 
 		this.reconnectTimer = setTimeout(async () => {
-			if (this.disposed || !this.isNeeded()) {
+			if (this.disposed || this.isNeeded() === false) {
 				this.setState(ConnectionState.Disconnected);
 				return;
 			}

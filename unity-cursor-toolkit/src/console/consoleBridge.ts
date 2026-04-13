@@ -6,17 +6,28 @@
  */
 
 import * as vscode from 'vscode';
-import { IConnectionManager } from '../core/interfaces';
-import { ConsoleEntry, IncomingMessage } from '../core/types';
+import type { IConnectionManager } from '../core/interfaces';
+import type { ConsoleEntry, IncomingMessage } from '../core/types';
+
+export interface ConsoleFilterOptions {
+	level?: string;
+	limit?: number;
+	search?: string;
+}
+
+export interface ConsoleBulkPayload {
+	readonly content: string;
+	readonly entryCount: number;
+}
 
 export class ConsoleBridge implements vscode.Disposable {
 
 	private readonly _onEntry = new vscode.EventEmitter<ConsoleEntry>();
-	private readonly _onBulk = new vscode.EventEmitter<{ content: string; entryCount: number }>();
+	private readonly _onBulk = new vscode.EventEmitter<ConsoleBulkPayload>();
 	private readonly _onClear = new vscode.EventEmitter<void>();
 
 	public readonly onEntry: vscode.Event<ConsoleEntry> = this._onEntry.event;
-	public readonly onBulk: vscode.Event<{ content: string; entryCount: number }> = this._onBulk.event;
+	public readonly onBulk: vscode.Event<ConsoleBulkPayload> = this._onBulk.event;
 	public readonly onClear: vscode.Event<void> = this._onClear.event;
 
 	private entries: ConsoleEntry[] = [];
@@ -28,7 +39,7 @@ export class ConsoleBridge implements vscode.Disposable {
 		);
 	}
 
-	public getEntries(options?: { level?: string; limit?: number; search?: string }): ConsoleEntry[] {
+	public getEntries(options?: ConsoleFilterOptions): ConsoleEntry[] {
 		let result = [...this.entries];
 
 		if (options?.level) {

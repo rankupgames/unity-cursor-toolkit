@@ -1,0 +1,20 @@
+{
+  "name": "com.rankupgames.unity-cursor-toolkit",
+  "version": "1.0.0",
+  "displayName": "Unity Cursor Toolkit",
+  "description": "Editor tools for Cursor/VS Code integration: hot reload, MCP bridge, console forwarding, debug adapter, and IL patching.",
+  "unity": "2019.4",
+  "author": {
+    "name": "Rank Up Games LLC",
+    "url": "https://github.com/rankupgames/unity-cursor-toolkit"
+  },
+  "license": "MIT",
+  "keywords": [
+    "cursor",
+    "vscode",
+    "hot-reload",
+    "mcp",
+    "editor-tools"
+  ],
+  "type": "tool"
+}

@@ -137,9 +137,9 @@ namespace UnityCursorToolkit.MCP
 			public bool development;
 		}
 
-		internal static System.Collections.Generic.Dictionary<string, object> ParseArgs(string json)
+		internal static Dictionary<string, object> ParseArgs(string json)
 		{
-			var d = new System.Collections.Generic.Dictionary<string, object>();
+			var d = new Dictionary<string, object>();
 			if (string.IsNullOrEmpty(json))
 				return d;
 			try
@@ -154,18 +154,18 @@ namespace UnityCursorToolkit.MCP
 					d["development"] = w.development;
 				}
 			}
-			catch { }
+			catch (System.Exception ex) { UnityEngine.Debug.LogWarning($"(EditorControlTools - ParseArgs) JSON parse failed: {ex.Message}"); }
 			return d;
 		}
 
-		internal static string GetString(System.Collections.Generic.Dictionary<string, object> d, string key, string def)
+		internal static string GetString(Dictionary<string, object> d, string key, string def)
 		{
 			if (d.TryGetValue(key, out var v) == false || v == null)
 				return def;
 			return v.ToString();
 		}
 
-		internal static int GetInt(System.Collections.Generic.Dictionary<string, object> d, string key, int def)
+		internal static int GetInt(Dictionary<string, object> d, string key, int def)
 		{
 			if (d.TryGetValue(key, out var v) == false)
 				return def;
@@ -176,7 +176,7 @@ namespace UnityCursorToolkit.MCP
 			return parsed;
 		}
 
-		internal static bool GetBool(System.Collections.Generic.Dictionary<string, object> d, string key, bool def)
+		internal static bool GetBool(Dictionary<string, object> d, string key, bool def)
 		{
 			if (d.TryGetValue(key, out var v) == false)
 				return def;

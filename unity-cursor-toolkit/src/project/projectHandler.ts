@@ -1,5 +1,6 @@
 /**
- * Unity Project Handler -- Manages Unity project detection, selection, and linking
+ * Unity Project Handler -- Manages Unity project detection, selection, linking,
+ * and UPM package injection into the project's manifest.json.
  *
  * Author: Miguel A. Lopez
  * Company: Rank Up Games LLC
@@ -11,7 +12,24 @@ import * as fs from 'fs';
 import { MetaManager } from './metaManager';
 
 const CURRENT_PROJECT_KEY = 'unityCursorToolkit.currentProjectUri';
-const UNITY_SCRIPTS = ['HotReloadHandler.cs', 'ConsoleToCursor.cs', 'DebugBridge.cs'];
+const PACKAGE_NAME = 'com.rankupgames.unity-cursor-toolkit';
+const PACKAGE_VERSION = '1.0.0';
+const MIN_UPM_VERSION = '1.0.0';
+const OPENUPM_REGISTRY_URL = 'https://package.openupm.com';
+const OPENUPM_SCOPE = 'com.rankupgames';
+
+const LEGACY_SCRIPTS = ['HotReloadHandler.cs', 'ConsoleToCursor.cs', 'DebugBridge.cs'];
+
+interface ScopedRegistry {
+	name: string;
+	url: string;
+	scopes: string[];
+}
+
+interface UnityManifest {
+	scopedRegistries?: ScopedRegistry[];
+	dependencies?: Record<string, string>;
+}
 
 let extensionContext: vscode.ExtensionContext | undefined;
 
@@ -46,6 +64,169 @@ export const getLinkedProjectPath = (): string | undefined => {
 	return fs.existsSync(path.join(projectPath, 'Assets')) ? projectPath : undefined;
 };
 
+export const isScriptInstalledInLinkedProject = (): boolean => {
+	const projectPath = getLinkedProjectPath();
+	if (projectPath == null) {
+		return false;
+	}
+
+	return isUpmPackageInstalled(projectPath);
+};
+
+export const isUpmPackageInstalled = (projectPath: string): boolean => {
+	const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
+	if (fs.existsSync(manifestPath) === false) {
+		return false;
+	}
+
+	try {
+		const manifest = fs.readFileSync(manifestPath, 'utf8');
+		return manifest.includes(PACKAGE_NAME);
+	} catch (error: unknown) {
+		console.warn(`[ProjectHandler] Failed to read manifest.json: ${error instanceof Error ? error.message : String(error)}`);
+		return false;
+	}
+};
+
+export const getInstalledUpmVersion = (projectPath: string): string | null => {
+	const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
+	if (fs.existsSync(manifestPath) === false) {
+		return null;
+	}
+
+	try {
+		const manifest: UnityManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+		return manifest.dependencies?.[PACKAGE_NAME] ?? null;
+	} catch (error: unknown) {
+		console.warn(`[ProjectHandler] Failed to parse manifest.json: ${error instanceof Error ? error.message : String(error)}`);
+		return null;
+	}
+};
+
+const compareVersions = (installed: string, required: string): number => {
+	const parseVersion = (version: string): number[] => version.split('.').map((segment) => parseInt(segment, 10) || 0);
+	const installedParts = parseVersion(installed);
+	const requiredParts = parseVersion(required);
+	const maxLength = Math.max(installedParts.length, requiredParts.length);
+
+	for (let i = 0; i < maxLength; i++) {
+		const installedSegment = installedParts[i] ?? 0;
+		const requiredSegment = requiredParts[i] ?? 0;
+		if (installedSegment < requiredSegment) return -1;
+		if (installedSegment > requiredSegment) return 1;
+	}
+	return 0;
+};
+
+export const injectUpmPackage = (projectPath: string): boolean => {
+	const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
+	if (fs.existsSync(manifestPath) === false) {
+		return false;
+	}
+
+	let manifest: UnityManifest;
+	try {
+		manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+	} catch (error: unknown) {
+		console.error(`[ProjectHandler] Failed to parse manifest.json: ${error instanceof Error ? error.message : String(error)}`);
+		vscode.window.showErrorMessage('Failed to read Packages/manifest.json. The file may be corrupted.');
+		return false;
+	}
+
+	if (manifest.dependencies?.[PACKAGE_NAME]) {
+		return true;
+	}
+
+	if (Array.isArray(manifest.scopedRegistries) === false) {
+		manifest.scopedRegistries = [];
+	}
+
+	const registries = manifest.scopedRegistries as ScopedRegistry[];
+	const existingRegistry = registries.find((registry) => registry.url === OPENUPM_REGISTRY_URL);
+	if (existingRegistry) {
+		if (existingRegistry.scopes.includes(OPENUPM_SCOPE) === false) {
+			existingRegistry.scopes.push(OPENUPM_SCOPE);
+		}
+	} else {
+		registries.push({
+			name: 'OpenUPM',
+			url: OPENUPM_REGISTRY_URL,
+			scopes: [OPENUPM_SCOPE]
+		});
+	}
+
+	manifest.dependencies = manifest.dependencies ?? {};
+	manifest.dependencies[PACKAGE_NAME] = PACKAGE_VERSION;
+
+	try {
+		fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+		return true;
+	} catch (error: unknown) {
+		console.error(`[ProjectHandler] Failed to write manifest.json: ${error instanceof Error ? error.message : String(error)}`);
+		vscode.window.showErrorMessage('Failed to update Packages/manifest.json.');
+		return false;
+	}
+};
+
+const updateUpmVersion = (projectPath: string, newVersion: string): boolean => {
+	const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
+
+	try {
+		const manifest: UnityManifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+		if (manifest.dependencies == null) {
+			return false;
+		}
+		manifest.dependencies[PACKAGE_NAME] = newVersion;
+		fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+		return true;
+	} catch (error: unknown) {
+		console.error(`[ProjectHandler] Failed to update UPM version: ${error instanceof Error ? error.message : String(error)}`);
+		return false;
+	}
+};
+
+export const checkAndUpdateUpmVersion = async (projectPath: string): Promise<void> => {
+	const installed = getInstalledUpmVersion(projectPath);
+	if (installed == null) {
+		return;
+	}
+
+	if (compareVersions(installed, MIN_UPM_VERSION) < 0) {
+		const result = await vscode.window.showInformationMessage(
+			`Unity Cursor Toolkit package is outdated (${installed} < ${MIN_UPM_VERSION}). Update to ${MIN_UPM_VERSION}?`,
+			'Update',
+			'Skip'
+		);
+		if (result === 'Update') {
+			if (updateUpmVersion(projectPath, MIN_UPM_VERSION)) {
+				vscode.window.showInformationMessage(`Updated Unity Cursor Toolkit to ${MIN_UPM_VERSION}. Switch to Unity to apply.`);
+			}
+		}
+	}
+};
+
+export const detectLegacyScripts = (projectPath: string): string[] => {
+	const editorPath = path.join(projectPath, 'Assets', 'Editor');
+	if (fs.existsSync(editorPath) === false) {
+		return [];
+	}
+
+	return LEGACY_SCRIPTS.filter((script) => fs.existsSync(path.join(editorPath, script)));
+};
+
+export const warnLegacyScripts = async (projectPath: string): Promise<void> => {
+	const legacyFiles = detectLegacyScripts(projectPath);
+	if (legacyFiles.length === 0) {
+		return;
+	}
+
+	const fileList = legacyFiles.join(', ');
+	await vscode.window.showWarningMessage(
+		`Legacy scripts found in Assets/Editor: ${fileList}. Remove them to avoid duplicate class errors with the UPM package.`,
+		'OK'
+	);
+};
+
 export const handleUnityProjectSetup = async (): Promise<boolean> => {
 	if (extensionContext == null) {
 		vscode.window.showErrorMessage('Unity Toolkit Error: Extension context not available.');
@@ -61,13 +242,13 @@ export const handleUnityProjectSetup = async (): Promise<boolean> => {
 			'Select New Project'
 		);
 		if (result === 'Use Existing Project') {
-			return await installScriptToProject(savedProjectUri);
+			return await setupUpmForProject(savedProjectUri);
 		}
 	}
 
 	const workspaceFolders = vscode.workspace.workspaceFolders;
 	if (workspaceFolders == null || workspaceFolders.length === 0) {
-		const projectUri = await selectAndInstallExternalProject();
+		const projectUri = await selectAndSetupExternalProject();
 		return projectUri != null;
 	}
 
@@ -81,7 +262,7 @@ export const handleUnityProjectSetup = async (): Promise<boolean> => {
 	let targetFolder: vscode.Uri | undefined;
 
 	if (unityProjects.length === 0) {
-		const projectUri = await selectAndInstallExternalProject();
+		const projectUri = await selectAndSetupExternalProject();
 		return projectUri != null;
 	} else if (unityProjects.length === 1) {
 		targetFolder = unityProjects[0].uri;
@@ -96,7 +277,7 @@ export const handleUnityProjectSetup = async (): Promise<boolean> => {
 			return false;
 		}
 		if (selected === selectExternal) {
-			const projectUri = await selectAndInstallExternalProject();
+			const projectUri = await selectAndSetupExternalProject();
 			return projectUri != null;
 		}
 		targetFolder = selected.uri;
@@ -104,23 +285,43 @@ export const handleUnityProjectSetup = async (): Promise<boolean> => {
 
 	if (targetFolder) {
 		saveCurrentProjectUri(targetFolder);
-		return await installScriptToProject(targetFolder);
+		return await setupUpmForProject(targetFolder);
 	}
 
 	return false;
 };
 
-export const isScriptInstalledInLinkedProject = (): boolean => {
-	if (extensionContext == null) {
+const setupUpmForProject = async (targetFolder: vscode.Uri): Promise<boolean> => {
+	const projectPath = targetFolder.fsPath;
+
+	if (isUpmPackageInstalled(projectPath)) {
+		await checkAndUpdateUpmVersion(projectPath);
+		await warnLegacyScripts(projectPath);
+		await MetaManager.applyMetaExclusions(projectPath);
+		return true;
+	}
+
+	const injected = injectUpmPackage(projectPath);
+	if (injected === false) {
+		const manualInstructions = `openupm add ${PACKAGE_NAME}`;
+		const result = await vscode.window.showErrorMessage(
+			'Failed to inject UPM package into manifest.json. Install manually:',
+			'Copy Command'
+		);
+		if (result === 'Copy Command') {
+			await vscode.env.clipboard.writeText(manualInstructions);
+			vscode.window.showInformationMessage('Install command copied to clipboard.');
+		}
 		return false;
 	}
 
-	const projectPath = getLinkedProjectPath();
-	if (projectPath == null) {
-		return false;
-	}
+	vscode.window.showInformationMessage(
+		'Unity Cursor Toolkit package added to your project. Switch to Unity -- it will auto-import on focus.'
+	);
 
-	return fs.existsSync(path.join(projectPath, 'Assets', 'Editor', 'HotReloadHandler.cs'));
+	await warnLegacyScripts(projectPath);
+	await MetaManager.applyMetaExclusions(projectPath);
+	return true;
 };
 
 export const clearLinkedProjectOnExit = (): void => {
@@ -148,7 +349,7 @@ const saveCurrentProjectUri = (projectUri: vscode.Uri): void => {
 	extensionContext.workspaceState.update(CURRENT_PROJECT_KEY, projectUri.toString());
 };
 
-const selectAndInstallExternalProject = async (): Promise<vscode.Uri | undefined> => {
+const selectAndSetupExternalProject = async (): Promise<vscode.Uri | undefined> => {
 	if (extensionContext == null) {
 		return undefined;
 	}
@@ -170,102 +371,16 @@ const selectAndInstallExternalProject = async (): Promise<vscode.Uri | undefined
 
 	if (fs.existsSync(assetsPath) === false) {
 		const result = await vscode.window.showWarningMessage(
-			`The selected folder doesn't appear to be a Unity project (no Assets folder). Install anyway?`,
-			'Install Anyway',
+			`The selected folder doesn't appear to be a Unity project (no Assets folder). Continue anyway?`,
+			'Continue',
 			'Cancel'
 		);
-		if (result !== 'Install Anyway') {
+		if (result !== 'Continue') {
 			return undefined;
 		}
 	}
 
 	saveCurrentProjectUri(selectedFolder);
-	const success = await installScriptToProject(selectedFolder);
+	const success = await setupUpmForProject(selectedFolder);
 	return success ? selectedFolder : undefined;
-};
-
-const installScriptToProject = async (targetFolder: vscode.Uri): Promise<boolean> => {
-	const extensionPath = vscode.extensions.getExtension('rankupgames.unity-cursor-toolkit')?.extensionPath;
-	const editorPath = path.join(targetFolder.fsPath, 'Assets', 'Editor');
-
-	if (fs.existsSync(editorPath) === false) {
-		const created = await fs.promises.mkdir(editorPath, { recursive: true })
-			.then(() => true)
-			.catch((err: NodeJS.ErrnoException) => {
-				vscode.window.showErrorMessage(`Failed to create Editor folder: ${err.message}`);
-				return false;
-			});
-
-		if (created === false) {
-			return false;
-		}
-	}
-
-	let anyInstalled = false;
-	let allSkipped = true;
-
-	for (const scriptName of UNITY_SCRIPTS) {
-		const destPath = path.join(editorPath, scriptName);
-		if (fs.existsSync(destPath)) {
-			continue;
-		}
-
-		allSkipped = false;
-		const sourcePath = findAssetSource(extensionPath, scriptName);
-		if (sourcePath == null) {
-			console.warn(`[ProjectHandler] ${scriptName} not found in extension assets.`);
-			continue;
-		}
-
-		const copied = await fs.promises.copyFile(sourcePath, destPath)
-			.then(() => true)
-			.catch((err: NodeJS.ErrnoException) => {
-				console.error(`[ProjectHandler] Failed to copy ${scriptName}: ${err.message}`);
-				return false;
-			});
-
-		if (copied) {
-			anyInstalled = true;
-		}
-	}
-
-	if (allSkipped) {
-		vscode.window.showInformationMessage('Unity Toolkit scripts already present.');
-		return true;
-	}
-
-	if (anyInstalled) {
-		vscode.window.showInformationMessage('Installed Unity Toolkit scripts. Restart Unity if running.');
-	}
-
-	await MetaManager.applyMetaExclusions(targetFolder.fsPath);
-	return true;
-};
-
-const ASSET_SUBFOLDERS: Record<string, string> = { 'DebugBridge.cs': 'Debug' };
-
-const findAssetSource = (extensionPath: string | undefined, fileName: string): string | undefined => {
-	const subfolder = ASSET_SUBFOLDERS[fileName];
-	const basePaths = extensionPath
-		? [
-			path.join(extensionPath, 'unity-assets'),
-			path.join(extensionPath, 'out', 'unity-assets')
-		]
-		: [
-			path.join(__dirname, '..', '..', 'unity-assets'),
-			path.join(__dirname, '..', '..', '..', 'unity-assets')
-		];
-
-	const possiblePaths = basePaths.flatMap((base) =>
-		subfolder
-			? [path.join(base, fileName), path.join(base, subfolder, fileName)]
-			: [path.join(base, fileName)]
-	);
-
-	for (const p of possiblePaths) {
-		if (fs.existsSync(p)) {
-			return p;
-		}
-	}
-	return undefined;
 };

@@ -9,7 +9,7 @@
  */
 
 import * as vscode from 'vscode';
-import { IncomingMessage } from './types';
+import type { IncomingMessage } from './types';
 
 interface WsClient {
 	readyState: number;
@@ -35,8 +35,8 @@ export class WebSocketTransport {
 		try {
 			// @ts-expect-error ws is optional; dynamic import for graceful fallback when not installed
 			wsModule = await import('ws');
-		} catch {
-			console.warn('[WebSocketTransport] ws package not installed. Add ws as optionalPeerDependency for remote transport.');
+		} catch (error: unknown) {
+			console.warn(`[WebSocketTransport] ws package not available: ${error instanceof Error ? error.message : 'not installed'}`);
 			return false;
 		}
 
@@ -62,8 +62,8 @@ export class WebSocketTransport {
 					if (command) {
 						this._onMessage.fire({ command, payload: parsed });
 					}
-				} catch {
-					// ignore malformed JSON
+				} catch (error: unknown) {
+					console.warn('[WebSocketTransport] Malformed JSON from client:', error instanceof Error ? error.message : String(error));
 				}
 			}) as (...args: unknown[]) => void);
 

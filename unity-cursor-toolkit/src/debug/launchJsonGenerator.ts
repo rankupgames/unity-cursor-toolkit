@@ -41,7 +41,8 @@ export async function generateLaunchJson(projectPath: string): Promise<void> {
 			if (parsed && typeof parsed === 'object' && Array.isArray(parsed.configurations)) {
 				existing = parsed;
 			}
-		} catch {
+		} catch (error: unknown) {
+			console.warn(`[LaunchJsonGenerator] Failed to parse existing launch.json: ${error instanceof Error ? error.message : String(error)}`);
 			existing = undefined;
 		}
 	}

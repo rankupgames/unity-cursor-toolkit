@@ -7,7 +7,7 @@
  * Company: Rank Up Games LLC
  */
 
-import { IToolProvider, ICommandSender, ToolDefinition, ToolResult } from '../core/interfaces';
+import type { IToolProvider, ICommandSender, ToolDefinition, ToolResult } from '../core/interfaces';
 
 export class UnityMcpTools implements IToolProvider {
 

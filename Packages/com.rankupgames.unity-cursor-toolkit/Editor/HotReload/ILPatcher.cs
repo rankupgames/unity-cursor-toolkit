@@ -16,6 +16,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -40,7 +41,7 @@ namespace UnityCursorToolkit.HotReload
 		/// </summary>
 		public static PatchResult TryPatch(string[] changedFiles)
 		{
-			var sw = System.Diagnostics.Stopwatch.StartNew();
+			var sw = Stopwatch.StartNew();
 			var result = new PatchResult();
 
 			try
@@ -346,7 +347,7 @@ namespace UnityCursorToolkit.HotReload
 
 			File.WriteAllLines(responseFile, rspLines);
 
-			var psi = new System.Diagnostics.ProcessStartInfo
+			var psi = new ProcessStartInfo
 			{
 				FileName = string.IsNullOrEmpty(monoHostPath) ? cscPath : monoHostPath,
 				Arguments = string.IsNullOrEmpty(monoHostPath)
@@ -358,7 +359,7 @@ namespace UnityCursorToolkit.HotReload
 				CreateNoWindow = true
 			};
 
-			using (var process = System.Diagnostics.Process.Start(psi))
+			using (var process = Process.Start(psi))
 			{
 				string stdout = process.StandardOutput.ReadToEnd();
 				string stderr = process.StandardError.ReadToEnd();
@@ -417,7 +418,7 @@ namespace UnityCursorToolkit.HotReload
 
 			// Clean up temp file
 			try { File.Delete(tempDllPath); }
-			catch { /* best effort */ }
+			catch (Exception ex) { UnityEngine.Debug.LogWarning($"(ILPatcher - ApplyPatches) Failed to clean temp DLL: {ex.Message}"); }
 
 			return patchedCount;
 		}

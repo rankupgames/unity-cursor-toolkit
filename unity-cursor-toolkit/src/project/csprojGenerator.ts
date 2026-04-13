@@ -14,7 +14,8 @@ export const hasCsprojFiles = (projectPath: string): boolean => {
 	try {
 		const files = fs.readdirSync(projectPath);
 		return files.some((f) => f.endsWith('.csproj'));
-	} catch {
+	} catch (error: unknown) {
+		console.debug(`[CsprojGenerator] Cannot read directory ${projectPath}: ${error instanceof Error ? error.message : String(error)}`);
 		return false;
 	}
 };

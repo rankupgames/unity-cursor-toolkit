@@ -10,6 +10,7 @@
 #if UNITY_EDITOR
 
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using UnityCursorToolkit.Core;
@@ -130,7 +131,7 @@ namespace UnityCursorToolkit.MCP
 			return "{\"success\":true,\"path\":\"" + AssetToolsHelpers.Escape(path) + "\"}";
 		}
 
-		private string SetColor(string path, string property, System.Collections.Generic.Dictionary<string, object> args)
+		private string SetColor(string path, string property, Dictionary<string, object> args)
 		{
 			if (string.IsNullOrEmpty(path))
 				return AssetToolsHelpers.JsonError("path is required");
@@ -201,9 +202,9 @@ namespace UnityCursorToolkit.MCP
 			public float[] color;
 		}
 
-		internal static System.Collections.Generic.Dictionary<string, object> ParseArgs(string json)
+		internal static Dictionary<string, object> ParseArgs(string json)
 		{
-			var d = new System.Collections.Generic.Dictionary<string, object>();
+			var d = new Dictionary<string, object>();
 			if (string.IsNullOrEmpty(json))
 				return d;
 			try
@@ -223,18 +224,18 @@ namespace UnityCursorToolkit.MCP
 					if (w.color != null && w.color.Length >= 4) d["color"] = w.color;
 				}
 			}
-			catch { }
+			catch (System.Exception ex) { UnityEngine.Debug.LogWarning($"(AssetTools - ParseArgs) JSON parse failed: {ex.Message}"); }
 			return d;
 		}
 
-		internal static string GetString(System.Collections.Generic.Dictionary<string, object> d, string key, string def)
+		internal static string GetString(Dictionary<string, object> d, string key, string def)
 		{
 			if (d.TryGetValue(key, out var v) == false || v == null)
 				return def;
 			return v.ToString();
 		}
 
-		internal static float GetFloat(System.Collections.Generic.Dictionary<string, object> d, string key, float def)
+		internal static float GetFloat(Dictionary<string, object> d, string key, float def)
 		{
 			if (d.TryGetValue(key, out var v) == false)
 				return def;
@@ -245,7 +246,7 @@ namespace UnityCursorToolkit.MCP
 			return parsed;
 		}
 
-		internal static float[] GetFloatArray(System.Collections.Generic.Dictionary<string, object> d, string key)
+		internal static float[] GetFloatArray(Dictionary<string, object> d, string key)
 		{
 			if (d.TryGetValue(key, out var v) == false)
 				return null;

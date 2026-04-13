@@ -6,7 +6,7 @@
  */
 
 import * as vscode from 'vscode';
-import { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
+import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { UnityDebugAdapterDescriptorFactory } from './debugAdapter';
 import { generateLaunchJson } from './launchJsonGenerator';
 import { getLinkedProjectPath } from '../project/index';

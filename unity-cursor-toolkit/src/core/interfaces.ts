@@ -7,6 +7,7 @@
  */
 
 import * as vscode from 'vscode';
+import type { ConnectionInfo, IncomingMessage } from './types';
 
 export interface IModule {
 	readonly id: string;
@@ -25,9 +26,9 @@ export interface ModuleContext {
 }
 
 export interface IConnectionManager {
-	readonly onStateChanged: vscode.Event<import('./types').ConnectionInfo>;
-	readonly onMessage: vscode.Event<import('./types').IncomingMessage>;
-	readonly info: import('./types').ConnectionInfo;
+	readonly onStateChanged: vscode.Event<ConnectionInfo>;
+	readonly onMessage: vscode.Event<IncomingMessage>;
+	readonly info: ConnectionInfo;
 	connect(): Promise<number | null>;
 	disconnect(): void;
 	send(command: string, payload?: Record<string, unknown>): void;
@@ -57,8 +58,13 @@ export interface ToolDefinition {
 	inputSchema: Record<string, unknown>;
 }
 
+export interface ToolResultContent {
+	readonly type: string;
+	readonly text: string;
+}
+
 export interface ToolResult {
-	content: Array<{ type: string; text: string }>;
+	content: ToolResultContent[];
 	isError?: boolean;
 }
 

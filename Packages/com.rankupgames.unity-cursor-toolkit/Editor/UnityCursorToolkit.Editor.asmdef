@@ -1,6 +1,6 @@
 {
     "name": "UnityCursorToolkit.Editor",
-    "rootNamespace": "",
+    "rootNamespace": "UnityCursorToolkit",
     "references": [],
     "includePlatforms": [
         "Editor"

@@ -19,6 +19,9 @@ using UnityEngine;
 #if UNITY_EDITOR
 using UnityEditor;
 
+namespace UnityCursorToolkit
+{
+
 [InitializeOnLoad]
 public static class ConsoleToCursor
 {
@@ -262,5 +265,7 @@ public static class ConsoleToCursor
 
 	#endregion
 }
+
+} // namespace UnityCursorToolkit
 
 #endif // UNITY_EDITOR

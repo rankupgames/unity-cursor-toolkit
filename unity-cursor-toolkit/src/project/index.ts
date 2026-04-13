@@ -7,14 +7,17 @@
  */
 
 import * as vscode from 'vscode';
-import { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
+import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import {
 	handleUnityProjectSetup,
 	hasLinkedUnityProject,
 	getLinkedProjectPath,
 	initializeUnityProjectHandler,
 	clearLinkedProjectOnExit,
-	isScriptInstalledInLinkedProject
+	isScriptInstalledInLinkedProject,
+	isUpmPackageInstalled,
+	checkAndUpdateUpmVersion,
+	warnLegacyScripts
 } from './projectHandler';
 import { MetaManager } from './metaManager';
 import { ProjectMcpTools } from './projectMcpTools';
@@ -63,7 +66,10 @@ export {
 	handleUnityProjectSetup,
 	hasLinkedUnityProject,
 	getLinkedProjectPath,
-	isScriptInstalledInLinkedProject
+	isScriptInstalledInLinkedProject,
+	isUpmPackageInstalled,
+	checkAndUpdateUpmVersion,
+	warnLegacyScripts
 };
 
 class ProjectStatusContributor implements IStatusBarContributor {
