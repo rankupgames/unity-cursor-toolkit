@@ -1,10 +1,11 @@
 # Unity Cursor Toolkit
 
-[![VS Code Marketplace](https://img.shields.io/vscode-marketplace/v/rankupgames.unity-cursor-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
-[![Installs](https://img.shields.io/vscode-marketplace/d/rankupgames.unity-cursor-toolkit.svg)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
+[![VS Code Marketplace](https://img.shields.io/vscode-marketplace/v/rankupgames.unity-cursor-toolkit.svg?label=Marketplace)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
+[![Marketplace Installs](https://img.shields.io/vscode-marketplace/d/rankupgames.unity-cursor-toolkit.svg?label=Installs)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
+[![Open VSX](https://img.shields.io/open-vsx/v/rankupgames/unity-cursor-toolkit?label=Open%20VSX)](https://open-vsx.org/extension/rankupgames/unity-cursor-toolkit)
+[![Open VSX Downloads](https://img.shields.io/open-vsx/dt/rankupgames/unity-cursor-toolkit?label=Open%20VSX%20Downloads)](https://open-vsx.org/extension/rankupgames/unity-cursor-toolkit)
+[![CI](https://img.shields.io/github/actions/workflow/status/rankupgames/unity-cursor-toolkit/ci.yml?branch=main&label=CI)](https://github.com/rankupgames/unity-cursor-toolkit/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![CI](https://img.shields.io/github/actions/workflow/status/rankupgames/unity-cursor-toolkit/ci.yml?branch=main)](https://github.com/rankupgames/unity-cursor-toolkit/actions)
-[![OpenVSX](https://img.shields.io/badge/OpenVSX-published-green)](https://open-vsx.org/extension/rankupgames/unity-cursor-toolkit)
 
 A VS Code / Cursor extension that bridges your editor and the Unity Editor -- hot reload, live console, MCP server for AI agents, Mono debugging, and stable TCP connectivity.
 
