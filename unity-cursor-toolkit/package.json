@@ -232,14 +232,14 @@
     "undici": ">=7.10.0"
   },
   "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.60.0",
     "@vscode/vsce": "^3.7.1",
-    "typescript": "^4.5.5",
-    "fs-extra": "^10.0.0",
     "esbuild": "^0.25.0",
+    "fs-extra": "^10.0.0",
     "ts-node": "^10.9.2",
-    "@modelcontextprotocol/sdk": "^1.27.1"
+    "typescript": "^4.5.5"
   },
   "keywords": [
     "unity",
