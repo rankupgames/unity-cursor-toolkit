@@ -1,0 +1,113 @@
+name: Extension Build
+
+on:
+  push:
+    branches: [main, 'Version-*']
+  pull_request:
+    branches: [main, 'Version-*']
+  schedule:
+    - cron: '0 11 * * 5'  # Friday 6am EST -- weekly build
+  workflow_dispatch:
+
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      has_changes: ${{ steps.changes.outputs.has_changes }}
+      build_version: ${{ steps.version.outputs.build_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for changes since last build
+        id: changes
+        run: |
+          if [ "${{ github.event_name }}" != "schedule" ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Non-scheduled run, always build"
+            exit 0
+          fi
+
+          LAST_BUILD=$(date -d '7 days ago' +%Y-%m-%dT%H:%M:%S 2>/dev/null || date -v-7d +%Y-%m-%dT%H:%M:%S)
+          COMMIT_COUNT=$(git log --since="$LAST_BUILD" --oneline -- unity-cursor-toolkit/ | wc -l | tr -d ' ')
+
+          if [ "$COMMIT_COUNT" -gt 0 ]; then
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Found $COMMIT_COUNT commits since $LAST_BUILD"
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No commits since $LAST_BUILD — skipping weekly build"
+          fi
+
+      - name: Compute version
+        id: version
+        if: steps.changes.outputs.has_changes == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TODAY=$(date -u +%m%d%y)
+          TODAY_ISO=$(date -u +%Y-%m-%d)
+
+          DAILY_RUNS=$(gh api "repos/${{ github.repository }}/actions/runs?created=>=${TODAY_ISO}&per_page=100" \
+            --jq '[.workflow_runs[] | select(.name == "Extension Build")] | length' 2>/dev/null || echo "0")
+          DAILY_INCREMENT=${DAILY_RUNS:-0}
+
+          BUILD_VERSION="0.2.${DAILY_INCREMENT}${TODAY}"
+          echo "build_version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
+          echo "Version: ${BUILD_VERSION}"
+
+  build:
+    needs: check-changes
+    if: needs.check-changes.outputs.has_changes == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: unity-cursor-toolkit
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
+      - name: Stamp version
+        run: |
+          VERSION="${{ needs.check-changes.outputs.build_version }}"
+          node -e "
+            const pkg = require('./package.json');
+            pkg.version = '${VERSION}';
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+          echo "Stamped package.json -> ${VERSION}"
+
+      - run: npm ci
+
+      - name: Security audit
+        run: |
+          npm audit --omit=dev
+          echo "### Dev-only audit (informational):" 
+          npm audit || true
+
+      - run: npm run compile
+
+      - name: Package VSIX
+        run: npx vsce package --no-dependencies
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix-${{ needs.check-changes.outputs.build_version }}
+          path: unity-cursor-toolkit/*.vsix
+
+      - name: Build summary
+        if: always()
+        run: |
+          echo "## Extension Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Trigger | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY

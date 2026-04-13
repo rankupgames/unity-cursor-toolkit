@@ -91,11 +91,14 @@ public class HotReloadHandler : EditorWindow
         AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
         EditorApplication.quitting += OnEditorQuitting;
 
-        // Auto-start on Unity load
+        #if UNITY_2019_1_OR_NEWER
+        CompilationPipeline.compilationStarted += OnCompilationStarted;
+        #endif
+
+        // Auto-start on Unity load (always start so extension can connect immediately)
         EditorApplication.delayCall += () => {
-            if (!isInitialized && wasRunningBeforeReload)
+            if (!isInitialized)
             {
-                // Clear the flag
                 EditorPrefs.SetBool(wasRunningPrefKey, false);
                 StartWithoutMutex();
             }
@@ -734,14 +737,17 @@ public class HotReloadHandler : EditorWindow
 
     /// <summary>
     /// Handles communication with a single client connection.
+    /// Accumulates TCP data and splits on newline delimiters to handle
+    /// message fragmentation and batching correctly.
     /// </summary>
     /// <param name="client">The connected TCP client</param>
     private static void HandleClient(TcpClient client)
     {
         try
         {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[4096];
             NetworkStream stream = client.GetStream();
+            StringBuilder lineBuffer = new StringBuilder();
 
             while (client.Connected && isServerRunning)
             {
@@ -750,12 +756,30 @@ public class HotReloadHandler : EditorWindow
                     int bytesRead = stream.Read(buffer, 0, buffer.Length);
                     if (bytesRead > 0)
                     {
-                        string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                        lineBuffer.Append(Encoding.UTF8.GetString(buffer, 0, bytesRead));
 
-                        // Queue message for processing on main thread
-                        lock (messageQueue)
+                        // Split on newline -- each complete line is one message
+                        string accumulated = lineBuffer.ToString();
+                        int newlineIdx;
+                        while ((newlineIdx = accumulated.IndexOf('\n')) >= 0)
                         {
-                            messageQueue.Enqueue(message);
+                            string line = accumulated.Substring(0, newlineIdx).Trim();
+                            accumulated = accumulated.Substring(newlineIdx + 1);
+
+                            if (string.IsNullOrEmpty(line) == false)
+                            {
+                                lock (messageQueue)
+                                {
+                                    messageQueue.Enqueue(line);
+                                }
+                            }
+                        }
+
+                        // Keep any incomplete data for the next read
+                        lineBuffer.Clear();
+                        if (accumulated.Length > 0)
+                        {
+                            lineBuffer.Append(accumulated);
                         }
                     }
                     else
@@ -801,9 +825,8 @@ public class HotReloadHandler : EditorWindow
 
     /// <summary>
     /// Processes messages received from the TCP client.
-    /// Handles different command types from the VS Code extension.
+    /// Routes to IL patching, MCP tool dispatch, debug port, and refresh.
     /// </summary>
-    /// <param name="message">The message received from the client</param>
     private static void ProcessMessage(string message)
     {
         if (showDebugLogs)
@@ -813,43 +836,168 @@ public class HotReloadHandler : EditorWindow
 
         try
         {
-            // Try to parse as JSON for more complex commands
             if (message.Contains("{") && message.Contains("}"))
             {
-                // Simple JSON parsing for command
                 if (message.Contains("\"command\""))
                 {
                     if (message.Contains("\"refresh\""))
                     {
-                        shouldRequestRefresh = true;
+                        string[] changedFiles = ExtractFilePaths(message);
+                        HandleRefresh(changedFiles);
                     }
                     else if (message.Contains("\"ping\""))
                     {
-                        // Could implement ping/pong in future
-                        if (showDebugLogs)
-                        {
-                            Debug.Log("Received ping from VS Code");
-                        }
+                        BroadcastToClients("{\"command\":\"pong\"}");
+                    }
+                    else if (message.Contains("\"getDebugPort\""))
+                    {
+                        UnityCursorToolkit.Debugging.DebugBridge.BroadcastDebugPort();
+                    }
+                    else if (message.Contains("\"mcpToolCall\""))
+                    {
+                        RouteMcpToolCall(message);
                     }
                 }
                 else
                 {
-                    // Default behavior - refresh
                     shouldRequestRefresh = true;
                 }
             }
             else
             {
-                // Simple message - trigger refresh
                 shouldRequestRefresh = true;
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error processing message: {ex.Message}");
-            // Default to refresh on error
+            Debug.LogError($"(HotReloadHandler - ProcessMessage) Error: {ex.Message}");
             shouldRequestRefresh = true;
         }
+    }
+
+    /// <summary>
+    /// Routes an mcpToolCall message to MCPBridge for dispatch.
+    /// Extracts toolName and args from the JSON payload.
+    /// </summary>
+    private static void RouteMcpToolCall(string message)
+    {
+        string toolName = ExtractJsonStringValue(message, "toolName");
+        if (string.IsNullOrEmpty(toolName))
+        {
+            Debug.LogWarning("(HotReloadHandler - RouteMcpToolCall) Missing toolName in mcpToolCall");
+            return;
+        }
+
+        string argsJson = ExtractJsonObject(message, "args");
+        UnityCursorToolkit.MCP.MCPBridge.HandleToolCall(toolName, argsJson ?? "{}");
+    }
+
+    /// <summary>
+    /// Extracts a string value for a given key from a JSON message.
+    /// </summary>
+    private static string ExtractJsonStringValue(string json, string key)
+    {
+        string search = "\"" + key + "\"";
+        int keyIdx = json.IndexOf(search);
+        if (keyIdx < 0) return null;
+
+        int colonIdx = json.IndexOf(':', keyIdx + search.Length);
+        if (colonIdx < 0) return null;
+
+        int quoteStart = json.IndexOf('"', colonIdx + 1);
+        if (quoteStart < 0) return null;
+
+        int quoteEnd = json.IndexOf('"', quoteStart + 1);
+        if (quoteEnd < 0) return null;
+
+        return json.Substring(quoteStart + 1, quoteEnd - quoteStart - 1);
+    }
+
+    /// <summary>
+    /// Extracts a nested JSON object for a given key.
+    /// </summary>
+    private static string ExtractJsonObject(string json, string key)
+    {
+        string search = "\"" + key + "\"";
+        int keyIdx = json.IndexOf(search);
+        if (keyIdx < 0) return null;
+
+        int braceStart = json.IndexOf('{', keyIdx + search.Length);
+        if (braceStart < 0) return null;
+
+        int depth = 0;
+        for (int i = braceStart; i < json.Length; i++)
+        {
+            if (json[i] == '{') depth++;
+            else if (json[i] == '}') depth--;
+
+            if (depth == 0)
+            {
+                return json.Substring(braceStart, i - braceStart + 1);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Decides whether to IL-patch or full-refresh based on play mode and preferences.
+    /// </summary>
+    private static void HandleRefresh(string[] changedFiles)
+    {
+        bool preferILPatch = EditorPrefs.GetBool("UnityCursorToolkit_PreferILPatch", true);
+
+        if (EditorApplication.isPlaying && preferILPatch && changedFiles != null && changedFiles.Length > 0)
+        {
+            var result = UnityCursorToolkit.HotReload.ILPatcher.TryPatch(changedFiles);
+
+            if (result.Success)
+            {
+                string payload = $"{{\"command\":\"compilationResult\",\"success\":true,\"method\":\"ilPatch\",\"patchedMethods\":{result.PatchedMethodCount},\"elapsedMs\":{result.ElapsedMs}}}";
+                BroadcastToClients(payload);
+
+                if (showDebugLogs)
+                {
+                    Debug.Log($"Hot Reload: IL Patch applied — {result.PatchedMethodCount} methods in {result.ElapsedMs}ms");
+                }
+                return;
+            }
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"Hot Reload: IL Patch fallback — {result.FallbackReason}");
+            }
+        }
+
+        shouldRequestRefresh = true;
+    }
+
+    /// <summary>
+    /// Extract file paths from the JSON refresh message.
+    /// </summary>
+    private static string[] ExtractFilePaths(string json)
+    {
+        int filesIdx = json.IndexOf("\"files\"");
+        if (filesIdx < 0) return null;
+
+        int arrayStart = json.IndexOf('[', filesIdx);
+        int arrayEnd = json.IndexOf(']', arrayStart);
+        if (arrayStart < 0 || arrayEnd < 0) return null;
+
+        string arrayContent = json.Substring(arrayStart + 1, arrayEnd - arrayStart - 1);
+        if (string.IsNullOrEmpty(arrayContent.Trim())) return new string[0];
+
+        var paths = new List<string>();
+        foreach (string part in arrayContent.Split(','))
+        {
+            string trimmed = part.Trim().Trim('"');
+            if (string.IsNullOrEmpty(trimmed) == false)
+            {
+                paths.Add(trimmed);
+            }
+        }
+
+        return paths.ToArray();
     }
 
     /// <summary>
@@ -862,11 +1010,11 @@ public class HotReloadHandler : EditorWindow
         {
             Debug.Log("Hot Reload: Refreshing Unity assets...");
 
-            // Refresh the asset database
             AssetDatabase.Refresh(ImportAssetOptions.Default);
 
-            // Request script compilation (Unity 2019.1 or newer)
             #if UNITY_2019_1_OR_NEWER
+            CompilationPipeline.compilationFinished -= OnCompilationFinished;
+            CompilationPipeline.compilationFinished += OnCompilationFinished;
             CompilationPipeline.RequestScriptCompilation();
             #endif
 
@@ -880,6 +1028,37 @@ public class HotReloadHandler : EditorWindow
             Debug.LogError($"Hot Reload refresh error: {e.Message}");
         }
     }
+
+    #if UNITY_2019_1_OR_NEWER
+    /// <summary>
+    /// Notifies connected extension clients that compilation has begun.
+    /// Extension pauses heartbeat during compilation since Unity's main thread is blocked.
+    /// </summary>
+    private static void OnCompilationStarted(object context)
+    {
+        BroadcastToClients("{\"command\":\"compilationStarted\"}");
+    }
+
+    private static void OnCompilationFinished(object context)
+    {
+        CompilationPipeline.compilationFinished -= OnCompilationFinished;
+
+        bool _success = !EditorUtility.scriptCompilationFailed;
+        string _payload = $"{{\"command\":\"compilationResult\",\"success\":{(_success ? "true" : "false")}}}";
+
+        lock (mainThreadActionsLock)
+        {
+            mainThreadActions.Enqueue(() =>
+            {
+                BroadcastToClients(_payload);
+                if (showDebugLogs)
+                {
+                    Debug.Log($"Hot Reload: Compilation {(_success ? "succeeded" : "failed")}");
+                }
+            });
+        }
+    }
+    #endif
 
     /// <summary>
     /// Sends a message to all connected extension clients.

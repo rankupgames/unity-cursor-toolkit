@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.1.507103025",
+  "version": "0.6.7031526",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
   "license": "MIT",
@@ -20,48 +20,49 @@
     "workspaceContains:Assets/",
     "workspaceContains:*.unity",
     "workspaceContains:*.cs",
-    "onCommand:unity-cursor-toolkit.plasticTimeline.refresh",
-    "onCommand:unity-cursor-toolkit.plasticTimeline.showLogs",
-    "onView:plasticTimeline"
+    "onView:unityConsole"
   ],
   "main": "./out/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
   "contributes": {
     "configuration": [
       {
         "title": "Unity Cursor Toolkit",
         "properties": {
-          "unityCursorToolkit.plasticTimeline.enabled": {
+          "unityCursorToolkit.console.enabled": {
             "type": "boolean",
-            "default": false,
-            "description": "Enable the Plastic SCM Timeline panel and webview."
+            "default": true,
+            "description": "Enable the Unity Console panel in the sidebar."
           },
-          "unityCursorToolkit.plasticTimeline.source": {
-            "type": "string",
-            "enum": ["cli", "rest", "auto"],
-            "default": "cli",
-            "description": "Primary data source for the Plastic Timeline. 'cli' uses the cm CLI, 'rest' uses the REST API (scaffold), 'auto' tries CLI then REST."
+          "unityCursorToolkit.console.autoStream": {
+            "type": "boolean",
+            "default": true,
+            "description": "Automatically stream Unity console output to the panel."
           },
-          "unityCursorToolkit.plasticTimeline.cliPath": {
-            "type": "string",
-            "description": "Optional explicit path to the 'cm' CLI binary."
-          },
-          "unityCursorToolkit.plasticTimeline.itemsPerPage": {
+          "unityCursorToolkit.console.maxEntries": {
             "type": "number",
-            "default": 100,
-            "minimum": 10,
-            "maximum": 1000,
-            "description": "Number of changesets to fetch per page."
+            "default": 10000,
+            "description": "Maximum console entries retained in the ring buffer."
           },
-          "unityCursorToolkit.plasticTimeline.order": {
-            "type": "string",
-            "enum": ["newest-first", "oldest-first"],
-            "default": "newest-first",
-            "description": "Timeline ordering."
-          },
-          "unityCursorToolkit.plasticTimeline.preferXml": {
+          "unityCursorToolkit.hotReload.preferILPatch": {
             "type": "boolean",
-            "default": false,
-            "description": "Attempt to fetch Plastic log as XML and parse (falls back to text parsing if unavailable)."
+            "default": true,
+            "description": "Prefer IL patching over full asset refresh when in play mode."
+          },
+          "unityCursorToolkit.hotReload.ilPatchTimeout": {
+            "type": "number",
+            "default": 5000,
+            "description": "Timeout (ms) for IL patch before falling back to full refresh."
+          },
+          "unityCursorToolkit.workspaceScanPaths": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "default": [],
+            "description": "Additional paths to scan for .code-workspace files."
           }
         }
       }
@@ -80,14 +81,111 @@
         "title": "Unity Toolkit: Stop Connection"
       },
       {
-        "command": "unity-cursor-toolkit.plasticTimeline.refresh",
-        "title": "Unity Toolkit: Refresh Plastic Timeline View",
-        "icon": "$(refresh)"
+        "command": "unity-cursor-toolkit.console.clear",
+        "title": "Unity Toolkit: Clear Console",
+        "icon": "$(clear-all)"
       },
       {
-        "command": "unity-cursor-toolkit.plasticTimeline.showLogs",
-        "title": "Unity Toolkit: Show Plastic Timeline Logs",
-        "icon": "$(output)"
+        "command": "unity-cursor-toolkit.console.sendToChat",
+        "title": "Unity Toolkit: Send Console to Chat",
+        "icon": "$(comment-discussion)"
+      },
+      {
+        "command": "unity-cursor-toolkit.console.copy",
+        "title": "Unity Toolkit: Copy Console",
+        "icon": "$(copy)"
+      },
+      {
+        "command": "unity-cursor-toolkit.console.snapshot",
+        "title": "Unity Toolkit: Console Snapshot"
+      },
+      {
+        "command": "unity-cursor-toolkit.console.export",
+        "title": "Unity Toolkit: Export Console Logs"
+      },
+      {
+        "command": "unity-cursor-toolkit.resolveMeta",
+        "title": "Unity Toolkit: Resolve Meta File"
+      },
+      {
+        "command": "unity-cursor-toolkit.openProject",
+        "title": "Unity Toolkit: Open Project"
+      },
+      {
+        "command": "unity-cursor-toolkit.generateFolderStructure",
+        "title": "Unity Toolkit: Generate Folder Structure"
+      },
+      {
+        "command": "unity-cursor-toolkit.quickAccess",
+        "title": "Unity Toolkit: Quick Actions"
+      },
+      {
+        "command": "unity-cursor-toolkit.debug.attach",
+        "title": "Unity Toolkit: Attach Debugger"
+      },
+      {
+        "command": "unity-cursor-toolkit.playMode.enter",
+        "title": "Unity Toolkit: Enter Play Mode",
+        "icon": "$(play)"
+      },
+      {
+        "command": "unity-cursor-toolkit.playMode.exit",
+        "title": "Unity Toolkit: Exit Play Mode",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "unity-cursor-toolkit.playMode.pause",
+        "title": "Unity Toolkit: Pause Play Mode",
+        "icon": "$(debug-pause)"
+      },
+      {
+        "command": "unity-cursor-toolkit.playMode.step",
+        "title": "Unity Toolkit: Step Frame",
+        "icon": "$(debug-step-over)"
+      },
+      {
+        "command": "unity-cursor-toolkit.screenshot",
+        "title": "Unity Toolkit: Capture Screenshot",
+        "icon": "$(device-camera)"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "unityCursorToolkit.debug",
+        "label": "Unity (Mono)",
+        "configurationAttributes": {
+          "attach": {
+            "properties": {
+              "debugPort": {
+                "type": "number",
+                "default": 56000,
+                "description": "Mono debugger port (from -debuggerPort or default 56000)"
+              }
+            }
+          }
+        },
+        "configurationSnippets": [
+          {
+            "label": "Attach to Unity Editor",
+            "description": "Attach to Unity Editor's Mono debugger",
+            "body": {
+              "type": "unityCursorToolkit.debug",
+              "request": "attach",
+              "name": "Attach to Unity Editor",
+              "debugPort": 56000
+            }
+          },
+          {
+            "label": "Attach to Unity Player",
+            "description": "Attach to Unity Player (Development build + Script Debugging)",
+            "body": {
+              "type": "unityCursorToolkit.debug",
+              "request": "attach",
+              "name": "Attach to Unity Player",
+              "debugPort": 56000
+            }
+          }
+        ]
       }
     ],
     "viewsContainers": {
@@ -95,34 +193,27 @@
         {
           "id": "unityCursorToolkit",
           "title": "Unity Cursor",
-          "icon": "TempIcon.png",
-          "when": "config.unityCursorToolkit.plasticTimeline.enabled"
+          "icon": "TempIcon.png"
         }
       ]
     },
     "views": {
       "unityCursorToolkit": [
         {
-          "id": "plasticTimeline",
-          "name": "Plastic Timeline",
+          "id": "unityConsole",
+          "name": "Unity Console",
           "type": "webview",
-          "icon": "TempIcon.png",
-          "when": "config.unityCursorToolkit.plasticTimeline.enabled"
+          "icon": "$(terminal)",
+          "when": "config.unityCursorToolkit.console.enabled"
         }
       ]
-    },
-    "viewsWelcome": [
-      {
-        "view": "plasticTimeline",
-        "contents": "Plastic Timeline is disabled. Enable it in Settings.",
-        "when": "config.unityCursorToolkit.plasticTimeline.enabled == false"
-      }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./ && npm run copy-assets",
     "watch": "tsc -watch -p ./",
+    "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "node ./out/test/runTest.js",
     "install-unity": "node install-unity-script.js",
@@ -132,19 +223,26 @@
     "build": "npm run compile",
     "bundle": "node scripts/esbuild-bundle.js",
     "bundle:watch": "node scripts/esbuild-bundle.js --watch",
-    "mcp:server": "ts-node src/mcp/server.ts",
     "install:unity": "node install-unity-script.js",
-    "copy-assets": "node scripts/copy-assets.js"
+    "copy-assets": "node scripts/copy-assets.js",
+    "dev": "npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
+    "bump": "node scripts/bump-version.js && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
+    "bump:minor": "npm version minor && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix 2>/dev/null || code --install-extension *.vsix)",
+    "local": "npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
+    "audit": "npm audit --omit=dev; npm audit"
+  },
+  "overrides": {
+    "undici": ">=7.10.0"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.60.0",
-    "@vscode/vsce": "^2.22.0",
+    "@vscode/vsce": "^3.7.1",
     "typescript": "^4.5.5",
     "fs-extra": "^10.0.0",
-    "esbuild": "^0.21.5",
+    "esbuild": "^0.25.0",
     "ts-node": "^10.9.2",
-    "@modelcontextprotocol/sdk": "^0.1.4"
+    "@modelcontextprotocol/sdk": "^1.27.1"
   },
   "keywords": [
     "unity",

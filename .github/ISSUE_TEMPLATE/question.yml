@@ -1,0 +1,33 @@
+name: Question
+description: Ask a question or get help with Unity Cursor Toolkit
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? We're here to help. Please provide as much context as you can.
+  - type: textarea
+    id: question
+    attributes:
+      label: Question
+      description: What would you like to know?
+      placeholder: "Ask your question here..."
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: What are you trying to accomplish?
+      placeholder: "Describe your use case or what you're working on..."
+    validations:
+      required: true
+  - type: textarea
+    id: relevant-details
+    attributes:
+      label: Relevant Details (optional)
+      description: Unity version, OS, extension version, or anything else that might help
+      placeholder: "Add any relevant details..."
+    validations:
+      required: false

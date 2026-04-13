@@ -3,6 +3,7 @@
 .gitignore
 node_modules/**
 src/**
+scripts/**
 tsconfig.json
 webpack.config.js
 .yarnrc
@@ -15,5 +16,6 @@ images/**
 *.vsix
 **/*.map
 **/.DS_Store
+out-bundle/**
 ../**
 !unity-assets/**

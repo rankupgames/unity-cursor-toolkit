@@ -1,6 +1,16 @@
+// @ts-nocheck
+/**
+ * [WIP] Plastic SCM Timeline -- webview provider for VCS timeline visualization.
+ * Currently disconnected from the extension. Not registered or activated.
+ * Re-enable by wiring into extension.ts and package.json when ready.
+ *
+ * Author: Miguel A. Lopez
+ * Company: Rank Up Games LLC
+ */
+
 import * as vscode from 'vscode';
-import { listChangesets as listChangesetsCli, ListChangesetsOptions } from '../services/plasticCli';
-import { listChangesets as listChangesetsRest } from '../services/plasticRest';
+import { listChangesets as listChangesetsCli, ListChangesetsOptions } from './plasticCli';
+import { listChangesets as listChangesetsRest } from './plasticRest';
 
 let _uiChannel: vscode.OutputChannel | undefined;
 function uiChannel(): vscode.OutputChannel {

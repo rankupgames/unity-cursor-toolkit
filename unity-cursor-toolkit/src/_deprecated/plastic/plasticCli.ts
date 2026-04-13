@@ -1,3 +1,13 @@
+// @ts-nocheck
+/**
+ * [WIP] Plastic SCM CLI wrapper -- workspace detection, platform-specific binary lookup, changeset parsing.
+ * Currently disconnected from the extension. Not registered or activated.
+ * Re-enable by wiring into extension.ts and package.json when ready.
+ *
+ * Author: Miguel A. Lopez
+ * Company: Rank Up Games LLC
+ */
+
 import * as vscode from 'vscode';
 import { execFile } from 'child_process';
 import * as fs from 'fs';

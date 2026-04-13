@@ -29,6 +29,7 @@ public static class ConsoleToCursor
 
 	private static readonly List<ConsoleEntry> entryBuffer = new List<ConsoleEntry>();
 	private static readonly object bufferLock = new object();
+	private static bool autoStreamEnabled = true;
 
 	#endregion
 
@@ -41,6 +42,16 @@ public static class ConsoleToCursor
 		public string command;
 		public string content;
 		public int entryCount;
+	}
+
+	[Serializable]
+	private struct StreamEntry
+	{
+		public string command;
+		public string type;
+		public string message;
+		public string stackTrace;
+		public string timestamp;
 	}
 
 	private struct ConsoleEntry
@@ -83,6 +94,19 @@ public static class ConsoleToCursor
 			{
 				entryBuffer.RemoveAt(0);
 			}
+		}
+
+		if (autoStreamEnabled && HotReloadHandler.IsServerRunning() && HotReloadHandler.GetConnectedClientCount() > 0)
+		{
+			var _stream = new StreamEntry
+			{
+				command = "consoleEntry",
+				type = type.ToString(),
+				message = message,
+				stackTrace = stackTrace ?? "",
+				timestamp = _entry.timestamp
+			};
+			HotReloadHandler.BroadcastToClients(JsonUtility.ToJson(_stream));
 		}
 	}
 

@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: unity-cursor-toolkit
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF#refs/tags/v}"
+          echo "version=${TAG}" >> $GITHUB_OUTPUT
+
+      - name: Stamp version
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          node -e "
+            const pkg = require('./package.json');
+            pkg.version = '${VERSION}';
+            require('fs').writeFileSync('package.json', JSON.stringify(pkg, null, 2) + '\n');
+          "
+
+      - run: npm ci
+      - run: npm run compile
+
+      - name: Package VSIX
+        run: npx vsce package --no-dependencies
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vsix-release-${{ steps.version.outputs.version }}
+          path: unity-cursor-toolkit/*.vsix
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          VSIX_FILE=$(ls *.vsix | head -1)
+          COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-8)
+
+          gh release create "v${VERSION}" \
+            --repo "${{ github.repository }}" \
+            --title "Unity Cursor Toolkit v${VERSION}" \
+            --notes "$(cat <<EOFNOTES
+          ## Unity Cursor Toolkit v${VERSION}
+
+          | Field | Value |
+          |-------|-------|
+          | Version | \`${VERSION}\` |
+          | Commit | \`${COMMIT_SHORT}\` |
+          | Branch | \`${{ github.ref_name }}\` |
+
+          ### Install
+          Download the \`.vsix\` below and install via \`code --install-extension <file>\`.
+          EOFNOTES
+          )" \
+            "${VSIX_FILE}"
+
+      - name: Publish to Marketplace
+        if: env.VSCE_PAT != ''
+        run: npx vsce publish --no-dependencies
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+
+      - name: Publish to OpenVSX
+        if: env.OVSX_PAT != ''
+        run: npx ovsx publish *.vsix -p $OVSX_PAT
+        env:
+          OVSX_PAT: ${{ secrets.OVSX_PAT }}

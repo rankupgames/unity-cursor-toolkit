@@ -6,6 +6,7 @@ const destDir = path.join(__dirname, "..", "out", "unity-assets");
 
 async function copyAssets() {
   try {
+    await fs.remove(destDir);
     await fs.ensureDir(destDir);
     await fs.copy(sourceDir, destDir);
     console.log("Successfully copied unity-assets to out/unity-assets");

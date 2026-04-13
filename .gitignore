@@ -3,6 +3,7 @@ node_modules/
 
 # VS Code extension build output
 out/
+out-bundle/
 *.vsix
 
 # System files
@@ -21,7 +22,14 @@ yarn-error.log*
 *.ntvs*
 *.njsproj
 *.sln
-*.sw? 
+*.sw?
+
+# Cursor IDE local state
+.cursor/
+
+# Environment / secrets
+.env
+.env.*
 
 # Unity generated
 [Ll]ibrary/
@@ -77,4 +85,4 @@ ExportedObj/
 
 # Root package files (no longer needed)
 /package.json
-/package-lock.json 
+/package-lock.json

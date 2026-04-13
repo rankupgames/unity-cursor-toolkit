@@ -1,3 +1,13 @@
+// @ts-nocheck
+/**
+ * [WIP] Plastic SCM REST API client -- scaffold for future REST-based timeline data.
+ * Currently disconnected from the extension. Not registered or activated.
+ * Re-enable by wiring into extension.ts and package.json when ready.
+ *
+ * Author: Miguel A. Lopez
+ * Company: Rank Up Games LLC
+ */
+
 import * as vscode from 'vscode';
 
 export type TimelineOrder = 'newest-first' | 'oldest-first';
