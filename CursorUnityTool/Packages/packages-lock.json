@@ -1,5 +1,12 @@
 {
   "dependencies": {
+    "com.rankupgames.unity-cursor-toolkit": {
+      "version": "https://github.com/rankupgames/unity-cursor-toolkit.git?path=Packages/com.rankupgames.unity-cursor-toolkit#v0.6.0",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "ba50e7acb2cc35cfc3ac024392c2b9074724b564"
+    },
     "com.unity.ai.navigation": {
       "version": "2.0.12",
       "depth": 0,

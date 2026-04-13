@@ -69,11 +69,9 @@ jobs:
           UPM_VERSION="${{ steps.upm.outputs.upm_version }}"
           VSIX_FILE=$(ls *.vsix | head -1)
           COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-8)
+          REPO="${{ github.repository }}"
 
-          gh release create "v${VERSION}" \
-            --repo "${{ github.repository }}" \
-            --title "Unity Cursor Toolkit v${VERSION}" \
-            --notes "$(cat <<'EOFNOTES'
+          cat > /tmp/release-notes.md <<EOFNOTES
           ## Unity Cursor Toolkit v${VERSION}
 
           | Field | Value |
@@ -86,15 +84,19 @@ jobs:
           Download the \`.vsix\` below or install from the marketplace.
 
           ### Unity Package (UPM)
-          ```
+          \`\`\`
           openupm add com.rankupgames.unity-cursor-toolkit
-          ```
+          \`\`\`
           Or add via git URL in Unity Package Manager:
-          ```
-          https://github.com/${{ github.repository }}.git?path=Packages/com.rankupgames.unity-cursor-toolkit#v${VERSION}
-          ```
+          \`\`\`
+          https://github.com/${REPO}.git?path=Packages/com.rankupgames.unity-cursor-toolkit#v${VERSION}
+          \`\`\`
           EOFNOTES
-          )" \
+
+          gh release create "v${VERSION}" \
+            --repo "${REPO}" \
+            --title "Unity Cursor Toolkit v${VERSION}" \
+            --notes-file /tmp/release-notes.md \
             "${VSIX_FILE}"
 
       - name: Publish to Marketplace
