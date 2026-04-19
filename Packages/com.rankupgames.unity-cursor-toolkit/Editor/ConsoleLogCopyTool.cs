@@ -17,7 +17,6 @@ using UnityEditor;
 using UnityEditor.Toolbars;
 
 using UnityEngine;
-using UnityEngine.UIElements;
 
 namespace UnityCursorToolkit
 {
@@ -31,28 +30,16 @@ public static class ConsoleLogCopyTool
 {
 	/// <summary>
 	/// Creates the main toolbar button with a clipboard icon docked to the right side.
+	/// Uses MainToolbarButton with MainToolbarContent for native Unity toolbar rendering.
 	/// </summary>
+	/// <returns>A MainToolbarButton configured with clipboard icon and copy action.</returns>
 	[MainToolbarElement("UnityCursorToolkit/CopyConsoleLogs", defaultDockPosition = MainToolbarDockPosition.Right)]
-	static VisualElement CreateMainToolbarCopyLogsButton()
+	static MainToolbarButton CreateMainToolbarCopyLogsButton()
 	{
-		var _button = new Button(() => CopyConsoleLogs())
-		{
-			tooltip = "Copy all console logs to clipboard"
-		};
-
-		var _icon = EditorGUIUtility.IconContent("Clipboard").image as Texture2D;
-		if (_icon != null)
-		{
-			_button.Add(new Image { image = _icon, style = { width = 16, height = 16 } });
-		}
-		else
-		{
-			_button.text = "Copy Logs";
-		}
-
-		_button.AddToClassList("unity-toolbar-button");
-
-		return _button;
+		Texture2D _icon = EditorGUIUtility.IconContent("Clipboard").image as Texture2D;
+		return new MainToolbarButton(
+			new MainToolbarContent(_icon, "Copy all console logs to clipboard"),
+			() => CopyConsoleLogs());
 	}
 
 	/// <summary>
