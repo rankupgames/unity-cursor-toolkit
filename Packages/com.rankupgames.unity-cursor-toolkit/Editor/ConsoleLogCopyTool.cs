@@ -5,7 +5,7 @@
  * Description: Editor tool to copy all Unity console log entries to the clipboard.
  *              Adds a button to the main toolbar and a menu item under Tools.
  * Created: 2026-04-13
- * Last Modified: 2026-04-13
+ * Last Modified: 2026-04-19
  */
 
 #if UNITY_EDITOR
@@ -17,21 +17,49 @@ using UnityEditor;
 using UnityEditor.Toolbars;
 
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace UnityCursorToolkit
 {
 
+/// <summary>
+/// Editor tool that copies all Unity console log entries to the system clipboard.
+/// Provides a main toolbar button (docked right) and a menu item under Tools.
+/// Uses reflection to access internal Unity LogEntries API across editor versions.
+/// </summary>
 public static class ConsoleLogCopyTool
 {
+	/// <summary>
+	/// Creates the main toolbar button with a clipboard icon docked to the right side.
+	/// </summary>
 	[MainToolbarElement("UnityCursorToolkit/CopyConsoleLogs", defaultDockPosition = MainToolbarDockPosition.Right)]
-	static MainToolbarButton CreateMainToolbarCopyLogsButton()
+	static VisualElement CreateMainToolbarCopyLogsButton()
 	{
+		var _button = new Button(() => CopyConsoleLogs())
+		{
+			tooltip = "Copy all console logs to clipboard"
+		};
+
 		var _icon = EditorGUIUtility.IconContent("Clipboard").image as Texture2D;
-		return new MainToolbarButton(
-			new MainToolbarContent(_icon, "Copy all console logs to clipboard"),
-			() => CopyConsoleLogs());
+		if (_icon != null)
+		{
+			_button.Add(new Image { image = _icon, style = { width = 16, height = 16 } });
+		}
+		else
+		{
+			_button.text = "Copy Logs";
+		}
+
+		_button.AddToClassList("unity-toolbar-button");
+
+		return _button;
 	}
 
+	/// <summary>
+	/// Copies all console log entries to the system clipboard.
+	/// Accessible via the menu at Tools/Unity Cursor Toolkit/Copy Console Logs
+	/// or the keyboard shortcut Cmd+Shift+L (Ctrl+Shift+L on Windows).
+	/// </summary>
 	[MenuItem("Tools/Unity Cursor Toolkit/Copy Console Logs %#l")]
 	internal static void CopyConsoleLogs()
 	{
@@ -46,6 +74,11 @@ public static class ConsoleLogCopyTool
 		Debug.Log("(ConsoleLogCopyTool - CopyConsoleLogs) Copied all console logs to clipboard");
 	}
 
+	/// <summary>
+	/// Retrieves all console log entries via reflection into the internal LogEntries API.
+	/// Supports both UnityEditor.LogEntries and UnityEditorInternal.LogEntries.
+	/// </summary>
+	/// <returns>All log entries as a single string with log-level prefixes, or null if empty.</returns>
 	private static string GetConsoleLogEntries()
 	{
 		var _logEntriesType = Type.GetType("UnityEditor.LogEntries, UnityEditor");
@@ -129,6 +162,12 @@ public static class ConsoleLogCopyTool
 		return _sb.ToString();
 	}
 
+	/// <summary>
+	/// Fallback method for retrieving log entries when the primary internal API
+	/// methods are unavailable. Uses the simpler GetEntryStringAt method.
+	/// </summary>
+	/// <param name="logEntriesType">The resolved LogEntries type to query.</param>
+	/// <returns>All log entries as a single string, or null if empty.</returns>
 	private static string GetConsoleLogEntriesFallback(Type logEntriesType)
 	{
 		var _getCount = logEntriesType.GetMethod("GetCount", BindingFlags.Static | BindingFlags.Public);
@@ -164,6 +203,11 @@ public static class ConsoleLogCopyTool
 		return _sb.ToString();
 	}
 
+	/// <summary>
+	/// Converts an internal Unity log mode bitmask to a human-readable prefix.
+	/// </summary>
+	/// <param name="mode">Unity internal log entry mode bitmask.</param>
+	/// <returns>A string prefix: [ERROR], [WARNING], or [LOG].</returns>
 	private static string GetLogPrefix(int mode)
 	{
 		bool _isError = (mode & (1 << 0)) != 0;
