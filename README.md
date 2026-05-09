@@ -21,7 +21,7 @@ Save-to-refresh with debounced file watching and compilation feedback in the sta
 
 ### Live Console
 
-Real-time streaming, severity filtering, text search, clickable stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable).
+Real-time streaming, severity filtering, text search across messages and stack traces, safe clickable `Assets/...` stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable).
 
 ### Connection
 
@@ -45,7 +45,7 @@ Attach to the Unity Editor or a Development Player via the built-in Mono soft de
 
 ### Meta File Management
 
-Auto-hide `.meta` files from explorer and Cmd+P, on-demand resolve for AI workflows.
+Auto-hide `.meta` files from explorer and Cmd+P, with workspace-contained on-demand resolve for AI workflows.
 
 ### Unity Package (C# side)
 
@@ -106,6 +106,33 @@ Add to your project's `Packages/manifest.json`:
 | `unityCursorToolkit.hotReload.preferILPatch` | `true` | Prefer IL patching over full asset refresh in play mode |
 | `unityCursorToolkit.hotReload.ilPatchTimeout` | `5000` | Timeout (ms) for IL patch before falling back to full refresh |
 | `unityCursorToolkit.workspaceScanPaths` | `[]` | Additional paths to scan for `.code-workspace` files |
+
+## Development and Validation
+
+The extension package lives in `unity-cursor-toolkit/`.
+
+```bash
+cd unity-cursor-toolkit
+npm ci
+npm run validate
+```
+
+`npm run validate` is the canonical local and CI gate. It compiles the extension, runs a strict unused-code type check, executes the runtime test harness, and runs both production and full npm audits.
+
+For packaging checks:
+
+```bash
+npx vsce package --no-dependencies
+```
+
+The VSIX package is intentionally limited to runtime extension assets: compiled `out/` files, metadata, icon, and license. Tests, backups, lockfiles, source maps, and generated bundles are excluded through `.vscodeignore`.
+
+## Security Hardening
+
+- Dependency audits run through `npm run validate` and GitHub Actions.
+- Console webviews use nonce-based CSP for scripts and styles.
+- Console payloads are normalized before rendering, filtering, copying, or forwarding to chat.
+- Clickable stack traces and `.meta` resolution reject paths that escape the current workspace.
 
 ## Commands
 
@@ -170,6 +197,10 @@ unity-cursor-toolkit/
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for repository and extension changes. The Unity package changelog lives at [Packages/com.rankupgames.unity-cursor-toolkit/CHANGELOG.md](Packages/com.rankupgames.unity-cursor-toolkit/CHANGELOG.md).
 
 ## Security
 

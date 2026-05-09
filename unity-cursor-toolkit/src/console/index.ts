@@ -23,7 +23,7 @@ export class ConsoleModule implements IModule {
 
 	public async activate(ctx: ModuleContext): Promise<void> {
 		this.bridge = new ConsoleBridge(ctx.connectionManager);
-		this.provider = new ConsolePanelProvider(ctx.extensionContext.extensionUri, this.bridge);
+		this.provider = new ConsolePanelProvider(this.bridge);
 		this.outputChannel = vscode.window.createOutputChannel('Unity Console');
 
 		this.disposables.push(

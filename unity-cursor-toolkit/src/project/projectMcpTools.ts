@@ -39,8 +39,8 @@ export class ProjectMcpTools implements IToolProvider {
 
 	public async handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {
 		if (name === 'resolve_meta') {
-			const assetPath = args.assetPath as string;
-			if (assetPath == null || assetPath.length === 0) {
+			const assetPath = args.assetPath;
+			if (typeof assetPath !== 'string' || assetPath.trim().length === 0) {
 				return { content: [{ type: 'text', text: 'assetPath is required' }], isError: true };
 			}
 

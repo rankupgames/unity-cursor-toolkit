@@ -16,7 +16,6 @@ import { ModuleLoader } from './core/moduleLoader';
 import { StatusBarController } from './core/statusBarController';
 import { ConnectionState } from './core/types';
 import {
-	IModule,
 	ModuleContext,
 	IMessageHandler,
 	IToolProvider,

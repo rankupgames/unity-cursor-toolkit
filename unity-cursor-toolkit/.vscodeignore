@@ -4,7 +4,10 @@
 node_modules/**
 src/**
 scripts/**
+test/**
+backup/**
 tsconfig.json
+package-lock.json
 webpack.config.js
 .yarnrc
 yarn.lock

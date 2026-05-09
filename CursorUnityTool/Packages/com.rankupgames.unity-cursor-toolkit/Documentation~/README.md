@@ -48,6 +48,29 @@ Add to your `Packages/manifest.json`:
 - Unity 2019.4 or later
 - Cursor or VS Code with the Unity Cursor Toolkit extension
 
+## Companion Extension Validation
+
+The VS Code/Cursor companion extension is maintained in the repository's `unity-cursor-toolkit/` folder.
+
+```bash
+cd unity-cursor-toolkit
+npm ci
+npm run validate
+```
+
+`npm run validate` compiles the extension, runs strict unused-code checks, executes the runtime test harness, and runs dependency audits.
+
+## Security Notes
+
+- The companion extension validates Unity/MCP/webview payloads before using them.
+- `.meta` resolution and clickable console stack traces are constrained to workspace-safe paths.
+- Console webviews use nonce-based Content Security Policy entries for scripts and styles.
+- Packaged VSIX artifacts exclude tests, backups, lockfiles, source maps, and generated bundles.
+
+## Changelog
+
+See `CHANGELOG.md` for Unity package changes. Repository and companion extension changes are documented in the repository root `CHANGELOG.md`.
+
 ## License
 
 MIT - See LICENSE.md for details.

@@ -85,19 +85,8 @@ jobs:
 
       - run: npm ci
 
-      - name: Security audit
-        run: |
-          npm audit --omit=dev
-          echo "### Dev-only audit (informational):" 
-          npm audit || true
-
-      - run: npm run compile
-
-      - name: Strict type check
-        run: npx tsc --noEmit --strict
-
-      - name: Run tests
-        run: node test/run-tests.js
+      - name: Validate extension
+        run: npm run validate
 
       - name: Validate UPM package
         run: |

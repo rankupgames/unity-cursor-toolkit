@@ -630,6 +630,26 @@ function testConsoleBridge() {
 		bridge.dispose();
 	});
 
+	test('consoleEntry normalizes malformed payload fields', () => {
+		const emitter = new vscode.EventEmitter();
+		const bridge = new ConsoleBridge({ onMessage: emitter.event });
+
+		emitter.fire({
+			command: 'consoleEntry',
+			payload: { command: 'consoleEntry', type: 123, message: 456, stackTrace: { bad: true }, timestamp: 789 }
+		});
+
+		const entries = bridge.getEntries();
+		assert.strictEqual(entries.length, 1);
+		assert.strictEqual(entries[0].type, 'log');
+		assert.strictEqual(entries[0].message, '');
+		assert.strictEqual(entries[0].stackTrace, '');
+		assert.ok(typeof entries[0].timestamp === 'string' && entries[0].timestamp.length > 0);
+		assert.doesNotThrow(() => bridge.getEntries({ search: 'anything' }));
+
+		bridge.dispose();
+	});
+
 	test('getEntries({ level }) filters by type', () => {
 		const emitter = new vscode.EventEmitter();
 		const bridge = new ConsoleBridge({ onMessage: emitter.event });
@@ -731,6 +751,22 @@ function testConsoleBridge() {
 		assert.strictEqual(bulks[0].content, 'Error log content');
 		assert.strictEqual(bulks[0].entryCount, 5);
 
+		bridge.dispose();
+	});
+
+	test('consoleToCursor ignores malformed content payloads', () => {
+		const emitter = new vscode.EventEmitter();
+		const bridge = new ConsoleBridge({ onMessage: emitter.event });
+
+		const bulks = [];
+		bridge.onBulk((b) => bulks.push(b));
+
+		emitter.fire({
+			command: 'consoleToCursor',
+			payload: { content: { text: 'not a string' }, entryCount: '5' }
+		});
+
+		assert.strictEqual(bulks.length, 0);
 		bridge.dispose();
 	});
 
@@ -1728,6 +1764,22 @@ async function testMetaManager() {
 		vscode.workspace.workspaceFolders = origFolders;
 	});
 
+	await testAsync('resolveMetaFile blocks paths outside the workspace', async () => {
+		const projectPath = path.join(tmpDir, 'p-traversal');
+		fs.mkdirSync(projectPath);
+		fs.writeFileSync(path.join(tmpDir, 'Outside.cs.meta'), 'guid: outside\n');
+
+		const origFolders = vscode.workspace.workspaceFolders;
+		vscode.workspace.workspaceFolders = [{ uri: { fsPath: projectPath }, name: 'test' }];
+
+		const manager = new MetaManager();
+		const content = await manager.resolveMetaFile('../Outside.cs');
+
+		assert.strictEqual(content, null);
+		manager.dispose();
+		vscode.workspace.workspaceFolders = origFolders;
+	});
+
 	await testAsync('handleAssetDeleted removes companion .meta file', async () => {
 		const projectPath = path.join(tmpDir, 'p5');
 		fs.mkdirSync(projectPath, { recursive: true });
@@ -1988,6 +2040,7 @@ async function testProjectMcpTools() {
 	const projectPath = path.join(tmpDir, 'project');
 	fs.mkdirSync(path.join(projectPath, 'Assets', 'Scripts'), { recursive: true });
 	fs.writeFileSync(path.join(projectPath, 'Assets', 'Scripts', 'Test.cs.meta'), 'guid: test123\n');
+	fs.writeFileSync(path.join(tmpDir, 'Outside.cs.meta'), 'guid: outside\n');
 
 	const origFolders = vscode.workspace.workspaceFolders;
 	vscode.workspace.workspaceFolders = [{ uri: { fsPath: projectPath }, name: 'test' }];
@@ -2019,6 +2072,18 @@ async function testProjectMcpTools() {
 		assert.ok(result.content[0].text.includes('required'));
 	});
 
+	await testAsync('resolve_meta returns error for non-string assetPath', async () => {
+		const result = await tools.handleToolCall('resolve_meta', { assetPath: 123 });
+		assert.strictEqual(result.isError, true);
+		assert.ok(result.content[0].text.includes('required'));
+	});
+
+	await testAsync('resolve_meta blocks asset paths outside the workspace', async () => {
+		const result = await tools.handleToolCall('resolve_meta', { assetPath: '../Outside.cs' });
+		assert.strictEqual(result.isError, true);
+		assert.ok(result.content[0].text.includes('No .meta file'));
+	});
+
 	await testAsync('unknown tool returns error', async () => {
 		const result = await tools.handleToolCall('nonexistent', {});
 		assert.strictEqual(result.isError, true);
@@ -2040,7 +2105,7 @@ async function testConsolePanelLogic() {
 
 	const emitter = new MockEventEmitter();
 	const bridge = new ConsoleBridge({ onMessage: emitter.event });
-	const panel = new ConsolePanelProvider({ fsPath: '/mock' }, bridge);
+	const panel = new ConsolePanelProvider(bridge);
 
 	emitter.fire({ command: 'consoleEntry', payload: { command: 'consoleEntry', type: 'Error', message: 'NullRef in Player', stackTrace: 'at Player.Update() (Assets/Scripts/Player.cs:42)', timestamp: '2026-01-01T12:00:00Z' } });
 	emitter.fire({ command: 'consoleEntry', payload: { command: 'consoleEntry', type: 'Warning', message: 'Shader not found', stackTrace: '', timestamp: '2026-01-01T12:00:01Z' } });
@@ -2122,6 +2187,55 @@ async function testConsolePanelLogic() {
 		assert.ok(!clipboardContent.includes('### Warnings'));
 
 		vscode.env.clipboard.writeText = origWrite;
+	});
+
+	test('webview script uses CSP nonce instead of unsafe inline script', () => {
+		const html = panel.getHtml({ cspSource: 'vscode-webview:' });
+		assert.ok(html.includes("script-src vscode-webview: 'nonce-"));
+		assert.ok(!html.includes("script-src vscode-webview: 'unsafe-inline'"));
+		assert.ok(html.includes("style-src vscode-webview: 'nonce-"));
+		assert.ok(!html.includes("style-src vscode-webview: 'unsafe-inline'"));
+		assert.match(html, /<style nonce="[a-f0-9]{32}">/);
+		assert.match(html, /<script nonce="[a-f0-9]{32}">/);
+	});
+
+	await testAsync('webview clear clears bridge entries', async () => {
+		const localEmitter = new MockEventEmitter();
+		const localBridge = new ConsoleBridge({ onMessage: localEmitter.event });
+		const localPanel = new ConsolePanelProvider(localBridge);
+
+		localEmitter.fire({ command: 'consoleEntry', payload: { command: 'consoleEntry', type: 'Log', message: 'Still in bridge', stackTrace: '', timestamp: '2026-01-01T12:00:03Z' } });
+		assert.strictEqual(localBridge.getEntries().length, 1);
+
+		await localPanel.handleWebviewMessage({ type: 'clear' });
+
+		assert.strictEqual(localBridge.getEntries().length, 0);
+		localPanel.dispose();
+		localBridge.dispose();
+	});
+
+	await testAsync('openFileAtLine rejects traversal paths', async () => {
+		const origFolders = vscode.workspace.workspaceFolders;
+		const origOpenTextDocument = vscode.workspace.openTextDocument;
+		const openedPaths = [];
+
+		try {
+			vscode.workspace.workspaceFolders = [{ uri: { fsPath: '/workspace' }, name: 'test' }];
+			vscode.workspace.openTextDocument = async (uri) => {
+				openedPaths.push(uri.fsPath);
+				return { getText: () => '', uri };
+			};
+
+			await panel.openFileAtLine('Assets/../package.json', 1);
+			await panel.openFileAtLine('../Assets/Scripts/Player.cs', 1);
+			assert.deepStrictEqual(openedPaths, []);
+
+			await panel.openFileAtLine('Assets/Scripts/Player.cs', 42);
+			assert.deepStrictEqual(openedPaths, [path.join('/workspace', 'Assets', 'Scripts', 'Player.cs')]);
+		} finally {
+			vscode.workspace.openTextDocument = origOpenTextDocument;
+			vscode.workspace.workspaceFolders = origFolders;
+		}
 	});
 
 	panel.dispose();
