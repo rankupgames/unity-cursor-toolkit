@@ -4,6 +4,12 @@ All notable changes to the Unity Cursor Toolkit VS Code/Cursor extension are doc
 
 ## [0.6.2041326] - 2026-05-09
 
+### Added
+
+- Added `out/mcp/server.js`, a standalone MCP stdio server for agents and editors that do not run VS Code extensions directly.
+- Added MCP tool annotations, resources, prompts, read-only mode, dry-run previews, and client config snippet commands.
+- Added runtime coverage for the standalone MCP server and agent safety behavior.
+
 ### Security
 
 - Updated transitive development dependencies so `fast-uri` resolves to `3.1.2`, addressing the GitHub Advisory alert for percent-encoded path traversal and the related authority-delimiter advisory.

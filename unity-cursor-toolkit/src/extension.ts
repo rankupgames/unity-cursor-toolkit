@@ -25,6 +25,7 @@ import {
 import { ConsoleModule } from './console/index';
 import { HotReloadModule } from './hot-reload/index';
 import { McpModule } from './mcp/index';
+import { createCombinedMcpConfigText, getMcpServerPath } from './mcp/clientConfig';
 import { DebugModule } from './debug/index';
 import { ProjectModule, hasLinkedUnityProject, getLinkedProjectPath, isScriptInstalledInLinkedProject, handleUnityProjectSetup } from './project/index';
 
@@ -71,6 +72,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(connection, moduleLoader);
 
 	registerCoreCommands(context);
+	registerMcpConfigCommands(context);
 	registerPlayModeCommands(context);
 	listenToConnectionState();
 	listenToCompilationResults();
@@ -86,6 +88,27 @@ export async function deactivate(): Promise<void> {
 	await moduleLoader?.deactivateAll();
 	commandSender?.dispose();
 	connection?.disconnect();
+}
+
+function registerMcpConfigCommands(context: vscode.ExtensionContext): void {
+	context.subscriptions.push(
+		vscode.commands.registerCommand('unity-cursor-toolkit.mcp.showServerPath', () => {
+			const serverPath = getMcpServerPath(context.extensionPath);
+			vscode.window.showInformationMessage(`Unity MCP server: ${serverPath}`);
+		}),
+
+		vscode.commands.registerCommand('unity-cursor-toolkit.mcp.copyClientConfig', async () => {
+			const serverPath = getMcpServerPath(context.extensionPath);
+			const config = createCombinedMcpConfigText({
+				serverPath,
+				projectPath: getLinkedProjectPath(),
+				readOnly: false
+			});
+
+			await vscode.env.clipboard.writeText(config);
+			vscode.window.showInformationMessage('Unity MCP client config copied to clipboard.');
+		})
+	);
 }
 
 function registerPlayModeCommands(context: vscode.ExtensionContext): void {

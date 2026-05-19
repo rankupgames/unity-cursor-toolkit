@@ -7,6 +7,7 @@
 
 import type { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
 import { ConsoleBridge } from './consoleBridge';
+import { getToolAnnotations } from '../mcp/toolMetadata';
 
 export class ConsoleMcpTools implements IToolProvider {
 
@@ -22,6 +23,7 @@ export class ConsoleMcpTools implements IToolProvider {
 		return [
 			{
 				name: 'read_console',
+				title: 'Read Console',
 				description: 'Fetch recent Unity console log entries with optional filtering by level, search term, and limit.',
 				inputSchema: {
 					type: 'object',
@@ -40,12 +42,15 @@ export class ConsoleMcpTools implements IToolProvider {
 							description: 'Substring to search for in message or stack trace'
 						}
 					}
-				}
+				},
+				annotations: getToolAnnotations('read_console')
 			},
 			{
 				name: 'clear_console',
+				title: 'Clear Console Buffer',
 				description: 'Clear all Unity console entries.',
-				inputSchema: { type: 'object', properties: {} }
+				inputSchema: { type: 'object', properties: {} },
+				annotations: getToolAnnotations('clear_console')
 			}
 		];
 	}

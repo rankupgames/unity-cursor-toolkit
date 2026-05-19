@@ -5,14 +5,13 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.0.0] - 2026-04-13
 
 ### Documentation
 
 - Clarified the companion VS Code/Cursor extension validation workflow and security hardening expectations.
 - Documented that repository and companion extension changes are tracked in the repository root changelog.
-
-## [1.0.0] - 2026-04-13
+- Documented standalone MCP client setup, AI agent workflows, read-only mode, and dry-run previews.
 
 ### Added
 

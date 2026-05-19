@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const net = require('net');
 const os = require('os');
+const { spawn } = require('child_process');
 
 // ── vscode mock ──────────────────────────────────────────────────────────────
 
@@ -185,6 +186,66 @@ async function getUnusedPort() {
 	const port = await listenOnLocalhost(server);
 	await closeServer(server);
 	return port;
+}
+
+function startMcpServer(env = {}) {
+	const child = spawn(process.execPath, [path.join(outDir, 'mcp', 'server.js')], {
+		env: { ...process.env, ...env },
+		stdio: ['pipe', 'pipe', 'pipe']
+	});
+	const pending = new Map();
+	let stdoutBuffer = '';
+	let stderr = '';
+
+	child.stdout.on('data', (chunk) => {
+		stdoutBuffer += chunk.toString();
+		const lines = stdoutBuffer.split('\n');
+		stdoutBuffer = lines.pop() || '';
+		for (const line of lines) {
+			if (line.trim().length === 0) {
+				continue;
+			}
+			const message = JSON.parse(line);
+			const callback = pending.get(message.id);
+			if (callback) {
+				pending.delete(message.id);
+				callback(message);
+			}
+		}
+	});
+
+	child.stderr.on('data', (chunk) => {
+		stderr += chunk.toString();
+	});
+
+	let requestId = 0;
+	return {
+		child,
+		get stderr() { return stderr; },
+		request(method, params) {
+			const id = ++requestId;
+			const payload = { jsonrpc: '2.0', id, method, params };
+			return new Promise((resolve, reject) => {
+				const timer = setTimeout(() => {
+					pending.delete(id);
+					reject(new Error(`Timed out waiting for MCP response to ${method}. stderr: ${stderr}`));
+				}, 4_000);
+
+				pending.set(id, (message) => {
+					clearTimeout(timer);
+					resolve(message);
+				});
+				child.stdin.write(JSON.stringify(payload) + '\n');
+			});
+		},
+		notify(method, params) {
+			child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params }) + '\n');
+		},
+		stop() {
+			child.stdin.end();
+			child.kill();
+		}
+	};
 }
 
 const outDir = path.join(__dirname, '..', 'out');
@@ -1024,7 +1085,17 @@ async function testUnityMcpTools() {
 			assert.ok(def.name, `Tool missing name`);
 			assert.ok(def.description, `${def.name} missing description`);
 			assert.ok(def.inputSchema, `${def.name} missing inputSchema`);
+			assert.ok(def.annotations, `${def.name} missing annotations`);
 		}
+	});
+
+	test('tool annotations distinguish read-only and mutating tools', () => {
+		const tools = new UnityMcpTools({ send() {}, request: async () => null });
+		const defs = Object.fromEntries(tools.getTools().map((def) => [def.name, def]));
+
+		assert.strictEqual(defs.project_info.annotations.readOnlyHint, true);
+		assert.strictEqual(defs.manage_asset.annotations.readOnlyHint, false);
+		assert.strictEqual(defs.manage_asset.annotations.destructiveHint, true);
 	});
 
 	await testAsync('handleToolCall returns isError when Unity does not respond (null)', async () => {
@@ -1090,6 +1161,30 @@ async function testUnityMcpTools() {
 		assert.strictEqual(calls[0].cmd, 'mcpToolCall');
 		assert.strictEqual(calls[0].payload.toolName, 'play_mode');
 		assert.deepStrictEqual(calls[0].payload.args, { action: 'enter' });
+	});
+
+	await testAsync('handleToolCall dryRun returns normalized command without sending to Unity', async () => {
+		let requestCount = 0;
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async () => {
+				requestCount++;
+				return { result: 'should-not-run', error: false };
+			}
+		});
+
+		const result = await tools.handleToolCall('manage_gameobject', {
+			action: 'setTransform',
+			name: 'Probe',
+			scale: { x: 2, y: 3, z: 4 },
+			dryRun: true
+		});
+		const payload = JSON.parse(result.content[0].text);
+
+		assert.strictEqual(requestCount, 0);
+		assert.strictEqual(payload.dryRun, true);
+		assert.strictEqual(payload.toolName, 'manage_gameobject');
+		assert.deepStrictEqual(payload.args, { action: 'setTransform', name: 'Probe', localScale: [2, 3, 4] });
 	});
 
 	await testAsync('handleToolCall normalizes MCP schema args for Unity handlers', async () => {
@@ -1220,6 +1315,109 @@ async function testUnityMcpTools() {
 		const result = await tools.handleToolCall('batch_execute', { operations: [] });
 		assert.strictEqual(result.isError, true);
 		assert.ok(result.content[0].text.includes('No operations'));
+	});
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// mcp/server.ts (standalone MCP stdio)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async function testStandaloneMcpServer() {
+	console.log('\n── mcp/server.ts (standalone stdio) ──');
+
+	await testAsync('stdio server initializes and lists tools, resources, and prompts', async () => {
+		const closedPort = await getUnusedPort();
+		const server = startMcpServer({
+			UNITY_CURSOR_TOOLKIT_MCP_PORTS: String(closedPort),
+			UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY: '1'
+		});
+
+		try {
+			const init = await server.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
+			server.notify('notifications/initialized', {});
+			assert.strictEqual(init.result.serverInfo.name, 'unity-cursor-toolkit');
+			assert.ok(init.result.instructions.includes('Read-only mode is enabled'));
+
+			const tools = await server.request('tools/list', {});
+			const toolNames = tools.result.tools.map((tool) => tool.name);
+			assert.ok(toolNames.includes('project_info'));
+			assert.ok(toolNames.includes('read_console'));
+			const projectInfo = tools.result.tools.find((tool) => tool.name === 'project_info');
+			assert.strictEqual(projectInfo.annotations.readOnlyHint, true);
+
+			const resources = await server.request('resources/list', {});
+			const resourceUris = resources.result.resources.map((resource) => resource.uri);
+			assert.ok(resourceUris.includes('unity://tools/catalog'));
+			assert.ok(resourceUris.includes('unity://console/errors'));
+
+			const prompts = await server.request('prompts/list', {});
+			const promptNames = prompts.result.prompts.map((prompt) => prompt.name);
+			assert.ok(promptNames.includes('diagnose_unity_errors'));
+			assert.ok(promptNames.includes('safe_scene_edit_plan'));
+		} finally {
+			server.stop();
+		}
+	});
+
+	await testAsync('read-only mode blocks mutating tools but allows dryRun', async () => {
+		const closedPort = await getUnusedPort();
+		const server = startMcpServer({
+			UNITY_CURSOR_TOOLKIT_MCP_PORTS: String(closedPort),
+			UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY: '1'
+		});
+
+		try {
+			await server.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
+
+			const blocked = await server.request('tools/call', {
+				name: 'play_mode',
+				arguments: { action: 'enter' }
+			});
+			assert.strictEqual(blocked.result.isError, true);
+			assert.ok(blocked.result.content[0].text.includes('blocked'));
+
+			const dryRun = await server.request('tools/call', {
+				name: 'manage_gameobject',
+				arguments: {
+					action: 'setTransform',
+					name: 'Probe',
+					position: { x: 1, y: 2, z: 3 },
+					dryRun: true
+				}
+			});
+			const payload = JSON.parse(dryRun.result.content[0].text);
+			assert.strictEqual(payload.dryRun, true);
+			assert.deepStrictEqual(payload.args.position, [1, 2, 3]);
+		} finally {
+			server.stop();
+		}
+	});
+
+	await testAsync('missing Unity connection returns clean tool error', async () => {
+		const closedPort = await getUnusedPort();
+		const server = startMcpServer({ UNITY_CURSOR_TOOLKIT_MCP_PORTS: String(closedPort) });
+
+		try {
+			await server.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
+			const response = await server.request('tools/call', { name: 'project_info', arguments: {} });
+			assert.strictEqual(response.result.isError, true);
+			assert.ok(response.result.content[0].text.includes('Unity did not respond'));
+		} finally {
+			server.stop();
+		}
+	});
+
+	await testAsync('client config snippets include supported MCP client shapes', async () => {
+		const { createMcpClientConfigSnippets } = require(path.join(outDir, 'mcp', 'clientConfig'));
+		const snippets = createMcpClientConfigSnippets({
+			serverPath: '/ext/out/mcp/server.js',
+			projectPath: '/project',
+			readOnly: true
+		});
+
+		assert.strictEqual(JSON.parse(snippets.cursorClaude).mcpServers['unity-cursor-toolkit'].command, 'node');
+		assert.strictEqual(JSON.parse(snippets.vscode).servers['unity-cursor-toolkit'].type, 'stdio');
+		assert.strictEqual(JSON.parse(snippets.zed).context_servers['unity-cursor-toolkit'].env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH, '/project');
 	});
 }
 
@@ -2399,6 +2597,7 @@ async function main() {
 	await testConsoleMcpTools();
 	await testToolRouter();
 	await testUnityMcpTools();
+	await testStandaloneMcpServer();
 	await testLaunchJsonGenerator();
 	await testModuleLoader();
 	testDebugAdapter();

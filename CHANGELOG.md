@@ -6,6 +6,12 @@ The Unity UPM package has its own changelog at `Packages/com.rankupgames.unity-c
 
 ## [0.6.2041326] - 2026-05-09
 
+### Added
+
+- Added a standalone MCP stdio server for Cursor, Claude Code, VS Code Copilot Agent mode, Zed, and other MCP clients.
+- Added MCP resources, prompts, tool annotations, read-only mode, and dry-run previews for safer agent workflows.
+- Added AI-ready documentation: `AGENTS.md`, `llms.txt`, `docs/AI_AGENTS.md`, `docs/MCP_CLIENTS.md`, and `docs/FEATURE_ROADMAP.md`.
+
 ### Security
 
 - Updated transitive development dependencies so `fast-uri` resolves to `3.1.2`, addressing the GitHub Advisory alert for percent-encoded path traversal and the related authority-delimiter advisory.
@@ -24,4 +30,5 @@ The Unity UPM package has its own changelog at `Packages/com.rankupgames.unity-c
 - Added `npm run check:unused` and `npm run validate`.
 - Routed CI and release workflows through `npm run validate` so compile, strict unused-code checks, runtime tests, and npm audits all run the same way locally and in GitHub Actions.
 - Updated VSIX packaging ignores so test files, backup files, package locks, source maps, and generated bundles are not shipped in extension artifacts.
+- Added runtime tests for MCP server initialization, tool/resource/prompt discovery, read-only blocking, dry-run behavior, and client config snippets.
 - Added regression tests for path traversal, CSP hardening, malformed console payloads, console clear behavior, and MCP `.meta` input validation.

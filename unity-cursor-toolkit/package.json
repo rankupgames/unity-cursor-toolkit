@@ -147,6 +147,15 @@
         "command": "unity-cursor-toolkit.screenshot",
         "title": "Unity Toolkit: Capture Screenshot",
         "icon": "$(device-camera)"
+      },
+      {
+        "command": "unity-cursor-toolkit.mcp.showServerPath",
+        "title": "Unity Toolkit: Show MCP Server Path"
+      },
+      {
+        "command": "unity-cursor-toolkit.mcp.copyClientConfig",
+        "title": "Unity Toolkit: Copy MCP Client Config",
+        "icon": "$(copy)"
       }
     ],
     "debuggers": [
@@ -216,6 +225,7 @@
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "node test/run-tests.js",
+    "mcp:serve": "node out/mcp/server.js",
     "package": "vsce package",
     "publish": "vsce publish",
     "install:extension": "npm install",

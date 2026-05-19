@@ -7,6 +7,7 @@
 
 import type { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
 import { MetaManager } from './metaManager';
+import { getToolAnnotations } from '../mcp/toolMetadata';
 
 export class ProjectMcpTools implements IToolProvider {
 
@@ -22,6 +23,7 @@ export class ProjectMcpTools implements IToolProvider {
 		return [
 			{
 				name: 'resolve_meta',
+				title: 'Resolve Meta',
 				description: 'Read a Unity .meta file for an asset path. Returns the GUID and import settings.',
 				inputSchema: {
 					type: 'object',
@@ -32,7 +34,8 @@ export class ProjectMcpTools implements IToolProvider {
 						}
 					},
 					required: ['assetPath']
-				}
+				},
+				annotations: getToolAnnotations('resolve_meta')
 			}
 		];
 	}

@@ -37,7 +37,7 @@ Enter, exit, pause, and single-frame step directly from VS Code / Cursor -- no n
 
 ### MCP Server
 
-AI agents (Cursor, Claude Code, Copilot) can read console, control play mode, manage scenes/assets, query project info, and capture screenshots.
+AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, and use read-only or dry-run safeguards before mutating Unity state.
 
 ### Mono Debugger
 
@@ -57,6 +57,27 @@ A companion UPM package (`com.rankupgames.unity-cursor-toolkit`) provides the Un
 2. Install the Unity package (see [Unity Package Installation](#unity-package-installation)).
 3. Open a Unity project folder in VS Code or Cursor.
 4. Click **Unity Attach** in the status bar to connect.
+
+## AI Agent Quick Start
+
+The extension now builds a standalone MCP stdio server for agents that do not run VS Code extensions directly.
+
+```bash
+cd unity-cursor-toolkit
+npm ci
+npm run compile
+npm run mcp:serve
+```
+
+Use **Unity Toolkit: Copy MCP Client Config** in VS Code/Cursor to copy setup snippets, or read [MCP Client Setup](docs/MCP_CLIENTS.md) for Cursor, Claude Code, VS Code Copilot Agent mode, and Zed examples.
+
+Agent safety defaults:
+
+- Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` to block mutating tools.
+- Pass `dryRun: true` to mutating tools to inspect the normalized Unity command without executing it.
+- Start with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"` before scene or asset edits.
+
+See [AI Agent Guide](docs/AI_AGENTS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
 
 ## Requirements
 
@@ -156,6 +177,8 @@ The VSIX package is intentionally limited to runtime extension assets: compiled 
 | `unity-cursor-toolkit.playMode.pause` | Pause Play Mode |
 | `unity-cursor-toolkit.playMode.step` | Step one frame |
 | `unity-cursor-toolkit.screenshot` | Capture a screenshot from Unity |
+| `unity-cursor-toolkit.mcp.showServerPath` | Show the standalone MCP server path |
+| `unity-cursor-toolkit.mcp.copyClientConfig` | Copy MCP client config snippets |
 
 ## Project Structure
 
@@ -181,6 +204,9 @@ unity-cursor-toolkit/
 │           └── MCP/                     # MCP bridge, scene/asset/editor tools
 ├── CursorUnityTool/                # Unity test project
 ├── zed/                            # Zed editor integration (MCP)
+├── docs/                           # Agent and MCP setup docs
+├── AGENTS.md                       # Coding-agent repo instructions
+├── llms.txt                        # AI-readable documentation index
 ├── .github/workflows/              # CI and release pipelines
 ├── CONTRIBUTING.md
 ├── SECURITY.md
@@ -192,7 +218,7 @@ unity-cursor-toolkit/
 - **VS Code Marketplace** -- Primary distribution
 - **OpenVSX** -- Windsurf, VSCodium, Theia
 - **Cursor** -- Native support
-- **Zed** -- Via MCP server (see `zed/`)
+- **Zed** -- Via standalone MCP server (see `zed/`)
 
 ## Contributing
 

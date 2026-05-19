@@ -1,6 +1,6 @@
 # Unity Cursor Toolkit
 
-Editor tools for Cursor/VS Code integration with Unity.
+Editor tools for Cursor/VS Code and MCP-capable AI agents integrating with Unity.
 
 ## Features
 
@@ -9,6 +9,7 @@ Editor tools for Cursor/VS Code integration with Unity.
 - **MCP Bridge**: Model Context Protocol tool dispatch for AI-assisted Unity editing
 - **Debug Bridge**: Broadcasts Mono soft debugger port for attach debugging
 - **IL Patcher**: Runtime method body swapping during play mode (avoids domain reload)
+- **Agent Safety**: Supports read-only MCP sessions and dry-run previews from the companion extension
 
 ## Installation
 
@@ -60,11 +61,31 @@ npm run validate
 
 `npm run validate` compiles the extension, runs strict unused-code checks, executes the runtime test harness, and runs dependency audits.
 
+## AI Agent Usage
+
+The companion extension builds a standalone MCP stdio server at `unity-cursor-toolkit/out/mcp/server.js`. MCP clients can launch it with Node to access the Unity-side tools provided by this package.
+
+Recommended agent flow:
+
+1. Open the Unity project in Unity with this package installed.
+2. Start the companion MCP server from an MCP client.
+3. Inspect with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"`.
+4. Use `dryRun: true` before mutating assets, scenes, GameObjects, components, play mode, menus, or builds.
+
+Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` for agent sessions that should inspect Unity without changing Editor state.
+
+See the repository docs:
+
+- `docs/AI_AGENTS.md`
+- `docs/MCP_CLIENTS.md`
+- `docs/FEATURE_ROADMAP.md`
+
 ## Security Notes
 
 - The companion extension validates Unity/MCP/webview payloads before using them.
 - `.meta` resolution and clickable console stack traces are constrained to workspace-safe paths.
 - Console webviews use nonce-based Content Security Policy entries for scripts and styles.
+- MCP tools expose read-only/destructive annotations for clients that surface tool approval context.
 - Packaged VSIX artifacts exclude tests, backups, lockfiles, source maps, and generated bundles.
 
 ## Changelog
