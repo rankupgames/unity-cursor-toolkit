@@ -101,11 +101,25 @@ function registerPlayModeCommands(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('unity-cursor-toolkit.screenshot', async () => {
 			const result = await commandSender.request('mcpToolCall', { toolName: 'screenshot', args: {} });
-			if (result?.result) {
-				vscode.window.showInformationMessage(`Screenshot saved: ${result.result}`);
+			const screenshotPath = getScreenshotPath(result?.result);
+			if (screenshotPath) {
+				vscode.window.showInformationMessage(`Screenshot saved: ${screenshotPath}`);
 			}
 		})
 	);
+}
+
+function getScreenshotPath(result: unknown): string | undefined {
+	if (typeof result === 'string') {
+		return result;
+	}
+
+	if (typeof result === 'object' && result != null) {
+		const pathValue = (result as { path?: unknown }).path;
+		return typeof pathValue === 'string' ? pathValue : undefined;
+	}
+
+	return undefined;
 }
 
 function registerCoreCommands(context: vscode.ExtensionContext): void {

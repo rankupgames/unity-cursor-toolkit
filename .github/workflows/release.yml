@@ -5,10 +5,13 @@ on:
     tags: ['v*']
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      upm_version: ${{ steps.upm.outputs.upm_version }}
     defaults:
       run:
         working-directory: unity-cursor-toolkit
@@ -57,13 +60,52 @@ jobs:
           name: vsix-release-${{ steps.version.outputs.version }}
           path: unity-cursor-toolkit/*.vsix
 
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: release-approval
+    permissions:
+      contents: write
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    defaults:
+      run:
+        working-directory: unity-cursor-toolkit
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: vsix-release-${{ needs.build.outputs.version }}
+          path: unity-cursor-toolkit
+
+      - name: Locate VSIX
+        id: vsix
+        run: |
+          VSIX_FILE=$(ls *.vsix | head -1)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "::error::No VSIX artifact downloaded"
+            exit 1
+          fi
+          echo "file=${VSIX_FILE}" >> $GITHUB_OUTPUT
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          VERSION="${{ steps.version.outputs.version }}"
-          UPM_VERSION="${{ steps.upm.outputs.upm_version }}"
-          VSIX_FILE=$(ls *.vsix | head -1)
+          VERSION="${{ needs.build.outputs.version }}"
+          UPM_VERSION="${{ needs.build.outputs.upm_version }}"
+          VSIX_FILE="${{ steps.vsix.outputs.file }}"
           COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-8)
           REPO="${{ github.repository }}"
 
@@ -97,12 +139,8 @@ jobs:
 
       - name: Publish to Marketplace
         if: env.VSCE_PAT != ''
-        run: npx vsce publish --no-dependencies
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: npx vsce publish --packagePath "${{ steps.vsix.outputs.file }}"
 
       - name: Publish to OpenVSX
         if: env.OVSX_PAT != ''
-        run: npx ovsx publish *.vsix -p $OVSX_PAT
-        env:
-          OVSX_PAT: ${{ secrets.OVSX_PAT }}
+        run: npx ovsx publish "${{ steps.vsix.outputs.file }}" -p "$OVSX_PAT"

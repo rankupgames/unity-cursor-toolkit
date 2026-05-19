@@ -87,42 +87,39 @@ namespace UnityCursorToolkit.MCP
 
 		/// <summary>
 		/// Dispatches a tool call to the registered handler and sends the result via BroadcastToClients.
-		/// Runs on main thread via EditorApplication.delayCall.
 		/// </summary>
 		/// <param name="toolName">Name of the tool.</param>
 		/// <param name="argsJson">JSON arguments for the tool.</param>
-		public static void HandleToolCall(string toolName, string argsJson)
+		public static void HandleToolCall(string toolName, string argsJson, string requestId = null)
 		{
-			EditorApplication.delayCall += () =>
+			string result = null;
+			try
 			{
-				string result = null;
-				try
+				if (_initialized == false)
 				{
-					if (_initialized == false)
-					{
-						Initialize();
-					}
-
-					if (_handlers.TryGetValue(toolName, out IToolHandler handler) == false)
-					{
-						result = BuildErrorJson($"Unknown tool: {toolName}");
-					}
-					else
-					{
-						result = handler.HandleCommand(argsJson ?? "{}");
-					}
-				}
-				catch (Exception ex)
-				{
-					result = BuildErrorJson(ex.Message);
+					Initialize();
 				}
 
-				if (result != null)
+				if (_handlers.TryGetValue(toolName, out IToolHandler handler) == false)
 				{
-					string payload = "{\"command\":\"mcpToolResult\",\"tool\":\"" + EscapeJson(toolName) + "\",\"result\":" + result + "}";
-					HotReloadHandler.BroadcastToClients(payload);
+					result = BuildErrorJson($"Unknown tool: {toolName}");
 				}
-			};
+				else
+				{
+					result = handler.HandleCommand(argsJson ?? "{}");
+				}
+			}
+			catch (Exception ex)
+			{
+				result = BuildErrorJson(ex.Message);
+			}
+
+			if (result != null)
+			{
+				string requestPart = string.IsNullOrEmpty(requestId) ? "" : ",\"_requestId\":\"" + EscapeJson(requestId) + "\"";
+				string payload = "{\"command\":\"mcpToolResult\",\"tool\":\"" + EscapeJson(toolName) + "\"" + requestPart + ",\"result\":" + result + "}";
+				HotReloadHandler.BroadcastToClients(payload);
+			}
 		}
 
 		private static string BuildErrorJson(string message)

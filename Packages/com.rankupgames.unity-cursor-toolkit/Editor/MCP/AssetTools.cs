@@ -33,9 +33,13 @@ namespace UnityCursorToolkit.MCP
 				case "import":
 					return Import(AssetToolsHelpers.GetString(args, "path", ""));
 				case "move":
-					return Move(AssetToolsHelpers.GetString(args, "source", ""), AssetToolsHelpers.GetString(args, "dest", ""));
+					return Move(
+						AssetToolsHelpers.GetString(args, "source", AssetToolsHelpers.GetString(args, "path", "")),
+						AssetToolsHelpers.GetString(args, "dest", AssetToolsHelpers.GetString(args, "newPath", "")));
 				case "rename":
-					return Rename(AssetToolsHelpers.GetString(args, "path", ""), AssetToolsHelpers.GetString(args, "newName", ""));
+					return Rename(
+						AssetToolsHelpers.GetString(args, "path", ""),
+						AssetToolsHelpers.GetString(args, "newName", AssetToolsHelpers.GetFileNameWithoutExtension(AssetToolsHelpers.GetString(args, "newPath", ""))));
 				case "delete":
 					return Delete(AssetToolsHelpers.GetString(args, "path", ""));
 				case "refresh":
@@ -109,11 +113,11 @@ namespace UnityCursorToolkit.MCP
 				case "create":
 					return Create(AssetToolsHelpers.GetString(args, "path", ""), AssetToolsHelpers.GetString(args, "shader", ""));
 				case "setColor":
-					return SetColor(AssetToolsHelpers.GetString(args, "path", ""), AssetToolsHelpers.GetString(args, "property", ""), args);
+					return SetColor(AssetToolsHelpers.GetString(args, "path", ""), AssetToolsHelpers.GetString(args, "property", AssetToolsHelpers.GetString(args, "propertyName", "")), args);
 				case "setFloat":
-					return SetFloat(AssetToolsHelpers.GetString(args, "path", ""), AssetToolsHelpers.GetString(args, "property", ""), AssetToolsHelpers.GetFloat(args, "value", 0f));
+					return SetFloat(AssetToolsHelpers.GetString(args, "path", ""), AssetToolsHelpers.GetString(args, "property", AssetToolsHelpers.GetString(args, "propertyName", "")), AssetToolsHelpers.GetFloat(args, "value", 0f));
 				case "setTexture":
-					return SetTexture(AssetToolsHelpers.GetString(args, "path", ""), AssetToolsHelpers.GetString(args, "property", ""), AssetToolsHelpers.GetString(args, "texturePath", ""));
+					return SetTexture(AssetToolsHelpers.GetString(args, "path", ""), AssetToolsHelpers.GetString(args, "property", AssetToolsHelpers.GetString(args, "propertyName", "")), AssetToolsHelpers.GetString(args, "texturePath", ""));
 				default:
 					return AssetToolsHelpers.JsonError($"Unknown action: {action}");
 			}
@@ -194,9 +198,11 @@ namespace UnityCursorToolkit.MCP
 			public string path;
 			public string source;
 			public string dest;
+			public string newPath;
 			public string newName;
 			public string shader;
 			public string property;
+			public string propertyName;
 			public string texturePath;
 			public float value;
 			public float[] color;
@@ -216,9 +222,15 @@ namespace UnityCursorToolkit.MCP
 					if (w.path != null) d["path"] = w.path;
 					if (w.source != null) d["source"] = w.source;
 					if (w.dest != null) d["dest"] = w.dest;
+					if (w.newPath != null) d["newPath"] = w.newPath;
 					if (w.newName != null) d["newName"] = w.newName;
 					if (w.shader != null) d["shader"] = w.shader;
 					if (w.property != null) d["property"] = w.property;
+					if (w.propertyName != null)
+					{
+						d["propertyName"] = w.propertyName;
+						if (d.ContainsKey("property") == false) d["property"] = w.propertyName;
+					}
 					if (w.texturePath != null) d["texturePath"] = w.texturePath;
 					d["value"] = w.value;
 					if (w.color != null && w.color.Length >= 4) d["color"] = w.color;
@@ -233,6 +245,18 @@ namespace UnityCursorToolkit.MCP
 			if (d.TryGetValue(key, out var v) == false || v == null)
 				return def;
 			return v.ToString();
+		}
+
+		internal static string GetFileNameWithoutExtension(string path)
+		{
+			if (string.IsNullOrEmpty(path))
+				return "";
+			string fileName = path.Replace("\\", "/");
+			int slashIdx = fileName.LastIndexOf('/');
+			if (slashIdx >= 0)
+				fileName = fileName.Substring(slashIdx + 1);
+			int dotIdx = fileName.LastIndexOf('.');
+			return dotIdx > 0 ? fileName.Substring(0, dotIdx) : fileName;
 		}
 
 		internal static float GetFloat(Dictionary<string, object> d, string key, float def)

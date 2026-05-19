@@ -145,11 +145,11 @@ namespace UnityCursorToolkit.MCP
 				case "find":
 					return Find(SceneToolsHelpers.GetString(args, "name", ""), SceneToolsHelpers.GetInt(args, "instanceId", -1));
 				case "destroy":
-					return Destroy(SceneToolsHelpers.GetInt(args, "instanceId", -1));
+					return Destroy(args);
 				case "setTransform":
 					return SetTransform(args);
 				case "setParent":
-					return SetParent(SceneToolsHelpers.GetInt(args, "instanceId", -1), SceneToolsHelpers.GetInt(args, "parentInstanceId", -1));
+					return SetParent(args);
 				default:
 					return SceneToolsHelpers.JsonError($"Unknown action: {action}");
 			}
@@ -164,21 +164,17 @@ namespace UnityCursorToolkit.MCP
 
 		private string Find(string name, int instanceId)
 		{
-			GameObject go = null;
-			if (instanceId >= 0)
-				go = (GameObject)EditorUtilityCompat.IDToObject(instanceId);
-			else if (string.IsNullOrEmpty(name) == false)
-				go = GameObject.Find(name);
+			GameObject go = SceneToolsHelpers.ResolveGameObject(instanceId, name);
 			if (go == null)
 				return SceneToolsHelpers.JsonError("GameObject not found");
 			return "{\"success\":true,\"instanceId\":" + go.GetInstanceID() + ",\"name\":\"" + SceneToolsHelpers.Escape(go.name) + "\"}";
 		}
 
-		private string Destroy(int instanceId)
+		private string Destroy(Dictionary<string, object> args)
 		{
-			if (instanceId < 0)
-				return SceneToolsHelpers.JsonError("instanceId is required");
-			var go = (GameObject)EditorUtilityCompat.IDToObject(instanceId);
+			int instanceId = SceneToolsHelpers.GetInt(args, "instanceId", -1);
+			string name = SceneToolsHelpers.GetString(args, "name", SceneToolsHelpers.GetString(args, "gameObjectName", ""));
+			var go = SceneToolsHelpers.ResolveGameObject(instanceId, name);
 			if (go == null)
 				return SceneToolsHelpers.JsonError("GameObject not found");
 			Undo.DestroyObjectImmediate(go);
@@ -188,9 +184,8 @@ namespace UnityCursorToolkit.MCP
 		private string SetTransform(Dictionary<string, object> args)
 		{
 			var instanceId = SceneToolsHelpers.GetInt(args, "instanceId", -1);
-			if (instanceId < 0)
-				return SceneToolsHelpers.JsonError("instanceId is required");
-			var go = (GameObject)EditorUtilityCompat.IDToObject(instanceId);
+			string name = SceneToolsHelpers.GetString(args, "name", SceneToolsHelpers.GetString(args, "gameObjectName", ""));
+			var go = SceneToolsHelpers.ResolveGameObject(instanceId, name);
 			if (go == null)
 				return SceneToolsHelpers.JsonError("GameObject not found");
 
@@ -217,18 +212,26 @@ namespace UnityCursorToolkit.MCP
 			return "{\"success\":true}";
 		}
 
-		private string SetParent(int instanceId, int parentInstanceId)
+		private string SetParent(Dictionary<string, object> args)
 		{
-			if (instanceId < 0)
-				return SceneToolsHelpers.JsonError("instanceId is required");
-			var go = (GameObject)EditorUtilityCompat.IDToObject(instanceId);
+			int instanceId = SceneToolsHelpers.GetInt(args, "instanceId", -1);
+			string name = SceneToolsHelpers.GetString(args, "name", SceneToolsHelpers.GetString(args, "gameObjectName", ""));
+			var go = SceneToolsHelpers.ResolveGameObject(instanceId, name);
 			if (go == null)
 				return SceneToolsHelpers.JsonError("GameObject not found");
 
 			Transform parent = null;
+			int parentInstanceId = SceneToolsHelpers.GetInt(args, "parentInstanceId", -1);
+			string parentName = SceneToolsHelpers.GetString(args, "parentName", "");
 			if (parentInstanceId >= 0)
 			{
-				var parentGo = (GameObject)EditorUtilityCompat.IDToObject(parentInstanceId);
+				var parentGo = SceneToolsHelpers.ResolveGameObject(parentInstanceId, "");
+				if (parentGo != null)
+					parent = parentGo.transform;
+			}
+			else if (string.IsNullOrEmpty(parentName) == false)
+			{
+				var parentGo = SceneToolsHelpers.ResolveGameObject(-1, parentName);
 				if (parentGo != null)
 					parent = parentGo.transform;
 			}
@@ -256,27 +259,28 @@ namespace UnityCursorToolkit.MCP
 			switch (action)
 			{
 				case "add":
-					return Add(SceneToolsHelpers.GetInt(args, "instanceId", -1), SceneToolsHelpers.GetString(args, "componentType", ""));
+					return Add(args);
 				case "remove":
-					return Remove(SceneToolsHelpers.GetInt(args, "instanceId", -1), SceneToolsHelpers.GetString(args, "componentType", ""));
+					return Remove(args);
 				case "getProperties":
-					return GetProperties(SceneToolsHelpers.GetInt(args, "instanceId", -1));
-					case "setProperty":
+					return GetProperties(args);
+				case "setProperty":
 					object value;
 					args.TryGetValue("value", out value);
-					return SetProperty(SceneToolsHelpers.GetInt(args, "instanceId", -1), SceneToolsHelpers.GetString(args, "propertyPath", ""), value);
+					return SetProperty(args, value);
 				default:
 					return SceneToolsHelpers.JsonError($"Unknown action: {action}");
 			}
 		}
 
-		private string Add(int instanceId, string componentType)
+		private string Add(Dictionary<string, object> args)
 		{
-			if (instanceId < 0)
-				return SceneToolsHelpers.JsonError("instanceId is required");
+			int instanceId = SceneToolsHelpers.GetInt(args, "instanceId", -1);
+			string name = SceneToolsHelpers.GetString(args, "name", SceneToolsHelpers.GetString(args, "gameObjectName", ""));
+			string componentType = SceneToolsHelpers.GetString(args, "componentType", "");
 			if (string.IsNullOrEmpty(componentType))
 				return SceneToolsHelpers.JsonError("componentType is required");
-			var go = (GameObject)EditorUtilityCompat.IDToObject(instanceId);
+			var go = SceneToolsHelpers.ResolveGameObject(instanceId, name);
 			if (go == null)
 				return SceneToolsHelpers.JsonError("GameObject not found");
 
@@ -288,13 +292,14 @@ namespace UnityCursorToolkit.MCP
 			return "{\"success\":true,\"componentInstanceId\":" + comp.GetInstanceID() + "}";
 		}
 
-		private string Remove(int instanceId, string componentType)
+		private string Remove(Dictionary<string, object> args)
 		{
-			if (instanceId < 0)
-				return SceneToolsHelpers.JsonError("instanceId is required");
+			int instanceId = SceneToolsHelpers.GetInt(args, "instanceId", -1);
+			string name = SceneToolsHelpers.GetString(args, "name", SceneToolsHelpers.GetString(args, "gameObjectName", ""));
+			string componentType = SceneToolsHelpers.GetString(args, "componentType", "");
 			if (string.IsNullOrEmpty(componentType))
 				return SceneToolsHelpers.JsonError("componentType is required");
-			var go = (GameObject)EditorUtilityCompat.IDToObject(instanceId);
+			var go = SceneToolsHelpers.ResolveGameObject(instanceId, name);
 			if (go == null)
 				return SceneToolsHelpers.JsonError("GameObject not found");
 
@@ -308,11 +313,11 @@ namespace UnityCursorToolkit.MCP
 			return "{\"success\":true}";
 		}
 
-		private string GetProperties(int instanceId)
+		private string GetProperties(Dictionary<string, object> args)
 		{
-			if (instanceId < 0)
-				return SceneToolsHelpers.JsonError("instanceId is required");
-			var obj = EditorUtilityCompat.IDToObject(instanceId);
+			int instanceId = SceneToolsHelpers.GetInt(args, "instanceId", -1);
+			string name = SceneToolsHelpers.GetString(args, "name", SceneToolsHelpers.GetString(args, "gameObjectName", ""));
+			var obj = SceneToolsHelpers.ResolveGameObject(instanceId, name);
 			if (obj == null)
 				return SceneToolsHelpers.JsonError("Object not found");
 
@@ -333,13 +338,14 @@ namespace UnityCursorToolkit.MCP
 			return sb.ToString();
 		}
 
-		private string SetProperty(int instanceId, string propertyPath, object value)
+		private string SetProperty(Dictionary<string, object> args, object value)
 		{
-			if (instanceId < 0)
-				return SceneToolsHelpers.JsonError("instanceId is required");
+			int instanceId = SceneToolsHelpers.GetInt(args, "instanceId", -1);
+			string name = SceneToolsHelpers.GetString(args, "name", SceneToolsHelpers.GetString(args, "gameObjectName", ""));
+			string propertyPath = SceneToolsHelpers.GetString(args, "propertyPath", SceneToolsHelpers.GetString(args, "propertyName", ""));
 			if (string.IsNullOrEmpty(propertyPath))
 				return SceneToolsHelpers.JsonError("propertyPath is required");
-			var obj = EditorUtilityCompat.IDToObject(instanceId);
+			var obj = SceneToolsHelpers.ResolveGameObject(instanceId, name);
 			if (obj == null)
 				return SceneToolsHelpers.JsonError("Object not found");
 
@@ -384,16 +390,26 @@ namespace UnityCursorToolkit.MCP
 				{
 					if (obj.action != null) d["action"] = obj.action;
 					if (obj.path != null) d["path"] = obj.path;
+					if (obj.scenePath != null && d.ContainsKey("path") == false) d["path"] = obj.scenePath;
 					if (obj.name != null) d["name"] = obj.name;
+					if (obj.gameObjectName != null)
+					{
+						d["gameObjectName"] = obj.gameObjectName;
+						if (d.ContainsKey("name") == false) d["name"] = obj.gameObjectName;
+					}
 					d["instanceId"] = obj.instanceId;
 					d["parentInstanceId"] = obj.parentInstanceId;
+					if (obj.parentName != null) d["parentName"] = obj.parentName;
 					if (obj.componentType != null) d["componentType"] = obj.componentType;
 					if (obj.propertyPath != null) d["propertyPath"] = obj.propertyPath;
+					if (obj.propertyName != null && d.ContainsKey("propertyPath") == false) d["propertyPath"] = obj.propertyName;
 					if (obj.position != null) d["position"] = obj.position;
 					if (obj.rotation != null) d["rotation"] = obj.rotation;
 					if (obj.localScale != null) d["localScale"] = obj.localScale;
+					if (obj.scale != null && d.ContainsKey("localScale") == false) d["localScale"] = obj.scale;
 					if (obj.valueNumber != 0) d["value"] = obj.valueNumber;
 					else if (obj.valueString != null) d["value"] = obj.valueString;
+					else if (obj.propertyValue != null) d["value"] = obj.propertyValue;
 					else if (obj.valueBool) d["value"] = obj.valueBool;
 				}
 			}
@@ -436,6 +452,21 @@ namespace UnityCursorToolkit.MCP
 			return v;
 		}
 
+		internal static GameObject ResolveGameObject(int instanceId, string name)
+		{
+			if (instanceId >= 0)
+			{
+				var obj = EditorUtilityCompat.IDToObject(instanceId);
+				if (obj is GameObject go)
+					return go;
+			}
+
+			if (string.IsNullOrEmpty(name) == false)
+				return GameObject.Find(name);
+
+			return null;
+		}
+
 		internal static string JsonError(string msg) => "{\"success\":false,\"error\":\"" + SceneToolsHelpers.Escape(msg) + "\"}";
 		internal static string Escape(string s)
 		{
@@ -449,14 +480,20 @@ namespace UnityCursorToolkit.MCP
 	{
 		public string action;
 		public string path;
+		public string scenePath;
 		public string name;
+		public string gameObjectName;
 		public int instanceId;
 		public int parentInstanceId;
+		public string parentName;
 		public string componentType;
 		public string propertyPath;
+		public string propertyName;
+		public string propertyValue;
 		public float[] position;
 		public float[] rotation;
 		public float[] localScale;
+		public float[] scale;
 		public double valueNumber;
 		public string valueString;
 		public bool valueBool;

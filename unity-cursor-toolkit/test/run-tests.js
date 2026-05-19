@@ -164,6 +164,29 @@ function sleep(ms) {
 	return new Promise((res) => setTimeout(res, ms));
 }
 
+function listenOnLocalhost(server, port = 0) {
+	return new Promise((resolve) => {
+		server.listen(port, '127.0.0.1', () => {
+			const address = server.address();
+			if (address == null || typeof address === 'string') {
+				throw new Error('Expected TCP server address');
+			}
+			resolve(address.port);
+		});
+	});
+}
+
+function closeServer(server) {
+	return new Promise((resolve) => server.close(resolve));
+}
+
+async function getUnusedPort() {
+	const server = net.createServer();
+	const port = await listenOnLocalhost(server);
+	await closeServer(server);
+	return port;
+}
+
 const outDir = path.join(__dirname, '..', 'out');
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -270,16 +293,21 @@ async function testConnectionTcp() {
 
 	// Uses port 55504 (last port in the PORTS array)
 	await testAsync('connect scans PORTS array and returns found port or null', async () => {
-		const conn = new ConnectionManager();
-		const result = await conn.connect();
-		if (result === null) {
-			assert.strictEqual(conn.info.state, ConnectionState.Disconnected, 'State should be Disconnected when no port found');
-		} else {
+		const closedPort = await getUnusedPort();
+		const server = net.createServer(() => {});
+		const openPort = await listenOnLocalhost(server);
+
+		try {
+			const conn = new ConnectionManager([closedPort, openPort]);
+			const result = await conn.connect();
+			assert.strictEqual(result, openPort);
 			assert.strictEqual(conn.info.state, ConnectionState.Connected, 'State should be Connected if a port was found');
-			assert.strictEqual(typeof result, 'number');
+			assert.strictEqual(conn.info.port, openPort);
 			conn.disconnect();
+			conn.dispose();
+		} finally {
+			await closeServer(server);
 		}
-		conn.dispose();
 	});
 
 	await testAsync('connects to TCP server, exchanges messages, fires onMessage', async () => {
@@ -301,16 +329,16 @@ async function testConnectionTcp() {
 			});
 		});
 
-		await new Promise((res) => server.listen(55504, '127.0.0.1', res));
+		const portToUse = await listenOnLocalhost(server);
 
 		try {
-			const conn = new ConnectionManager();
+			const conn = new ConnectionManager([portToUse]);
 			conn.setNeededCallback(() => true);
 
 			const port = await conn.connect();
-			assert.strictEqual(port, 55504);
+			assert.strictEqual(port, portToUse);
 			assert.strictEqual(conn.info.state, ConnectionState.Connected);
-			assert.strictEqual(conn.info.port, 55504);
+			assert.strictEqual(conn.info.port, portToUse);
 
 			conn.send('hello', { data: 99 });
 			await sleep(100);
@@ -333,22 +361,22 @@ async function testConnectionTcp() {
 			assert.strictEqual(conn.info.state, ConnectionState.Disconnected);
 			conn.dispose();
 		} finally {
-			server.close();
+			await closeServer(server);
 			await sleep(100);
 		}
 	});
 
 	await testAsync('state transitions: Disconnected -> Connecting -> Connected', async () => {
 		const server = net.createServer(() => {});
-		await new Promise((res) => server.listen(55503, '127.0.0.1', res));
+		const portToUse = await listenOnLocalhost(server);
 
 		try {
-			const conn = new ConnectionManager();
+			const conn = new ConnectionManager([portToUse]);
 			const states = [];
 			conn.onStateChanged((info) => states.push(info.state));
 
 			const port = await conn.connect();
-			assert.strictEqual(port, 55503);
+			assert.strictEqual(port, portToUse);
 			assert.ok(states.includes(ConnectionState.Connecting), 'Should transition through Connecting');
 			assert.ok(states.includes(ConnectionState.Connected), 'Should reach Connected');
 
@@ -356,7 +384,7 @@ async function testConnectionTcp() {
 			assert.ok(states.includes(ConnectionState.Disconnected), 'Should reach Disconnected on manual disconnect');
 			conn.dispose();
 		} finally {
-			server.close();
+			await closeServer(server);
 			await sleep(100);
 		}
 	});
@@ -373,14 +401,14 @@ async function testConnectionTcp() {
 				}
 			});
 		});
-		await new Promise((res) => server.listen(55502, '127.0.0.1', res));
+		const portToUse = await listenOnLocalhost(server);
 
 		try {
-			const conn = new ConnectionManager();
+			const conn = new ConnectionManager([portToUse]);
 			conn.setNeededCallback(() => true);
 
 			const port = await conn.connect();
-			assert.strictEqual(port, 55502);
+			assert.strictEqual(port, portToUse);
 			assert.strictEqual(conn.info.state, ConnectionState.Connected);
 
 			// Wait long enough that a heartbeat should fire (10s interval)
@@ -391,7 +419,7 @@ async function testConnectionTcp() {
 			conn.disconnect();
 			conn.dispose();
 		} finally {
-			server.close();
+			await closeServer(server);
 			await sleep(100);
 		}
 	});
@@ -404,17 +432,17 @@ async function testConnectionTcp() {
 				setTimeout(() => socket.destroy(), 50);
 			}
 		});
-		await new Promise((res) => server.listen(55501, '127.0.0.1', res));
+		const portToUse = await listenOnLocalhost(server);
 
 		try {
-			const conn = new ConnectionManager();
+			const conn = new ConnectionManager([portToUse]);
 			conn.setNeededCallback(() => true);
 
 			const stateLog = [];
 			conn.onStateChanged((info) => stateLog.push(info.state));
 
 			const port = await conn.connect();
-			assert.strictEqual(port, 55501);
+			assert.strictEqual(port, portToUse);
 
 			// Wait for server to drop us and reconnect to start
 			await sleep(2500);
@@ -427,7 +455,7 @@ async function testConnectionTcp() {
 			conn.disconnect();
 			conn.dispose();
 		} finally {
-			server.close();
+			await closeServer(server);
 			await sleep(100);
 		}
 	});
@@ -1016,12 +1044,32 @@ async function testUnityMcpTools() {
 		assert.ok(result.content[0].text.includes('2022.3.1f1'));
 	});
 
+	await testAsync('handleToolCall stringifies Unity object results', async () => {
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async () => ({ result: { unityVersion: '6000.3.9f1', success: true } })
+		});
+		const result = await tools.handleToolCall('project_info', {});
+		assert.ok(!result.isError, `isError should be falsy, got ${result.isError}`);
+		assert.ok(result.content[0].text.includes('"unityVersion":"6000.3.9f1"'));
+	});
+
 	await testAsync('handleToolCall returns isError when Unity reports error', async () => {
 		const tools = new UnityMcpTools({
 			send() {},
 			request: async () => ({ result: 'Scene not found', error: true })
 		});
 		const result = await tools.handleToolCall('manage_scene', { action: 'load', scenePath: 'bad' });
+		assert.strictEqual(result.isError, true);
+		assert.ok(result.content[0].text.includes('Scene not found'));
+	});
+
+	await testAsync('handleToolCall returns isError when Unity result has success=false', async () => {
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async () => ({ result: { success: false, error: 'Scene not found' } })
+		});
+		const result = await tools.handleToolCall('manage_scene', { action: 'load', path: 'bad' });
 		assert.strictEqual(result.isError, true);
 		assert.ok(result.content[0].text.includes('Scene not found'));
 	});
@@ -1042,6 +1090,80 @@ async function testUnityMcpTools() {
 		assert.strictEqual(calls[0].cmd, 'mcpToolCall');
 		assert.strictEqual(calls[0].payload.toolName, 'play_mode');
 		assert.deepStrictEqual(calls[0].payload.args, { action: 'enter' });
+	});
+
+	await testAsync('handleToolCall normalizes MCP schema args for Unity handlers', async () => {
+		const calls = [];
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async (cmd, payload) => {
+				calls.push({ cmd, payload });
+				return { result: { success: true }, error: false };
+			}
+		});
+
+		await tools.handleToolCall('manage_scene', { action: 'load', scenePath: 'Assets/Test.unity' });
+		await tools.handleToolCall('manage_asset', { action: 'move', path: 'Assets/A.mat', newPath: 'Assets/B.mat' });
+		await tools.handleToolCall('manage_asset', { action: 'rename', path: 'Assets/B.mat', newPath: 'Assets/Renamed.mat' });
+		await tools.handleToolCall('manage_material', {
+			action: 'setColor',
+			path: 'Assets/M.mat',
+			propertyName: '_Color',
+			color: { r: 0.1, g: 0.2, b: 0.3, a: 1 }
+		});
+		await tools.handleToolCall('manage_gameobject', {
+			action: 'setTransform',
+			instanceId: 123,
+			position: { x: 1, y: 2, z: 3 },
+			rotation: { x: 0, y: 0, z: 0, w: 1 },
+			scale: { x: 2, y: 2, z: 2 }
+		});
+		await tools.handleToolCall('manage_component', {
+			action: 'setProperty',
+			gameObjectName: 'Probe',
+			propertyName: 'm_Name',
+			propertyValue: 'ProbeRenamed'
+		});
+		await tools.handleToolCall('build_trigger', { buildPath: 'Builds/Test', development: true });
+
+		assert.deepStrictEqual(calls[0].payload.args, { action: 'load', scenePath: 'Assets/Test.unity', path: 'Assets/Test.unity' });
+		assert.deepStrictEqual(calls[1].payload.args, {
+			action: 'move',
+			path: 'Assets/A.mat',
+			newPath: 'Assets/B.mat',
+			source: 'Assets/A.mat',
+			dest: 'Assets/B.mat'
+		});
+		assert.deepStrictEqual(calls[2].payload.args, {
+			action: 'rename',
+			path: 'Assets/B.mat',
+			newPath: 'Assets/Renamed.mat',
+			newName: 'Renamed'
+		});
+		assert.deepStrictEqual(calls[3].payload.args, {
+			action: 'setColor',
+			path: 'Assets/M.mat',
+			propertyName: '_Color',
+			property: '_Color',
+			color: [0.1, 0.2, 0.3, 1]
+		});
+		assert.deepStrictEqual(calls[4].payload.args, {
+			action: 'setTransform',
+			instanceId: 123,
+			position: [1, 2, 3],
+			rotation: [0, 0, 0, 1],
+			localScale: [2, 2, 2]
+		});
+		assert.deepStrictEqual(calls[5].payload.args, {
+			action: 'setProperty',
+			gameObjectName: 'Probe',
+			name: 'Probe',
+			propertyName: 'm_Name',
+			propertyValue: 'ProbeRenamed',
+			propertyPath: 'm_Name',
+			valueString: 'ProbeRenamed'
+		});
+		assert.deepStrictEqual(calls[6].payload.args, { buildPath: 'Builds/Test', development: true, path: 'Builds/Test' });
 	});
 
 	await testAsync('batch_execute runs operations in sequence', async () => {

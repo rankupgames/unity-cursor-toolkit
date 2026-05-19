@@ -28,7 +28,8 @@ export class UnityMcpTools implements IToolProvider {
 					type: 'object',
 					properties: {
 						action: { type: 'string', enum: ['getHierarchy', 'load', 'save', 'create'] },
-						scenePath: { type: 'string', description: 'Scene asset path (for load/create)' }
+						scenePath: { type: 'string', description: 'Scene asset path (for load/create)' },
+						path: { type: 'string', description: 'Alias for scenePath' }
 					},
 					required: ['action']
 				}
@@ -41,10 +42,12 @@ export class UnityMcpTools implements IToolProvider {
 					properties: {
 						action: { type: 'string', enum: ['create', 'find', 'destroy', 'setTransform', 'setParent'] },
 						name: { type: 'string' },
+						instanceId: { type: 'number' },
 						position: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } } },
-						rotation: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } } },
+						rotation: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' }, w: { type: 'number' } } },
 						scale: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } } },
-						parentName: { type: 'string' }
+						parentName: { type: 'string' },
+						parentInstanceId: { type: 'number' }
 					},
 					required: ['action']
 				}
@@ -57,6 +60,7 @@ export class UnityMcpTools implements IToolProvider {
 					properties: {
 						action: { type: 'string', enum: ['add', 'remove', 'getProperties', 'setProperty'] },
 						gameObjectName: { type: 'string' },
+						instanceId: { type: 'number' },
 						componentType: { type: 'string' },
 						propertyName: { type: 'string' },
 						propertyValue: { type: 'string' }
@@ -72,7 +76,10 @@ export class UnityMcpTools implements IToolProvider {
 					properties: {
 						action: { type: 'string', enum: ['import', 'move', 'rename', 'delete', 'refresh'] },
 						path: { type: 'string' },
-						newPath: { type: 'string' }
+						newPath: { type: 'string' },
+						source: { type: 'string' },
+						dest: { type: 'string' },
+						newName: { type: 'string' }
 					},
 					required: ['action']
 				}
@@ -86,6 +93,7 @@ export class UnityMcpTools implements IToolProvider {
 						action: { type: 'string', enum: ['create', 'setColor', 'setFloat', 'setTexture'] },
 						path: { type: 'string' },
 						propertyName: { type: 'string' },
+						property: { type: 'string', description: 'Alias for propertyName' },
 						color: { type: 'object', properties: { r: { type: 'number' }, g: { type: 'number' }, b: { type: 'number' }, a: { type: 'number' } } },
 						value: { type: 'number' },
 						texturePath: { type: 'string' }
@@ -132,6 +140,8 @@ export class UnityMcpTools implements IToolProvider {
 					type: 'object',
 					properties: {
 						buildPath: { type: 'string', description: 'Output path for the build' },
+						path: { type: 'string', description: 'Alias for buildPath' },
+						buildTarget: { type: 'number', description: 'Unity BuildTarget enum value. Defaults to the active editor target.' },
 						development: { type: 'boolean', description: 'Development build flag' }
 					}
 				}
@@ -165,7 +175,8 @@ export class UnityMcpTools implements IToolProvider {
 			return this.handleBatchExecute(args);
 		}
 
-		const result = await this.commandSender.request('mcpToolCall', { toolName: name, args });
+		const unityArgs = UnityMcpTools.normalizeArgs(name, args);
+		const result = await this.commandSender.request('mcpToolCall', { toolName: name, args: unityArgs });
 
 		if (result == null) {
 			return {
@@ -174,13 +185,157 @@ export class UnityMcpTools implements IToolProvider {
 			};
 		}
 
-		const resultText = (result.result as string) ?? JSON.stringify(result);
-		const isError = result.error === true;
+		const resultPayload = result.result;
+		const resultText = typeof resultPayload === 'string'
+			? resultPayload
+			: JSON.stringify(resultPayload ?? result);
+		const isError = result.error === true || UnityMcpTools.isUnityErrorResult(resultPayload);
 
 		return {
 			content: [{ type: 'text', text: resultText }],
 			isError
 		};
+	}
+
+	private static isUnityErrorResult(result: unknown): boolean {
+		return typeof result === 'object'
+			&& result != null
+			&& (result as { success?: unknown }).success === false;
+	}
+
+	private static normalizeArgs(name: string, args: Record<string, unknown>): Record<string, unknown> {
+		switch (name) {
+			case 'manage_scene':
+				return UnityMcpTools.normalizeSceneArgs(args);
+			case 'manage_asset':
+				return UnityMcpTools.normalizeAssetArgs(args);
+			case 'manage_material':
+				return UnityMcpTools.normalizeMaterialArgs(args);
+			case 'manage_gameobject':
+				return UnityMcpTools.normalizeGameObjectArgs(args);
+			case 'manage_component':
+				return UnityMcpTools.normalizeComponentArgs(args);
+			case 'build_trigger':
+				return UnityMcpTools.withAlias(args, 'buildPath', 'path');
+			default:
+				return args;
+		}
+	}
+
+	private static normalizeSceneArgs(args: Record<string, unknown>): Record<string, unknown> {
+		return UnityMcpTools.withAlias(args, 'scenePath', 'path');
+	}
+
+	private static normalizeAssetArgs(args: Record<string, unknown>): Record<string, unknown> {
+		const normalized = { ...args };
+		const action = String(normalized.action ?? '');
+		if (normalized.newPath != null) {
+			if (action === 'move') {
+				normalized.source ??= normalized.path;
+				normalized.dest ??= normalized.newPath;
+			}
+			if (action === 'rename') {
+				normalized.newName ??= UnityMcpTools.basenameWithoutExtension(normalized.newPath);
+			}
+		}
+		return normalized;
+	}
+
+	private static normalizeMaterialArgs(args: Record<string, unknown>): Record<string, unknown> {
+		const normalized = UnityMcpTools.withAlias(args, 'propertyName', 'property');
+		const color = UnityMcpTools.colorToArray(normalized.color);
+		if (color) {
+			normalized.color = color;
+		}
+		return normalized;
+	}
+
+	private static normalizeGameObjectArgs(args: Record<string, unknown>): Record<string, unknown> {
+		const normalized = { ...args };
+		const position = UnityMcpTools.vectorToArray(normalized.position, ['x', 'y', 'z']);
+		const rotation = UnityMcpTools.vectorToArray(normalized.rotation, ['x', 'y', 'z', 'w'], [0, 0, 0, 1]);
+		const scale = UnityMcpTools.vectorToArray(normalized.scale, ['x', 'y', 'z']);
+
+		if (position) {
+			normalized.position = position;
+		}
+		if (rotation) {
+			normalized.rotation = rotation;
+		}
+		if (scale) {
+			normalized.localScale = scale;
+			delete normalized.scale;
+		}
+
+		return normalized;
+	}
+
+	private static normalizeComponentArgs(args: Record<string, unknown>): Record<string, unknown> {
+		const normalized = UnityMcpTools.withAlias(args, 'gameObjectName', 'name');
+		if (normalized.propertyName != null && normalized.propertyPath == null) {
+			normalized.propertyPath = normalized.propertyName;
+		}
+		if (normalized.propertyValue != null) {
+			const value = normalized.propertyValue;
+			if (typeof value === 'number') {
+				normalized.valueNumber = value;
+			} else if (typeof value === 'boolean') {
+				normalized.valueBool = value;
+			} else {
+				normalized.valueString = String(value);
+			}
+		}
+		return normalized;
+	}
+
+	private static withAlias(args: Record<string, unknown>, from: string, to: string): Record<string, unknown> {
+		if (args[from] == null || args[to] != null) {
+			return args;
+		}
+		return { ...args, [to]: args[from] };
+	}
+
+	private static vectorToArray(value: unknown, keys: string[], defaults?: number[]): number[] | null {
+		if (Array.isArray(value)) {
+			return value.map(Number);
+		}
+		if (typeof value !== 'object' || value == null) {
+			return null;
+		}
+
+		const record = value as Record<string, unknown>;
+		return keys.map((key, index) => UnityMcpTools.toNumber(record[key], defaults?.[index] ?? 0));
+	}
+
+	private static colorToArray(value: unknown): number[] | null {
+		return UnityMcpTools.vectorToArray(value, ['r', 'g', 'b', 'a'], [0, 0, 0, 1]);
+	}
+
+	private static toNumber(value: unknown, fallback: number): number {
+		if (typeof value === 'number' && Number.isFinite(value)) {
+			return value;
+		}
+		if (typeof value === 'string') {
+			const parsed = Number(value);
+			if (Number.isFinite(parsed)) {
+				return parsed;
+			}
+		}
+		return fallback;
+	}
+
+	private static basenameWithoutExtension(value: unknown): string | undefined {
+		if (typeof value !== 'string' || value.length === 0) {
+			return undefined;
+		}
+
+		const fileName = value.split(/[\\/]/).pop();
+		if (fileName == null || fileName.length === 0) {
+			return undefined;
+		}
+
+		const lastDot = fileName.lastIndexOf('.');
+		return lastDot > 0 ? fileName.slice(0, lastDot) : fileName;
 	}
 
 	private async handleBatchExecute(args: Record<string, unknown>): Promise<ToolResult> {

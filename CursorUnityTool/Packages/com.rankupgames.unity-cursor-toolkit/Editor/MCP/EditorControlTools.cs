@@ -105,8 +105,9 @@ namespace UnityCursorToolkit.MCP
 		public string HandleCommand(string argsJson)
 		{
 			var args = EditorControlHelpers.ParseArgs(argsJson);
-			var path = EditorControlHelpers.GetString(args, "path", "Build/Build");
-			var target = (BuildTarget)EditorControlHelpers.GetInt(args, "buildTarget", (int)BuildTarget.StandaloneWindows64);
+			var path = EditorControlHelpers.GetString(args, "path", EditorControlHelpers.GetString(args, "buildPath", "Build/Build"));
+			var targetValue = EditorControlHelpers.GetInt(args, "buildTarget", 0);
+			var target = targetValue == 0 ? EditorUserBuildSettings.activeBuildTarget : (BuildTarget)targetValue;
 			var opts = BuildOptions.None;
 			if (EditorControlHelpers.GetBool(args, "development", false))
 				opts |= BuildOptions.Development;
@@ -133,6 +134,7 @@ namespace UnityCursorToolkit.MCP
 			public string action;
 			public string menuPath;
 			public string path;
+			public string buildPath;
 			public int buildTarget;
 			public bool development;
 		}
@@ -150,6 +152,11 @@ namespace UnityCursorToolkit.MCP
 					if (w.action != null) d["action"] = w.action;
 					if (w.menuPath != null) d["menuPath"] = w.menuPath;
 					if (w.path != null) d["path"] = w.path;
+					if (w.buildPath != null)
+					{
+						d["buildPath"] = w.buildPath;
+						if (d.ContainsKey("path") == false) d["path"] = w.buildPath;
+					}
 					d["buildTarget"] = w.buildTarget;
 					d["development"] = w.development;
 				}

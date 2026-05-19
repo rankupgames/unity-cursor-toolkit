@@ -23,21 +23,11 @@ jobs:
       - name: Check for changes since last build
         id: changes
         run: |
-          if [ "${{ github.event_name }}" != "schedule" ]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Non-scheduled run, always build"
-            exit 0
-          fi
-
-          LAST_BUILD=$(date -d '7 days ago' +%Y-%m-%dT%H:%M:%S 2>/dev/null || date -v-7d +%Y-%m-%dT%H:%M:%S)
-          COMMIT_COUNT=$(git log --since="$LAST_BUILD" --oneline -- unity-cursor-toolkit/ Packages/ | wc -l | tr -d ' ')
-
-          if [ "$COMMIT_COUNT" -gt 0 ]; then
-            echo "has_changes=true" >> $GITHUB_OUTPUT
-            echo "Found $COMMIT_COUNT commits since $LAST_BUILD"
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            echo "Friday scheduled run, building VS Code and OpenVSX packages"
           else
-            echo "has_changes=false" >> $GITHUB_OUTPUT
-            echo "No commits since $LAST_BUILD — skipping weekly build"
+            echo "Non-scheduled run, building extension packages"
           fi
 
       - name: Compute version
@@ -108,13 +98,27 @@ jobs:
             console.log('UPM package valid:', pkg.name, pkg.version, '(unity >=', pkg.unity + ')');
           "
 
-      - name: Package VSIX
-        run: npx vsce package --no-dependencies
+      - name: Package VS Code Marketplace VSIX
+        run: |
+          VERSION="${{ needs.check-changes.outputs.build_version }}"
+          mkdir -p dist/vscode
+          npx vsce package --no-dependencies --out "dist/vscode/unity-cursor-toolkit-vscode-${VERSION}.vsix"
+
+      - name: Package OpenVSX VSIX
+        run: |
+          VERSION="${{ needs.check-changes.outputs.build_version }}"
+          mkdir -p dist/openvsx
+          npx vsce package --no-dependencies --out "dist/openvsx/unity-cursor-toolkit-openvsx-${VERSION}.vsix"
 
       - uses: actions/upload-artifact@v4
         with:
-          name: vsix-${{ needs.check-changes.outputs.build_version }}
-          path: unity-cursor-toolkit/*.vsix
+          name: vscode-extension-${{ needs.check-changes.outputs.build_version }}
+          path: unity-cursor-toolkit/dist/vscode/*.vsix
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: openvsx-extension-${{ needs.check-changes.outputs.build_version }}
+          path: unity-cursor-toolkit/dist/openvsx/*.vsix
 
       - name: Build summary
         if: always()
@@ -125,4 +129,6 @@ jobs:
           echo "| Version | \`${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Trigger | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| VS Code Artifact | \`vscode-extension-${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| OpenVSX Artifact | \`openvsx-extension-${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY

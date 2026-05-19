@@ -571,19 +571,6 @@ public class HotReloadHandler : EditorWindow
                 {
                     server = new TcpListener(IPAddress.Any, portToTry);
 
-                    // Try to set socket options to allow port reuse
-                    try
-                    {
-                        server.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        if (showDebugLogs)
-                        {
-                            Debug.LogWarning($"Could not set ReuseAddress option: {ex.Message}");
-                        }
-                    }
-
                     server.Start();
 
                     currentPort = portToTry;
@@ -841,29 +828,34 @@ public class HotReloadHandler : EditorWindow
         {
             if (message.Contains("{") && message.Contains("}"))
             {
-                if (message.Contains("\"command\""))
-                {
-                    if (message.Contains("\"refresh\""))
-                    {
-                        string[] changedFiles = ExtractFilePaths(message);
-                        HandleRefresh(changedFiles);
-                    }
-                    else if (message.Contains("\"ping\""))
-                    {
-                        BroadcastToClients("{\"command\":\"pong\"}");
-                    }
-                    else if (message.Contains("\"getDebugPort\""))
-                    {
-                        UnityCursorToolkit.Debugging.DebugBridge.BroadcastDebugPort();
-                    }
-                    else if (message.Contains("\"mcpToolCall\""))
-                    {
-                        RouteMcpToolCall(message);
-                    }
-                }
-                else
+                string command = ExtractJsonStringValue(message, "command");
+                if (string.IsNullOrEmpty(command))
                 {
                     shouldRequestRefresh = true;
+                    return;
+                }
+
+                switch (command)
+                {
+                    case "refresh":
+                        string[] changedFiles = ExtractFilePaths(message);
+                        HandleRefresh(changedFiles);
+                        break;
+                    case "ping":
+                        BroadcastToClients("{\"command\":\"pong\"}");
+                        break;
+                    case "getDebugPort":
+                        UnityCursorToolkit.Debugging.DebugBridge.BroadcastDebugPort();
+                        break;
+                    case "mcpToolCall":
+                        RouteMcpToolCall(message);
+                        break;
+                    default:
+                        if (showDebugLogs)
+                        {
+                            Debug.LogWarning($"(HotReloadHandler - ProcessMessage) Unknown command: {command}");
+                        }
+                        break;
                 }
             }
             else
@@ -892,7 +884,12 @@ public class HotReloadHandler : EditorWindow
         }
 
         string argsJson = ExtractJsonObject(message, "args");
-        UnityCursorToolkit.MCP.MCPBridge.HandleToolCall(toolName, argsJson ?? "{}");
+        string requestId = ExtractJsonStringValue(message, "_requestId");
+        if (showDebugLogs)
+        {
+            Debug.Log($"(HotReloadHandler - RouteMcpToolCall) Routing tool: {toolName}");
+        }
+        UnityCursorToolkit.MCP.MCPBridge.HandleToolCall(toolName, argsJson ?? "{}", requestId);
     }
 
     /// <summary>
