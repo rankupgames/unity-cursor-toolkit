@@ -16,7 +16,7 @@ jobs:
       has_changes: ${{ steps.changes.outputs.has_changes }}
       build_version: ${{ steps.version.outputs.build_version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
@@ -55,13 +55,18 @@ jobs:
       run:
         working-directory: unity-cursor-toolkit
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
+      - name: Use npm 11.14.1
+        run: |
+          npm install -g npm@11.14.1
+          npm --version
 
       - name: Stamp version
         run: |
@@ -110,12 +115,12 @@ jobs:
           mkdir -p dist/openvsx
           npx vsce package --no-dependencies --out "dist/openvsx/unity-cursor-toolkit-openvsx-${VERSION}.vsix"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: vscode-extension-${{ needs.check-changes.outputs.build_version }}
           path: unity-cursor-toolkit/dist/vscode/*.vsix
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: openvsx-extension-${{ needs.check-changes.outputs.build_version }}
           path: unity-cursor-toolkit/dist/openvsx/*.vsix
