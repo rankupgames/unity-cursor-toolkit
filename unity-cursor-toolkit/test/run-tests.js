@@ -1066,16 +1066,16 @@ async function testUnityMcpTools() {
 	console.log('\n── mcp/unityMcpTools.ts ──');
 	const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
 
-	test('getTools returns all 11 tool definitions with correct names', () => {
+	test('getTools returns all 12 tool definitions with correct names', () => {
 		const tools = new UnityMcpTools({ send() {}, request: async () => null });
 		const defs = tools.getTools();
-		assert.strictEqual(defs.length, 11);
+		assert.strictEqual(defs.length, 12);
 		const names = defs.map(d => d.name).sort();
 		assert.deepStrictEqual(names, [
 			'batch_execute', 'build_trigger', 'execute_menu_item',
 			'manage_asset', 'manage_component', 'manage_gameobject',
 			'manage_material', 'manage_scene', 'play_mode',
-			'project_info', 'screenshot'
+			'profiler_snapshot', 'project_info', 'screenshot'
 		]);
 	});
 
@@ -1096,6 +1096,19 @@ async function testUnityMcpTools() {
 		assert.strictEqual(defs.project_info.annotations.readOnlyHint, true);
 		assert.strictEqual(defs.manage_asset.annotations.readOnlyHint, false);
 		assert.strictEqual(defs.manage_asset.annotations.destructiveHint, true);
+		assert.strictEqual(defs.profiler_snapshot.annotations.readOnlyHint, false);
+		assert.strictEqual(defs.profiler_snapshot.annotations.destructiveHint, true);
+	});
+
+	test('profiler_snapshot schema exposes session actions and detail options', () => {
+		const tools = new UnityMcpTools({ send() {}, request: async () => null });
+		const profiler = tools.getTools().find((def) => def.name === 'profiler_snapshot');
+		assert.ok(profiler, 'profiler_snapshot tool exists');
+		assert.ok(profiler.inputSchema.properties.action.enum.includes('current'));
+		assert.ok(profiler.inputSchema.properties.action.enum.includes('saveSession'));
+		assert.ok(profiler.inputSchema.properties.includeRaw);
+		assert.ok(profiler.inputSchema.properties.sessionId);
+		assert.ok(profiler.inputSchema.properties.dryRun);
 	});
 
 	await testAsync('handleToolCall returns isError when Unity does not respond (null)', async () => {
@@ -1163,6 +1176,39 @@ async function testUnityMcpTools() {
 		assert.deepStrictEqual(calls[0].payload.args, { action: 'enter' });
 	});
 
+	await testAsync('profiler_snapshot current defaults are forwarded without requiring mutation approval', async () => {
+		const calls = [];
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async (cmd, payload) => {
+				calls.push({ cmd, payload });
+				return { result: { success: true, session: { id: 'editor_1' } }, error: false };
+			}
+		});
+
+		const result = await tools.handleToolCall('profiler_snapshot', {});
+
+		assert.ok(!result.isError, `isError should be falsy, got ${result.isError}`);
+		assert.strictEqual(calls[0].payload.toolName, 'profiler_snapshot');
+		assert.deepStrictEqual(calls[0].payload.args, {});
+		assert.ok(result.content[0].text.includes('editor_1'));
+	});
+
+	await testAsync('profiler_snapshot normalizes sessionId alias', async () => {
+		const calls = [];
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async (cmd, payload) => {
+				calls.push({ cmd, payload });
+				return { result: { success: true }, error: false };
+			}
+		});
+
+		await tools.handleToolCall('profiler_snapshot', { action: 'readSession', sessionId: 'play_123' });
+
+		assert.deepStrictEqual(calls[0].payload.args, { action: 'readSession', sessionId: 'play_123', id: 'play_123' });
+	});
+
 	await testAsync('handleToolCall dryRun returns normalized command without sending to Unity', async () => {
 		let requestCount = 0;
 		const tools = new UnityMcpTools({
@@ -1220,6 +1266,7 @@ async function testUnityMcpTools() {
 			propertyValue: 'ProbeRenamed'
 		});
 		await tools.handleToolCall('build_trigger', { buildPath: 'Builds/Test', development: true });
+		await tools.handleToolCall('profiler_snapshot', { action: 'saveSession', sessionId: 'editor_123' });
 
 		assert.deepStrictEqual(calls[0].payload.args, { action: 'load', scenePath: 'Assets/Test.unity', path: 'Assets/Test.unity' });
 		assert.deepStrictEqual(calls[1].payload.args, {
@@ -1259,6 +1306,7 @@ async function testUnityMcpTools() {
 			valueString: 'ProbeRenamed'
 		});
 		assert.deepStrictEqual(calls[6].payload.args, { buildPath: 'Builds/Test', development: true, path: 'Builds/Test' });
+		assert.deepStrictEqual(calls[7].payload.args, { action: 'saveSession', sessionId: 'editor_123', id: 'editor_123' });
 	});
 
 	await testAsync('batch_execute runs operations in sequence', async () => {
@@ -1342,6 +1390,7 @@ async function testStandaloneMcpServer() {
 			const toolNames = tools.result.tools.map((tool) => tool.name);
 			assert.ok(toolNames.includes('project_info'));
 			assert.ok(toolNames.includes('read_console'));
+			assert.ok(toolNames.includes('profiler_snapshot'));
 			const projectInfo = tools.result.tools.find((tool) => tool.name === 'project_info');
 			assert.strictEqual(projectInfo.annotations.readOnlyHint, true);
 
@@ -1388,6 +1437,20 @@ async function testStandaloneMcpServer() {
 			const payload = JSON.parse(dryRun.result.content[0].text);
 			assert.strictEqual(payload.dryRun, true);
 			assert.deepStrictEqual(payload.args.position, [1, 2, 3]);
+
+			const profilerCurrent = await server.request('tools/call', {
+				name: 'profiler_snapshot',
+				arguments: { action: 'current' }
+			});
+			assert.strictEqual(profilerCurrent.result.isError, true);
+			assert.ok(profilerCurrent.result.content[0].text.includes('Unity did not respond'));
+
+			const profilerBlocked = await server.request('tools/call', {
+				name: 'profiler_snapshot',
+				arguments: { action: 'clearSessions' }
+			});
+			assert.strictEqual(profilerBlocked.result.isError, true);
+			assert.ok(profilerBlocked.result.content[0].text.includes('blocked'));
 		} finally {
 			server.stop();
 		}

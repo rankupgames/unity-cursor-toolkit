@@ -153,6 +153,29 @@ export class UnityMcpTools implements IToolProvider {
 				annotations: getToolAnnotations('project_info')
 			},
 			{
+				name: 'profiler_snapshot',
+				title: 'Profiler Snapshot',
+				description: 'Capture the current Unity profiler/console session, list retained sessions, read or save a session, clear temp sessions, or discover available counters.',
+				inputSchema: {
+					type: 'object',
+					properties: withDryRunProperty({
+						action: {
+							type: 'string',
+							enum: ['current', 'listSessions', 'readSession', 'saveSession', 'clearSessions', 'discoverCounters'],
+							description: 'Profiler snapshot action. Defaults to current.'
+						},
+						sessionId: { type: 'string', description: 'Session id for readSession or saveSession.' },
+						id: { type: 'string', description: 'Alias for sessionId.' },
+						includeConsole: { type: 'boolean', description: 'Include Unity console text in current snapshots. Defaults to true.' },
+						includeRaw: { type: 'boolean', description: 'Include raw frame arrays and full configured detail.' },
+						includeSaved: { type: 'boolean', description: 'Include saved sessions when listing, or also clear saved sessions with clearSessions. Defaults to false.' },
+						format: { type: 'string', enum: ['json', 'markdown'], description: 'Return current snapshot as JSON object or Markdown content.' },
+						limit: { type: 'number', description: 'Maximum counters returned by discoverCounters.' }
+					})
+				},
+				annotations: getToolAnnotations('profiler_snapshot')
+			},
+			{
 				name: 'build_trigger',
 				title: 'Build Trigger',
 				description: 'Trigger a Unity build with specified settings.',
@@ -250,6 +273,9 @@ export class UnityMcpTools implements IToolProvider {
 				break;
 			case 'build_trigger':
 				normalized = UnityMcpTools.withAlias(args, 'buildPath', 'path');
+				break;
+			case 'profiler_snapshot':
+				normalized = UnityMcpTools.withAlias(args, 'sessionId', 'id');
 				break;
 			default:
 				normalized = args;

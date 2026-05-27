@@ -15,7 +15,8 @@ const MUTATING_TOOLS = {
 	play_mode: true,
 	execute_menu_item: true,
 	build_trigger: true,
-	clear_console: true
+	clear_console: true,
+	profiler_snapshot: true
 } as const;
 
 const READ_ONLY_TOOLS = {
@@ -28,12 +29,14 @@ const READ_ONLY_TOOLS = {
 const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	manage_scene: ['getHierarchy'],
 	manage_gameobject: ['find'],
-	manage_component: ['getProperties']
+	manage_component: ['getProperties'],
+	profiler_snapshot: ['current', 'listSessions', 'readSession', 'discoverCounters']
 };
 
 const DESTRUCTIVE_ACTIONS: Record<string, readonly string[]> = {
 	manage_asset: ['delete'],
-	manage_gameobject: ['destroy']
+	manage_gameobject: ['destroy'],
+	profiler_snapshot: ['clearSessions']
 };
 
 export function withDryRunProperty(properties: Record<string, unknown>): Record<string, unknown> {
@@ -84,7 +87,7 @@ export function isMutatingToolCall(toolName: string, args: Record<string, unknow
 
 	const readOnlyActions = READ_ONLY_ACTIONS[toolName];
 	if (readOnlyActions) {
-		const action = typeof args.action === 'string' ? args.action : '';
+		const action = typeof args.action === 'string' ? args.action : toolName === 'profiler_snapshot' ? 'current' : '';
 		return readOnlyActions.includes(action) === false;
 	}
 
@@ -123,7 +126,8 @@ function canBeDestructiveTool(toolName: string): boolean {
 	return toolName === 'manage_asset'
 		|| toolName === 'manage_gameobject'
 		|| toolName === 'batch_execute'
-		|| toolName === 'clear_console';
+		|| toolName === 'clear_console'
+		|| toolName === 'profiler_snapshot';
 }
 
 function isUsuallyIdempotentTool(toolName: string): boolean {

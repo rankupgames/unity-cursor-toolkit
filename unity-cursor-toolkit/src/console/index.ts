@@ -11,6 +11,7 @@ import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction }
 import { ConsoleBridge } from './consoleBridge';
 import { ConsolePanelProvider } from './consolePanel';
 import { ConsoleMcpTools } from './consoleMcpTools';
+import { ConnectionState } from '../core/types';
 
 export class ConsoleModule implements IModule {
 
@@ -20,10 +21,12 @@ export class ConsoleModule implements IModule {
 	private provider: ConsolePanelProvider | undefined;
 	private outputChannel: vscode.OutputChannel | undefined;
 	private disposables: vscode.Disposable[] = [];
+	private moduleContext: ModuleContext | undefined;
 
 	public async activate(ctx: ModuleContext): Promise<void> {
+		this.moduleContext = ctx;
 		this.bridge = new ConsoleBridge(ctx.connectionManager);
-		this.provider = new ConsolePanelProvider(this.bridge);
+		this.provider = new ConsolePanelProvider(this.bridge, () => this.captureUnityProfilerSnapshot());
 		this.outputChannel = vscode.window.createOutputChannel('Unity Console');
 
 		this.disposables.push(
@@ -86,6 +89,30 @@ export class ConsoleModule implements IModule {
 			d.dispose();
 		}
 		this.disposables.length = 0;
+	}
+
+	private async captureUnityProfilerSnapshot(): Promise<string | null> {
+		if (this.moduleContext == null || this.moduleContext.connectionManager.info.state !== ConnectionState.Connected) {
+			return null;
+		}
+
+		const result = await this.moduleContext.commandSender.request('mcpToolCall', {
+			toolName: 'profiler_snapshot',
+			args: {
+				action: 'current',
+				format: 'markdown',
+				includeConsole: true,
+				includeRaw: true
+			}
+		});
+
+		const payload = result?.result;
+		if (typeof payload === 'object' && payload != null) {
+			const content = (payload as { content?: unknown }).content;
+			return typeof content === 'string' ? content : null;
+		}
+
+		return null;
 	}
 }
 

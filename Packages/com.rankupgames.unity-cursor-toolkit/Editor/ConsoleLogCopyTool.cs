@@ -55,14 +55,20 @@ public static class ConsoleLogCopyTool
 	internal static void CopyConsoleLogs()
 	{
 		var _entries = GetConsoleLogEntries();
+
+		GUIUtility.systemCopyBuffer = ProfilerSessionRecorder.BuildClipboardSnapshot(_entries, ProfilerSnapshotSettings.Current.IncludeRawFrameArrays);
 		if (string.IsNullOrEmpty(_entries))
 		{
-			Debug.Log("(ConsoleLogCopyTool - CopyConsoleLogs) Console is empty, nothing to copy");
+			Debug.Log("(ConsoleLogCopyTool - CopyConsoleLogs) Console is empty; copied current profiler session snapshot to clipboard");
 			return;
 		}
 
-		GUIUtility.systemCopyBuffer = _entries;
-		Debug.Log("(ConsoleLogCopyTool - CopyConsoleLogs) Copied all console logs to clipboard");
+		Debug.Log("(ConsoleLogCopyTool - CopyConsoleLogs) Copied console logs and current profiler session snapshot to clipboard");
+	}
+
+	internal static string GetConsoleLogEntriesForSnapshot()
+	{
+		return GetConsoleLogEntries();
 	}
 
 	/// <summary>

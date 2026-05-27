@@ -13,6 +13,8 @@ import type { ConsoleEntry } from '../core/types';
 
 const DEFAULT_MAX_ENTRIES = 10_000;
 
+export type UnityProfilerSnapshotProvider = () => Promise<string | null>;
+
 interface ConsoleWebviewMessage {
 	readonly type?: unknown;
 	readonly text?: unknown;
@@ -25,12 +27,14 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	public static readonly viewId = 'unityConsole';
 
 	private readonly bridge: ConsoleBridge;
+	private readonly unityProfilerSnapshotProvider: UnityProfilerSnapshotProvider | undefined;
 	private currentView: vscode.WebviewView | undefined;
 	private entries: ConsoleEntry[] = [];
 	private disposables: vscode.Disposable[] = [];
 
-	constructor(bridge: ConsoleBridge) {
+	constructor(bridge: ConsoleBridge, unityProfilerSnapshotProvider?: UnityProfilerSnapshotProvider) {
 		this.bridge = bridge;
+		this.unityProfilerSnapshotProvider = unityProfilerSnapshotProvider;
 
 		this.disposables.push(
 			bridge.onEntry((entry) => {
@@ -77,6 +81,17 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	}
 
 	public async snapshot(): Promise<void> {
+		try {
+			const unitySnapshot = await this.unityProfilerSnapshotProvider?.();
+			if (unitySnapshot) {
+				await vscode.env.clipboard.writeText(unitySnapshot);
+				vscode.window.showInformationMessage('Unity console and profiler snapshot copied to clipboard.');
+				return;
+			}
+		} catch (error: unknown) {
+			console.warn(`[ConsolePanel] Unity profiler snapshot unavailable: ${error instanceof Error ? error.message : String(error)}`);
+		}
+
 		const errors = this.entries.filter((e) => e.type === 'error' || e.type === 'exception');
 		const warnings = this.entries.filter((e) => e.type === 'warning');
 		const recent = this.entries.slice(-10);

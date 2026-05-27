@@ -21,7 +21,7 @@ Save-to-refresh with debounced file watching and compilation feedback in the sta
 
 ### Live Console
 
-Real-time streaming, severity filtering, text search across messages and stack traces, safe clickable `Assets/...` stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable).
+Real-time streaming, severity filtering, text search across messages and stack traces, safe clickable `Assets/...` stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable). Console snapshots can include the current Unity profiler session so agents get logs, frame trends, hot frames, and hot paths together.
 
 ### Connection
 
@@ -37,7 +37,7 @@ Enter, exit, pause, and single-frame step directly from VS Code / Cursor -- no n
 
 ### MCP Server
 
-AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, and use read-only or dry-run safeguards before mutating Unity state.
+AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, inspect profiler snapshots, and use read-only or dry-run safeguards before mutating Unity state.
 
 ### Mono Debugger
 
@@ -140,6 +140,8 @@ npm run validate
 
 `npm run validate` is the canonical local and CI gate. It compiles the extension, runs a strict unused-code type check, executes the runtime test harness, and runs both production and full npm audits.
 
+Dependency updates should use npm 11.14.1 or newer with the repository age gate, for example `npm update <package> --package-lock-only --ignore-scripts --min-release-age=7`. Prefer lockfile-scoped security fixes for transitive audit findings. If a fixed package is newer than 7 days, leave the advisory pending unless the update is explicitly approved as a security hotfix.
+
 For packaging checks:
 
 ```bash
@@ -151,6 +153,7 @@ The VSIX package is intentionally limited to runtime extension assets: compiled 
 ## Security Hardening
 
 - Dependency audits run through `npm run validate` and GitHub Actions.
+- Dependency updates follow a 7-day npm release-age gate unless an explicit security hotfix exception is documented.
 - Console webviews use nonce-based CSP for scripts and styles.
 - Console payloads are normalized before rendering, filtering, copying, or forwarding to chat.
 - Clickable stack traces and `.meta` resolution reject paths that escape the current workspace.
@@ -165,7 +168,7 @@ The VSIX package is intentionally limited to runtime extension assets: compiled 
 | `unity-cursor-toolkit.console.clear` | Clear the console panel |
 | `unity-cursor-toolkit.console.sendToChat` | Send console output to AI chat |
 | `unity-cursor-toolkit.console.copy` | Copy console output to clipboard |
-| `unity-cursor-toolkit.console.snapshot` | Take a console snapshot |
+| `unity-cursor-toolkit.console.snapshot` | Take a console/profiler snapshot |
 | `unity-cursor-toolkit.console.export` | Export console logs to file |
 | `unity-cursor-toolkit.resolveMeta` | Resolve `.meta` file for a path (for AI) |
 | `unity-cursor-toolkit.openProject` | Open Unity project in the editor |
@@ -197,6 +200,7 @@ unity-cursor-toolkit/
 │   └── com.rankupgames.unity-cursor-toolkit/   # Unity UPM package (C#)
 │       └── Editor/
 │           ├── ConsoleToCursor.cs       # Console log forwarding
+│           ├── ProfilerSnapshot.cs      # Profiler session snapshots and MCP access
 │           ├── HotReloadHandler.cs      # Asset refresh on code changes
 │           ├── Core/                    # MCP tool attribute, interfaces
 │           ├── Debug/                   # Mono debug bridge
