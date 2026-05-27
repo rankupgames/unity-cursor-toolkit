@@ -318,6 +318,7 @@ function buildInitializeResult(tools: readonly ToolDefinition[], readOnly: boole
 			'Connect Unity first by installing com.rankupgames.unity-cursor-toolkit and opening the project in Unity.',
 			`Read-only mode is ${readOnly ? 'enabled' : 'disabled'} via ${READ_ONLY_ENV}.`,
 			'Use project_info, read_console, and manage_scene/getHierarchy before mutating a scene.',
+			'Use profiler_snapshot action=current for session artifacts, then readConsoleTranscript with the returned session id when the compact console timeline is needed.',
 			'Use dryRun=true on mutating tools to inspect normalized Unity commands without executing them.',
 			`Available tools: ${tools.map((tool) => tool.name).join(', ')}.`
 		].join(' ')
@@ -387,11 +388,11 @@ function toCatalogEntry(tool: ToolDefinition): Record<string, unknown> {
 function buildPromptText(name: string): string {
 	switch (name) {
 		case 'diagnose_unity_errors':
-			return 'Use unity://console/errors and project_info first. Identify the most likely Unity error cause, propose the smallest fix, and avoid mutating tools unless the user asks.';
+			return 'Use unity://console/errors and project_info first. For timeline reconstruction, call profiler_snapshot with action=current, then profiler_snapshot with action=readConsoleTranscript and the returned session id. Identify the most likely Unity error cause, propose the smallest fix, and avoid mutating tools unless the user asks.';
 		case 'inspect_active_scene':
 			return 'Read project_info and unity://scene/hierarchy. Summarize the active scene, important objects, and any missing context before proposing edits.';
 		case 'prepare_build':
-			return 'Read project_info and recent console output. If the project is clean, propose a build_trigger call with dryRun=true before executing a build.';
+			return 'Read project_info and recent console output. When console timing matters, capture profiler_snapshot action=current and readConsoleTranscript for the compact grouped console timeline. If the project is clean, propose a build_trigger call with dryRun=true before executing a build.';
 		case 'safe_scene_edit_plan':
 			return 'Inspect the active scene with read-only tools, produce a step-by-step edit plan, then use dryRun=true for the first mutating tool call.';
 		default:

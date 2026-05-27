@@ -6,6 +6,7 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 
 - Read recent Unity console output with `read_console`.
 - Capture current console/profiler context with `profiler_snapshot`.
+- Read compact whole-console session transcripts with `profiler_snapshot` using `action: "readConsoleTranscript"` after capturing or listing a session id.
 - Inspect project state with `project_info`.
 - Inspect active scene hierarchy with `manage_scene` and `action: "getHierarchy"`.
 - Resolve Unity `.meta` files with `resolve_meta`.
@@ -15,10 +16,11 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 
 1. Call `project_info`.
 2. Call `read_console` with `level: "error"` and then without a level filter.
-3. Call `profiler_snapshot` with `action: "current"` when investigating performance, hitches, GC allocations, or frame timing.
-4. Call `manage_scene` with `action: "getHierarchy"` before any scene edit.
-5. Use `dryRun: true` for the first mutating call.
-6. Execute the real mutating call only after the user has approved the intended change.
+3. Call `profiler_snapshot` with `action: "current"` when investigating performance, hitches, GC allocations, frame timing, or console event timelines.
+4. When the compact grouped console timeline is needed, call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id.
+5. Call `manage_scene` with `action: "getHierarchy"` before any scene edit.
+6. Use `dryRun: true` for the first mutating call.
+7. Execute the real mutating call only after the user has approved the intended change.
 
 ## Safety Controls
 
@@ -26,7 +28,7 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 - Pass `dryRun: true` to mutating Unity tools to return the normalized command without sending it to Unity.
 - `resolve_meta` rejects absolute paths and traversal outside the Unity project root.
 - Tools include MCP annotations such as `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint` so clients can expose safer approval UX.
-- `profiler_snapshot` read actions are allowed in read-only mode. Saving or clearing retained profiler sessions is treated as mutating.
+- `profiler_snapshot` read actions are allowed in read-only mode, including `readConsoleTranscript`. Saving or clearing retained profiler sessions is treated as mutating.
 
 ## Dependency Changes
 

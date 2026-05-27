@@ -30,7 +30,7 @@ const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	manage_scene: ['getHierarchy'],
 	manage_gameobject: ['find'],
 	manage_component: ['getProperties'],
-	profiler_snapshot: ['current', 'listSessions', 'readSession', 'discoverCounters']
+	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters']
 };
 
 const DESTRUCTIVE_ACTIONS: Record<string, readonly string[]> = {

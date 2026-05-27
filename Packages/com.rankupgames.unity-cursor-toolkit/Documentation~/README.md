@@ -70,7 +70,8 @@ Recommended agent flow:
 1. Open the Unity project in Unity with this package installed.
 2. Start the companion MCP server from an MCP client.
 3. Inspect with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"`.
-4. Use `dryRun: true` before mutating assets, scenes, GameObjects, components, play mode, menus, or builds.
+4. Use `profiler_snapshot` with `action: "current"`, then `action: "readConsoleTranscript"` with the captured session id when an agent needs the compact grouped whole-console timeline.
+5. Use `dryRun: true` before mutating assets, scenes, GameObjects, components, play mode, menus, or builds.
 
 Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` for agent sessions that should inspect Unity without changing Editor state.
 

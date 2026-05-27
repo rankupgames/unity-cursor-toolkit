@@ -19,7 +19,7 @@ namespace UnityCursorToolkit.MCP
 	internal sealed class ProfilerSnapshotTool : IToolHandler
 	{
 		public string ToolName => "profiler_snapshot";
-		public string Description => "Capture, list, read, save, or clear Unity Cursor Toolkit profiler sessions.";
+		public string Description => "Capture, list, read, save, or clear Unity Cursor Toolkit profiler sessions and console transcript artifacts.";
 
 		public string HandleCommand(string argsJson)
 		{
@@ -36,6 +36,8 @@ namespace UnityCursorToolkit.MCP
 					return ProfilerSessionRecorder.ListSessionsJson(args.includeSaved);
 				case "readSession":
 					return ProfilerSessionRecorder.ReadSessionJson(args.SessionId);
+				case "readConsoleTranscript":
+					return ProfilerSessionRecorder.ReadConsoleTranscriptJson(args.SessionId);
 				case "saveSession":
 					return ProfilerSessionRecorder.SaveSessionJson(args.SessionId);
 				case "clearSessions":
@@ -49,12 +51,11 @@ namespace UnityCursorToolkit.MCP
 
 		private static string Current(ProfilerSnapshotArgs args)
 		{
-			string consoleEntries = args.includeConsole ? ConsoleLogCopyTool.GetConsoleLogEntriesForSnapshot() : null;
-			ProfilerSnapshotSession session = ProfilerSessionRecorder.CaptureCurrentSession(args.includeRaw);
+			ProfilerSnapshotSession session = ProfilerSessionRecorder.CaptureCurrentSession(args.includeRaw, args.includeConsole);
 
 			if (string.Equals(args.format, "markdown", StringComparison.OrdinalIgnoreCase))
 			{
-				string markdown = ProfilerSnapshotFormatter.FormatClipboard(consoleEntries, session, args.includeRaw);
+				string markdown = ProfilerSnapshotFormatter.FormatClipboard(session);
 				return "{\"success\":true,\"format\":\"markdown\",\"content\":\"" + ProfilerSnapshotJson.Escape(markdown) + "\"}";
 			}
 
@@ -62,7 +63,7 @@ namespace UnityCursorToolkit.MCP
 			sb.Append("{\"success\":true,\"session\":").Append(session.ToJson(args.includeRaw));
 			if (args.includeConsole)
 			{
-				sb.Append(",\"console\":\"").Append(ProfilerSnapshotJson.Escape(consoleEntries)).Append("\"");
+				sb.Append(",\"console\":\"").Append(ProfilerSnapshotJson.Escape(ProfilerSnapshotFormatter.FormatConsoleSummary(session))).Append("\"");
 			}
 			sb.Append("}");
 			return sb.ToString();

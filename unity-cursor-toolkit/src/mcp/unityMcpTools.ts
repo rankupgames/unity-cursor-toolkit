@@ -155,18 +155,18 @@ export class UnityMcpTools implements IToolProvider {
 			{
 				name: 'profiler_snapshot',
 				title: 'Profiler Snapshot',
-				description: 'Capture the current Unity profiler/console session, list retained sessions, read or save a session, clear temp sessions, or discover available counters.',
+				description: 'Capture the current Unity profiler session plus a compact whole-console transcript artifact, list retained sessions, read the session or console transcript, save a session, clear temp sessions, or discover available counters.',
 				inputSchema: {
 					type: 'object',
 					properties: withDryRunProperty({
 						action: {
 							type: 'string',
-							enum: ['current', 'listSessions', 'readSession', 'saveSession', 'clearSessions', 'discoverCounters'],
+							enum: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'saveSession', 'clearSessions', 'discoverCounters'],
 							description: 'Profiler snapshot action. Defaults to current.'
 						},
-						sessionId: { type: 'string', description: 'Session id for readSession or saveSession.' },
+						sessionId: { type: 'string', description: 'Session id for readSession, readConsoleTranscript, or saveSession.' },
 						id: { type: 'string', description: 'Alias for sessionId.' },
-						includeConsole: { type: 'boolean', description: 'Include Unity console text in current snapshots. Defaults to true.' },
+						includeConsole: { type: 'boolean', description: 'Include compact whole-console transcript artifact metadata and grouped error summary in current snapshots. Defaults to true.' },
 						includeRaw: { type: 'boolean', description: 'Include raw frame arrays and full configured detail.' },
 						includeSaved: { type: 'boolean', description: 'Include saved sessions when listing, or also clear saved sessions with clearSessions. Defaults to false.' },
 						format: { type: 'string', enum: ['json', 'markdown'], description: 'Return current snapshot as JSON object or Markdown content.' },

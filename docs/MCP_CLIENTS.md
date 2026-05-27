@@ -113,7 +113,8 @@ Add a custom context server to Zed `settings.json`:
 3. Start the MCP client and list tools.
 4. Call `project_info`.
 5. Call `read_console`.
-6. Call `profiler_snapshot` with `action: "current"` to confirm Unity can return the current console/profiler session.
-7. For safety, try `manage_gameobject` with `dryRun: true` before any real scene mutation.
+6. Call `profiler_snapshot` with `action: "current"` to confirm Unity can return the current console/profiler session and compact console transcript path.
+7. Call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id to confirm the MCP client can fetch the grouped whole-console timeline.
+8. For safety, try `manage_gameobject` with `dryRun: true` before any real scene mutation.
 
 When rebuilding the extension from source, install with `npm ci`. Dependency updates should use npm 11.14.1 or newer with `--min-release-age=7`; security fixes for packages younger than 7 days need explicit hotfix approval before changing the lockfile.

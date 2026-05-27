@@ -86,7 +86,7 @@ namespace UnityCursorToolkit
 			EditorGUILayout.PropertyField(serialized.FindProperty("hierarchyDepth"), new GUIContent("Hierarchy depth"));
 			EditorGUILayout.PropertyField(serialized.FindProperty("maxHierarchyItems"), new GUIContent("Max hierarchy items"));
 			EditorGUILayout.PropertyField(serialized.FindProperty("topHotPathCount"), new GUIContent("Top hot path count"));
-			EditorGUILayout.PropertyField(serialized.FindProperty("includeRawFrameArrays"), new GUIContent("Include raw arrays in clipboard"));
+			EditorGUILayout.PropertyField(serialized.FindProperty("includeRawFrameArrays"), new GUIContent("Include raw arrays in session JSON"));
 			EditorGUILayout.PropertyField(serialized.FindProperty("deepProfiling"), new GUIContent("Deep profiling"));
 			serialized.ApplyModifiedProperties();
 
@@ -121,6 +121,7 @@ namespace UnityCursorToolkit
 
 		private static string sessionId;
 		private static string sessionStartedUtc;
+		private static DateTime sessionStartedAtUtc;
 		private static int activeCapacity;
 		private static bool activeEnabled;
 		private static bool profilerDriverManaged;
@@ -132,11 +133,17 @@ namespace UnityCursorToolkit
 
 		static ProfilerSessionRecorder()
 		{
-			sessionStartedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
+			sessionStartedAtUtc = DateTime.UtcNow;
+			sessionStartedUtc = FormatUtc(sessionStartedAtUtc);
 			sessionId = CreateSessionId();
+			ConsoleTranscriptRecorder.Reset(sessionStartedAtUtc);
 			EditorApplication.update += Tick;
 			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 			ApplySettings();
+		}
+
+		internal static void EnsureInitialized()
+		{
 		}
 
 		internal static void ApplySettings()
@@ -163,7 +170,7 @@ namespace UnityCursorToolkit
 			}
 		}
 
-		internal static ProfilerSnapshotSession CaptureCurrentSession(bool includeRaw)
+		internal static ProfilerSnapshotSession CaptureCurrentSession(bool includeRaw, bool includeConsole = true)
 		{
 			lock (syncRoot)
 			{
@@ -195,15 +202,19 @@ namespace UnityCursorToolkit
 
 				CaptureHierarchy(settings, session);
 				AnalyzeBottleneck(session);
+				if (includeConsole)
+				{
+					StoreConsoleTranscript(session);
+				}
 				session.sessionPath = StoreTempSession(session, includeRaw);
 				return session;
 			}
 		}
 
-		internal static string BuildClipboardSnapshot(string consoleEntries, bool includeRaw)
+		internal static string BuildClipboardSnapshot(bool includeRaw)
 		{
 			ProfilerSnapshotSession session = CaptureCurrentSession(includeRaw);
-			return ProfilerSnapshotFormatter.FormatClipboard(consoleEntries, session, includeRaw);
+			return ProfilerSnapshotFormatter.FormatClipboard(session);
 		}
 
 		internal static string ListSessionsJson(bool includeSaved)
@@ -231,6 +242,23 @@ namespace UnityCursorToolkit
 			return "{\"success\":true,\"session\":" + File.ReadAllText(path) + "}";
 		}
 
+		internal static string ReadConsoleTranscriptJson(string id)
+		{
+			string path = ResolveSessionPath(id, true);
+			if (string.IsNullOrEmpty(path) || File.Exists(path) == false)
+			{
+				return ProfilerSnapshotJson.Error("Session not found: " + id);
+			}
+
+			string consolePath = GetConsoleTranscriptPath(path);
+			if (File.Exists(consolePath) == false)
+			{
+				return ProfilerSnapshotJson.Error("Console transcript not found for session: " + id);
+			}
+
+			return "{\"success\":true,\"id\":\"" + ProfilerSnapshotJson.Escape(id) + "\",\"path\":\"" + ProfilerSnapshotJson.Escape(consolePath) + "\",\"consoleTranscript\":" + File.ReadAllText(consolePath) + "}";
+		}
+
 		internal static string SaveSessionJson(string id)
 		{
 			string source = ResolveSessionPath(id, false);
@@ -242,7 +270,19 @@ namespace UnityCursorToolkit
 			Directory.CreateDirectory(SavedFolder);
 			string dest = Path.Combine(SavedFolder, Path.GetFileName(source));
 			File.Copy(source, dest, true);
-			return "{\"success\":true,\"id\":\"" + ProfilerSnapshotJson.Escape(id) + "\",\"path\":\"" + ProfilerSnapshotJson.Escape(dest) + "\"}";
+
+			string consoleSource = GetConsoleTranscriptPath(source);
+			string consoleDest = GetConsoleTranscriptPath(dest);
+			if (File.Exists(consoleSource))
+			{
+				File.Copy(consoleSource, consoleDest, true);
+			}
+			else if (File.Exists(consoleDest))
+			{
+				File.Delete(consoleDest);
+			}
+
+			return "{\"success\":true,\"id\":\"" + ProfilerSnapshotJson.Escape(id) + "\",\"path\":\"" + ProfilerSnapshotJson.Escape(dest) + "\",\"consolePath\":\"" + ProfilerSnapshotJson.Escape(File.Exists(consoleDest) ? consoleDest : string.Empty) + "\"}";
 		}
 
 		internal static string ClearSessionsJson(bool includeSaved)
@@ -313,9 +353,11 @@ namespace UnityCursorToolkit
 		{
 			lock (syncRoot)
 			{
-				sessionStartedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
+				sessionStartedAtUtc = DateTime.UtcNow;
+				sessionStartedUtc = FormatUtc(sessionStartedAtUtc);
 				sessionId = CreateSessionId();
 				frameTimings.Clear();
+				ConsoleTranscriptRecorder.Reset(sessionStartedAtUtc);
 				foreach (RecorderSlot recorder in recorders)
 				{
 					recorder.Reset();
@@ -593,6 +635,26 @@ namespace UnityCursorToolkit
 			return sum / timings.Count;
 		}
 
+		private static void StoreConsoleTranscript(ProfilerSnapshotSession session)
+		{
+			Directory.CreateDirectory(TempFolder);
+			string path = Path.Combine(TempFolder, session.id + ".console.json");
+			ConsoleTranscript transcript = BuildConsoleTranscript(session, path);
+
+			session.consoleTranscript = transcript;
+			session.consoleTranscriptPath = path;
+			session.consoleEntryCount = transcript.EntryCount;
+			session.consoleErrorGroupCount = transcript.ErrorGroupCount;
+			session.consoleTrimmed = transcript.trimmed;
+
+			File.WriteAllText(path, transcript.ToJson());
+		}
+
+		private static ConsoleTranscript BuildConsoleTranscript(ProfilerSnapshotSession session, string path)
+		{
+			return ConsoleTranscriptRecorder.Capture(session.id, session.startedUtc, session.capturedUtc, path);
+		}
+
 		private static void ConfigureProfilerDriver(ProfilerSnapshotSettings settings)
 		{
 			SetProfilerDriverEnabled(settings.CaptureHierarchy);
@@ -721,12 +783,18 @@ namespace UnityCursorToolkit
 		{
 			Directory.CreateDirectory(TempFolder);
 			FileInfo[] files = new DirectoryInfo(TempFolder).GetFiles("*.json")
+				.Where(f => IsConsoleTranscriptFile(f.Name) == false)
 				.OrderByDescending(f => f.LastWriteTimeUtc)
 				.ToArray();
 			int limit = ProfilerSnapshotSettings.Current.TempSessionLimit;
 			for (int i = limit; i < files.Length; i++)
 			{
+				string consolePath = GetConsoleTranscriptPath(files[i].FullName);
 				files[i].Delete();
+				if (File.Exists(consolePath))
+				{
+					File.Delete(consolePath);
+				}
 			}
 		}
 
@@ -738,6 +806,7 @@ namespace UnityCursorToolkit
 			}
 
 			FileInfo[] files = new DirectoryInfo(folder).GetFiles("*.json")
+				.Where(f => IsConsoleTranscriptFile(f.Name) == false)
 				.OrderByDescending(f => f.LastWriteTimeUtc)
 				.ToArray();
 			for (int i = 0; i < files.Length; i++)
@@ -779,6 +848,18 @@ namespace UnityCursorToolkit
 			return null;
 		}
 
+		private static bool IsConsoleTranscriptFile(string fileName)
+		{
+			return fileName.EndsWith(".console.json", StringComparison.OrdinalIgnoreCase);
+		}
+
+		private static string GetConsoleTranscriptPath(string sessionPath)
+		{
+			string folder = Path.GetDirectoryName(sessionPath);
+			string id = Path.GetFileNameWithoutExtension(sessionPath);
+			return Path.Combine(folder ?? string.Empty, id + ".console.json");
+		}
+
 		private static void DeleteFiles(string folder, string pattern)
 		{
 			if (Directory.Exists(folder) == false)
@@ -797,6 +878,11 @@ namespace UnityCursorToolkit
 		{
 			string mode = EditorApplication.isPlaying ? "play" : "editor";
 			return mode + "_" + DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff", CultureInfo.InvariantCulture);
+		}
+
+		private static string FormatUtc(DateTime value)
+		{
+			return value.ToString("O", CultureInfo.InvariantCulture);
 		}
 
 		private static string ProjectRoot

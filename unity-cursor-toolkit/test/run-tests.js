@@ -1105,6 +1105,7 @@ async function testUnityMcpTools() {
 		const profiler = tools.getTools().find((def) => def.name === 'profiler_snapshot');
 		assert.ok(profiler, 'profiler_snapshot tool exists');
 		assert.ok(profiler.inputSchema.properties.action.enum.includes('current'));
+		assert.ok(profiler.inputSchema.properties.action.enum.includes('readConsoleTranscript'));
 		assert.ok(profiler.inputSchema.properties.action.enum.includes('saveSession'));
 		assert.ok(profiler.inputSchema.properties.includeRaw);
 		assert.ok(profiler.inputSchema.properties.sessionId);
@@ -1444,6 +1445,13 @@ async function testStandaloneMcpServer() {
 			});
 			assert.strictEqual(profilerCurrent.result.isError, true);
 			assert.ok(profilerCurrent.result.content[0].text.includes('Unity did not respond'));
+
+			const profilerTranscript = await server.request('tools/call', {
+				name: 'profiler_snapshot',
+				arguments: { action: 'readConsoleTranscript', sessionId: 'editor_123' }
+			});
+			assert.strictEqual(profilerTranscript.result.isError, true);
+			assert.ok(profilerTranscript.result.content[0].text.includes('Unity did not respond'));
 
 			const profilerBlocked = await server.request('tools/call', {
 				name: 'profiler_snapshot',
