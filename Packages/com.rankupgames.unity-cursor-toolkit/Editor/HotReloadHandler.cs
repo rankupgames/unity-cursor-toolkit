@@ -48,7 +48,7 @@ public class HotReloadHandler : EditorWindow
     private static int lastSuccessfulPort = 55500; // Last port that successfully connected
     private static readonly Queue<string> messageQueue = new Queue<string>();
     private static bool isInitialized = false;
-    private static bool isServerRunning = false;
+    private static volatile bool isServerRunning = false;
     private static readonly List<TcpClient> connectedClients = new List<TcpClient>();
     private static readonly object clientListLock = new object();
 
@@ -437,9 +437,9 @@ public class HotReloadHandler : EditorWindow
             {
                 listenerThread.Join(1000); // Give it more time to exit gracefully
 
-                if (listenerThread.IsAlive)
+                if (listenerThread.IsAlive && showDebugLogs)
                 {
-                    listenerThread.Abort(); // Force abort if thread doesn't exit gracefully
+                    Debug.LogWarning("Unity Hot Reload server thread did not stop before assembly reload.");
                 }
             }
             catch (Exception ex)

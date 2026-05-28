@@ -7,6 +7,7 @@ Editor tools for Cursor/VS Code and MCP-capable AI agents integrating with Unity
 - **Hot Reload**: TCP server that triggers asset refresh when code changes are detected
 - **Console Forwarding**: Streams Unity console output to Cursor/VS Code
 - **MCP Bridge**: Model Context Protocol tool dispatch for AI-assisted Unity editing
+- **Runtime Game Commands**: Project-owned coroutine workflows callable through MCP without UI automation
 - **Debug Bridge**: Broadcasts Mono soft debugger port for attach debugging
 - **IL Patcher**: Runtime method body swapping during play mode (avoids domain reload)
 - **Agent Safety**: Supports read-only MCP sessions and dry-run previews from the companion extension
@@ -40,7 +41,7 @@ Add to your `Packages/manifest.json`:
   }
 ],
 "dependencies": {
-  "com.rankupgames.unity-cursor-toolkit": "1.0.0"
+  "com.rankupgames.unity-cursor-toolkit": "1.1.0"
 }
 ```
 
@@ -70,13 +71,29 @@ Recommended agent flow:
 1. Open the Unity project in Unity with this package installed.
 2. Start the companion MCP server from an MCP client.
 3. Inspect with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"`.
-4. Use `dryRun: true` before mutating assets, scenes, GameObjects, components, play mode, menus, or builds.
+4. Use `profiler_snapshot` with `action: "current"`, then `action: "readConsoleTranscript"` with the captured session id when an agent needs the compact grouped whole-console timeline.
+5. Use `game_command` with `action: "list"` to discover project-owned runtime workflows.
+6. Use `dryRun: true` before mutating assets, scenes, GameObjects, components, play mode, menus, or builds.
 
 Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` for agent sessions that should inspect Unity without changing Editor state.
+
+## Runtime Game Commands
+
+Game code can register deterministic play-mode sequences through `UnityCursorToolkit.AgentCommands.AgentCommandRegistry`. The companion MCP tool is `game_command` with `list`, `run`, `status`, and `cancel` actions.
+
+```csharp
+AgentCommandRegistry.Register(
+	"auth.select_us_east",
+	"Selects the US East server through the game's server selection handler.",
+	SelectUsEastServer);
+```
+
+Commands run on Unity's main thread as coroutines. They should call existing game subsystem methods, wait for completion, then report `context.Succeed(...)` or `context.Fail(...)`.
 
 See the repository docs:
 
 - `docs/AI_AGENTS.md`
+- `docs/GAME_COMMANDS.md`
 - `docs/MCP_CLIENTS.md`
 - `docs/FEATURE_ROADMAP.md`
 

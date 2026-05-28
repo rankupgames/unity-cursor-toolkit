@@ -137,3 +137,83 @@ jobs:
           echo "| VS Code Artifact | \`vscode-extension-${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| OpenVSX Artifact | \`openvsx-extension-${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+
+  publish:
+    needs: [check-changes, build]
+    if: needs.check-changes.outputs.has_changes == 'true' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      VSCE_PAT: ${{ secrets.VSCE_PAT }}
+      OVSX_PAT: ${{ secrets.OVSX_PAT }}
+    defaults:
+      run:
+        working-directory: unity-cursor-toolkit
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
+      - name: Use npm 11.14.1
+        run: |
+          npm install -g npm@11.14.1
+          npm --version
+
+      - name: Validate publish tokens
+        run: |
+          missing=0
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error::VSCE_PAT is required to publish the VS Code Marketplace package"
+            missing=1
+          fi
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::error::OVSX_PAT is required to publish the OpenVSX package"
+            missing=1
+          fi
+          exit "$missing"
+
+      - run: npm ci
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: vscode-extension-${{ needs.check-changes.outputs.build_version }}
+          path: unity-cursor-toolkit/dist/vscode
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: openvsx-extension-${{ needs.check-changes.outputs.build_version }}
+          path: unity-cursor-toolkit/dist/openvsx
+
+      - name: Publish to VS Code Marketplace
+        run: |
+          VSIX_FILE=$(ls dist/vscode/*.vsix | head -1)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "::error::No VS Code Marketplace VSIX artifact downloaded"
+            exit 1
+          fi
+          npx vsce publish --packagePath "$VSIX_FILE"
+
+      - name: Publish to OpenVSX
+        run: |
+          VSIX_FILE=$(ls dist/openvsx/*.vsix | head -1)
+          if [ -z "$VSIX_FILE" ]; then
+            echo "::error::No OpenVSX VSIX artifact downloaded"
+            exit 1
+          fi
+          npx ovsx publish "$VSIX_FILE" -p "$OVSX_PAT"
+
+      - name: Publish summary
+        if: always()
+        run: |
+          echo "## Marketplace Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| VS Code Marketplace | attempted |" >> $GITHUB_STEP_SUMMARY
+          echo "| OpenVSX | attempted |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY

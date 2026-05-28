@@ -153,6 +153,23 @@ export class UnityMcpTools implements IToolProvider {
 				annotations: getToolAnnotations('project_info')
 			},
 			{
+				name: 'game_command',
+				title: 'Game Command',
+				description: 'List, schedule, poll, or cancel game-authored runtime commands and workflows registered inside the Unity project.',
+				inputSchema: {
+					type: 'object',
+					properties: withDryRunProperty({
+						action: { type: 'string', enum: ['list', 'run', 'status', 'cancel'], description: 'Game command action. Defaults to list.' },
+						commandName: { type: 'string', description: 'Registered command name for action run.' },
+						name: { type: 'string', description: 'Alias for commandName.' },
+						runId: { type: 'string', description: 'Run id returned by action run, used by status and cancel.' },
+						id: { type: 'string', description: 'Alias for runId.' },
+						args: { type: 'object', description: 'Command-specific argument object forwarded to the registered Unity handler.' }
+					})
+				},
+				annotations: getToolAnnotations('game_command')
+			},
+			{
 				name: 'profiler_snapshot',
 				title: 'Profiler Snapshot',
 				description: 'Capture the current Unity profiler session plus a compact whole-console transcript artifact, list retained sessions, read the session or console transcript, save a session, clear temp sessions, or discover available counters.',
@@ -277,6 +294,9 @@ export class UnityMcpTools implements IToolProvider {
 			case 'profiler_snapshot':
 				normalized = UnityMcpTools.withAlias(args, 'sessionId', 'id');
 				break;
+			case 'game_command':
+				normalized = UnityMcpTools.normalizeGameCommandArgs(args);
+				break;
 			default:
 				normalized = args;
 				break;
@@ -372,6 +392,16 @@ export class UnityMcpTools implements IToolProvider {
 				normalized.valueString = String(value);
 			}
 		}
+		return normalized;
+	}
+
+	/**
+	 * Adds legacy aliases used by Unity-side command handlers so callers can use
+	 * either the descriptive MCP schema names or shorter command ids.
+	 */
+	private static normalizeGameCommandArgs(args: Record<string, unknown>): Record<string, unknown> {
+		let normalized = UnityMcpTools.withAlias(args, 'commandName', 'name');
+		normalized = UnityMcpTools.withAlias(normalized, 'runId', 'id');
 		return normalized;
 	}
 

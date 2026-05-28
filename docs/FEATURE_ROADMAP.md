@@ -12,6 +12,7 @@ This roadmap focuses on features that make Unity Cursor Toolkit more useful for 
 
 ## Unity Automation
 
+- Runtime command registry: expose project-owned coroutine workflows through MCP without UI automation.
 - Prefab tools: inspect overrides, instantiate prefabs, apply/revert changes, and support variants.
 - Selection tools: get current selection, select by instance ID, frame selected objects, and ping assets.
 - Test Runner tools: list tests, run EditMode/PlayMode tests, and return structured failures.

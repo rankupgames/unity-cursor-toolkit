@@ -10,6 +10,7 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 - Inspect project state with `project_info`.
 - Inspect active scene hierarchy with `manage_scene` and `action: "getHierarchy"`.
 - Resolve Unity `.meta` files with `resolve_meta`.
+- Discover and schedule game-authored runtime workflows with `game_command`.
 - Control play mode, capture screenshots, execute menu items, manage assets, edit GameObjects/components, and trigger builds when allowed.
 
 ## Safe Default Workflow
@@ -19,8 +20,9 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 3. Call `profiler_snapshot` with `action: "current"` when investigating performance, hitches, GC allocations, frame timing, or console event timelines.
 4. When the compact grouped console timeline is needed, call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id.
 5. Call `manage_scene` with `action: "getHierarchy"` before any scene edit.
-6. Use `dryRun: true` for the first mutating call.
-7. Execute the real mutating call only after the user has approved the intended change.
+6. Call `game_command` with `action: "list"` before scheduling a project-owned command.
+7. Use `dryRun: true` for the first mutating call.
+8. Execute the real mutating call only after the user has approved the intended change.
 
 ## Safety Controls
 
@@ -29,6 +31,26 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 - `resolve_meta` rejects absolute paths and traversal outside the Unity project root.
 - Tools include MCP annotations such as `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint` so clients can expose safer approval UX.
 - `profiler_snapshot` read actions are allowed in read-only mode, including `readConsoleTranscript`. Saving or clearing retained profiler sessions is treated as mutating.
+- `game_command` read actions are `list` and `status`; scheduling and cancellation are mutating because they execute or stop game code.
+
+## Runtime Game Commands
+
+Use `game_command` when the Unity project has registered workflows through `UnityCursorToolkit.AgentCommands`. Commands run in play mode on Unity's main thread and should call the game's existing public subsystem methods.
+
+Recommended flow:
+
+1. Call `game_command` with `action: "list"`.
+2. Start the command with `action: "run"` and a stable `commandName`.
+3. Poll with `action: "status"` and the returned `runId`.
+4. Use `action: "cancel"` only when the run is still pending or running.
+
+Example:
+
+```json
+{ "action": "run", "commandName": "auth.select_us_east", "args": {} }
+```
+
+See `docs/GAME_COMMANDS.md` for registration patterns and project integration notes.
 
 ## Dependency Changes
 

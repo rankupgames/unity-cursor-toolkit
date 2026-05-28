@@ -37,7 +37,7 @@ Enter, exit, pause, and single-frame step directly from VS Code / Cursor -- no n
 
 ### MCP Server
 
-AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, inspect profiler snapshots, and use read-only or dry-run safeguards before mutating Unity state.
+AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, inspect profiler snapshots, run game-authored command sequences, and use read-only or dry-run safeguards before mutating Unity state.
 
 ### Mono Debugger
 
@@ -49,7 +49,7 @@ Auto-hide `.meta` files from explorer and Cmd+P, with workspace-contained on-dem
 
 ### Unity Package (C# side)
 
-A companion UPM package (`com.rankupgames.unity-cursor-toolkit`) provides the Unity-side scripts: console forwarding, hot reload handler, MCP bridge, debug bridge, and IL patcher. Installable via OpenUPM, Git URL, or scoped registry.
+A companion UPM package (`com.rankupgames.unity-cursor-toolkit`) provides the Unity-side scripts: console forwarding, hot reload handler, MCP bridge, runtime command registry, debug bridge, and IL patcher. Installable via OpenUPM, Git URL, or scoped registry.
 
 ## Quick Start
 
@@ -76,8 +76,9 @@ Agent safety defaults:
 - Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` to block mutating tools.
 - Pass `dryRun: true` to mutating tools to inspect the normalized Unity command without executing it.
 - Start with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"` before scene or asset edits.
+- Use `game_command` with `action: "list"` to discover project-authored runtime workflows before scheduling them.
 
-See [AI Agent Guide](docs/AI_AGENTS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
+See [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
 
 ## Requirements
 
@@ -113,9 +114,31 @@ Add to your project's `Packages/manifest.json`:
   }
 ],
 "dependencies": {
-  "com.rankupgames.unity-cursor-toolkit": "1.0.0"
+  "com.rankupgames.unity-cursor-toolkit": "1.1.0"
 }
 ```
+
+## Runtime Game Commands
+
+Unity projects can register runtime command sequences that agents can call through MCP without driving the UI. Commands are registered from game code through `UnityCursorToolkit.AgentCommands.AgentCommandRegistry`, run as coroutines during play mode, and are scheduled through the `game_command` MCP tool.
+
+Typical flow:
+
+```json
+{ "action": "list" }
+```
+
+```json
+{ "action": "run", "commandName": "auth.select_us_east", "args": {} }
+```
+
+Then poll with:
+
+```json
+{ "action": "status", "runId": "<run id returned by run>" }
+```
+
+See [Runtime Game Commands](docs/GAME_COMMANDS.md) for registration patterns and project integration notes.
 
 ## Configuration
 
@@ -198,6 +221,8 @@ unity-cursor-toolkit/
 │       └── project/                # Project handler, meta manager, folder templates
 ├── Packages/
 │   └── com.rankupgames.unity-cursor-toolkit/   # Unity UPM package (C#)
+│       ├── Runtime/
+│       │   └── AgentCommands/         # Runtime command registry and coroutine runner
 │       └── Editor/
 │           ├── ConsoleToCursor.cs       # Console log forwarding
 │           ├── ProfilerSnapshot.cs      # Profiler session snapshots and MCP access
@@ -223,6 +248,8 @@ unity-cursor-toolkit/
 - **OpenVSX** -- Windsurf, VSCodium, Theia
 - **Cursor** -- Native support
 - **Zed** -- Via standalone MCP server (see `zed/`)
+
+CI and release workflows publish separate VS Code Marketplace and OpenVSX VSIX artifacts. Publishing fails loudly when `VSCE_PAT` or `OVSX_PAT` repository secrets are missing, so a green release means both registry uploads were attempted with valid credentials.
 
 ## Contributing
 

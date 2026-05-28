@@ -1,6 +1,6 @@
 # Unity Cursor Toolkit Extension
 
-VS Code / Cursor extension for Unity hot reload, live console streaming, MCP tool routing, play mode controls, `.meta` resolution, Mono debugger attach support, and standalone MCP access for AI agents.
+VS Code / Cursor extension for Unity hot reload, live console streaming, MCP tool routing, runtime game commands, play mode controls, `.meta` resolution, Mono debugger attach support, and standalone MCP access for AI agents.
 
 ## Development
 
@@ -30,6 +30,8 @@ Useful environment variables:
 
 Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy client snippets.
 
+Use the `game_command` MCP tool to list, schedule, poll, or cancel runtime workflows registered by the Unity project through the UPM package's `UnityCursorToolkit.AgentCommands` API.
+
 ## Packaging
 
 ```bash
@@ -37,6 +39,8 @@ npx vsce package --no-dependencies
 ```
 
 The generated VSIX includes only runtime extension assets: compiled `out/` files, metadata, icon, and license. Tests, backup files, lockfiles, source maps, and generated bundles are excluded through `.vscodeignore`.
+
+GitHub Actions builds separate VS Code Marketplace and OpenVSX artifacts. Publish jobs require both `VSCE_PAT` and `OVSX_PAT`; missing registry tokens fail the workflow instead of silently skipping an upload.
 
 ## Security Notes
 

@@ -1066,13 +1066,14 @@ async function testUnityMcpTools() {
 	console.log('\n── mcp/unityMcpTools.ts ──');
 	const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
 
-	test('getTools returns all 12 tool definitions with correct names', () => {
+	test('getTools returns all 13 tool definitions with correct names', () => {
 		const tools = new UnityMcpTools({ send() {}, request: async () => null });
 		const defs = tools.getTools();
-		assert.strictEqual(defs.length, 12);
+		assert.strictEqual(defs.length, 13);
 		const names = defs.map(d => d.name).sort();
 		assert.deepStrictEqual(names, [
 			'batch_execute', 'build_trigger', 'execute_menu_item',
+			'game_command',
 			'manage_asset', 'manage_component', 'manage_gameobject',
 			'manage_material', 'manage_scene', 'play_mode',
 			'profiler_snapshot', 'project_info', 'screenshot'
@@ -1110,6 +1111,20 @@ async function testUnityMcpTools() {
 		assert.ok(profiler.inputSchema.properties.includeRaw);
 		assert.ok(profiler.inputSchema.properties.sessionId);
 		assert.ok(profiler.inputSchema.properties.dryRun);
+	});
+
+	test('game_command schema exposes runtime command actions', () => {
+		const tools = new UnityMcpTools({ send() {}, request: async () => null });
+		const gameCommand = tools.getTools().find((def) => def.name === 'game_command');
+		assert.ok(gameCommand, 'game_command tool exists');
+		assert.ok(gameCommand.inputSchema.properties.action.enum.includes('list'));
+		assert.ok(gameCommand.inputSchema.properties.action.enum.includes('run'));
+		assert.ok(gameCommand.inputSchema.properties.action.enum.includes('status'));
+		assert.ok(gameCommand.inputSchema.properties.action.enum.includes('cancel'));
+		assert.ok(gameCommand.inputSchema.properties.commandName);
+		assert.ok(gameCommand.inputSchema.properties.runId);
+		assert.ok(gameCommand.inputSchema.properties.args);
+		assert.ok(gameCommand.inputSchema.properties.dryRun);
 	});
 
 	await testAsync('handleToolCall returns isError when Unity does not respond (null)', async () => {
@@ -1268,6 +1283,7 @@ async function testUnityMcpTools() {
 		});
 		await tools.handleToolCall('build_trigger', { buildPath: 'Builds/Test', development: true });
 		await tools.handleToolCall('profiler_snapshot', { action: 'saveSession', sessionId: 'editor_123' });
+		await tools.handleToolCall('game_command', { action: 'run', commandName: 'auth.select_us_east', runId: 'ignored' });
 
 		assert.deepStrictEqual(calls[0].payload.args, { action: 'load', scenePath: 'Assets/Test.unity', path: 'Assets/Test.unity' });
 		assert.deepStrictEqual(calls[1].payload.args, {
@@ -1308,6 +1324,13 @@ async function testUnityMcpTools() {
 		});
 		assert.deepStrictEqual(calls[6].payload.args, { buildPath: 'Builds/Test', development: true, path: 'Builds/Test' });
 		assert.deepStrictEqual(calls[7].payload.args, { action: 'saveSession', sessionId: 'editor_123', id: 'editor_123' });
+		assert.deepStrictEqual(calls[8].payload.args, {
+			action: 'run',
+			commandName: 'auth.select_us_east',
+			name: 'auth.select_us_east',
+			runId: 'ignored',
+			id: 'ignored'
+		});
 	});
 
 	await testAsync('batch_execute runs operations in sequence', async () => {
@@ -1392,6 +1415,7 @@ async function testStandaloneMcpServer() {
 			assert.ok(toolNames.includes('project_info'));
 			assert.ok(toolNames.includes('read_console'));
 			assert.ok(toolNames.includes('profiler_snapshot'));
+			assert.ok(toolNames.includes('game_command'));
 			const projectInfo = tools.result.tools.find((tool) => tool.name === 'project_info');
 			assert.strictEqual(projectInfo.annotations.readOnlyHint, true);
 
@@ -1459,6 +1483,20 @@ async function testStandaloneMcpServer() {
 			});
 			assert.strictEqual(profilerBlocked.result.isError, true);
 			assert.ok(profilerBlocked.result.content[0].text.includes('blocked'));
+
+			const gameCommandList = await server.request('tools/call', {
+				name: 'game_command',
+				arguments: {}
+			});
+			assert.strictEqual(gameCommandList.result.isError, true);
+			assert.ok(gameCommandList.result.content[0].text.includes('Unity did not respond'));
+
+			const gameCommandBlocked = await server.request('tools/call', {
+				name: 'game_command',
+				arguments: { action: 'run', commandName: 'auth.select_us_east' }
+			});
+			assert.strictEqual(gameCommandBlocked.result.isError, true);
+			assert.ok(gameCommandBlocked.result.content[0].text.includes('blocked'));
 		} finally {
 			server.stop();
 		}

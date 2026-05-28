@@ -4,6 +4,18 @@ All notable repository and VS Code/Cursor extension changes are documented in th
 
 The Unity UPM package has its own changelog at `Packages/com.rankupgames.unity-cursor-toolkit/CHANGELOG.md`.
 
+## [0.6.1052826] - 2026-05-28
+
+### Added
+
+- Added the `game_command` MCP tool for listing, scheduling, polling, and canceling game-authored runtime command sequences.
+- Added runtime command registration docs for Unity projects that want MCP-callable gameplay workflows without UI automation.
+
+### Changed
+
+- Bumped the UPM package to `1.1.0` for the runtime command registry API.
+- Updated CI and release workflows to publish separate VS Code Marketplace and OpenVSX artifacts and fail when registry tokens are missing.
+
 ## [0.6.2041326] - 2026-05-09
 
 ### Added

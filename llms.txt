@@ -9,6 +9,7 @@ Unity Cursor Toolkit provides hot reload, live console streaming, play mode cont
 - Repository README: README.md
 - AI agent guide: docs/AI_AGENTS.md
 - MCP client setup: docs/MCP_CLIENTS.md
+- Runtime game command guide: docs/GAME_COMMANDS.md
 - Feature roadmap: docs/FEATURE_ROADMAP.md
 - Extension README: unity-cursor-toolkit/README.md
 - Unity package docs: Packages/com.rankupgames.unity-cursor-toolkit/Documentation~/README.md
@@ -41,5 +42,6 @@ Useful environment variables:
 ## Agent-Safe Tooling Notes
 
 - Use `project_info`, `read_console`, `resolve_meta`, and `manage_scene` with `action: "getHierarchy"` before mutating.
+- Use `game_command` with `action: "list"` before scheduling project-owned runtime workflows.
 - Use `dryRun: true` on mutating tools to inspect the normalized Unity command without executing it.
-- Mutating tools include scene load/save/create, GameObject edits, component edits, asset edits, material edits, play mode, menu execution, build trigger, and batch execution.
+- Mutating tools include scene load/save/create, GameObject edits, component edits, asset edits, material edits, play mode, menu execution, runtime game command scheduling/canceling, build trigger, and batch execution.

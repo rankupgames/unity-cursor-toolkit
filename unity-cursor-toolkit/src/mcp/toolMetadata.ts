@@ -14,6 +14,7 @@ const MUTATING_TOOLS = {
 	manage_material: true,
 	play_mode: true,
 	execute_menu_item: true,
+	game_command: true,
 	build_trigger: true,
 	clear_console: true,
 	profiler_snapshot: true
@@ -30,7 +31,13 @@ const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	manage_scene: ['getHierarchy'],
 	manage_gameobject: ['find'],
 	manage_component: ['getProperties'],
+	game_command: ['list', 'status'],
 	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters']
+};
+
+const DEFAULT_ACTIONS: Record<string, string> = {
+	game_command: 'list',
+	profiler_snapshot: 'current'
 };
 
 const DESTRUCTIVE_ACTIONS: Record<string, readonly string[]> = {
@@ -87,7 +94,7 @@ export function isMutatingToolCall(toolName: string, args: Record<string, unknow
 
 	const readOnlyActions = READ_ONLY_ACTIONS[toolName];
 	if (readOnlyActions) {
-		const action = typeof args.action === 'string' ? args.action : toolName === 'profiler_snapshot' ? 'current' : '';
+		const action = typeof args.action === 'string' ? args.action : DEFAULT_ACTIONS[toolName] ?? '';
 		return readOnlyActions.includes(action) === false;
 	}
 

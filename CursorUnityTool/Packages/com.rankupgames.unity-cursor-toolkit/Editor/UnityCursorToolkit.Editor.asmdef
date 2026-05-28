@@ -1,7 +1,9 @@
 {
     "name": "UnityCursorToolkit.Editor",
     "rootNamespace": "UnityCursorToolkit",
-    "references": [],
+    "references": [
+        "GUID:ce130a53350d49668d238b0fd3a855e3"
+    ],
     "includePlatforms": [
         "Editor"
     ],

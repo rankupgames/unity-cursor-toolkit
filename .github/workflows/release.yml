@@ -57,13 +57,27 @@ jobs:
       - name: Validate extension
         run: npm run validate
 
-      - name: Package VSIX
-        run: npx vsce package --no-dependencies
+      - name: Package VS Code Marketplace VSIX
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p dist/vscode
+          npx vsce package --no-dependencies --out "dist/vscode/unity-cursor-toolkit-vscode-${VERSION}.vsix"
+
+      - name: Package OpenVSX VSIX
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          mkdir -p dist/openvsx
+          npx vsce package --no-dependencies --out "dist/openvsx/unity-cursor-toolkit-openvsx-${VERSION}.vsix"
 
       - uses: actions/upload-artifact@v7
         with:
-          name: vsix-release-${{ steps.version.outputs.version }}
-          path: unity-cursor-toolkit/*.vsix
+          name: vscode-release-${{ steps.version.outputs.version }}
+          path: unity-cursor-toolkit/dist/vscode/*.vsix
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: openvsx-release-${{ steps.version.outputs.version }}
+          path: unity-cursor-toolkit/dist/openvsx/*.vsix
 
   publish:
     needs: build
@@ -92,22 +106,46 @@ jobs:
           npm install -g npm@11.14.1
           npm --version
 
+      - name: Validate publish tokens
+        run: |
+          missing=0
+          if [ -z "$VSCE_PAT" ]; then
+            echo "::error::VSCE_PAT is required to publish the VS Code Marketplace package"
+            missing=1
+          fi
+          if [ -z "$OVSX_PAT" ]; then
+            echo "::error::OVSX_PAT is required to publish the OpenVSX package"
+            missing=1
+          fi
+          exit "$missing"
+
       - run: npm ci
 
       - uses: actions/download-artifact@v8
         with:
-          name: vsix-release-${{ needs.build.outputs.version }}
-          path: unity-cursor-toolkit
+          name: vscode-release-${{ needs.build.outputs.version }}
+          path: unity-cursor-toolkit/dist/vscode
 
-      - name: Locate VSIX
+      - uses: actions/download-artifact@v8
+        with:
+          name: openvsx-release-${{ needs.build.outputs.version }}
+          path: unity-cursor-toolkit/dist/openvsx
+
+      - name: Locate VSIX artifacts
         id: vsix
         run: |
-          VSIX_FILE=$(ls *.vsix | head -1)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VSIX artifact downloaded"
+          VSCODE_VSIX=$(ls dist/vscode/*.vsix | head -1)
+          OPENVSX_VSIX=$(ls dist/openvsx/*.vsix | head -1)
+          if [ -z "$VSCODE_VSIX" ]; then
+            echo "::error::No VS Code Marketplace VSIX artifact downloaded"
             exit 1
           fi
-          echo "file=${VSIX_FILE}" >> $GITHUB_OUTPUT
+          if [ -z "$OPENVSX_VSIX" ]; then
+            echo "::error::No OpenVSX VSIX artifact downloaded"
+            exit 1
+          fi
+          echo "vscode=${VSCODE_VSIX}" >> $GITHUB_OUTPUT
+          echo "openvsx=${OPENVSX_VSIX}" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
         env:
@@ -115,7 +153,8 @@ jobs:
         run: |
           VERSION="${{ needs.build.outputs.version }}"
           UPM_VERSION="${{ needs.build.outputs.upm_version }}"
-          VSIX_FILE="${{ steps.vsix.outputs.file }}"
+          VSCODE_VSIX="${{ steps.vsix.outputs.vscode }}"
+          OPENVSX_VSIX="${{ steps.vsix.outputs.openvsx }}"
           COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-8)
           REPO="${{ github.repository }}"
 
@@ -145,12 +184,11 @@ jobs:
             --repo "${REPO}" \
             --title "Unity Cursor Toolkit v${VERSION}" \
             --notes-file /tmp/release-notes.md \
-            "${VSIX_FILE}"
+            "${VSCODE_VSIX}" \
+            "${OPENVSX_VSIX}"
 
       - name: Publish to Marketplace
-        if: env.VSCE_PAT != ''
-        run: npx vsce publish --packagePath "${{ steps.vsix.outputs.file }}"
+        run: npx vsce publish --packagePath "${{ steps.vsix.outputs.vscode }}"
 
       - name: Publish to OpenVSX
-        if: env.OVSX_PAT != ''
-        run: npx ovsx publish "${{ steps.vsix.outputs.file }}" -p "$OVSX_PAT"
+        run: npx ovsx publish "${{ steps.vsix.outputs.openvsx }}" -p "$OVSX_PAT"

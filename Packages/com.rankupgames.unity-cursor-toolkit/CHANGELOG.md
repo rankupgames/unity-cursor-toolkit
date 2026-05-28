@@ -5,6 +5,18 @@ All notable changes to this package will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-05-28
+
+### Added
+
+- Added the runtime `UnityCursorToolkit.AgentCommands` assembly with `AgentCommandRegistry`, `AgentCommandRunner`, and status/result contracts for game-authored MCP workflows.
+- Added the editor-side `game_command` MCP adapter with `list`, `run`, `status`, and `cancel` actions.
+- Added runtime game command documentation and project integration guidance.
+
+### Fixed
+
+- Avoided aborting the hot reload TCP thread during editor assembly reload; the handler now requests shutdown and reports a warning when the thread is still alive.
+
 ## [1.0.0] - 2026-04-13
 
 ### Documentation
