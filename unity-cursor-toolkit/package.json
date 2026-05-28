@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.6.2041326",
+  "version": "0.6.1052826",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
   "license": "MIT",
@@ -147,6 +147,15 @@
         "command": "unity-cursor-toolkit.screenshot",
         "title": "Unity Toolkit: Capture Screenshot",
         "icon": "$(device-camera)"
+      },
+      {
+        "command": "unity-cursor-toolkit.mcp.showServerPath",
+        "title": "Unity Toolkit: Show MCP Server Path"
+      },
+      {
+        "command": "unity-cursor-toolkit.mcp.copyClientConfig",
+        "title": "Unity Toolkit: Copy MCP Client Config",
+        "icon": "$(copy)"
       }
     ],
     "debuggers": [
@@ -216,17 +225,20 @@
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
     "test": "node test/run-tests.js",
+    "mcp:serve": "node out/mcp/server.js",
     "package": "vsce package",
     "publish": "vsce publish",
     "install:extension": "npm install",
     "build": "npm run compile",
     "bundle": "node scripts/esbuild-bundle.js",
     "bundle:watch": "node scripts/esbuild-bundle.js --watch",
+    "check:unused": "tsc -p ./ --noEmit --noUnusedLocals --noUnusedParameters",
+    "validate": "npm run compile && npm run check:unused && npm test && npm run audit",
     "dev": "npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
     "bump": "node scripts/bump-version.js && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
     "bump:minor": "npm version minor && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix 2>/dev/null || code --install-extension *.vsix)",
     "local": "npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
-    "audit": "npm audit --omit=dev; npm audit"
+    "audit": "npm audit --omit=dev && npm audit"
   },
   "overrides": {
     "undici": ">=7.10.0"

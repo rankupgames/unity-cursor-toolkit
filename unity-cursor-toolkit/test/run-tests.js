@@ -9,6 +9,7 @@ const path = require('path');
 const fs = require('fs');
 const net = require('net');
 const os = require('os');
+const { spawn } = require('child_process');
 
 // ── vscode mock ──────────────────────────────────────────────────────────────
 
@@ -164,6 +165,89 @@ function sleep(ms) {
 	return new Promise((res) => setTimeout(res, ms));
 }
 
+function listenOnLocalhost(server, port = 0) {
+	return new Promise((resolve) => {
+		server.listen(port, '127.0.0.1', () => {
+			const address = server.address();
+			if (address == null || typeof address === 'string') {
+				throw new Error('Expected TCP server address');
+			}
+			resolve(address.port);
+		});
+	});
+}
+
+function closeServer(server) {
+	return new Promise((resolve) => server.close(resolve));
+}
+
+async function getUnusedPort() {
+	const server = net.createServer();
+	const port = await listenOnLocalhost(server);
+	await closeServer(server);
+	return port;
+}
+
+function startMcpServer(env = {}) {
+	const child = spawn(process.execPath, [path.join(outDir, 'mcp', 'server.js')], {
+		env: { ...process.env, ...env },
+		stdio: ['pipe', 'pipe', 'pipe']
+	});
+	const pending = new Map();
+	let stdoutBuffer = '';
+	let stderr = '';
+
+	child.stdout.on('data', (chunk) => {
+		stdoutBuffer += chunk.toString();
+		const lines = stdoutBuffer.split('\n');
+		stdoutBuffer = lines.pop() || '';
+		for (const line of lines) {
+			if (line.trim().length === 0) {
+				continue;
+			}
+			const message = JSON.parse(line);
+			const callback = pending.get(message.id);
+			if (callback) {
+				pending.delete(message.id);
+				callback(message);
+			}
+		}
+	});
+
+	child.stderr.on('data', (chunk) => {
+		stderr += chunk.toString();
+	});
+
+	let requestId = 0;
+	return {
+		child,
+		get stderr() { return stderr; },
+		request(method, params) {
+			const id = ++requestId;
+			const payload = { jsonrpc: '2.0', id, method, params };
+			return new Promise((resolve, reject) => {
+				const timer = setTimeout(() => {
+					pending.delete(id);
+					reject(new Error(`Timed out waiting for MCP response to ${method}. stderr: ${stderr}`));
+				}, 4_000);
+
+				pending.set(id, (message) => {
+					clearTimeout(timer);
+					resolve(message);
+				});
+				child.stdin.write(JSON.stringify(payload) + '\n');
+			});
+		},
+		notify(method, params) {
+			child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method, params }) + '\n');
+		},
+		stop() {
+			child.stdin.end();
+			child.kill();
+		}
+	};
+}
+
 const outDir = path.join(__dirname, '..', 'out');
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -270,16 +354,21 @@ async function testConnectionTcp() {
 
 	// Uses port 55504 (last port in the PORTS array)
 	await testAsync('connect scans PORTS array and returns found port or null', async () => {
-		const conn = new ConnectionManager();
-		const result = await conn.connect();
-		if (result === null) {
-			assert.strictEqual(conn.info.state, ConnectionState.Disconnected, 'State should be Disconnected when no port found');
-		} else {
+		const closedPort = await getUnusedPort();
+		const server = net.createServer(() => {});
+		const openPort = await listenOnLocalhost(server);
+
+		try {
+			const conn = new ConnectionManager([closedPort, openPort]);
+			const result = await conn.connect();
+			assert.strictEqual(result, openPort);
 			assert.strictEqual(conn.info.state, ConnectionState.Connected, 'State should be Connected if a port was found');
-			assert.strictEqual(typeof result, 'number');
+			assert.strictEqual(conn.info.port, openPort);
 			conn.disconnect();
+			conn.dispose();
+		} finally {
+			await closeServer(server);
 		}
-		conn.dispose();
 	});
 
 	await testAsync('connects to TCP server, exchanges messages, fires onMessage', async () => {
@@ -301,16 +390,16 @@ async function testConnectionTcp() {
 			});
 		});
 
-		await new Promise((res) => server.listen(55504, '127.0.0.1', res));
+		const portToUse = await listenOnLocalhost(server);
 
 		try {
-			const conn = new ConnectionManager();
+			const conn = new ConnectionManager([portToUse]);
 			conn.setNeededCallback(() => true);
 
 			const port = await conn.connect();
-			assert.strictEqual(port, 55504);
+			assert.strictEqual(port, portToUse);
 			assert.strictEqual(conn.info.state, ConnectionState.Connected);
-			assert.strictEqual(conn.info.port, 55504);
+			assert.strictEqual(conn.info.port, portToUse);
 
 			conn.send('hello', { data: 99 });
 			await sleep(100);
@@ -333,22 +422,22 @@ async function testConnectionTcp() {
 			assert.strictEqual(conn.info.state, ConnectionState.Disconnected);
 			conn.dispose();
 		} finally {
-			server.close();
+			await closeServer(server);
 			await sleep(100);
 		}
 	});
 
 	await testAsync('state transitions: Disconnected -> Connecting -> Connected', async () => {
 		const server = net.createServer(() => {});
-		await new Promise((res) => server.listen(55503, '127.0.0.1', res));
+		const portToUse = await listenOnLocalhost(server);
 
 		try {
-			const conn = new ConnectionManager();
+			const conn = new ConnectionManager([portToUse]);
 			const states = [];
 			conn.onStateChanged((info) => states.push(info.state));
 
 			const port = await conn.connect();
-			assert.strictEqual(port, 55503);
+			assert.strictEqual(port, portToUse);
 			assert.ok(states.includes(ConnectionState.Connecting), 'Should transition through Connecting');
 			assert.ok(states.includes(ConnectionState.Connected), 'Should reach Connected');
 
@@ -356,7 +445,7 @@ async function testConnectionTcp() {
 			assert.ok(states.includes(ConnectionState.Disconnected), 'Should reach Disconnected on manual disconnect');
 			conn.dispose();
 		} finally {
-			server.close();
+			await closeServer(server);
 			await sleep(100);
 		}
 	});
@@ -373,14 +462,14 @@ async function testConnectionTcp() {
 				}
 			});
 		});
-		await new Promise((res) => server.listen(55502, '127.0.0.1', res));
+		const portToUse = await listenOnLocalhost(server);
 
 		try {
-			const conn = new ConnectionManager();
+			const conn = new ConnectionManager([portToUse]);
 			conn.setNeededCallback(() => true);
 
 			const port = await conn.connect();
-			assert.strictEqual(port, 55502);
+			assert.strictEqual(port, portToUse);
 			assert.strictEqual(conn.info.state, ConnectionState.Connected);
 
 			// Wait long enough that a heartbeat should fire (10s interval)
@@ -391,7 +480,7 @@ async function testConnectionTcp() {
 			conn.disconnect();
 			conn.dispose();
 		} finally {
-			server.close();
+			await closeServer(server);
 			await sleep(100);
 		}
 	});
@@ -404,17 +493,17 @@ async function testConnectionTcp() {
 				setTimeout(() => socket.destroy(), 50);
 			}
 		});
-		await new Promise((res) => server.listen(55501, '127.0.0.1', res));
+		const portToUse = await listenOnLocalhost(server);
 
 		try {
-			const conn = new ConnectionManager();
+			const conn = new ConnectionManager([portToUse]);
 			conn.setNeededCallback(() => true);
 
 			const stateLog = [];
 			conn.onStateChanged((info) => stateLog.push(info.state));
 
 			const port = await conn.connect();
-			assert.strictEqual(port, 55501);
+			assert.strictEqual(port, portToUse);
 
 			// Wait for server to drop us and reconnect to start
 			await sleep(2500);
@@ -427,7 +516,7 @@ async function testConnectionTcp() {
 			conn.disconnect();
 			conn.dispose();
 		} finally {
-			server.close();
+			await closeServer(server);
 			await sleep(100);
 		}
 	});
@@ -630,6 +719,26 @@ function testConsoleBridge() {
 		bridge.dispose();
 	});
 
+	test('consoleEntry normalizes malformed payload fields', () => {
+		const emitter = new vscode.EventEmitter();
+		const bridge = new ConsoleBridge({ onMessage: emitter.event });
+
+		emitter.fire({
+			command: 'consoleEntry',
+			payload: { command: 'consoleEntry', type: 123, message: 456, stackTrace: { bad: true }, timestamp: 789 }
+		});
+
+		const entries = bridge.getEntries();
+		assert.strictEqual(entries.length, 1);
+		assert.strictEqual(entries[0].type, 'log');
+		assert.strictEqual(entries[0].message, '');
+		assert.strictEqual(entries[0].stackTrace, '');
+		assert.ok(typeof entries[0].timestamp === 'string' && entries[0].timestamp.length > 0);
+		assert.doesNotThrow(() => bridge.getEntries({ search: 'anything' }));
+
+		bridge.dispose();
+	});
+
 	test('getEntries({ level }) filters by type', () => {
 		const emitter = new vscode.EventEmitter();
 		const bridge = new ConsoleBridge({ onMessage: emitter.event });
@@ -731,6 +840,22 @@ function testConsoleBridge() {
 		assert.strictEqual(bulks[0].content, 'Error log content');
 		assert.strictEqual(bulks[0].entryCount, 5);
 
+		bridge.dispose();
+	});
+
+	test('consoleToCursor ignores malformed content payloads', () => {
+		const emitter = new vscode.EventEmitter();
+		const bridge = new ConsoleBridge({ onMessage: emitter.event });
+
+		const bulks = [];
+		bridge.onBulk((b) => bulks.push(b));
+
+		emitter.fire({
+			command: 'consoleToCursor',
+			payload: { content: { text: 'not a string' }, entryCount: '5' }
+		});
+
+		assert.strictEqual(bulks.length, 0);
 		bridge.dispose();
 	});
 
@@ -941,16 +1066,17 @@ async function testUnityMcpTools() {
 	console.log('\n── mcp/unityMcpTools.ts ──');
 	const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
 
-	test('getTools returns all 11 tool definitions with correct names', () => {
+	test('getTools returns all 13 tool definitions with correct names', () => {
 		const tools = new UnityMcpTools({ send() {}, request: async () => null });
 		const defs = tools.getTools();
-		assert.strictEqual(defs.length, 11);
+		assert.strictEqual(defs.length, 13);
 		const names = defs.map(d => d.name).sort();
 		assert.deepStrictEqual(names, [
 			'batch_execute', 'build_trigger', 'execute_menu_item',
+			'game_command',
 			'manage_asset', 'manage_component', 'manage_gameobject',
 			'manage_material', 'manage_scene', 'play_mode',
-			'project_info', 'screenshot'
+			'profiler_snapshot', 'project_info', 'screenshot'
 		]);
 	});
 
@@ -960,7 +1086,45 @@ async function testUnityMcpTools() {
 			assert.ok(def.name, `Tool missing name`);
 			assert.ok(def.description, `${def.name} missing description`);
 			assert.ok(def.inputSchema, `${def.name} missing inputSchema`);
+			assert.ok(def.annotations, `${def.name} missing annotations`);
 		}
+	});
+
+	test('tool annotations distinguish read-only and mutating tools', () => {
+		const tools = new UnityMcpTools({ send() {}, request: async () => null });
+		const defs = Object.fromEntries(tools.getTools().map((def) => [def.name, def]));
+
+		assert.strictEqual(defs.project_info.annotations.readOnlyHint, true);
+		assert.strictEqual(defs.manage_asset.annotations.readOnlyHint, false);
+		assert.strictEqual(defs.manage_asset.annotations.destructiveHint, true);
+		assert.strictEqual(defs.profiler_snapshot.annotations.readOnlyHint, false);
+		assert.strictEqual(defs.profiler_snapshot.annotations.destructiveHint, true);
+	});
+
+	test('profiler_snapshot schema exposes session actions and detail options', () => {
+		const tools = new UnityMcpTools({ send() {}, request: async () => null });
+		const profiler = tools.getTools().find((def) => def.name === 'profiler_snapshot');
+		assert.ok(profiler, 'profiler_snapshot tool exists');
+		assert.ok(profiler.inputSchema.properties.action.enum.includes('current'));
+		assert.ok(profiler.inputSchema.properties.action.enum.includes('readConsoleTranscript'));
+		assert.ok(profiler.inputSchema.properties.action.enum.includes('saveSession'));
+		assert.ok(profiler.inputSchema.properties.includeRaw);
+		assert.ok(profiler.inputSchema.properties.sessionId);
+		assert.ok(profiler.inputSchema.properties.dryRun);
+	});
+
+	test('game_command schema exposes runtime command actions', () => {
+		const tools = new UnityMcpTools({ send() {}, request: async () => null });
+		const gameCommand = tools.getTools().find((def) => def.name === 'game_command');
+		assert.ok(gameCommand, 'game_command tool exists');
+		assert.ok(gameCommand.inputSchema.properties.action.enum.includes('list'));
+		assert.ok(gameCommand.inputSchema.properties.action.enum.includes('run'));
+		assert.ok(gameCommand.inputSchema.properties.action.enum.includes('status'));
+		assert.ok(gameCommand.inputSchema.properties.action.enum.includes('cancel'));
+		assert.ok(gameCommand.inputSchema.properties.commandName);
+		assert.ok(gameCommand.inputSchema.properties.runId);
+		assert.ok(gameCommand.inputSchema.properties.args);
+		assert.ok(gameCommand.inputSchema.properties.dryRun);
 	});
 
 	await testAsync('handleToolCall returns isError when Unity does not respond (null)', async () => {
@@ -980,12 +1144,32 @@ async function testUnityMcpTools() {
 		assert.ok(result.content[0].text.includes('2022.3.1f1'));
 	});
 
+	await testAsync('handleToolCall stringifies Unity object results', async () => {
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async () => ({ result: { unityVersion: '6000.3.9f1', success: true } })
+		});
+		const result = await tools.handleToolCall('project_info', {});
+		assert.ok(!result.isError, `isError should be falsy, got ${result.isError}`);
+		assert.ok(result.content[0].text.includes('"unityVersion":"6000.3.9f1"'));
+	});
+
 	await testAsync('handleToolCall returns isError when Unity reports error', async () => {
 		const tools = new UnityMcpTools({
 			send() {},
 			request: async () => ({ result: 'Scene not found', error: true })
 		});
 		const result = await tools.handleToolCall('manage_scene', { action: 'load', scenePath: 'bad' });
+		assert.strictEqual(result.isError, true);
+		assert.ok(result.content[0].text.includes('Scene not found'));
+	});
+
+	await testAsync('handleToolCall returns isError when Unity result has success=false', async () => {
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async () => ({ result: { success: false, error: 'Scene not found' } })
+		});
+		const result = await tools.handleToolCall('manage_scene', { action: 'load', path: 'bad' });
 		assert.strictEqual(result.isError, true);
 		assert.ok(result.content[0].text.includes('Scene not found'));
 	});
@@ -1006,6 +1190,147 @@ async function testUnityMcpTools() {
 		assert.strictEqual(calls[0].cmd, 'mcpToolCall');
 		assert.strictEqual(calls[0].payload.toolName, 'play_mode');
 		assert.deepStrictEqual(calls[0].payload.args, { action: 'enter' });
+	});
+
+	await testAsync('profiler_snapshot current defaults are forwarded without requiring mutation approval', async () => {
+		const calls = [];
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async (cmd, payload) => {
+				calls.push({ cmd, payload });
+				return { result: { success: true, session: { id: 'editor_1' } }, error: false };
+			}
+		});
+
+		const result = await tools.handleToolCall('profiler_snapshot', {});
+
+		assert.ok(!result.isError, `isError should be falsy, got ${result.isError}`);
+		assert.strictEqual(calls[0].payload.toolName, 'profiler_snapshot');
+		assert.deepStrictEqual(calls[0].payload.args, {});
+		assert.ok(result.content[0].text.includes('editor_1'));
+	});
+
+	await testAsync('profiler_snapshot normalizes sessionId alias', async () => {
+		const calls = [];
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async (cmd, payload) => {
+				calls.push({ cmd, payload });
+				return { result: { success: true }, error: false };
+			}
+		});
+
+		await tools.handleToolCall('profiler_snapshot', { action: 'readSession', sessionId: 'play_123' });
+
+		assert.deepStrictEqual(calls[0].payload.args, { action: 'readSession', sessionId: 'play_123', id: 'play_123' });
+	});
+
+	await testAsync('handleToolCall dryRun returns normalized command without sending to Unity', async () => {
+		let requestCount = 0;
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async () => {
+				requestCount++;
+				return { result: 'should-not-run', error: false };
+			}
+		});
+
+		const result = await tools.handleToolCall('manage_gameobject', {
+			action: 'setTransform',
+			name: 'Probe',
+			scale: { x: 2, y: 3, z: 4 },
+			dryRun: true
+		});
+		const payload = JSON.parse(result.content[0].text);
+
+		assert.strictEqual(requestCount, 0);
+		assert.strictEqual(payload.dryRun, true);
+		assert.strictEqual(payload.toolName, 'manage_gameobject');
+		assert.deepStrictEqual(payload.args, { action: 'setTransform', name: 'Probe', localScale: [2, 3, 4] });
+	});
+
+	await testAsync('handleToolCall normalizes MCP schema args for Unity handlers', async () => {
+		const calls = [];
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async (cmd, payload) => {
+				calls.push({ cmd, payload });
+				return { result: { success: true }, error: false };
+			}
+		});
+
+		await tools.handleToolCall('manage_scene', { action: 'load', scenePath: 'Assets/Test.unity' });
+		await tools.handleToolCall('manage_asset', { action: 'move', path: 'Assets/A.mat', newPath: 'Assets/B.mat' });
+		await tools.handleToolCall('manage_asset', { action: 'rename', path: 'Assets/B.mat', newPath: 'Assets/Renamed.mat' });
+		await tools.handleToolCall('manage_material', {
+			action: 'setColor',
+			path: 'Assets/M.mat',
+			propertyName: '_Color',
+			color: { r: 0.1, g: 0.2, b: 0.3, a: 1 }
+		});
+		await tools.handleToolCall('manage_gameobject', {
+			action: 'setTransform',
+			instanceId: 123,
+			position: { x: 1, y: 2, z: 3 },
+			rotation: { x: 0, y: 0, z: 0, w: 1 },
+			scale: { x: 2, y: 2, z: 2 }
+		});
+		await tools.handleToolCall('manage_component', {
+			action: 'setProperty',
+			gameObjectName: 'Probe',
+			propertyName: 'm_Name',
+			propertyValue: 'ProbeRenamed'
+		});
+		await tools.handleToolCall('build_trigger', { buildPath: 'Builds/Test', development: true });
+		await tools.handleToolCall('profiler_snapshot', { action: 'saveSession', sessionId: 'editor_123' });
+		await tools.handleToolCall('game_command', { action: 'run', commandName: 'auth.select_us_east', runId: 'ignored' });
+
+		assert.deepStrictEqual(calls[0].payload.args, { action: 'load', scenePath: 'Assets/Test.unity', path: 'Assets/Test.unity' });
+		assert.deepStrictEqual(calls[1].payload.args, {
+			action: 'move',
+			path: 'Assets/A.mat',
+			newPath: 'Assets/B.mat',
+			source: 'Assets/A.mat',
+			dest: 'Assets/B.mat'
+		});
+		assert.deepStrictEqual(calls[2].payload.args, {
+			action: 'rename',
+			path: 'Assets/B.mat',
+			newPath: 'Assets/Renamed.mat',
+			newName: 'Renamed'
+		});
+		assert.deepStrictEqual(calls[3].payload.args, {
+			action: 'setColor',
+			path: 'Assets/M.mat',
+			propertyName: '_Color',
+			property: '_Color',
+			color: [0.1, 0.2, 0.3, 1]
+		});
+		assert.deepStrictEqual(calls[4].payload.args, {
+			action: 'setTransform',
+			instanceId: 123,
+			position: [1, 2, 3],
+			rotation: [0, 0, 0, 1],
+			localScale: [2, 2, 2]
+		});
+		assert.deepStrictEqual(calls[5].payload.args, {
+			action: 'setProperty',
+			gameObjectName: 'Probe',
+			name: 'Probe',
+			propertyName: 'm_Name',
+			propertyValue: 'ProbeRenamed',
+			propertyPath: 'm_Name',
+			valueString: 'ProbeRenamed'
+		});
+		assert.deepStrictEqual(calls[6].payload.args, { buildPath: 'Builds/Test', development: true, path: 'Builds/Test' });
+		assert.deepStrictEqual(calls[7].payload.args, { action: 'saveSession', sessionId: 'editor_123', id: 'editor_123' });
+		assert.deepStrictEqual(calls[8].payload.args, {
+			action: 'run',
+			commandName: 'auth.select_us_east',
+			name: 'auth.select_us_east',
+			runId: 'ignored',
+			id: 'ignored'
+		});
 	});
 
 	await testAsync('batch_execute runs operations in sequence', async () => {
@@ -1062,6 +1387,146 @@ async function testUnityMcpTools() {
 		const result = await tools.handleToolCall('batch_execute', { operations: [] });
 		assert.strictEqual(result.isError, true);
 		assert.ok(result.content[0].text.includes('No operations'));
+	});
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// mcp/server.ts (standalone MCP stdio)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async function testStandaloneMcpServer() {
+	console.log('\n── mcp/server.ts (standalone stdio) ──');
+
+	await testAsync('stdio server initializes and lists tools, resources, and prompts', async () => {
+		const closedPort = await getUnusedPort();
+		const server = startMcpServer({
+			UNITY_CURSOR_TOOLKIT_MCP_PORTS: String(closedPort),
+			UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY: '1'
+		});
+
+		try {
+			const init = await server.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
+			server.notify('notifications/initialized', {});
+			assert.strictEqual(init.result.serverInfo.name, 'unity-cursor-toolkit');
+			assert.ok(init.result.instructions.includes('Read-only mode is enabled'));
+
+			const tools = await server.request('tools/list', {});
+			const toolNames = tools.result.tools.map((tool) => tool.name);
+			assert.ok(toolNames.includes('project_info'));
+			assert.ok(toolNames.includes('read_console'));
+			assert.ok(toolNames.includes('profiler_snapshot'));
+			assert.ok(toolNames.includes('game_command'));
+			const projectInfo = tools.result.tools.find((tool) => tool.name === 'project_info');
+			assert.strictEqual(projectInfo.annotations.readOnlyHint, true);
+
+			const resources = await server.request('resources/list', {});
+			const resourceUris = resources.result.resources.map((resource) => resource.uri);
+			assert.ok(resourceUris.includes('unity://tools/catalog'));
+			assert.ok(resourceUris.includes('unity://console/errors'));
+
+			const prompts = await server.request('prompts/list', {});
+			const promptNames = prompts.result.prompts.map((prompt) => prompt.name);
+			assert.ok(promptNames.includes('diagnose_unity_errors'));
+			assert.ok(promptNames.includes('safe_scene_edit_plan'));
+		} finally {
+			server.stop();
+		}
+	});
+
+	await testAsync('read-only mode blocks mutating tools but allows dryRun', async () => {
+		const closedPort = await getUnusedPort();
+		const server = startMcpServer({
+			UNITY_CURSOR_TOOLKIT_MCP_PORTS: String(closedPort),
+			UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY: '1'
+		});
+
+		try {
+			await server.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
+
+			const blocked = await server.request('tools/call', {
+				name: 'play_mode',
+				arguments: { action: 'enter' }
+			});
+			assert.strictEqual(blocked.result.isError, true);
+			assert.ok(blocked.result.content[0].text.includes('blocked'));
+
+			const dryRun = await server.request('tools/call', {
+				name: 'manage_gameobject',
+				arguments: {
+					action: 'setTransform',
+					name: 'Probe',
+					position: { x: 1, y: 2, z: 3 },
+					dryRun: true
+				}
+			});
+			const payload = JSON.parse(dryRun.result.content[0].text);
+			assert.strictEqual(payload.dryRun, true);
+			assert.deepStrictEqual(payload.args.position, [1, 2, 3]);
+
+			const profilerCurrent = await server.request('tools/call', {
+				name: 'profiler_snapshot',
+				arguments: { action: 'current' }
+			});
+			assert.strictEqual(profilerCurrent.result.isError, true);
+			assert.ok(profilerCurrent.result.content[0].text.includes('Unity did not respond'));
+
+			const profilerTranscript = await server.request('tools/call', {
+				name: 'profiler_snapshot',
+				arguments: { action: 'readConsoleTranscript', sessionId: 'editor_123' }
+			});
+			assert.strictEqual(profilerTranscript.result.isError, true);
+			assert.ok(profilerTranscript.result.content[0].text.includes('Unity did not respond'));
+
+			const profilerBlocked = await server.request('tools/call', {
+				name: 'profiler_snapshot',
+				arguments: { action: 'clearSessions' }
+			});
+			assert.strictEqual(profilerBlocked.result.isError, true);
+			assert.ok(profilerBlocked.result.content[0].text.includes('blocked'));
+
+			const gameCommandList = await server.request('tools/call', {
+				name: 'game_command',
+				arguments: {}
+			});
+			assert.strictEqual(gameCommandList.result.isError, true);
+			assert.ok(gameCommandList.result.content[0].text.includes('Unity did not respond'));
+
+			const gameCommandBlocked = await server.request('tools/call', {
+				name: 'game_command',
+				arguments: { action: 'run', commandName: 'auth.select_us_east' }
+			});
+			assert.strictEqual(gameCommandBlocked.result.isError, true);
+			assert.ok(gameCommandBlocked.result.content[0].text.includes('blocked'));
+		} finally {
+			server.stop();
+		}
+	});
+
+	await testAsync('missing Unity connection returns clean tool error', async () => {
+		const closedPort = await getUnusedPort();
+		const server = startMcpServer({ UNITY_CURSOR_TOOLKIT_MCP_PORTS: String(closedPort) });
+
+		try {
+			await server.request('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'test', version: '1' } });
+			const response = await server.request('tools/call', { name: 'project_info', arguments: {} });
+			assert.strictEqual(response.result.isError, true);
+			assert.ok(response.result.content[0].text.includes('Unity did not respond'));
+		} finally {
+			server.stop();
+		}
+	});
+
+	await testAsync('client config snippets include supported MCP client shapes', async () => {
+		const { createMcpClientConfigSnippets } = require(path.join(outDir, 'mcp', 'clientConfig'));
+		const snippets = createMcpClientConfigSnippets({
+			serverPath: '/ext/out/mcp/server.js',
+			projectPath: '/project',
+			readOnly: true
+		});
+
+		assert.strictEqual(JSON.parse(snippets.cursorClaude).mcpServers['unity-cursor-toolkit'].command, 'node');
+		assert.strictEqual(JSON.parse(snippets.vscode).servers['unity-cursor-toolkit'].type, 'stdio');
+		assert.strictEqual(JSON.parse(snippets.zed).context_servers['unity-cursor-toolkit'].env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH, '/project');
 	});
 }
 
@@ -1728,6 +2193,22 @@ async function testMetaManager() {
 		vscode.workspace.workspaceFolders = origFolders;
 	});
 
+	await testAsync('resolveMetaFile blocks paths outside the workspace', async () => {
+		const projectPath = path.join(tmpDir, 'p-traversal');
+		fs.mkdirSync(projectPath);
+		fs.writeFileSync(path.join(tmpDir, 'Outside.cs.meta'), 'guid: outside\n');
+
+		const origFolders = vscode.workspace.workspaceFolders;
+		vscode.workspace.workspaceFolders = [{ uri: { fsPath: projectPath }, name: 'test' }];
+
+		const manager = new MetaManager();
+		const content = await manager.resolveMetaFile('../Outside.cs');
+
+		assert.strictEqual(content, null);
+		manager.dispose();
+		vscode.workspace.workspaceFolders = origFolders;
+	});
+
 	await testAsync('handleAssetDeleted removes companion .meta file', async () => {
 		const projectPath = path.join(tmpDir, 'p5');
 		fs.mkdirSync(projectPath, { recursive: true });
@@ -1988,6 +2469,7 @@ async function testProjectMcpTools() {
 	const projectPath = path.join(tmpDir, 'project');
 	fs.mkdirSync(path.join(projectPath, 'Assets', 'Scripts'), { recursive: true });
 	fs.writeFileSync(path.join(projectPath, 'Assets', 'Scripts', 'Test.cs.meta'), 'guid: test123\n');
+	fs.writeFileSync(path.join(tmpDir, 'Outside.cs.meta'), 'guid: outside\n');
 
 	const origFolders = vscode.workspace.workspaceFolders;
 	vscode.workspace.workspaceFolders = [{ uri: { fsPath: projectPath }, name: 'test' }];
@@ -2019,6 +2501,18 @@ async function testProjectMcpTools() {
 		assert.ok(result.content[0].text.includes('required'));
 	});
 
+	await testAsync('resolve_meta returns error for non-string assetPath', async () => {
+		const result = await tools.handleToolCall('resolve_meta', { assetPath: 123 });
+		assert.strictEqual(result.isError, true);
+		assert.ok(result.content[0].text.includes('required'));
+	});
+
+	await testAsync('resolve_meta blocks asset paths outside the workspace', async () => {
+		const result = await tools.handleToolCall('resolve_meta', { assetPath: '../Outside.cs' });
+		assert.strictEqual(result.isError, true);
+		assert.ok(result.content[0].text.includes('No .meta file'));
+	});
+
 	await testAsync('unknown tool returns error', async () => {
 		const result = await tools.handleToolCall('nonexistent', {});
 		assert.strictEqual(result.isError, true);
@@ -2040,7 +2534,7 @@ async function testConsolePanelLogic() {
 
 	const emitter = new MockEventEmitter();
 	const bridge = new ConsoleBridge({ onMessage: emitter.event });
-	const panel = new ConsolePanelProvider({ fsPath: '/mock' }, bridge);
+	const panel = new ConsolePanelProvider(bridge);
 
 	emitter.fire({ command: 'consoleEntry', payload: { command: 'consoleEntry', type: 'Error', message: 'NullRef in Player', stackTrace: 'at Player.Update() (Assets/Scripts/Player.cs:42)', timestamp: '2026-01-01T12:00:00Z' } });
 	emitter.fire({ command: 'consoleEntry', payload: { command: 'consoleEntry', type: 'Warning', message: 'Shader not found', stackTrace: '', timestamp: '2026-01-01T12:00:01Z' } });
@@ -2124,6 +2618,55 @@ async function testConsolePanelLogic() {
 		vscode.env.clipboard.writeText = origWrite;
 	});
 
+	test('webview script uses CSP nonce instead of unsafe inline script', () => {
+		const html = panel.getHtml({ cspSource: 'vscode-webview:' });
+		assert.ok(html.includes("script-src vscode-webview: 'nonce-"));
+		assert.ok(!html.includes("script-src vscode-webview: 'unsafe-inline'"));
+		assert.ok(html.includes("style-src vscode-webview: 'nonce-"));
+		assert.ok(!html.includes("style-src vscode-webview: 'unsafe-inline'"));
+		assert.match(html, /<style nonce="[a-f0-9]{32}">/);
+		assert.match(html, /<script nonce="[a-f0-9]{32}">/);
+	});
+
+	await testAsync('webview clear clears bridge entries', async () => {
+		const localEmitter = new MockEventEmitter();
+		const localBridge = new ConsoleBridge({ onMessage: localEmitter.event });
+		const localPanel = new ConsolePanelProvider(localBridge);
+
+		localEmitter.fire({ command: 'consoleEntry', payload: { command: 'consoleEntry', type: 'Log', message: 'Still in bridge', stackTrace: '', timestamp: '2026-01-01T12:00:03Z' } });
+		assert.strictEqual(localBridge.getEntries().length, 1);
+
+		await localPanel.handleWebviewMessage({ type: 'clear' });
+
+		assert.strictEqual(localBridge.getEntries().length, 0);
+		localPanel.dispose();
+		localBridge.dispose();
+	});
+
+	await testAsync('openFileAtLine rejects traversal paths', async () => {
+		const origFolders = vscode.workspace.workspaceFolders;
+		const origOpenTextDocument = vscode.workspace.openTextDocument;
+		const openedPaths = [];
+
+		try {
+			vscode.workspace.workspaceFolders = [{ uri: { fsPath: '/workspace' }, name: 'test' }];
+			vscode.workspace.openTextDocument = async (uri) => {
+				openedPaths.push(uri.fsPath);
+				return { getText: () => '', uri };
+			};
+
+			await panel.openFileAtLine('Assets/../package.json', 1);
+			await panel.openFileAtLine('../Assets/Scripts/Player.cs', 1);
+			assert.deepStrictEqual(openedPaths, []);
+
+			await panel.openFileAtLine('Assets/Scripts/Player.cs', 42);
+			assert.deepStrictEqual(openedPaths, [path.join('/workspace', 'Assets', 'Scripts', 'Player.cs')]);
+		} finally {
+			vscode.workspace.openTextDocument = origOpenTextDocument;
+			vscode.workspace.workspaceFolders = origFolders;
+		}
+	});
+
 	panel.dispose();
 	bridge.dispose();
 }
@@ -2163,6 +2706,7 @@ async function main() {
 	await testConsoleMcpTools();
 	await testToolRouter();
 	await testUnityMcpTools();
+	await testStandaloneMcpServer();
 	await testLaunchJsonGenerator();
 	await testModuleLoader();
 	testDebugAdapter();

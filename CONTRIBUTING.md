@@ -7,9 +7,12 @@ Thank you for your interest in contributing. Please follow these guidelines.
 ```bash
 git clone <repo-url>
 cd unity-cursor-toolkit
-npm install
-npm run dev
+cd unity-cursor-toolkit
+npm ci
+npm run validate
 ```
+
+The first `cd unity-cursor-toolkit` enters the repository root. The second enters the VS Code/Cursor extension package.
 
 ## Branch Naming
 
@@ -27,7 +30,9 @@ npm run dev
 
 ## Testing
 
-- `npm run compile` must pass
+- `npm run validate` must pass before opening a PR
+- `npm run validate` runs compile, strict unused-code checks, runtime tests, and npm audits
+- `npx vsce package --no-dependencies` should pass for extension packaging changes
 - Test against a Unity project with the extension installed
 - Verify hot reload, console panel, and connection behavior as relevant
 
@@ -42,4 +47,6 @@ Changes to `unity-assets/` C# files must:
 
 - TypeScript strict mode
 - Tabs for indentation
-- Prefer `const` arrow functions over `function` declarations
+- Prefer typed boundaries for webview, MCP, and Unity payloads
+- Validate filesystem paths before reading or writing user/workspace-provided paths
+- Keep extension package artifacts lean; do not ship tests, backups, lockfiles, source maps, or generated bundles in the VSIX

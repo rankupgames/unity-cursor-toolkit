@@ -7,7 +7,6 @@
  */
 
 import * as vscode from 'vscode';
-import * as path from 'path';
 import * as fs from 'fs';
 
 export const hasCsprojFiles = (projectPath: string): boolean => {
@@ -25,7 +24,7 @@ export const promptCsprojGeneration = async (projectPath: string): Promise<void>
 		return;
 	}
 
-	const result = await vscode.window.showInformationMessage(
+	await vscode.window.showInformationMessage(
 		'No .csproj files found. For C# IntelliSense, open the Unity project in Unity Editor and regenerate project files via Edit > Preferences > External Tools > Regenerate project files.',
 		'OK'
 	);

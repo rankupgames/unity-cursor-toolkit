@@ -12,7 +12,7 @@ import { ConnectionState, safeJsonParse } from './types';
 import type { ConnectionInfo, IncomingMessage } from './types';
 import type { IConnectionManager } from './interfaces';
 
-const PORTS = [55500, 55501, 55502, 55503, 55504];
+const DEFAULT_PORTS = [55500, 55501, 55502, 55503, 55504] as const;
 const HEARTBEAT_INTERVAL_MS = 10_000;
 const HEARTBEAT_TIMEOUT_MS = 15_000;
 const INITIAL_BACKOFF_MS = 1_000;
@@ -40,6 +40,8 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 	private disposed = false;
 	private heartbeatPaused = false;
 
+	constructor(private readonly ports: readonly number[] = DEFAULT_PORTS) {}
+
 	public get info(): ConnectionInfo {
 		return { state: this.state, port: this.port };
 	}
@@ -56,7 +58,7 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 		this.setState(ConnectionState.Connecting);
 		this.destroySocket();
 
-		for (const candidate of PORTS) {
+		for (const candidate of this.ports) {
 			if (this.disposed) {
 				break;
 			}

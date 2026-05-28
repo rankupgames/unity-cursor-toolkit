@@ -7,7 +7,7 @@
  */
 
 import * as vscode from 'vscode';
-import type { IModule, ModuleContext, IToolProvider, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
+import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { ToolRouter } from './toolRouter';
 import { UnityMcpTools } from './unityMcpTools';
 

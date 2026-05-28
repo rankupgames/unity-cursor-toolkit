@@ -54,8 +54,20 @@ export interface IToolProvider {
 
 export interface ToolDefinition {
 	name: string;
+	title?: string;
 	description: string;
 	inputSchema: Record<string, unknown>;
+	outputSchema?: Record<string, unknown>;
+	annotations?: ToolAnnotations;
+	_meta?: Record<string, unknown>;
+}
+
+export interface ToolAnnotations {
+	title?: string;
+	readOnlyHint?: boolean;
+	destructiveHint?: boolean;
+	idempotentHint?: boolean;
+	openWorldHint?: boolean;
 }
 
 export interface ToolResultContent {

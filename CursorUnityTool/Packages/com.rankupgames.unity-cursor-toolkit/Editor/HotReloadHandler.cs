@@ -30,6 +30,9 @@ using UnityEditor;
 using UnityEditor.Compilation;
 #endif
 
+namespace UnityCursorToolkit
+{
+
 /// <summary>
 /// Editor window that handles hot reload functionality between Unity and VS Code/Cursor.
 /// Implements a TCP server to listen for file change notifications.
@@ -45,7 +48,7 @@ public class HotReloadHandler : EditorWindow
     private static int lastSuccessfulPort = 55500; // Last port that successfully connected
     private static readonly Queue<string> messageQueue = new Queue<string>();
     private static bool isInitialized = false;
-    private static bool isServerRunning = false;
+    private static volatile bool isServerRunning = false;
     private static readonly List<TcpClient> connectedClients = new List<TcpClient>();
     private static readonly object clientListLock = new object();
 
@@ -91,11 +94,14 @@ public class HotReloadHandler : EditorWindow
         AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
         EditorApplication.quitting += OnEditorQuitting;
 
-        // Auto-start on Unity load
+        #if UNITY_2019_1_OR_NEWER
+        CompilationPipeline.compilationStarted += OnCompilationStarted;
+        #endif
+
+        // Auto-start on Unity load (always start so extension can connect immediately)
         EditorApplication.delayCall += () => {
-            if (!isInitialized && wasRunningBeforeReload)
+            if (isInitialized == false)
             {
-                // Clear the flag
                 EditorPrefs.SetBool(wasRunningPrefKey, false);
                 StartWithoutMutex();
             }
@@ -121,7 +127,7 @@ public class HotReloadHandler : EditorWindow
         {
             instanceMutex = new Mutex(true, "UnityHotReloadHandler", out createdNew);
 
-            if (!createdNew)
+            if (createdNew == false)
             {
                 // Try to get ownership of existing mutex with a timeout
                 try
@@ -132,9 +138,9 @@ public class HotReloadHandler : EditorWindow
                         createdNew = true;
                     }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Mutex is abandoned or we can't get it
+                    Debug.LogWarning($"(HotReloadHandler - Start) Mutex acquisition failed: {ex.Message}");
                     createdNew = false;
                 }
             }
@@ -151,10 +157,10 @@ public class HotReloadHandler : EditorWindow
             createdNew = true; // Proceed anyway
         }
 
-        if (!createdNew && instanceMutex != null)
+        if (createdNew == false && instanceMutex != null)
         {
             // Check if a server is actually running on our port
-            if (!IsPortInUse(currentPort))
+            if (IsPortInUse(currentPort) == false)
             {
                 Debug.Log("Previous instance mutex found but port is free. Proceeding with startup.");
                 try
@@ -162,7 +168,7 @@ public class HotReloadHandler : EditorWindow
                     instanceMutex.ReleaseMutex();
                     instanceMutex.Close();
                 }
-                catch { }
+                catch (Exception ex) { Debug.LogWarning($"(HotReloadHandler - Start) Mutex release failed: {ex.Message}"); }
                 instanceMutex = null;
                 createdNew = true;
             }
@@ -209,19 +215,19 @@ public class HotReloadHandler : EditorWindow
     /// </summary>
     private static bool IsPortInUse(int port)
     {
-        System.Net.Sockets.TcpListener tempListener = null;
+        TcpListener tempListener = null;
         try
         {
             // Explicitly qualify TcpListener and IPAddress to ensure correct type resolution
-            tempListener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, port);
+            tempListener = new TcpListener(IPAddress.Any, port);
             tempListener.Start();
             return false; // Port is available if we could start
         }
-        catch (System.Net.Sockets.SocketException ex)
+        catch (SocketException ex)
         {
             // Check if the specific error is "Address already in use"
             // Common error codes for this are 10048 (WSAEADDRINUSE on Windows) or 48/98 on Unix-like systems.
-            if (ex.SocketErrorCode == System.Net.Sockets.SocketError.AddressAlreadyInUse || ex.ErrorCode == 48 || ex.ErrorCode == 98 || ex.ErrorCode == 10048)
+            if (ex.SocketErrorCode == SocketError.AddressAlreadyInUse || ex.ErrorCode == 48 || ex.ErrorCode == 98 || ex.ErrorCode == 10048)
             {
                 return true; // Port is in use
             }
@@ -229,9 +235,9 @@ public class HotReloadHandler : EditorWindow
             // Depending on desired behavior, could return true or re-throw. For IsPortInUse, true is safer.
             return true;
         }
-        catch
+        catch (Exception ex)
         {
-            // Any other exception (e.g., security, permissions) likely means port is not usable by us.
+            Debug.LogWarning($"(HotReloadHandler - IsPortInUse) Port check failed: {ex.Message}");
             return true;
         }
         finally
@@ -249,7 +255,7 @@ public class HotReloadHandler : EditorWindow
     [MenuItem("Tools/Hot Reload/Stop")]
     public static void Stop()
     {
-        if (!isInitialized)
+        if (isInitialized == false)
         {
             Debug.Log("Hot Reload server is not running.");
             return;
@@ -267,7 +273,7 @@ public class HotReloadHandler : EditorWindow
                 instanceMutex.ReleaseMutex();
                 instanceMutex.Close();
             }
-            catch { }
+            catch (Exception ex) { Debug.LogWarning($"(HotReloadHandler - Stop) Mutex release failed: {ex.Message}"); }
             instanceMutex = null;
         }
 
@@ -284,7 +290,7 @@ public class HotReloadHandler : EditorWindow
     [MenuItem("Tools/Hot Reload/Reload")]
     public static void Reload()
     {
-        if (!isInitialized)
+        if (isInitialized == false)
         {
             Debug.Log("Hot Reload server is not running. Starting fresh...");
             Start();
@@ -323,7 +329,7 @@ public class HotReloadHandler : EditorWindow
         }
 
         // If we couldn't restart on the same port, start normally
-        if (!restarted)
+        if (restarted == false)
         {
             Debug.LogWarning($"Could not reload on port {portToReuse}, starting on available port...");
             StartListenerThread();
@@ -431,9 +437,9 @@ public class HotReloadHandler : EditorWindow
             {
                 listenerThread.Join(1000); // Give it more time to exit gracefully
 
-                if (listenerThread.IsAlive)
+                if (listenerThread.IsAlive && showDebugLogs)
                 {
-                    listenerThread.Abort(); // Force abort if thread doesn't exit gracefully
+                    Debug.LogWarning("Unity Hot Reload server thread did not stop before assembly reload.");
                 }
             }
             catch (Exception ex)
@@ -465,7 +471,7 @@ public class HotReloadHandler : EditorWindow
                 instanceMutex.ReleaseMutex();
                 instanceMutex.Close();
             }
-            catch { }
+            catch (Exception ex) { Debug.LogWarning($"(HotReloadHandler - OnBeforeAssemblyReload) Mutex release failed: {ex.Message}"); }
             instanceMutex = null;
         }
 
@@ -541,7 +547,7 @@ public class HotReloadHandler : EditorWindow
         // Finally, add all alternative ports
         foreach (int port in ALTERNATIVE_PORTS)
         {
-            if (!portsToTry.Contains(port))
+            if (portsToTry.Contains(port) == false)
             {
                 portsToTry.Add(port);
             }
@@ -563,20 +569,7 @@ public class HotReloadHandler : EditorWindow
 
                 try
                 {
-                    server = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, portToTry);
-
-                    // Try to set socket options to allow port reuse
-                    try
-                    {
-                        server.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        if (showDebugLogs)
-                        {
-                            Debug.LogWarning($"Could not set ReuseAddress option: {ex.Message}");
-                        }
-                    }
+                    server = new TcpListener(IPAddress.Any, portToTry);
 
                     server.Start();
 
@@ -619,7 +612,7 @@ public class HotReloadHandler : EditorWindow
                 break;
         }
 
-        if (!serverStarted)
+        if (serverStarted == false)
         {
             Debug.LogError("Failed to start Hot Reload server. All ports are in use.");
             return;
@@ -672,7 +665,7 @@ public class HotReloadHandler : EditorWindow
                     // Clean up disconnected clients
                     lock (clientListLock)
                     {
-                        int removedCount = connectedClients.RemoveAll(c => !c.Connected);
+                        int removedCount = connectedClients.RemoveAll(c => c.Connected == false);
                         if (removedCount > 0 && showDebugLogs)
                         {
                             Debug.Log($"Cleaned up {removedCount} disconnected client(s)");
@@ -681,7 +674,7 @@ public class HotReloadHandler : EditorWindow
                 }
                 catch (SocketException ex)
                 {
-                    if (!isServerRunning)
+                    if (isServerRunning == false)
                     {
                         // Server is shutting down, this is expected
                         break;
@@ -700,7 +693,7 @@ public class HotReloadHandler : EditorWindow
         }
         catch (Exception e)
         {
-            if (!isServerRunning)
+            if (isServerRunning == false)
             {
                 // Server is shutting down, this is expected
                 if (showDebugLogs)
@@ -734,14 +727,17 @@ public class HotReloadHandler : EditorWindow
 
     /// <summary>
     /// Handles communication with a single client connection.
+    /// Accumulates TCP data and splits on newline delimiters to handle
+    /// message fragmentation and batching correctly.
     /// </summary>
     /// <param name="client">The connected TCP client</param>
     private static void HandleClient(TcpClient client)
     {
         try
         {
-            byte[] buffer = new byte[1024];
+            byte[] buffer = new byte[4096];
             NetworkStream stream = client.GetStream();
+            StringBuilder lineBuffer = new StringBuilder();
 
             while (client.Connected && isServerRunning)
             {
@@ -750,12 +746,30 @@ public class HotReloadHandler : EditorWindow
                     int bytesRead = stream.Read(buffer, 0, buffer.Length);
                     if (bytesRead > 0)
                     {
-                        string message = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                        lineBuffer.Append(Encoding.UTF8.GetString(buffer, 0, bytesRead));
 
-                        // Queue message for processing on main thread
-                        lock (messageQueue)
+                        // Split on newline -- each complete line is one message
+                        string accumulated = lineBuffer.ToString();
+                        int newlineIdx;
+                        while ((newlineIdx = accumulated.IndexOf('\n')) >= 0)
                         {
-                            messageQueue.Enqueue(message);
+                            string line = accumulated.Substring(0, newlineIdx).Trim();
+                            accumulated = accumulated.Substring(newlineIdx + 1);
+
+                            if (string.IsNullOrEmpty(line) == false)
+                            {
+                                lock (messageQueue)
+                                {
+                                    messageQueue.Enqueue(line);
+                                }
+                            }
+                        }
+
+                        // Keep any incomplete data for the next read
+                        lineBuffer.Clear();
+                        if (accumulated.Length > 0)
+                        {
+                            lineBuffer.Append(accumulated);
                         }
                     }
                     else
@@ -790,7 +804,7 @@ public class HotReloadHandler : EditorWindow
             {
                 client.Close();
             }
-            catch { }
+            catch (Exception ex) { Debug.LogWarning($"(HotReloadHandler - HandleClient) Client close failed: {ex.Message}"); }
 
             if (showDebugLogs)
             {
@@ -801,9 +815,8 @@ public class HotReloadHandler : EditorWindow
 
     /// <summary>
     /// Processes messages received from the TCP client.
-    /// Handles different command types from the VS Code extension.
+    /// Routes to IL patching, MCP tool dispatch, debug port, and refresh.
     /// </summary>
-    /// <param name="message">The message received from the client</param>
     private static void ProcessMessage(string message)
     {
         if (showDebugLogs)
@@ -813,43 +826,178 @@ public class HotReloadHandler : EditorWindow
 
         try
         {
-            // Try to parse as JSON for more complex commands
             if (message.Contains("{") && message.Contains("}"))
             {
-                // Simple JSON parsing for command
-                if (message.Contains("\"command\""))
+                string command = ExtractJsonStringValue(message, "command");
+                if (string.IsNullOrEmpty(command))
                 {
-                    if (message.Contains("\"refresh\""))
-                    {
-                        shouldRequestRefresh = true;
-                    }
-                    else if (message.Contains("\"ping\""))
-                    {
-                        // Could implement ping/pong in future
+                    shouldRequestRefresh = true;
+                    return;
+                }
+
+                switch (command)
+                {
+                    case "refresh":
+                        string[] changedFiles = ExtractFilePaths(message);
+                        HandleRefresh(changedFiles);
+                        break;
+                    case "ping":
+                        BroadcastToClients("{\"command\":\"pong\"}");
+                        break;
+                    case "getDebugPort":
+                        UnityCursorToolkit.Debugging.DebugBridge.BroadcastDebugPort();
+                        break;
+                    case "mcpToolCall":
+                        RouteMcpToolCall(message);
+                        break;
+                    default:
                         if (showDebugLogs)
                         {
-                            Debug.Log("Received ping from VS Code");
+                            Debug.LogWarning($"(HotReloadHandler - ProcessMessage) Unknown command: {command}");
                         }
-                    }
-                }
-                else
-                {
-                    // Default behavior - refresh
-                    shouldRequestRefresh = true;
+                        break;
                 }
             }
             else
             {
-                // Simple message - trigger refresh
                 shouldRequestRefresh = true;
             }
         }
         catch (Exception ex)
         {
-            Debug.LogError($"Error processing message: {ex.Message}");
-            // Default to refresh on error
+            Debug.LogError($"(HotReloadHandler - ProcessMessage) Error: {ex.Message}");
             shouldRequestRefresh = true;
         }
+    }
+
+    /// <summary>
+    /// Routes an mcpToolCall message to MCPBridge for dispatch.
+    /// Extracts toolName and args from the JSON payload.
+    /// </summary>
+    private static void RouteMcpToolCall(string message)
+    {
+        string toolName = ExtractJsonStringValue(message, "toolName");
+        if (string.IsNullOrEmpty(toolName))
+        {
+            Debug.LogWarning("(HotReloadHandler - RouteMcpToolCall) Missing toolName in mcpToolCall");
+            return;
+        }
+
+        string argsJson = ExtractJsonObject(message, "args");
+        string requestId = ExtractJsonStringValue(message, "_requestId");
+        if (showDebugLogs)
+        {
+            Debug.Log($"(HotReloadHandler - RouteMcpToolCall) Routing tool: {toolName}");
+        }
+        UnityCursorToolkit.MCP.MCPBridge.HandleToolCall(toolName, argsJson ?? "{}", requestId);
+    }
+
+    /// <summary>
+    /// Extracts a string value for a given key from a JSON message.
+    /// </summary>
+    private static string ExtractJsonStringValue(string json, string key)
+    {
+        string search = "\"" + key + "\"";
+        int keyIdx = json.IndexOf(search);
+        if (keyIdx < 0) return null;
+
+        int colonIdx = json.IndexOf(':', keyIdx + search.Length);
+        if (colonIdx < 0) return null;
+
+        int quoteStart = json.IndexOf('"', colonIdx + 1);
+        if (quoteStart < 0) return null;
+
+        int quoteEnd = json.IndexOf('"', quoteStart + 1);
+        if (quoteEnd < 0) return null;
+
+        return json.Substring(quoteStart + 1, quoteEnd - quoteStart - 1);
+    }
+
+    /// <summary>
+    /// Extracts a nested JSON object for a given key.
+    /// </summary>
+    private static string ExtractJsonObject(string json, string key)
+    {
+        string search = "\"" + key + "\"";
+        int keyIdx = json.IndexOf(search);
+        if (keyIdx < 0) return null;
+
+        int braceStart = json.IndexOf('{', keyIdx + search.Length);
+        if (braceStart < 0) return null;
+
+        int depth = 0;
+        for (int i = braceStart; i < json.Length; i++)
+        {
+            if (json[i] == '{') depth++;
+            else if (json[i] == '}') depth--;
+
+            if (depth == 0)
+            {
+                return json.Substring(braceStart, i - braceStart + 1);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Decides whether to IL-patch or full-refresh based on play mode and preferences.
+    /// </summary>
+    private static void HandleRefresh(string[] changedFiles)
+    {
+        bool preferILPatch = EditorPrefs.GetBool("UnityCursorToolkit_PreferILPatch", true);
+
+        if (EditorApplication.isPlaying && preferILPatch && changedFiles != null && changedFiles.Length > 0)
+        {
+            var result = UnityCursorToolkit.HotReload.ILPatcher.TryPatch(changedFiles);
+
+            if (result.Success)
+            {
+                string payload = $"{{\"command\":\"compilationResult\",\"success\":true,\"method\":\"ilPatch\",\"patchedMethods\":{result.PatchedMethodCount},\"elapsedMs\":{result.ElapsedMs}}}";
+                BroadcastToClients(payload);
+
+                if (showDebugLogs)
+                {
+                    Debug.Log($"Hot Reload: IL Patch applied — {result.PatchedMethodCount} methods in {result.ElapsedMs}ms");
+                }
+                return;
+            }
+
+            if (showDebugLogs)
+            {
+                Debug.Log($"Hot Reload: IL Patch fallback — {result.FallbackReason}");
+            }
+        }
+
+        shouldRequestRefresh = true;
+    }
+
+    /// <summary>
+    /// Extract file paths from the JSON refresh message.
+    /// </summary>
+    private static string[] ExtractFilePaths(string json)
+    {
+        int filesIdx = json.IndexOf("\"files\"");
+        if (filesIdx < 0) return null;
+
+        int arrayStart = json.IndexOf('[', filesIdx);
+        int arrayEnd = json.IndexOf(']', arrayStart);
+        if (arrayStart < 0 || arrayEnd < 0) return null;
+
+        string arrayContent = json.Substring(arrayStart + 1, arrayEnd - arrayStart - 1);
+        if (string.IsNullOrEmpty(arrayContent.Trim())) return new string[0];
+
+        var paths = new List<string>();
+        foreach (string part in arrayContent.Split(','))
+        {
+            string trimmed = part.Trim().Trim('"');
+            if (string.IsNullOrEmpty(trimmed) == false)
+            {
+                paths.Add(trimmed);
+            }
+        }
+
+        return paths.ToArray();
     }
 
     /// <summary>
@@ -862,11 +1010,11 @@ public class HotReloadHandler : EditorWindow
         {
             Debug.Log("Hot Reload: Refreshing Unity assets...");
 
-            // Refresh the asset database
             AssetDatabase.Refresh(ImportAssetOptions.Default);
 
-            // Request script compilation (Unity 2019.1 or newer)
             #if UNITY_2019_1_OR_NEWER
+            CompilationPipeline.compilationFinished -= OnCompilationFinished;
+            CompilationPipeline.compilationFinished += OnCompilationFinished;
             CompilationPipeline.RequestScriptCompilation();
             #endif
 
@@ -879,6 +1027,74 @@ public class HotReloadHandler : EditorWindow
         {
             Debug.LogError($"Hot Reload refresh error: {e.Message}");
         }
+    }
+
+    #if UNITY_2019_1_OR_NEWER
+    /// <summary>
+    /// Notifies connected extension clients that compilation has begun.
+    /// Extension pauses heartbeat during compilation since Unity's main thread is blocked.
+    /// </summary>
+    private static void OnCompilationStarted(object context)
+    {
+        BroadcastToClients("{\"command\":\"compilationStarted\"}");
+    }
+
+    private static void OnCompilationFinished(object context)
+    {
+        CompilationPipeline.compilationFinished -= OnCompilationFinished;
+
+        bool _success = !EditorUtility.scriptCompilationFailed;
+        string _payload = $"{{\"command\":\"compilationResult\",\"success\":{(_success ? "true" : "false")}}}";
+
+        lock (mainThreadActionsLock)
+        {
+            mainThreadActions.Enqueue(() =>
+            {
+                BroadcastToClients(_payload);
+                if (showDebugLogs)
+                {
+                    Debug.Log($"Hot Reload: Compilation {(_success ? "succeeded" : "failed")}");
+                }
+            });
+        }
+    }
+    #endif
+
+    /// <summary>
+    /// Sends a message to all connected extension clients.
+    /// Used by other Editor scripts (e.g. ConsoleToCursor) to communicate back to the extension.
+    /// </summary>
+    public static bool BroadcastToClients(string message)
+    {
+        if (isServerRunning == false)
+            return false;
+
+        byte[] _data = Encoding.UTF8.GetBytes(message + "\n");
+        int _sent = 0;
+
+        lock (clientListLock)
+        {
+            foreach (var _client in connectedClients.ToList())
+            {
+                try
+                {
+                    if (_client.Connected)
+                    {
+                        _client.GetStream().Write(_data, 0, _data.Length);
+                        _sent++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    if (showDebugLogs)
+                    {
+                        Debug.LogWarning($"(HotReloadHandler - BroadcastToClients) Failed to send to client: {ex.Message}");
+                    }
+                }
+            }
+        }
+
+        return _sent > 0;
     }
 
     /// <summary>
@@ -944,7 +1160,7 @@ public class HotReloadHandler : EditorWindow
     {
         try
         {
-            server = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, specificPort);
+            server = new TcpListener(IPAddress.Any, specificPort);
 
             // Try to set socket options to allow port reuse
             try
@@ -982,5 +1198,7 @@ public class HotReloadHandler : EditorWindow
         }
     }
 }
+
+} // namespace UnityCursorToolkit
 
 #endif // UNITY_EDITOR

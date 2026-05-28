@@ -6,28 +6,39 @@
  */
 
 import * as vscode from 'vscode';
+import * as crypto from 'crypto';
+import * as path from 'path';
 import { ConsoleBridge } from './consoleBridge';
 import type { ConsoleEntry } from '../core/types';
 
 const DEFAULT_MAX_ENTRIES = 10_000;
 
+export type UnityProfilerSnapshotProvider = () => Promise<string | null>;
+
+interface ConsoleWebviewMessage {
+	readonly type?: unknown;
+	readonly text?: unknown;
+	readonly path?: unknown;
+	readonly line?: unknown;
+}
+
 export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 
 	public static readonly viewId = 'unityConsole';
 
-	private readonly extensionUri: vscode.Uri;
 	private readonly bridge: ConsoleBridge;
+	private readonly unityProfilerSnapshotProvider: UnityProfilerSnapshotProvider | undefined;
 	private currentView: vscode.WebviewView | undefined;
 	private entries: ConsoleEntry[] = [];
 	private disposables: vscode.Disposable[] = [];
 
-	constructor(extensionUri: vscode.Uri, bridge: ConsoleBridge) {
-		this.extensionUri = extensionUri;
+	constructor(bridge: ConsoleBridge, unityProfilerSnapshotProvider?: UnityProfilerSnapshotProvider) {
 		this.bridge = bridge;
+		this.unityProfilerSnapshotProvider = unityProfilerSnapshotProvider;
 
 		this.disposables.push(
 			bridge.onEntry((entry) => {
-				const maxEntries = vscode.workspace.getConfiguration('unityCursorToolkit.console').get<number>('maxEntries', DEFAULT_MAX_ENTRIES);
+				const maxEntries = this.getMaxEntries();
 				this.entries.push(entry);
 				if (this.entries.length > maxEntries) {
 					this.entries.shift();
@@ -50,40 +61,17 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 		webviewView.webview.options = { enableScripts: true };
 		webviewView.webview.html = this.getHtml(webviewView.webview);
 
-		webviewView.webview.onDidReceiveMessage(async (msg) => {
-			if (msg == null) {
-				return;
-			}
-			switch (msg.type) {
-				case 'ready':
-					this.postAllEntries();
-					return;
-				case 'clear':
-					this.entries = [];
-					return;
-				case 'sendToChat': {
-					const content = this.formatEntries(this.entries);
-					this.bridge.sendToChat(content, this.entries.length);
-					return;
-				}
-			case 'copy': {
-				const text = (msg.text as string) ?? '';
-				await vscode.env.clipboard.writeText(text);
-				vscode.window.showInformationMessage('Console entries copied to clipboard.');
-				return;
-			}
-			case 'openFile': {
-				await this.openFileAtLine(msg.path, msg.line);
-				return;
-			}
-			}
-		});
+		this.disposables.push(
+			webviewView.webview.onDidReceiveMessage((message: ConsoleWebviewMessage) => {
+				this.handleWebviewMessage(message).catch((error: unknown) => {
+					console.warn(`[ConsolePanel] Failed to handle webview message: ${error instanceof Error ? error.message : String(error)}`);
+				});
+			})
+		);
 	}
 
 	public clear(): void {
-		this.entries = [];
 		this.bridge.clearEntries();
-		this.currentView?.webview.postMessage({ type: 'clear' });
 	}
 
 	public async copyToClipboard(): Promise<void> {
@@ -93,6 +81,17 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	}
 
 	public async snapshot(): Promise<void> {
+		try {
+			const unitySnapshot = await this.unityProfilerSnapshotProvider?.();
+			if (unitySnapshot) {
+				await vscode.env.clipboard.writeText(unitySnapshot);
+				vscode.window.showInformationMessage('Unity console and profiler snapshot copied to clipboard.');
+				return;
+			}
+		} catch (error: unknown) {
+			console.warn(`[ConsolePanel] Unity profiler snapshot unavailable: ${error instanceof Error ? error.message : String(error)}`);
+		}
+
 		const errors = this.entries.filter((e) => e.type === 'error' || e.type === 'exception');
 		const warnings = this.entries.filter((e) => e.type === 'warning');
 		const recent = this.entries.slice(-10);
@@ -173,24 +172,84 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 		}
 	}
 
-	private async openFileAtLine(filePath: string, line: number): Promise<void> {
-		const workspaceFolders = vscode.workspace.workspaceFolders;
-		if (workspaceFolders == null) {
+	private async handleWebviewMessage(message: ConsoleWebviewMessage | null | undefined): Promise<void> {
+		if (message == null || typeof message.type !== 'string') {
 			return;
 		}
 
-		for (const folder of workspaceFolders) {
-			const fullPath = vscode.Uri.joinPath(folder.uri, filePath);
+		switch (message.type) {
+			case 'ready':
+				this.postAllEntries();
+				return;
+			case 'clear':
+				this.clear();
+				return;
+			case 'sendToChat': {
+				const content = this.formatEntries(this.entries);
+				await this.bridge.sendToChat(content, this.entries.length);
+				return;
+			}
+			case 'copy':
+				if (typeof message.text !== 'string') {
+					return;
+				}
+				await vscode.env.clipboard.writeText(message.text);
+				vscode.window.showInformationMessage('Console entries copied to clipboard.');
+				return;
+			case 'openFile':
+				if (typeof message.path !== 'string') {
+					return;
+				}
+				await this.openFileAtLine(message.path, this.toLineNumber(message.line));
+				return;
+		}
+	}
+
+	private async openFileAtLine(filePath: string, line: number): Promise<void> {
+		for (const fullPath of this.getWorkspaceFileCandidates(filePath)) {
 			try {
 				const doc = await vscode.workspace.openTextDocument(fullPath);
 				const lineNum = Math.max(0, line - 1);
 				const range = new vscode.Range(lineNum, 0, lineNum, 0);
 				await vscode.window.showTextDocument(doc, { selection: range, preview: true });
 				return;
-		} catch (error: unknown) {
-			console.debug(`[ConsolePanel] File not found in folder, trying next: ${error instanceof Error ? error.message : String(error)}`);
+			} catch (error: unknown) {
+				console.debug(`[ConsolePanel] File not found in folder, trying next: ${error instanceof Error ? error.message : String(error)}`);
+			}
 		}
+	}
+
+	private getWorkspaceFileCandidates(filePath: string): vscode.Uri[] {
+		const workspaceFolders = vscode.workspace.workspaceFolders;
+		if (workspaceFolders == null) {
+			return [];
 		}
+
+		const segments = this.getSafeWorkspaceRelativeSegments(filePath);
+		if (segments == null) {
+			return [];
+		}
+
+		return workspaceFolders
+			.map((folder) => {
+				const candidate = vscode.Uri.joinPath(folder.uri, ...segments);
+				return ConsolePanelProvider.isPathInsideWorkspace(folder.uri.fsPath, candidate.fsPath) ? candidate : undefined;
+			})
+			.filter((candidate): candidate is vscode.Uri => candidate != null);
+	}
+
+	private getSafeWorkspaceRelativeSegments(filePath: string): string[] | null {
+		const normalizedPath = filePath.replace(/\\/g, '/').trim();
+		if (normalizedPath.length === 0) {
+			return null;
+		}
+
+		const segments = normalizedPath.split('/').filter((segment) => segment.length > 0);
+		if (segments[0] !== 'Assets' || segments.some((segment) => segment === '.' || segment === '..')) {
+			return null;
+		}
+
+		return segments;
 	}
 
 	private postEntry(entry: ConsoleEntry): void {
@@ -214,10 +273,11 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	}
 
 	private getHtml(webview: vscode.Webview): string {
+		const nonce = ConsolePanelProvider.createNonce();
 		const csp = [
 			"default-src 'none'",
-			`style-src ${webview.cspSource} 'unsafe-inline'`,
-			`script-src ${webview.cspSource} 'unsafe-inline'`
+			`style-src ${webview.cspSource} 'nonce-${nonce}'`,
+			`script-src ${webview.cspSource} 'nonce-${nonce}'`
 		].join('; ');
 
 		return `<!DOCTYPE html>
@@ -227,7 +287,7 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	<meta http-equiv="Content-Security-Policy" content="${csp}">
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Unity Console</title>
-	<style>
+	<style nonce="${nonce}">
 		:root { color-scheme: var(--vscode-color-scheme); }
 		* { box-sizing: border-box; margin: 0; padding: 0; }
 		body { font-family: var(--vscode-editor-font-family); font-size: 12px; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
@@ -285,7 +345,7 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	<div class="log-area" id="log-area">
 		<div class="empty" id="empty">Waiting for Unity console output...</div>
 	</div>
-	<script>
+	<script nonce="${nonce}">
 		const vscode = acquireVsCodeApi();
 		const logArea = document.getElementById('log-area');
 		const emptyEl = document.getElementById('empty');
@@ -302,8 +362,6 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 			d.textContent = s;
 			return d.innerHTML;
 		}
-
-		var TRACE_RE = /\(at\s+(Assets\/[^:]+):(\d+)\)/g;
 
 		function linkifyStack(stack) {
 			var escaped = escapeHtml(stack);
@@ -325,6 +383,7 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 			div.className = 'log-entry ' + e.type;
 			div.dataset.type = e.type;
 			div.dataset.msg = (e.message || '').toLowerCase();
+			div.dataset.search = ((e.message || '') + '\\n' + (e.stackTrace || '')).toLowerCase();
 
 			var msgHtml = searchTerm ? highlightText(e.message, searchTerm) : escapeHtml(e.message);
 			var html = '<span class="log-ts">' + escapeHtml(e.timestamp) + '</span>' + msgHtml;
@@ -335,20 +394,13 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 			return div;
 		}
 
-		function matchesSearch(e) {
-			if (searchTerm.length === 0) return true;
-			var term = searchTerm.toLowerCase();
-			return (e.message || '').toLowerCase().includes(term) ||
-				(e.stackTrace || '').toLowerCase().includes(term);
-		}
-
 		function applyFilter() {
 			var f = filterEl.value;
 			var all = logArea.querySelectorAll('.log-entry');
 			var visible = 0;
 			all.forEach(function(el) {
 				var typeMatch = f === 'all' || el.dataset.type === f || (f === 'error' && el.dataset.type === 'exception');
-				var searchMatch = searchTerm.length === 0 || (el.dataset.msg || '').includes(searchTerm.toLowerCase());
+				var searchMatch = searchTerm.length === 0 || (el.dataset.search || '').includes(searchTerm.toLowerCase());
 				var show = typeMatch && searchMatch;
 				el.style.display = show ? '' : 'none';
 				if (show) visible++;
@@ -436,5 +488,29 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	</script>
 </body>
 </html>`;
+	}
+
+	private toLineNumber(value: unknown): number {
+		const line = typeof value === 'number' ? value : Number(value);
+		return Number.isFinite(line) ? line : 1;
+	}
+
+	private getMaxEntries(): number {
+		const configured = vscode.workspace.getConfiguration('unityCursorToolkit.console').get<number>('maxEntries', DEFAULT_MAX_ENTRIES);
+		if (Number.isFinite(configured) === false || configured < 1) {
+			return DEFAULT_MAX_ENTRIES;
+		}
+
+		return Math.floor(configured);
+	}
+
+	private static isPathInsideWorkspace(workspacePath: string, targetPath: string): boolean {
+		const relativePath = path.relative(path.resolve(workspacePath), path.resolve(targetPath));
+		return relativePath.length === 0
+			|| (relativePath !== '..' && relativePath.startsWith(`..${path.sep}`) === false && path.isAbsolute(relativePath) === false);
+	}
+
+	private static createNonce(): string {
+		return crypto.randomBytes(16).toString('hex');
 	}
 }

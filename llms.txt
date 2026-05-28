@@ -1,0 +1,47 @@
+# Unity Cursor Toolkit
+
+> Unity Editor bridge for VS Code, Cursor, and MCP-capable AI agents.
+
+Unity Cursor Toolkit provides hot reload, live console streaming, play mode controls, Mono debugger attach support, `.meta` resolution, and MCP tools for Unity Editor automation.
+
+## Start Here
+
+- Repository README: README.md
+- AI agent guide: docs/AI_AGENTS.md
+- MCP client setup: docs/MCP_CLIENTS.md
+- Runtime game command guide: docs/GAME_COMMANDS.md
+- Feature roadmap: docs/FEATURE_ROADMAP.md
+- Extension README: unity-cursor-toolkit/README.md
+- Unity package docs: Packages/com.rankupgames.unity-cursor-toolkit/Documentation~/README.md
+- Zed setup: zed/README.md
+- Agent coding instructions: AGENTS.md
+
+## Important Commands
+
+```bash
+cd unity-cursor-toolkit
+npm ci
+npm run validate
+npm run mcp:serve
+```
+
+## MCP Server
+
+Build first with `npm run compile`, then run:
+
+```bash
+node unity-cursor-toolkit/out/mcp/server.js
+```
+
+Useful environment variables:
+
+- `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` blocks mutating Unity MCP tools.
+- `UNITY_CURSOR_TOOLKIT_PROJECT_PATH=/path/to/unity/project` sets the project root for `.meta` resolution.
+- `UNITY_CURSOR_TOOLKIT_MCP_PORTS=55500,55501,55502,55503,55504` overrides Unity TCP ports.
+
+## Agent-Safe Tooling Notes
+
+- Use `project_info`, `read_console`, `resolve_meta`, and `manage_scene` with `action: "getHierarchy"` before mutating.
+- Use `game_command` with `action: "list"` before scheduling project-owned runtime workflows.
+- Use `dryRun: true` on mutating tools to inspect the normalized Unity command without executing it.
+- Mutating tools include scene load/save/create, GameObject edits, component edits, asset edits, material edits, play mode, menu execution, runtime game command scheduling/canceling, build trigger, and batch execution.

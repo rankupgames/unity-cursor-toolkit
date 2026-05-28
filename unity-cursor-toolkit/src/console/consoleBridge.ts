@@ -9,6 +9,8 @@ import * as vscode from 'vscode';
 import type { IConnectionManager } from '../core/interfaces';
 import type { ConsoleEntry, IncomingMessage } from '../core/types';
 
+const DEFAULT_MAX_ENTRIES = 10_000;
+
 export interface ConsoleFilterOptions {
 	level?: string;
 	limit?: number;
@@ -95,13 +97,13 @@ export class ConsoleBridge implements vscode.Disposable {
 	private handleMessage(msg: IncomingMessage): void {
 		if (msg.command === 'consoleEntry') {
 			const entry: ConsoleEntry = {
-				type: this.mapLogType(msg.payload.type as string),
-				message: (msg.payload.message as string) ?? '',
-				stackTrace: (msg.payload.stackTrace as string) ?? '',
-				timestamp: (msg.payload.timestamp as string) ?? new Date().toISOString()
+				type: this.mapLogType(this.getPayloadString(msg.payload.type)),
+				message: this.getPayloadString(msg.payload.message) ?? '',
+				stackTrace: this.getPayloadString(msg.payload.stackTrace) ?? '',
+				timestamp: this.getPayloadString(msg.payload.timestamp) ?? new Date().toISOString()
 			};
 
-			const maxEntries = vscode.workspace.getConfiguration('unityCursorToolkit.console').get<number>('maxEntries', 10_000);
+			const maxEntries = this.getMaxEntries();
 			this.entries.push(entry);
 			if (this.entries.length > maxEntries) {
 				this.entries.shift();
@@ -109,14 +111,31 @@ export class ConsoleBridge implements vscode.Disposable {
 
 			this._onEntry.fire(entry);
 		} else if (msg.command === 'consoleToCursor') {
-			const content = msg.payload.content as string | undefined;
-			const entryCount = (msg.payload.entryCount as number) ?? 0;
+			const content = this.getPayloadString(msg.payload.content);
+			const entryCount = this.getPayloadNumber(msg.payload.entryCount) ?? 0;
 
 			if (content) {
 				this._onBulk.fire({ content, entryCount });
 				this.sendToChat(content, entryCount);
 			}
 		}
+	}
+
+	private getMaxEntries(): number {
+		const configured = vscode.workspace.getConfiguration('unityCursorToolkit.console').get<number>('maxEntries', DEFAULT_MAX_ENTRIES);
+		if (Number.isFinite(configured) === false || configured < 1) {
+			return DEFAULT_MAX_ENTRIES;
+		}
+
+		return Math.floor(configured);
+	}
+
+	private getPayloadString(value: unknown): string | undefined {
+		return typeof value === 'string' ? value : undefined;
+	}
+
+	private getPayloadNumber(value: unknown): number | undefined {
+		return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
 	}
 
 	private mapLogType(raw: string | undefined): ConsoleEntry['type'] {

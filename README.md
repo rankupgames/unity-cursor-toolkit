@@ -21,7 +21,7 @@ Save-to-refresh with debounced file watching and compilation feedback in the sta
 
 ### Live Console
 
-Real-time streaming, severity filtering, text search, clickable stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable).
+Real-time streaming, severity filtering, text search across messages and stack traces, safe clickable `Assets/...` stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable). Console snapshots can include the current Unity profiler session so agents get logs, frame trends, hot frames, and hot paths together.
 
 ### Connection
 
@@ -37,7 +37,7 @@ Enter, exit, pause, and single-frame step directly from VS Code / Cursor -- no n
 
 ### MCP Server
 
-AI agents (Cursor, Claude Code, Copilot) can read console, control play mode, manage scenes/assets, query project info, and capture screenshots.
+AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, inspect profiler snapshots, run game-authored command sequences, and use read-only or dry-run safeguards before mutating Unity state.
 
 ### Mono Debugger
 
@@ -45,11 +45,11 @@ Attach to the Unity Editor or a Development Player via the built-in Mono soft de
 
 ### Meta File Management
 
-Auto-hide `.meta` files from explorer and Cmd+P, on-demand resolve for AI workflows.
+Auto-hide `.meta` files from explorer and Cmd+P, with workspace-contained on-demand resolve for AI workflows.
 
 ### Unity Package (C# side)
 
-A companion UPM package (`com.rankupgames.unity-cursor-toolkit`) provides the Unity-side scripts: console forwarding, hot reload handler, MCP bridge, debug bridge, and IL patcher. Installable via OpenUPM, Git URL, or scoped registry.
+A companion UPM package (`com.rankupgames.unity-cursor-toolkit`) provides the Unity-side scripts: console forwarding, hot reload handler, MCP bridge, runtime command registry, debug bridge, and IL patcher. Installable via OpenUPM, Git URL, or scoped registry.
 
 ## Quick Start
 
@@ -57,6 +57,28 @@ A companion UPM package (`com.rankupgames.unity-cursor-toolkit`) provides the Un
 2. Install the Unity package (see [Unity Package Installation](#unity-package-installation)).
 3. Open a Unity project folder in VS Code or Cursor.
 4. Click **Unity Attach** in the status bar to connect.
+
+## AI Agent Quick Start
+
+The extension now builds a standalone MCP stdio server for agents that do not run VS Code extensions directly.
+
+```bash
+cd unity-cursor-toolkit
+npm ci
+npm run compile
+npm run mcp:serve
+```
+
+Use **Unity Toolkit: Copy MCP Client Config** in VS Code/Cursor to copy setup snippets, or read [MCP Client Setup](docs/MCP_CLIENTS.md) for Cursor, Claude Code, VS Code Copilot Agent mode, and Zed examples.
+
+Agent safety defaults:
+
+- Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` to block mutating tools.
+- Pass `dryRun: true` to mutating tools to inspect the normalized Unity command without executing it.
+- Start with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"` before scene or asset edits.
+- Use `game_command` with `action: "list"` to discover project-authored runtime workflows before scheduling them.
+
+See [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
 
 ## Requirements
 
@@ -92,9 +114,31 @@ Add to your project's `Packages/manifest.json`:
   }
 ],
 "dependencies": {
-  "com.rankupgames.unity-cursor-toolkit": "1.0.0"
+  "com.rankupgames.unity-cursor-toolkit": "1.1.0"
 }
 ```
+
+## Runtime Game Commands
+
+Unity projects can register runtime command sequences that agents can call through MCP without driving the UI. Commands are registered from game code through `UnityCursorToolkit.AgentCommands.AgentCommandRegistry`, run as coroutines during play mode, and are scheduled through the `game_command` MCP tool.
+
+Typical flow:
+
+```json
+{ "action": "list" }
+```
+
+```json
+{ "action": "run", "commandName": "auth.select_us_east", "args": {} }
+```
+
+Then poll with:
+
+```json
+{ "action": "status", "runId": "<run id returned by run>" }
+```
+
+See [Runtime Game Commands](docs/GAME_COMMANDS.md) for registration patterns and project integration notes.
 
 ## Configuration
 
@@ -107,6 +151,36 @@ Add to your project's `Packages/manifest.json`:
 | `unityCursorToolkit.hotReload.ilPatchTimeout` | `5000` | Timeout (ms) for IL patch before falling back to full refresh |
 | `unityCursorToolkit.workspaceScanPaths` | `[]` | Additional paths to scan for `.code-workspace` files |
 
+## Development and Validation
+
+The extension package lives in `unity-cursor-toolkit/`.
+
+```bash
+cd unity-cursor-toolkit
+npm ci
+npm run validate
+```
+
+`npm run validate` is the canonical local and CI gate. It compiles the extension, runs a strict unused-code type check, executes the runtime test harness, and runs both production and full npm audits.
+
+Dependency updates should use npm 11.14.1 or newer with the repository age gate, for example `npm update <package> --package-lock-only --ignore-scripts --min-release-age=7`. Prefer lockfile-scoped security fixes for transitive audit findings. If a fixed package is newer than 7 days, leave the advisory pending unless the update is explicitly approved as a security hotfix.
+
+For packaging checks:
+
+```bash
+npx vsce package --no-dependencies
+```
+
+The VSIX package is intentionally limited to runtime extension assets: compiled `out/` files, metadata, icon, and license. Tests, backups, lockfiles, source maps, and generated bundles are excluded through `.vscodeignore`.
+
+## Security Hardening
+
+- Dependency audits run through `npm run validate` and GitHub Actions.
+- Dependency updates follow a 7-day npm release-age gate unless an explicit security hotfix exception is documented.
+- Console webviews use nonce-based CSP for scripts and styles.
+- Console payloads are normalized before rendering, filtering, copying, or forwarding to chat.
+- Clickable stack traces and `.meta` resolution reject paths that escape the current workspace.
+
 ## Commands
 
 | Command | Description |
@@ -117,7 +191,7 @@ Add to your project's `Packages/manifest.json`:
 | `unity-cursor-toolkit.console.clear` | Clear the console panel |
 | `unity-cursor-toolkit.console.sendToChat` | Send console output to AI chat |
 | `unity-cursor-toolkit.console.copy` | Copy console output to clipboard |
-| `unity-cursor-toolkit.console.snapshot` | Take a console snapshot |
+| `unity-cursor-toolkit.console.snapshot` | Take a console/profiler snapshot |
 | `unity-cursor-toolkit.console.export` | Export console logs to file |
 | `unity-cursor-toolkit.resolveMeta` | Resolve `.meta` file for a path (for AI) |
 | `unity-cursor-toolkit.openProject` | Open Unity project in the editor |
@@ -129,6 +203,8 @@ Add to your project's `Packages/manifest.json`:
 | `unity-cursor-toolkit.playMode.pause` | Pause Play Mode |
 | `unity-cursor-toolkit.playMode.step` | Step one frame |
 | `unity-cursor-toolkit.screenshot` | Capture a screenshot from Unity |
+| `unity-cursor-toolkit.mcp.showServerPath` | Show the standalone MCP server path |
+| `unity-cursor-toolkit.mcp.copyClientConfig` | Copy MCP client config snippets |
 
 ## Project Structure
 
@@ -145,8 +221,11 @@ unity-cursor-toolkit/
 │       └── project/                # Project handler, meta manager, folder templates
 ├── Packages/
 │   └── com.rankupgames.unity-cursor-toolkit/   # Unity UPM package (C#)
+│       ├── Runtime/
+│       │   └── AgentCommands/         # Runtime command registry and coroutine runner
 │       └── Editor/
 │           ├── ConsoleToCursor.cs       # Console log forwarding
+│           ├── ProfilerSnapshot.cs      # Profiler session snapshots and MCP access
 │           ├── HotReloadHandler.cs      # Asset refresh on code changes
 │           ├── Core/                    # MCP tool attribute, interfaces
 │           ├── Debug/                   # Mono debug bridge
@@ -154,6 +233,9 @@ unity-cursor-toolkit/
 │           └── MCP/                     # MCP bridge, scene/asset/editor tools
 ├── CursorUnityTool/                # Unity test project
 ├── zed/                            # Zed editor integration (MCP)
+├── docs/                           # Agent and MCP setup docs
+├── AGENTS.md                       # Coding-agent repo instructions
+├── llms.txt                        # AI-readable documentation index
 ├── .github/workflows/              # CI and release pipelines
 ├── CONTRIBUTING.md
 ├── SECURITY.md
@@ -165,11 +247,17 @@ unity-cursor-toolkit/
 - **VS Code Marketplace** -- Primary distribution
 - **OpenVSX** -- Windsurf, VSCodium, Theia
 - **Cursor** -- Native support
-- **Zed** -- Via MCP server (see `zed/`)
+- **Zed** -- Via standalone MCP server (see `zed/`)
+
+CI and release workflows publish separate VS Code Marketplace and OpenVSX VSIX artifacts. Publishing fails loudly when `VSCE_PAT` or `OVSX_PAT` repository secrets are missing, so a green release means both registry uploads were attempted with valid credentials.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for repository and extension changes. The Unity package changelog lives at [Packages/com.rankupgames.unity-cursor-toolkit/CHANGELOG.md](Packages/com.rankupgames.unity-cursor-toolkit/CHANGELOG.md).
 
 ## Security
 

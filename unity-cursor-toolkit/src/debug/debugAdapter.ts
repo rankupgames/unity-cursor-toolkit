@@ -47,14 +47,12 @@ export class UnityDebugSession implements vscode.DebugAdapter {
 
 	private _disposed = false;
 	private _monoPort: number;
-	private _sessionConfig: vscode.DebugConfiguration | undefined;
 
 	constructor(monoPort?: number) {
 		this._monoPort = monoPort ?? DEFAULT_MONO_DEBUG_PORT;
 	}
 
 	public setConfiguration(config: vscode.DebugConfiguration): void {
-		this._sessionConfig = config;
 		const port = config.debugPort ?? config.port ?? this._monoPort;
 		if (typeof port === 'number') {
 			this._monoPort = port;
@@ -183,9 +181,7 @@ export class UnityDebugSession implements vscode.DebugAdapter {
 	}
 
 	private handleSetBreakpoints(_cmd: string, seq: number, args?: Record<string, unknown>): void {
-		const source = args?.source as { path?: string } | undefined;
 		const _bpRequests = (args?.breakpoints as Array<{ line?: number; column?: number }>) ?? [];
-		const path = source?.path ?? '';
 
 		// TODO: Send breakpoints to Mono debugger via wire protocol.
 		// Map path/line to method/il offset and send MSG_SET_BREAKPOINT.
@@ -205,9 +201,7 @@ export class UnityDebugSession implements vscode.DebugAdapter {
 		this.sendResponse('threads', seq, true, undefined, { threads });
 	}
 
-	private handleStackTrace(_cmd: string, seq: number, args?: Record<string, unknown>): void {
-		const _threadId = (args?.threadId as number) ?? 1;
-
+	private handleStackTrace(_cmd: string, seq: number, _args?: Record<string, unknown>): void {
 		// TODO: Query Mono debugger for stack frames via wire protocol.
 		const stackFrames = [
 			{ id: 1, name: '[stub] Main', line: 0, column: 0 }
@@ -215,9 +209,7 @@ export class UnityDebugSession implements vscode.DebugAdapter {
 		this.sendResponse('stackTrace', seq, true, undefined, { stackFrames });
 	}
 
-	private handleScopes(_cmd: string, seq: number, args?: Record<string, unknown>): void {
-		const _frameId = (args?.frameId as number) ?? 1;
-
+	private handleScopes(_cmd: string, seq: number, _args?: Record<string, unknown>): void {
 		// TODO: Query Mono debugger for scopes (locals, args) via wire protocol.
 		const scopes = [
 			{ name: 'Local', variablesReference: 1, expensive: false }
@@ -225,31 +217,29 @@ export class UnityDebugSession implements vscode.DebugAdapter {
 		this.sendResponse('scopes', seq, true, undefined, { scopes });
 	}
 
-	private handleVariables(_cmd: string, seq: number, args?: Record<string, unknown>): void {
-		const _variablesReference = (args?.variablesReference as number) ?? 1;
-
+	private handleVariables(_cmd: string, seq: number, _args?: Record<string, unknown>): void {
 		// TODO: Query Mono debugger for variable values via wire protocol.
 		const variables: Array<{ name: string; value: string; variablesReference: number }> = [];
 		this.sendResponse('variables', seq, true, undefined, { variables });
 	}
 
 	private handleContinue(_cmd: string, seq: number, _args?: Record<string, unknown>): void {
-		// TODO: Send continue command to Mono debugger via wire protocol. Use _args.threadId.
+		// TODO: Send continue command to Mono debugger via wire protocol.
 		this.sendResponse('continue', seq, true);
 	}
 
 	private handleNext(_cmd: string, seq: number, _args?: Record<string, unknown>): void {
-		// TODO: Send step-over command to Mono debugger via wire protocol. Use _args.threadId.
+		// TODO: Send step-over command to Mono debugger via wire protocol.
 		this.sendResponse('next', seq, true);
 	}
 
 	private handleStepIn(_cmd: string, seq: number, _args?: Record<string, unknown>): void {
-		// TODO: Send step-in command to Mono debugger via wire protocol. Use _args.threadId.
+		// TODO: Send step-in command to Mono debugger via wire protocol.
 		this.sendResponse('stepIn', seq, true);
 	}
 
 	private handleStepOut(_cmd: string, seq: number, _args?: Record<string, unknown>): void {
-		// TODO: Send step-out command to Mono debugger via wire protocol. Use _args.threadId.
+		// TODO: Send step-out command to Mono debugger via wire protocol.
 		this.sendResponse('stepOut', seq, true);
 	}
 

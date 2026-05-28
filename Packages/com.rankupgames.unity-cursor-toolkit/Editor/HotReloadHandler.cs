@@ -48,7 +48,7 @@ public class HotReloadHandler : EditorWindow
     private static int lastSuccessfulPort = 55500; // Last port that successfully connected
     private static readonly Queue<string> messageQueue = new Queue<string>();
     private static bool isInitialized = false;
-    private static bool isServerRunning = false;
+    private static volatile bool isServerRunning = false;
     private static readonly List<TcpClient> connectedClients = new List<TcpClient>();
     private static readonly object clientListLock = new object();
 
@@ -437,9 +437,9 @@ public class HotReloadHandler : EditorWindow
             {
                 listenerThread.Join(1000); // Give it more time to exit gracefully
 
-                if (listenerThread.IsAlive)
+                if (listenerThread.IsAlive && showDebugLogs)
                 {
-                    listenerThread.Abort(); // Force abort if thread doesn't exit gracefully
+                    Debug.LogWarning("Unity Hot Reload server thread did not stop before assembly reload.");
                 }
             }
             catch (Exception ex)
@@ -570,19 +570,6 @@ public class HotReloadHandler : EditorWindow
                 try
                 {
                     server = new TcpListener(IPAddress.Any, portToTry);
-
-                    // Try to set socket options to allow port reuse
-                    try
-                    {
-                        server.Server.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.ReuseAddress, true);
-                    }
-                    catch (Exception ex)
-                    {
-                        if (showDebugLogs)
-                        {
-                            Debug.LogWarning($"Could not set ReuseAddress option: {ex.Message}");
-                        }
-                    }
 
                     server.Start();
 
@@ -841,29 +828,34 @@ public class HotReloadHandler : EditorWindow
         {
             if (message.Contains("{") && message.Contains("}"))
             {
-                if (message.Contains("\"command\""))
-                {
-                    if (message.Contains("\"refresh\""))
-                    {
-                        string[] changedFiles = ExtractFilePaths(message);
-                        HandleRefresh(changedFiles);
-                    }
-                    else if (message.Contains("\"ping\""))
-                    {
-                        BroadcastToClients("{\"command\":\"pong\"}");
-                    }
-                    else if (message.Contains("\"getDebugPort\""))
-                    {
-                        UnityCursorToolkit.Debugging.DebugBridge.BroadcastDebugPort();
-                    }
-                    else if (message.Contains("\"mcpToolCall\""))
-                    {
-                        RouteMcpToolCall(message);
-                    }
-                }
-                else
+                string command = ExtractJsonStringValue(message, "command");
+                if (string.IsNullOrEmpty(command))
                 {
                     shouldRequestRefresh = true;
+                    return;
+                }
+
+                switch (command)
+                {
+                    case "refresh":
+                        string[] changedFiles = ExtractFilePaths(message);
+                        HandleRefresh(changedFiles);
+                        break;
+                    case "ping":
+                        BroadcastToClients("{\"command\":\"pong\"}");
+                        break;
+                    case "getDebugPort":
+                        UnityCursorToolkit.Debugging.DebugBridge.BroadcastDebugPort();
+                        break;
+                    case "mcpToolCall":
+                        RouteMcpToolCall(message);
+                        break;
+                    default:
+                        if (showDebugLogs)
+                        {
+                            Debug.LogWarning($"(HotReloadHandler - ProcessMessage) Unknown command: {command}");
+                        }
+                        break;
                 }
             }
             else
@@ -892,7 +884,12 @@ public class HotReloadHandler : EditorWindow
         }
 
         string argsJson = ExtractJsonObject(message, "args");
-        UnityCursorToolkit.MCP.MCPBridge.HandleToolCall(toolName, argsJson ?? "{}");
+        string requestId = ExtractJsonStringValue(message, "_requestId");
+        if (showDebugLogs)
+        {
+            Debug.Log($"(HotReloadHandler - RouteMcpToolCall) Routing tool: {toolName}");
+        }
+        UnityCursorToolkit.MCP.MCPBridge.HandleToolCall(toolName, argsJson ?? "{}", requestId);
     }
 
     /// <summary>

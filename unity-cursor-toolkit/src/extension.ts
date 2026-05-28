@@ -16,7 +16,6 @@ import { ModuleLoader } from './core/moduleLoader';
 import { StatusBarController } from './core/statusBarController';
 import { ConnectionState } from './core/types';
 import {
-	IModule,
 	ModuleContext,
 	IMessageHandler,
 	IToolProvider,
@@ -26,6 +25,7 @@ import {
 import { ConsoleModule } from './console/index';
 import { HotReloadModule } from './hot-reload/index';
 import { McpModule } from './mcp/index';
+import { createCombinedMcpConfigText, getMcpServerPath } from './mcp/clientConfig';
 import { DebugModule } from './debug/index';
 import { ProjectModule, hasLinkedUnityProject, getLinkedProjectPath, isScriptInstalledInLinkedProject, handleUnityProjectSetup } from './project/index';
 
@@ -72,6 +72,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(connection, moduleLoader);
 
 	registerCoreCommands(context);
+	registerMcpConfigCommands(context);
 	registerPlayModeCommands(context);
 	listenToConnectionState();
 	listenToCompilationResults();
@@ -89,6 +90,27 @@ export async function deactivate(): Promise<void> {
 	connection?.disconnect();
 }
 
+function registerMcpConfigCommands(context: vscode.ExtensionContext): void {
+	context.subscriptions.push(
+		vscode.commands.registerCommand('unity-cursor-toolkit.mcp.showServerPath', () => {
+			const serverPath = getMcpServerPath(context.extensionPath);
+			vscode.window.showInformationMessage(`Unity MCP server: ${serverPath}`);
+		}),
+
+		vscode.commands.registerCommand('unity-cursor-toolkit.mcp.copyClientConfig', async () => {
+			const serverPath = getMcpServerPath(context.extensionPath);
+			const config = createCombinedMcpConfigText({
+				serverPath,
+				projectPath: getLinkedProjectPath(),
+				readOnly: false
+			});
+
+			await vscode.env.clipboard.writeText(config);
+			vscode.window.showInformationMessage('Unity MCP client config copied to clipboard.');
+		})
+	);
+}
+
 function registerPlayModeCommands(context: vscode.ExtensionContext): void {
 	const playModeActions = ['enter', 'exit', 'pause', 'step'] as const;
 	for (const action of playModeActions) {
@@ -102,11 +124,25 @@ function registerPlayModeCommands(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('unity-cursor-toolkit.screenshot', async () => {
 			const result = await commandSender.request('mcpToolCall', { toolName: 'screenshot', args: {} });
-			if (result?.result) {
-				vscode.window.showInformationMessage(`Screenshot saved: ${result.result}`);
+			const screenshotPath = getScreenshotPath(result?.result);
+			if (screenshotPath) {
+				vscode.window.showInformationMessage(`Screenshot saved: ${screenshotPath}`);
 			}
 		})
 	);
+}
+
+function getScreenshotPath(result: unknown): string | undefined {
+	if (typeof result === 'string') {
+		return result;
+	}
+
+	if (typeof result === 'object' && result != null) {
+		const pathValue = (result as { path?: unknown }).path;
+		return typeof pathValue === 'string' ? pathValue : undefined;
+	}
+
+	return undefined;
 }
 
 function registerCoreCommands(context: vscode.ExtensionContext): void {

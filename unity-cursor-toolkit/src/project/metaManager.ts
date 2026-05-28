@@ -54,19 +54,29 @@ export class MetaManager implements vscode.Disposable {
 	}
 
 	public async resolveMetaFile(assetPath: string): Promise<string | null> {
+		const requestedAssetPath = assetPath.trim();
+		if (requestedAssetPath.length === 0) {
+			return null;
+		}
+
 		const workspaceFolders = vscode.workspace.workspaceFolders;
 		if (workspaceFolders == null) {
 			return null;
 		}
 
 		for (const folder of workspaceFolders) {
-			const metaPath = path.join(folder.uri.fsPath, assetPath + '.meta');
+			const workspacePath = path.resolve(folder.uri.fsPath);
+			const metaPath = path.resolve(workspacePath, requestedAssetPath + '.meta');
+			if (MetaManager.isPathInsideWorkspace(workspacePath, metaPath) === false) {
+				continue;
+			}
+
 			if (fs.existsSync(metaPath)) {
 				return fs.promises.readFile(metaPath, 'utf-8');
 			}
 		}
 
-		vscode.window.showWarningMessage(`Meta file not found for: ${assetPath}`);
+		vscode.window.showWarningMessage(`Meta file not found for: ${requestedAssetPath}`);
 		return null;
 	}
 
@@ -79,10 +89,16 @@ export class MetaManager implements vscode.Disposable {
 	private handleAssetDeleted(uri: vscode.Uri): void {
 		const metaPath = uri.fsPath + '.meta';
 		if (fs.existsSync(metaPath)) {
-		fs.promises.unlink(metaPath).catch((error: unknown) => {
-			const message = error instanceof Error ? error.message : String(error);
-			console.error(`[MetaManager] Failed to delete meta file: ${message}`);
-		});
+			fs.promises.unlink(metaPath).catch((error: unknown) => {
+				const message = error instanceof Error ? error.message : String(error);
+				console.error(`[MetaManager] Failed to delete meta file: ${message}`);
+			});
 		}
+	}
+
+	private static isPathInsideWorkspace(workspacePath: string, targetPath: string): boolean {
+		const relativePath = path.relative(workspacePath, targetPath);
+		return relativePath.length === 0
+			|| (relativePath !== '..' && relativePath.startsWith(`..${path.sep}`) === false && path.isAbsolute(relativePath) === false);
 	}
 }
