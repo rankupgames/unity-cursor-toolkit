@@ -187,8 +187,30 @@ jobs:
             "${VSCODE_VSIX}" \
             "${OPENVSX_VSIX}"
 
-      - name: Publish to Marketplace
+      - name: Publish to VS Code Marketplace
+        id: publish_vscode
+        continue-on-error: true
         run: npx vsce publish --packagePath "${{ steps.vsix.outputs.vscode }}"
 
       - name: Publish to OpenVSX
+        id: publish_openvsx
+        continue-on-error: true
         run: npx ovsx publish "${{ steps.vsix.outputs.openvsx }}" -p "$OVSX_PAT"
+
+      - name: Fail if any registry publish failed
+        run: |
+          if [ "${{ steps.publish_vscode.outcome }}" != "success" ] || [ "${{ steps.publish_openvsx.outcome }}" != "success" ]; then
+            echo "::error::One or more registry publish steps failed"
+            exit 1
+          fi
+
+      - name: Publish summary
+        if: always()
+        run: |
+          echo "## Marketplace Publish Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Version | \`${{ needs.build.outputs.version }}\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| VS Code Marketplace | ${{ steps.publish_vscode.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OpenVSX | ${{ steps.publish_openvsx.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY

@@ -190,6 +190,8 @@ jobs:
           path: unity-cursor-toolkit/dist/openvsx
 
       - name: Publish to VS Code Marketplace
+        id: publish_vscode
+        continue-on-error: true
         run: |
           VSIX_FILE=$(ls dist/vscode/*.vsix | head -1)
           if [ -z "$VSIX_FILE" ]; then
@@ -199,6 +201,8 @@ jobs:
           npx vsce publish --packagePath "$VSIX_FILE"
 
       - name: Publish to OpenVSX
+        id: publish_openvsx
+        continue-on-error: true
         run: |
           VSIX_FILE=$(ls dist/openvsx/*.vsix | head -1)
           if [ -z "$VSIX_FILE" ]; then
@@ -207,6 +211,13 @@ jobs:
           fi
           npx ovsx publish "$VSIX_FILE" -p "$OVSX_PAT"
 
+      - name: Fail if any registry publish failed
+        run: |
+          if [ "${{ steps.publish_vscode.outcome }}" != "success" ] || [ "${{ steps.publish_openvsx.outcome }}" != "success" ]; then
+            echo "::error::One or more registry publish steps failed"
+            exit 1
+          fi
+
       - name: Publish summary
         if: always()
         run: |
@@ -214,6 +225,6 @@ jobs:
           echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
           echo "| Version | \`${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| VS Code Marketplace | attempted |" >> $GITHUB_STEP_SUMMARY
-          echo "| OpenVSX | attempted |" >> $GITHUB_STEP_SUMMARY
+          echo "| VS Code Marketplace | ${{ steps.publish_vscode.outcome }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| OpenVSX | ${{ steps.publish_openvsx.outcome }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
