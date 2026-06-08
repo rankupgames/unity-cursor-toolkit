@@ -17,7 +17,9 @@ const MUTATING_TOOLS = {
 	game_command: true,
 	build_trigger: true,
 	clear_console: true,
-	profiler_snapshot: true
+	profiler_snapshot: true,
+	unity_context: true,
+	viewport_stream: true
 } as const;
 
 const READ_ONLY_TOOLS = {
@@ -32,12 +34,16 @@ const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	manage_gameobject: ['find'],
 	manage_component: ['getProperties'],
 	game_command: ['list', 'status'],
-	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters']
+	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters'],
+	unity_context: ['query', 'read', 'summary'],
+	viewport_stream: ['status']
 };
 
 const DEFAULT_ACTIONS: Record<string, string> = {
 	game_command: 'list',
-	profiler_snapshot: 'current'
+	profiler_snapshot: 'current',
+	unity_context: 'summary',
+	viewport_stream: 'status'
 };
 
 const DESTRUCTIVE_ACTIONS: Record<string, readonly string[]> = {
@@ -140,7 +146,8 @@ function canBeDestructiveTool(toolName: string): boolean {
 function isUsuallyIdempotentTool(toolName: string): boolean {
 	return toolName === 'project_info'
 		|| toolName === 'read_console'
-		|| toolName === 'resolve_meta';
+		|| toolName === 'resolve_meta'
+		|| toolName === 'unity_context';
 }
 
 function toToolTitle(toolName: string): string {

@@ -23,6 +23,7 @@ Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy rea
 | `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` | Unity project root used for `.meta` resolution |
 | `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY` | Set to `1` to block mutating tools |
 | `UNITY_CURSOR_TOOLKIT_MCP_PORTS` | Comma-separated Unity TCP ports, default `55500,55501,55502,55503,55504` |
+| `UNITY_CURSOR_TOOLKIT_UNITY_PATH` | Optional Unity executable path for `game_command` with `host: "editorBatchmode"` |
 
 ## Cursor
 
@@ -113,10 +114,11 @@ Add a custom context server to Zed `settings.json`:
 3. Start the MCP client and list tools.
 4. Call `project_info`.
 5. Call `read_console`.
-6. Call `profiler_snapshot` with `action: "current"` to confirm Unity can return the current console/profiler session and compact console transcript path.
-7. Call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id to confirm the MCP client can fetch the grouped whole-console timeline.
-8. Call `game_command` with `action: "list"` to confirm runtime command discovery works when the Unity project has registered commands.
-9. For safety, try `manage_gameobject` with `dryRun: true` before any real scene mutation.
+6. Call `unity_context` with `action: "scan"` to generate `.umetacontext/index.json`, then call `unity_context` with `action: "summary"`.
+7. Call `profiler_snapshot` with `action: "current"` to confirm Unity can return the current console/profiler session and compact console transcript path.
+8. Call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id to confirm the MCP client can fetch the grouped whole-console timeline.
+9. Call `game_command` with `action: "list"` to confirm runtime command discovery works when the Unity project has registered commands.
+10. For safety, try `manage_gameobject` with `dryRun: true` before any real scene mutation.
 
 ## Runtime Game Commands
 
@@ -135,5 +137,19 @@ The `game_command` tool bridges MCP clients to commands registered by the Unity 
 ```
 
 See `docs/GAME_COMMANDS.md` for the C# registration pattern and project setup checklist.
+
+## Unity Context Graph
+
+`unity_context` provides a compact tracked project index at `.umetacontext/index.json`. The `scan` action writes that file and is blocked by read-only mode unless `dryRun: true` is used. The `query`, `read`, and `summary` actions are read-only and are intended to replace broad `Assets/`, `Packages/`, or `ProjectSettings/` file fetches.
+
+## Viewport Stream
+
+`viewport_stream` starts a local Node HTTP MJPEG endpoint backed by Unity JPEG frame capture:
+
+```json
+{ "action": "start", "width": 640, "height": 360, "fps": 10 }
+```
+
+Use `status` to read the stream URL and last frame metadata, and `stop` when finished. Rendered streaming requires a graphics-capable Unity Editor or player host; `-nographics` is only appropriate for non-rendering batch/headless command workflows.
 
 When rebuilding the extension from source, install with `npm ci`. Dependency updates should use npm 11.14.1 or newer with `--min-release-age=7`; security fixes for packages younger than 7 days need explicit hotfix approval before changing the lockfile.

@@ -20,7 +20,10 @@
     "workspaceContains:Assets/",
     "workspaceContains:*.unity",
     "workspaceContains:*.cs",
-    "onView:unityConsole"
+    "onView:unityConsole",
+    "onCommand:unity-cursor-toolkit.remoteShell.launch",
+    "onCommand:unity-cursor-toolkit.remoteShell.stop",
+    "onCommand:unity-cursor-toolkit.remoteShell.status"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -63,6 +66,21 @@
             },
             "default": [],
             "description": "Additional paths to scan for .code-workspace files."
+          },
+          "unityCursorToolkit.remoteShell.manifestPath": {
+            "type": "string",
+            "default": "${workspaceFolder}/remote_workspace/unity-shell.json",
+            "description": "Path to the Unity VDD shell manifest."
+          },
+          "unityCursorToolkit.remoteShell.shellAppPath": {
+            "type": "string",
+            "default": "",
+            "description": "Optional path to a built Unity VDD native shell app or executable. Leave empty to run the bundled Swift package with swift run."
+          },
+          "unityCursorToolkit.remoteShell.localPortBase": {
+            "type": "number",
+            "default": 48170,
+            "description": "First local forwarded port for the Unity VDD shell. The control port uses the next port."
           }
         }
       }
@@ -156,6 +174,21 @@
         "command": "unity-cursor-toolkit.mcp.copyClientConfig",
         "title": "Unity Toolkit: Copy MCP Client Config",
         "icon": "$(copy)"
+      },
+      {
+        "command": "unity-cursor-toolkit.remoteShell.launch",
+        "title": "Unity Toolkit: Launch Unity VDD Shell",
+        "icon": "$(window)"
+      },
+      {
+        "command": "unity-cursor-toolkit.remoteShell.stop",
+        "title": "Unity Toolkit: Stop Unity VDD Shell",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "unity-cursor-toolkit.remoteShell.status",
+        "title": "Unity Toolkit: Unity VDD Shell Status",
+        "icon": "$(pulse)"
       }
     ],
     "debuggers": [
@@ -224,7 +257,10 @@
     "watch": "tsc -watch -p ./",
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
-    "test": "node test/run-tests.js",
+    "test": "node test/run-tests.js && node test/simplified-context-tests.js && node test/remote-shell-tests.js",
+    "test:unity-internal": "node scripts/run-internal-unity-smoke.js",
+    "dev:unity-viewport": "node scripts/run-internal-viewport-stream.js",
+    "remote-shell": "node out/remote-shell/sidecarCli.js",
     "mcp:serve": "node out/mcp/server.js",
     "package": "vsce package",
     "publish": "vsce publish",

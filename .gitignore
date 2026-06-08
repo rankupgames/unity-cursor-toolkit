@@ -5,6 +5,7 @@ node_modules/
 out/
 out-bundle/
 *.vsix
+unity-cursor-toolkit/native-shell/**/.build/
 
 # System files
 .DS_Store

@@ -1,6 +1,6 @@
 # Unity Cursor Toolkit Extension
 
-VS Code / Cursor extension for Unity hot reload, live console streaming, MCP tool routing, runtime game commands, play mode controls, `.meta` resolution, Mono debugger attach support, and standalone MCP access for AI agents.
+VS Code / Cursor extension for Unity hot reload, live console streaming, MCP tool routing, runtime game commands, Unity context indexing, viewport streaming, play mode controls, `.meta` resolution, Mono debugger attach support, and standalone MCP access for AI agents.
 
 ## Development
 
@@ -27,10 +27,17 @@ Useful environment variables:
 - `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` blocks mutating tools.
 - `UNITY_CURSOR_TOOLKIT_PROJECT_PATH=/path/to/unity/project` sets the project root for `.meta` resolution.
 - `UNITY_CURSOR_TOOLKIT_MCP_PORTS=55500,55501,55502,55503,55504` overrides the Unity TCP port scan.
+- `UNITY_CURSOR_TOOLKIT_UNITY_PATH=/path/to/Unity` sets the executable for `game_command` with `host: "editorBatchmode"`.
 
 Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy client snippets.
 
 Use the `game_command` MCP tool to list, schedule, poll, or cancel runtime workflows registered by the Unity project through the UPM package's `UnityCursorToolkit.AgentCommands` API.
+
+Use `unity_context` to scan `.umetacontext/index.json` and query compact Unity asset/object context. Use `viewport_stream` for local MJPEG viewport capture when a graphics-capable Unity Editor or player host is available.
+
+## Unity VDD Shell MVP
+
+The extension contributes `Unity Toolkit: Launch Unity VDD Shell`, `Unity Toolkit: Unity VDD Shell Status`, and `Unity Toolkit: Stop Unity VDD Shell`. These commands run the compiled remote-shell sidecar, read `remote_workspace/unity-shell.json`, open SSH tunnels to a Windows VDD host, start the remote PowerShell capture sidecar, and launch the bundled SwiftUI macOS shell. The real manifest is local/ignored; start from `remote_workspace/unity-shell.example.json` in the repository workspace.
 
 ## Packaging
 

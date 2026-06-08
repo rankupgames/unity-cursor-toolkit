@@ -37,7 +37,7 @@ Enter, exit, pause, and single-frame step directly from VS Code / Cursor -- no n
 
 ### MCP Server
 
-AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, inspect profiler snapshots, run game-authored command sequences, and use read-only or dry-run safeguards before mutating Unity state.
+AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, query the tracked Unity context graph, control play mode, manage scenes/assets, query project info, capture screenshots, inspect profiler snapshots, run game-authored command sequences, stream a local viewport, and use read-only or dry-run safeguards before mutating Unity state.
 
 ### Mono Debugger
 
@@ -75,8 +75,10 @@ Agent safety defaults:
 
 - Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` to block mutating tools.
 - Pass `dryRun: true` to mutating tools to inspect the normalized Unity command without executing it.
+- Use `unity_context` with `action: "scan"` to generate `.umetacontext/index.json`, then query/read/summary to avoid broad asset fetches.
 - Start with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"` before scene or asset edits.
 - Use `game_command` with `action: "list"` to discover project-authored runtime workflows before scheduling them.
+- Use `viewport_stream` only with a graphics-capable Editor or player host; `-nographics` is for non-rendering batch workflows.
 
 See [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
 
@@ -122,6 +124,8 @@ Add to your project's `Packages/manifest.json`:
 
 Unity projects can register runtime command sequences that agents can call through MCP without driving the UI. Commands are registered from game code through `UnityCursorToolkit.AgentCommands.AgentCommandRegistry`, run as coroutines during play mode, and are scheduled through the `game_command` MCP tool.
 
+For non-rendering automation without an already-open Editor bridge, pass `host: "editorBatchmode"` and `dryRun: true` first to inspect the Unity command line.
+
 Typical flow:
 
 ```json
@@ -150,6 +154,22 @@ See [Runtime Game Commands](docs/GAME_COMMANDS.md) for registration patterns and
 | `unityCursorToolkit.hotReload.preferILPatch` | `true` | Prefer IL patching over full asset refresh in play mode |
 | `unityCursorToolkit.hotReload.ilPatchTimeout` | `5000` | Timeout (ms) for IL patch before falling back to full refresh |
 | `unityCursorToolkit.workspaceScanPaths` | `[]` | Additional paths to scan for `.code-workspace` files |
+| `unityCursorToolkit.remoteShell.manifestPath` | `"${workspaceFolder}/remote_workspace/unity-shell.json"` | Path to the Unity VDD shell manifest |
+| `unityCursorToolkit.remoteShell.shellAppPath` | `""` | Optional path to a built macOS shell app/executable; empty runs the bundled Swift package with `swift run` |
+| `unityCursorToolkit.remoteShell.localPortBase` | `48170` | First local SSH forwarded port for the stream; control uses the next port |
+
+## Unity VDD Shell MVP
+
+The workspace includes an experimental native-shell MVP for rendering a Unity Windows Player from a remote Windows VDD host without Moonlight. Use the VS Code/Cursor tasks `Unity Shell: Init Manifest`, `Unity Shell: Launch`, `Unity Shell: Status`, and `Unity Shell: Stop`, or run the sidecar directly after compiling:
+
+```bash
+cd unity-cursor-toolkit
+npm run build
+npm run remote-shell -- init --manifest "$PWD/../remote_workspace/unity-shell.json"
+npm run remote-shell -- launch --manifest "$PWD/../remote_workspace/unity-shell.json"
+```
+
+The real `remote_workspace/unity-shell.json` is ignored. Start from `remote_workspace/unity-shell.example.json`, then point it at a Windows host with VDD, FFmpeg, the Unity Player build, and `remote-shell/windows/unity-vdd-sidecar.ps1` copied to the configured `remoteSidecarPath`.
 
 ## Development and Validation
 

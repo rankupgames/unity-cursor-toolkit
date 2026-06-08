@@ -28,6 +28,7 @@ import { McpModule } from './mcp/index';
 import { createCombinedMcpConfigText, getMcpServerPath } from './mcp/clientConfig';
 import { DebugModule } from './debug/index';
 import { ProjectModule, hasLinkedUnityProject, getLinkedProjectPath, isScriptInstalledInLinkedProject, handleUnityProjectSetup } from './project/index';
+import { RemoteShellModule } from './remote-shell/index';
 
 let connection: ConnectionManager;
 let commandSender: CommandSender;
@@ -68,6 +69,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	moduleLoader.register(new HotReloadModule());
 	moduleLoader.register(new McpModule());
 	moduleLoader.register(new DebugModule());
+	moduleLoader.register(new RemoteShellModule());
 
 	context.subscriptions.push(connection, moduleLoader);
 

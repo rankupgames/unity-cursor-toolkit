@@ -1124,6 +1124,9 @@ async function testUnityMcpTools() {
 		assert.ok(gameCommand.inputSchema.properties.commandName);
 		assert.ok(gameCommand.inputSchema.properties.runId);
 		assert.ok(gameCommand.inputSchema.properties.args);
+		assert.ok(gameCommand.inputSchema.properties.host.enum.includes('editorBatchmode'));
+		assert.ok(gameCommand.inputSchema.properties.unityPath);
+		assert.ok(gameCommand.inputSchema.properties.timeoutMs);
 		assert.ok(gameCommand.inputSchema.properties.dryRun);
 	});
 
@@ -1416,6 +1419,8 @@ async function testStandaloneMcpServer() {
 			assert.ok(toolNames.includes('read_console'));
 			assert.ok(toolNames.includes('profiler_snapshot'));
 			assert.ok(toolNames.includes('game_command'));
+			assert.ok(toolNames.includes('unity_context'));
+			assert.ok(toolNames.includes('viewport_stream'));
 			const projectInfo = tools.result.tools.find((tool) => tool.name === 'project_info');
 			assert.strictEqual(projectInfo.annotations.readOnlyHint, true);
 
@@ -1423,6 +1428,7 @@ async function testStandaloneMcpServer() {
 			const resourceUris = resources.result.resources.map((resource) => resource.uri);
 			assert.ok(resourceUris.includes('unity://tools/catalog'));
 			assert.ok(resourceUris.includes('unity://console/errors'));
+			assert.ok(resourceUris.includes('unity://context/summary'));
 
 			const prompts = await server.request('prompts/list', {});
 			const promptNames = prompts.result.prompts.map((prompt) => prompt.name);

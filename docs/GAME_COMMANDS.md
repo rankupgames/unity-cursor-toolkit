@@ -51,6 +51,8 @@ The companion extension exposes the generic `game_command` MCP tool:
 | `status` | Reads the retained status for a `runId` |
 | `cancel` | Stops a pending or running command coroutine |
 
+The optional `host` field accepts `editor`, `editorBatchmode`, `player`, or `auto`. Existing calls that omit `host` keep the normal Editor bridge behavior. `list` output includes capability fields such as supported hosts, play-mode requirement, batchmode support, and viewport input support when provided by the Unity package.
+
 Example agent flow:
 
 ```json
@@ -66,6 +68,22 @@ Example agent flow:
 ```
 
 The `commandName` field also accepts the alias `name`. The `runId` field also accepts the alias `id`.
+
+## Editor Batchmode Host
+
+Use `host: "editorBatchmode"` for non-rendering command workflows that should run without an already-open Unity Editor bridge. The Node MCP server launches Unity with:
+
+```text
+-batchmode -executeMethod UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run -projectPath <project>
+```
+
+Pass `unityPath` on the tool call or set `UNITY_CURSOR_TOOLKIT_UNITY_PATH` when Unity cannot be found from `ProjectSettings/ProjectVersion.txt`. Use `dryRun: true` first to inspect the generated command without launching Unity.
+
+Unity `-nographics` is intentionally not used for rendered viewport capture because Unity skips graphics initialization in that mode. Keep batchmode for command and automation workflows, and use `viewport_stream` for graphics-capable Editor/player streaming.
+
+## Viewport Input Commands
+
+Projects can register `viewport.tap`, `viewport.swipe`, `viewport.key`, or `viewport.text` commands through the same registry. `viewport_stream` input tries these project-owned commands before falling back to Unity Input System reflection when available.
 
 ## Project Integration Checklist
 
