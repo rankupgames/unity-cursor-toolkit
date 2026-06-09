@@ -11,6 +11,8 @@ const { spawnSync } = require('child_process');
 
 const outDir = path.join(__dirname, '..', 'out');
 const repoRoot = path.resolve(__dirname, '..', '..');
+const fakeWorkspaceRoot = path.join(path.parse(process.cwd()).root, 'repo');
+const fakeExtensionRoot = path.join(path.parse(process.cwd()).root, 'ext');
 let passed = 0;
 let failed = 0;
 const failures = [];
@@ -74,12 +76,12 @@ function main() {
 
 	test('resolveManifestPath supports workspace token and relative defaults', () => {
 		assert.strictEqual(
-			resolveManifestPath('/repo', '${workspaceFolder}/remote_workspace/unity-shell.json'),
-			path.join('/repo', 'remote_workspace', 'unity-shell.json')
+			resolveManifestPath(fakeWorkspaceRoot, '${workspaceFolder}/remote_workspace/unity-shell.json'),
+			path.join(fakeWorkspaceRoot, 'remote_workspace', 'unity-shell.json')
 		);
 		assert.strictEqual(
-			resolveManifestPath('/repo'),
-			path.join('/repo', 'remote_workspace', 'unity-shell.json')
+			resolveManifestPath(fakeWorkspaceRoot),
+			path.join(fakeWorkspaceRoot, 'remote_workspace', 'unity-shell.json')
 		);
 		assert.strictEqual(createExampleManifest().sshTarget, 'unity-vdd-host');
 	});
@@ -144,17 +146,17 @@ function main() {
 
 	console.log('\n-- remote-shell/extensionCommands.ts --');
 	test('extension invocation resolves workspace manifest and sidecar command', () => {
-		const invocation = buildRemoteShellInvocation('launch', '/ext', '/repo', {
+		const invocation = buildRemoteShellInvocation('launch', fakeExtensionRoot, fakeWorkspaceRoot, {
 			manifestPath: '${workspaceFolder}/remote_workspace/unity-shell.json',
 			shellAppPath: '${workspaceFolder}/unity-cursor-toolkit/native-shell/UnityVddShell/.build/release/UnityVddShell',
 			localPortBase: 63000
 		});
 		assert.strictEqual(invocation.command, process.execPath);
-		assert.ok(invocation.args.includes(path.join('/ext', 'out', 'remote-shell', 'sidecarCli.js')));
-		assert.ok(invocation.args.includes(path.join('/repo', 'remote_workspace', 'unity-shell.json')));
+		assert.ok(invocation.args.includes(path.join(fakeExtensionRoot, 'out', 'remote-shell', 'sidecarCli.js')));
+		assert.ok(invocation.args.includes(path.join(fakeWorkspaceRoot, 'remote_workspace', 'unity-shell.json')));
 		assert.ok(invocation.args.includes('--shell-app'));
 		assert.ok(invocation.args.includes('63000'));
-		assert.strictEqual(resolveRemoteShellManifestPath({}, '/repo'), path.join('/repo', 'remote_workspace', 'unity-shell.json'));
+		assert.strictEqual(resolveRemoteShellManifestPath({}, fakeWorkspaceRoot), path.join(fakeWorkspaceRoot, 'remote_workspace', 'unity-shell.json'));
 	});
 
 	console.log('\n-- remote-shell assets --');
