@@ -12,5 +12,8 @@
       "path": "../VAULT-BREACH/VAULT BREACH/AgentsVault/UnityCursorToolkit"
     }
   ],
-  "settings": {}
+  "settings": {
+    "unityCursorToolkit.remoteShell.manifestPath": "${workspaceFolder}/remote_workspace/unity-shell.json",
+    "unityCursorToolkit.remoteShell.localPortBase": 48170
+  }
 }

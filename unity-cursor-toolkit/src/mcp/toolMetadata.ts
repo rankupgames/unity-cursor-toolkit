@@ -18,7 +18,8 @@ const MUTATING_TOOLS = {
 	build_trigger: true,
 	clear_console: true,
 	profiler_snapshot: true,
-	unity_context: true
+	unity_context: true,
+	viewport_stream: true
 } as const;
 
 const READ_ONLY_TOOLS = {
@@ -34,13 +35,15 @@ const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	manage_component: ['getProperties'],
 	game_command: ['list', 'status'],
 	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters'],
-	unity_context: ['query', 'read', 'summary']
+	unity_context: ['query', 'read', 'summary'],
+	viewport_stream: ['status']
 };
 
 const DEFAULT_ACTIONS: Record<string, string> = {
 	game_command: 'list',
 	profiler_snapshot: 'current',
-	unity_context: 'summary'
+	unity_context: 'summary',
+	viewport_stream: 'status'
 };
 
 const DESTRUCTIVE_ACTIONS: Record<string, readonly string[]> = {

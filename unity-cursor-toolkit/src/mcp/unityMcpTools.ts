@@ -166,7 +166,7 @@ export class UnityMcpTools implements IToolProvider {
 						runId: { type: 'string', description: 'Run id returned by action run, used by status and cancel.' },
 						id: { type: 'string', description: 'Alias for runId.' },
 						args: { type: 'object', description: 'Command-specific argument object forwarded to the registered Unity handler.' },
-						host: { type: 'string', enum: ['editor', 'editorBatchmode', 'auto'], description: 'Execution host. Defaults to auto/editor bridge behavior.' },
+						host: { type: 'string', enum: ['editor', 'editorBatchmode', 'player', 'auto'], description: 'Execution host. Defaults to auto/editor bridge behavior.' },
 						unityPath: { type: 'string', description: 'Unity executable path for host editorBatchmode.' },
 						timeoutMs: { type: 'number', description: 'Batchmode timeout in milliseconds. Defaults to 120000.' }
 					})

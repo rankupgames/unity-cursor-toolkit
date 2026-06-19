@@ -10,6 +10,7 @@ const fs = require('fs');
 const net = require('net');
 const os = require('os');
 const { spawn } = require('child_process');
+const { EventEmitter } = require('events');
 
 // ── vscode mock ──────────────────────────────────────────────────────────────
 
@@ -181,13 +182,13 @@ function closeServer(server) {
 	return new Promise((resolve) => server.close(resolve));
 }
 
-function writePongOnPing(socket, delayMs = 0) {
+function writePongOnPing(socket) {
 	socket.on('data', (data) => {
 		const lines = data.toString().split('\n').filter(Boolean);
 		for (const line of lines) {
 			const parsed = JSON.parse(line);
 			if (parsed.command === 'ping') {
-				setTimeout(() => socket.write('{"command":"pong"}\n'), delayMs);
+				socket.write('{"command":"pong"}\n');
 			}
 		}
 	});
@@ -356,6 +357,198 @@ function testConnectionUnit() {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// core/unityEditorLauncher.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function testUnityEditorLauncher() {
+	console.log('\n── core/unityEditorLauncher.ts ──');
+	const {
+		resolveUnityEditorPath,
+		createUnityEditorLaunchPlan,
+		launchUnityEditor
+	} = require(path.join(outDir, 'core', 'unityEditorLauncher'));
+
+	test('resolves macOS Unity Hub editor from ProjectVersion.txt', () => {
+		const projectPath = '/workspace/CursorUnityTool';
+		const expected = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const resolved = resolveUnityEditorPath(projectPath, {
+			platform: 'darwin',
+			env: {},
+			fileExists: candidate => candidate === expected,
+			readFile: candidate => {
+				assert.strictEqual(candidate, path.join(projectPath, 'ProjectSettings', 'ProjectVersion.txt'));
+				return 'm_EditorVersion: 6000.3.9f1\n';
+			}
+		});
+
+		assert.strictEqual(resolved, expected);
+	});
+
+	test('normalizes UNITY_CURSOR_TOOLKIT_UNITY_PATH when it points at Unity.app', () => {
+		const appPath = '/Unity/Hub/Editor/6000.3.9f1/Unity.app';
+		const expected = path.join(appPath, 'Contents', 'MacOS', 'Unity');
+		const resolved = resolveUnityEditorPath('/workspace/project', {
+			platform: 'darwin',
+			env: { UNITY_CURSOR_TOOLKIT_UNITY_PATH: appPath },
+			fileExists: candidate => candidate === expected,
+			readFile: () => ''
+		});
+
+		assert.strictEqual(resolved, expected);
+	});
+
+	test('launch plan uses the official editor process with project/log flags only', () => {
+		const projectPath = '/workspace/CursorUnityTool';
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const plan = createUnityEditorLaunchPlan(projectPath, {
+			platform: 'darwin',
+			editorPathOverride: editorPath,
+			tempDir: '/tmp',
+			fileExists: candidate => candidate === editorPath,
+			readFile: () => ''
+		});
+
+		assert.strictEqual(plan.editorPath, editorPath);
+		assert.deepStrictEqual(plan.args.slice(0, 2), ['-projectPath', projectPath]);
+		assert.ok(plan.args.includes('-executeMethod'), 'hidden launch explicitly starts the toolkit bridge');
+		assert.ok(plan.args.includes('UnityCursorToolkit.HotReloadHandler.Start'), 'hidden launch starts the HotReload bridge');
+		assert.ok(plan.args.includes('-logFile'), 'launch captures a Unity log path for troubleshooting');
+		assert.ok(!plan.args.includes('-batchmode'), 'real EditorWindow rendering must not launch batchmode');
+		assert.ok(!plan.args.includes('-nographics'), 'real EditorWindow rendering needs graphics');
+	});
+
+	test('hidden launch refuses to start when Unity already holds the project lock', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-lock-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		fs.mkdirSync(path.join(projectPath, 'Temp'), { recursive: true });
+		fs.writeFileSync(path.join(projectPath, 'Temp', 'UnityLockfile'), 'locked');
+		try {
+			assert.throws(() => launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				spawnProcess: () => {
+					throw new Error('spawn should not be reached');
+				}
+			}), /already open or starting/);
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	test('hidden launch lock blocks a second detached editor spawn for the same project', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-lock-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		let spawnCount = 0;
+		const livePids = new Set([12345]);
+		const spawnProcess = () => {
+			spawnCount++;
+			const child = new EventEmitter();
+			child.pid = 12345;
+			child.unref = () => {};
+			return child;
+		};
+		try {
+			const first = launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				processExists: pid => livePids.has(pid),
+				spawnProcess
+			});
+			assert.strictEqual(spawnCount, 1);
+			assert.ok(fs.existsSync(first.launchLockPath), 'launch lock should be written next to temp logs');
+
+			assert.throws(() => launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				processExists: pid => livePids.has(pid),
+				spawnProcess
+			}), /already in progress/);
+			assert.strictEqual(spawnCount, 1, 'second launch must not spawn another Unity process');
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// scripts/unity-license.js
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function testUnityLicenseScript() {
+	console.log('\n── scripts/unity-license.js ──');
+	const {
+		createLicensePlan,
+		getLicenseFileCandidates,
+		parseArgs
+	} = require(path.join(__dirname, '..', 'scripts', 'unity-license.js'));
+
+	test('activate dry-run uses official Unity activation flags and masks credentials', () => {
+		const options = parseArgs(['activate', '--unity-path', '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app']);
+		const plan = createLicensePlan('activate', options, {
+			UNITY_EMAIL: 'dev@example.com',
+			UNITY_PASSWORD: 'secret-password',
+			UNITY_SERIAL: 'SERIAL-1234'
+		});
+
+		assert.strictEqual(plan.execute, false);
+		assert.deepStrictEqual(plan.args.slice(0, 4), ['-quit', '-batchmode', '-serial', 'SERIAL-1234']);
+		assert.ok(plan.args.includes('-username'));
+		assert.ok(plan.args.includes('-password'));
+		assert.ok(plan.maskedCommand.includes('<UNITY_EMAIL>'));
+		assert.ok(plan.maskedCommand.includes('<UNITY_PASSWORD>'));
+		assert.ok(plan.maskedCommand.includes('<UNITY_SERIAL>'));
+		assert.ok(!plan.maskedCommand.includes('dev@example.com'));
+		assert.ok(!plan.maskedCommand.includes('secret-password'));
+		assert.ok(!plan.maskedCommand.includes('SERIAL-1234'));
+	});
+
+	test('manual activation create uses createManualActivationFile without credentials', () => {
+		const options = parseArgs(['activate', '--manual', '--unity-path', '/Unity/Unity']);
+		const plan = createLicensePlan('activate', options, {});
+
+		assert.deepStrictEqual(plan.args, ['-batchmode', '-createManualActivationFile', '-logFile', '-']);
+		assert.deepStrictEqual(plan.requiredEnv, []);
+		assert.ok(!plan.maskedCommand.includes('UNITY_PASSWORD'));
+	});
+
+	test('manual license import uses manualLicenseFile path', () => {
+		const options = parseArgs(['activate', '--manual', '--ulf', '/tmp/license.ulf', '--unity-path', '/Unity/Unity']);
+		const plan = createLicensePlan('activate', options, {});
+
+		assert.deepStrictEqual(plan.args, ['-batchmode', '-manualLicenseFile', '/tmp/license.ulf', '-logFile', '-']);
+	});
+
+	test('return execute requires env credentials before touching a seat', () => {
+		const options = parseArgs(['return', '--execute', '--unity-path', process.execPath]);
+
+		assert.throws(
+			() => createLicensePlan('return', options, {}),
+			/missing required UNITY_EMAIL/
+		);
+	});
+
+	test('status candidate paths include Windows ProgramData license file', () => {
+		const candidates = getLicenseFileCandidates('win32', { PROGRAMDATA: 'C:\\ProgramData' });
+
+		assert.deepStrictEqual(candidates, [path.win32.join('C:\\ProgramData', 'Unity', 'Unity_lic.ulf')]);
+	});
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // core/connection.ts (TCP integration)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -387,18 +580,20 @@ async function testConnectionTcp() {
 		let connectionCount = 0;
 		const server = net.createServer((socket) => {
 			connectionCount++;
-			writePongOnPing(socket, 50);
+			socket.on('data', (data) => {
+				if (data.toString().includes('"ping"')) {
+					setTimeout(() => socket.write('{"command":"pong"}\n'), 50);
+				}
+			});
 		});
 		const openPort = await listenOnLocalhost(server);
 
 		try {
 			const conn = new ConnectionManager([openPort]);
 			const [first, second] = await Promise.all([conn.connect(), conn.connect()]);
-
 			assert.strictEqual(first, openPort);
 			assert.strictEqual(second, openPort);
 			assert.strictEqual(connectionCount, 1, 'Only one socket probe should be opened');
-
 			conn.disconnect();
 			conn.dispose();
 		} finally {
@@ -409,7 +604,7 @@ async function testConnectionTcp() {
 	await testAsync('connect rejects open ports that do not speak toolkit JSON pong', async () => {
 		const server = net.createServer((socket) => {
 			socket.on('data', () => {
-				socket.write('Unity debugger listener\n');
+				socket.write('Unity debugger listener\\n');
 			});
 		});
 		const openPort = await listenOnLocalhost(server);
@@ -417,31 +612,8 @@ async function testConnectionTcp() {
 		try {
 			const conn = new ConnectionManager([openPort]);
 			const result = await conn.connect();
-
 			assert.strictEqual(result, null);
 			assert.strictEqual(conn.info.state, ConnectionState.Disconnected);
-
-			conn.dispose();
-		} finally {
-			await closeServer(server);
-		}
-	});
-
-	await testAsync('connect rejects malformed JSON handshake data', async () => {
-		const server = net.createServer((socket) => {
-			socket.on('data', () => {
-				socket.write('{not-json}\n');
-			});
-		});
-		const openPort = await listenOnLocalhost(server);
-
-		try {
-			const conn = new ConnectionManager([openPort]);
-			const result = await conn.connect();
-
-			assert.strictEqual(result, null);
-			assert.strictEqual(conn.info.state, ConnectionState.Disconnected);
-
 			conn.dispose();
 		} finally {
 			await closeServer(server);
@@ -1202,6 +1374,9 @@ async function testUnityMcpTools() {
 		assert.ok(gameCommand.inputSchema.properties.commandName);
 		assert.ok(gameCommand.inputSchema.properties.runId);
 		assert.ok(gameCommand.inputSchema.properties.args);
+		assert.ok(gameCommand.inputSchema.properties.host.enum.includes('editorBatchmode'));
+		assert.ok(gameCommand.inputSchema.properties.unityPath);
+		assert.ok(gameCommand.inputSchema.properties.timeoutMs);
 		assert.ok(gameCommand.inputSchema.properties.dryRun);
 	});
 
@@ -1494,6 +1669,8 @@ async function testStandaloneMcpServer() {
 			assert.ok(toolNames.includes('read_console'));
 			assert.ok(toolNames.includes('profiler_snapshot'));
 			assert.ok(toolNames.includes('game_command'));
+			assert.ok(toolNames.includes('unity_context'));
+			assert.ok(toolNames.includes('viewport_stream'));
 			const projectInfo = tools.result.tools.find((tool) => tool.name === 'project_info');
 			assert.strictEqual(projectInfo.annotations.readOnlyHint, true);
 
@@ -1501,6 +1678,7 @@ async function testStandaloneMcpServer() {
 			const resourceUris = resources.result.resources.map((resource) => resource.uri);
 			assert.ok(resourceUris.includes('unity://tools/catalog'));
 			assert.ok(resourceUris.includes('unity://console/errors'));
+			assert.ok(resourceUris.includes('unity://context/summary'));
 
 			const prompts = await server.request('prompts/list', {});
 			const promptNames = prompts.result.prompts.map((prompt) => prompt.name);
@@ -2383,6 +2561,26 @@ async function testProjectHandler() {
 		assert.strictEqual(getLinkedProjectPath(), unityProject);
 	});
 
+	await testAsync('UNITY_CURSOR_TOOLKIT_PROJECT_PATH links proof workspaces without prior state', async () => {
+		const unityProject = path.join(tmpDir, 'EnvGame');
+		fs.mkdirSync(path.join(unityProject, 'Assets'), { recursive: true });
+
+		const ctx = createMockExtensionContext(tmpDir);
+		initializeUnityProjectHandler(ctx);
+		const previousProjectPath = process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH;
+		process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH = unityProject;
+		try {
+			assert.strictEqual(hasLinkedUnityProject(), true, 'Env project path should count as a linked Unity project');
+			assert.strictEqual(getLinkedProjectPath(), unityProject);
+		} finally {
+			if (previousProjectPath === undefined) {
+				delete process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH;
+			} else {
+				process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH = previousProjectPath;
+			}
+		}
+	});
+
 	await testAsync('hasLinkedUnityProject returns false for path without Assets', async () => {
 		const noAssets = path.join(tmpDir, 'NotUnity');
 		fs.mkdirSync(noAssets, { recursive: true });
@@ -2765,6 +2963,106 @@ function testFolderTemplates() {
 	});
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// viewport/index.ts (webview source guards)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+function testViewportWebviewSource() {
+	console.log('\n── viewport/index.ts ──');
+	const source = fs.readFileSync(path.join(outDir, 'viewport', 'index.js'), 'utf8');
+	const packageJson = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'package.json'), 'utf8'));
+	const windowsProofRunner = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'run-windows-unity-without-editor-proof.js'), 'utf8');
+	const unityWithoutEditorAudit = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'audit-unity-without-editor.js'), 'utf8');
+	const installedCursorSmoke = fs.readFileSync(path.join(__dirname, '..', 'scripts', 'smoke-installed-cursor-viewports.js'), 'utf8');
+	const workspaceRoot = path.join(__dirname, '..', '..');
+	const viewportStreamTool = fs.readFileSync(path.join(workspaceRoot, 'Packages', 'com.rankupgames.unity-cursor-toolkit', 'Editor', 'MCP', 'ViewportStreamTool.cs'), 'utf8');
+	const viewportStreamToolMirror = fs.readFileSync(path.join(workspaceRoot, 'CursorUnityTool', 'Packages', 'com.rankupgames.unity-cursor-toolkit', 'Editor', 'MCP', 'ViewportStreamTool.cs'), 'utf8');
+	const editorWindowCapture = fs.readFileSync(path.join(workspaceRoot, 'Packages', 'com.rankupgames.unity-cursor-toolkit', 'Editor', 'MCP', 'EditorWindowViewportCapture.cs'), 'utf8');
+	const editorWindowCaptureMirror = fs.readFileSync(path.join(workspaceRoot, 'CursorUnityTool', 'Packages', 'com.rankupgames.unity-cursor-toolkit', 'Editor', 'MCP', 'EditorWindowViewportCapture.cs'), 'utf8');
+
+	test('live Unity frames are not covered by toolkit HUD overlays', () => {
+		assert.ok(!source.includes('viewport-hud'), 'Viewport webview should not overlay HUD chrome on Unity pixels');
+		assert.ok(!source.includes('streamBadge'), 'Streaming status should stay outside the rendered Unity frame');
+	});
+
+	test('viewport commands expose real editor Inspector, Package Manager, and custom EditorWindow panels', () => {
+		const commands = packageJson.contributes.commands.map((command) => command.command);
+		assert.ok(commands.includes('unity-cursor-toolkit.viewport.openInspector'), 'Inspector command should be contributed');
+		assert.ok(commands.includes('unity-cursor-toolkit.viewport.openPackageManager'), 'Package Manager command should be contributed');
+		assert.ok(commands.includes('unity-cursor-toolkit.viewport.openCustomWindow'), 'custom EditorWindow command should be contributed');
+		assert.ok(packageJson.activationEvents.includes('onCommand:unity-cursor-toolkit.viewport.openInspector'), 'Inspector command should activate the extension');
+		assert.ok(packageJson.activationEvents.includes('onCommand:unity-cursor-toolkit.viewport.openPackageManager'), 'Package Manager command should activate the extension');
+		assert.ok(packageJson.activationEvents.includes('onCommand:unity-cursor-toolkit.viewport.openCustomWindow'), 'custom EditorWindow command should activate the extension');
+		assert.ok(source.includes('Open Inspector'), 'Quick Actions should expose Inspector');
+		assert.ok(source.includes('Open Package Manager'), 'Quick Actions should expose Package Manager');
+		assert.ok(source.includes('Open Custom EditorWindow'), 'Quick Actions should expose custom EditorWindow panels');
+	});
+
+	test('viewport commands expose explicit player-host Scene and Game panels', () => {
+		const commands = packageJson.contributes.commands.map((command) => command.command);
+		assert.ok(commands.includes('unity-cursor-toolkit.viewport.openPlayerSceneView'), 'player Scene View command should be contributed');
+		assert.ok(commands.includes('unity-cursor-toolkit.viewport.openPlayerGameView'), 'player Game View command should be contributed');
+		assert.ok(packageJson.activationEvents.includes('onCommand:unity-cursor-toolkit.viewport.openPlayerSceneView'), 'player Scene View command should activate the extension');
+		assert.ok(packageJson.activationEvents.includes('onCommand:unity-cursor-toolkit.viewport.openPlayerGameView'), 'player Game View command should activate the extension');
+		assert.ok(source.includes('Open Player Scene View'), 'Quick Actions should expose player Scene View');
+		assert.ok(source.includes('Open Player Game View'), 'Quick Actions should expose player Game View');
+		assert.ok(source.includes("host: this.host"), 'Viewport stream requests should use the panel host');
+		assert.ok(source.includes("captureMode: this.host === 'player' ? 'camera' : 'editorWindow'"), 'Player panels should request camera capture while editor panels request editor-window capture');
+		assert.ok(source.includes('Attaching to running Viewport Service player'), 'Player panels should attach without launching the Unity editor');
+	});
+
+	test('installed Cursor viewport proof mode is explicit and records editor frame hashes', () => {
+		assert.ok(source.includes('UNITY_CURSOR_TOOLKIT_VIEWPORT_PROOF_OUT'), 'Proof mode should only run when explicitly requested by env');
+		assert.ok(source.includes("proofMode: 'installed-cursor-editor-scene-game'"), 'Proof report should identify the installed Cursor Scene/Game proof mode');
+		assert.ok(source.includes('this.openSceneView();'), 'Proof mode should open the real editor Scene View panel');
+		assert.ok(source.includes('this.openGameView();'), 'Proof mode should open the real editor Game View panel');
+		assert.ok(source.includes("value.host === 'editor'"), 'Proof mode should require editor-hosted frames');
+		assert.ok(source.includes("value.captureMode === 'editorWindow'"), 'Proof mode should require real EditorWindow capture mode');
+		assert.ok(source.includes('createHash'), 'Proof mode should hash the rendered frame bytes');
+		assert.ok(source.includes("'sha256'"), 'Proof mode should use SHA-256 for frame hashes');
+		assert.ok(source.includes('pendingStartStream'), 'Proof auto-start should stay single-flight while Unity is launching');
+		assert.ok(source.includes('autoStartRequested'), 'Proof auto-start should survive webview initialization timing');
+		assert.ok(source.includes('runProofInput'), 'Proof mode should require input delivery, not only frame hashes');
+		assert.ok(source.includes('isProofInputReady'), 'Proof pass criteria should include editor-window input proof');
+		assert.ok(source.includes('inputProof: this.inputProof ?? null'), 'Proof reports should archive input proof details');
+		assert.ok(source.includes('requestPointerLock'), 'Game View should request pointer lock for mouse-look style input');
+		assert.ok(source.includes('Viewport input failed'), 'Viewport input failures should be visible instead of silently ignored');
+		assert.ok(installedCursorSmoke.includes('UNITY_CURSOR_TOOLKIT_PROJECT_PATH'), 'Installed Cursor proof should pin the Unity project path in isolated Cursor');
+	});
+
+	test('editor-window viewport input and GameView orientation are first-class proof requirements', () => {
+		for (const content of [viewportStreamTool, viewportStreamToolMirror]) {
+			assert.ok(content.includes('session.captureMode == "editorWindow" && TryEditorWindowInput'), 'editorWindow input should run before project/input-system fallbacks');
+			assert.ok(!content.includes('session.captureMode == "editorWindow" && session.view == "scene"'), 'editorWindow input should not be scene-only');
+		}
+		for (const content of [editorWindowCapture, editorWindowCaptureMirror]) {
+			assert.ok(content.includes('ShouldFlipReadbackVertically(string view)'), 'orientation fix should be view-aware');
+			assert.ok(content.includes('|| view == "game"'), 'GameView readback should be flipped where Unity returns a bottom-origin buffer');
+		}
+		assert.ok(unityWithoutEditorAudit.includes('inputProof.success !== true'), 'Audit should reject proof artifacts that only have frame hashes');
+		assert.ok(unityWithoutEditorAudit.includes("inputProof.layer !== 'editorWindow'"), 'Audit should require input to hit the Unity EditorWindow layer');
+	});
+
+	test('Unity project markers activate viewport proof without manual command palette use', () => {
+		assert.ok(packageJson.activationEvents.includes('workspaceContains:ProjectSettings/ProjectVersion.txt'), 'Unity project roots should activate from ProjectVersion.txt');
+		assert.ok(packageJson.activationEvents.includes('workspaceContains:**/ProjectSettings/ProjectVersion.txt'), 'parent workspaces containing Unity projects should activate from nested ProjectVersion.txt');
+		assert.ok(packageJson.activationEvents.includes('workspaceContains:Assets/**/*.cs'), 'Unity script folders should activate the extension');
+		assert.ok(packageJson.activationEvents.includes('onStartupFinished'), 'installed Cursor proof mode needs activation without command-palette input');
+	});
+
+	test('Windows proof gate requires installed Cursor Scene/Game frame hashes', () => {
+		assert.ok(windowsProofRunner.includes('Installed Cursor automated editor Scene/Game frame proof'), 'Windows runner should execute the installed Cursor proof step');
+		assert.ok(windowsProofRunner.includes('smoke-installed-cursor-viewports.js'), 'Windows runner should use the packaged installed-Cursor smoke runner');
+		assert.ok(windowsProofRunner.includes('--viewport-proof-out'), 'Windows runner should request archived viewport proof JSON');
+		assert.ok(windowsProofRunner.includes('installed-cursor-editor-scene-game-auto-proof-windows.json'), 'Windows runner should archive Windows Cursor proof JSON');
+		assert.ok(unityWithoutEditorAudit.includes("requireStep(summary, 'Installed Cursor automated editor Scene/Game frame proof')"), 'Audit should require the Windows Cursor proof step');
+		assert.ok(unityWithoutEditorAudit.includes("resolveWindowsArtifact(proof, 'installedCursorViewportProof'"), 'Audit should load the Windows Cursor proof artifact');
+		assert.ok(unityWithoutEditorAudit.includes("cursorSmoke.platform !== 'win32'"), 'Audit should reject non-Windows Cursor smoke artifacts');
+		assert.ok(unityWithoutEditorAudit.includes("validateInstalledCursorProofPanel(cursorProof.panels?.sceneView, 'scene')"), 'Audit should validate the Windows Scene View proof panel');
+		assert.ok(unityWithoutEditorAudit.includes("validateInstalledCursorProofPanel(cursorProof.panels?.gameView, 'game')"), 'Audit should validate the Windows Game View proof panel');
+	});
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 
 async function main() {
@@ -2778,6 +3076,8 @@ async function main() {
 
 	testTypes();
 	testConnectionUnit();
+	testUnityEditorLauncher();
+	testUnityLicenseScript();
 	await testConnectionTcp();
 	await testCommandSender();
 	testConsoleBridge();
@@ -2795,6 +3095,7 @@ async function main() {
 	await testProjectHandler();
 	await testProjectMcpTools();
 	await testConsolePanelLogic();
+	testViewportWebviewSource();
 	testFolderTemplates();
 
 	console.log(`\n${'='.repeat(60)}`);

@@ -28,6 +28,42 @@
       "script": "install:unity",
       "group": "none",
       "problemMatcher": []
+    },
+    {
+      "label": "Unity Shell: Init Manifest",
+      "type": "shell",
+      "command": "npm run build && npm run remote-shell -- init --manifest \"${workspaceFolder}/remote_workspace/unity-shell.json\"",
+      "options": {
+        "cwd": "${workspaceFolder}/unity-cursor-toolkit"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Unity Shell: Launch",
+      "type": "shell",
+      "command": "npm run build && npm run remote-shell -- launch --manifest \"${workspaceFolder}/remote_workspace/unity-shell.json\"",
+      "options": {
+        "cwd": "${workspaceFolder}/unity-cursor-toolkit"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Unity Shell: Stop",
+      "type": "shell",
+      "command": "npm run remote-shell -- stop --manifest \"${workspaceFolder}/remote_workspace/unity-shell.json\"",
+      "options": {
+        "cwd": "${workspaceFolder}/unity-cursor-toolkit"
+      },
+      "problemMatcher": []
+    },
+    {
+      "label": "Unity Shell: Status",
+      "type": "shell",
+      "command": "npm run remote-shell -- status --manifest \"${workspaceFolder}/remote_workspace/unity-shell.json\"",
+      "options": {
+        "cwd": "${workspaceFolder}/unity-cursor-toolkit"
+      },
+      "problemMatcher": []
     }
   ]
-} 
+}

@@ -18,9 +18,28 @@
   ],
   "activationEvents": [
     "workspaceContains:Assets/",
+    "workspaceContains:Assets",
+    "workspaceContains:ProjectSettings/ProjectVersion.txt",
+    "workspaceContains:**/ProjectSettings/ProjectVersion.txt",
+    "workspaceContains:Assets/**/*.cs",
+    "onStartupFinished",
     "workspaceContains:*.unity",
     "workspaceContains:*.cs",
-    "onView:unityConsole"
+    "onView:unityConsole",
+    "onView:unityHierarchy",
+    "onCommand:unity-cursor-toolkit.viewport.openPrototype",
+    "onCommand:unity-cursor-toolkit.viewport.openSceneView",
+    "onCommand:unity-cursor-toolkit.viewport.openGameView",
+    "onCommand:unity-cursor-toolkit.viewport.openPlayerSceneView",
+    "onCommand:unity-cursor-toolkit.viewport.openPlayerGameView",
+    "onCommand:unity-cursor-toolkit.viewport.openInspector",
+    "onCommand:unity-cursor-toolkit.viewport.openPackageManager",
+    "onCommand:unity-cursor-toolkit.viewport.openCustomWindow",
+    "onCommand:unity-cursor-toolkit.hierarchy.refresh",
+    "onCommand:unity-cursor-toolkit.hierarchy.focus",
+    "onCommand:unity-cursor-toolkit.remoteShell.launch",
+    "onCommand:unity-cursor-toolkit.remoteShell.stop",
+    "onCommand:unity-cursor-toolkit.remoteShell.status"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -56,6 +75,16 @@
             "default": 5000,
             "description": "Timeout (ms) for IL patch before falling back to full refresh."
           },
+          "unityCursorToolkit.autoLaunchEditor": {
+            "type": "boolean",
+            "default": true,
+            "description": "Automatically launch the installed Unity Editor for the linked project when attaching or opening viewport panels."
+          },
+          "unityCursorToolkit.unityEditorPath": {
+            "type": "string",
+            "default": "",
+            "description": "Optional path to the installed Unity Editor executable. Leave empty to resolve from the linked project's ProjectVersion.txt or UNITY_CURSOR_TOOLKIT_UNITY_PATH."
+          },
           "unityCursorToolkit.workspaceScanPaths": {
             "type": "array",
             "items": {
@@ -63,6 +92,21 @@
             },
             "default": [],
             "description": "Additional paths to scan for .code-workspace files."
+          },
+          "unityCursorToolkit.remoteShell.manifestPath": {
+            "type": "string",
+            "default": "${workspaceFolder}/remote_workspace/unity-shell.json",
+            "description": "Path to the Unity VDD shell manifest."
+          },
+          "unityCursorToolkit.remoteShell.shellAppPath": {
+            "type": "string",
+            "default": "",
+            "description": "Optional path to a built Unity VDD native shell app or executable. Leave empty to run the bundled Swift package with swift run."
+          },
+          "unityCursorToolkit.remoteShell.localPortBase": {
+            "type": "number",
+            "default": 48170,
+            "description": "First local forwarded port for the Unity VDD shell. The control port uses the next port."
           }
         }
       }
@@ -149,6 +193,56 @@
         "icon": "$(device-camera)"
       },
       {
+        "command": "unity-cursor-toolkit.viewport.openPrototype",
+        "title": "Unity Toolkit: Open Scene View Prototype",
+        "icon": "$(layout-panel)"
+      },
+      {
+        "command": "unity-cursor-toolkit.viewport.openSceneView",
+        "title": "Unity Toolkit: Open Scene View",
+        "icon": "$(layout-panel)"
+      },
+      {
+        "command": "unity-cursor-toolkit.viewport.openGameView",
+        "title": "Unity Toolkit: Open Game View",
+        "icon": "$(game)"
+      },
+      {
+        "command": "unity-cursor-toolkit.viewport.openPlayerSceneView",
+        "title": "Unity Toolkit: Open Player Scene View",
+        "icon": "$(play)"
+      },
+      {
+        "command": "unity-cursor-toolkit.viewport.openPlayerGameView",
+        "title": "Unity Toolkit: Open Player Game View",
+        "icon": "$(run)"
+      },
+      {
+        "command": "unity-cursor-toolkit.viewport.openInspector",
+        "title": "Unity Toolkit: Open Inspector",
+        "icon": "$(inspect)"
+      },
+      {
+        "command": "unity-cursor-toolkit.viewport.openPackageManager",
+        "title": "Unity Toolkit: Open Package Manager",
+        "icon": "$(package)"
+      },
+      {
+        "command": "unity-cursor-toolkit.viewport.openCustomWindow",
+        "title": "Unity Toolkit: Open Custom EditorWindow",
+        "icon": "$(window)"
+      },
+      {
+        "command": "unity-cursor-toolkit.hierarchy.focus",
+        "title": "Unity Toolkit: Focus Hierarchy",
+        "icon": "$(list-tree)"
+      },
+      {
+        "command": "unity-cursor-toolkit.hierarchy.refresh",
+        "title": "Unity Toolkit: Refresh Hierarchy",
+        "icon": "$(refresh)"
+      },
+      {
         "command": "unity-cursor-toolkit.mcp.showServerPath",
         "title": "Unity Toolkit: Show MCP Server Path"
       },
@@ -156,6 +250,21 @@
         "command": "unity-cursor-toolkit.mcp.copyClientConfig",
         "title": "Unity Toolkit: Copy MCP Client Config",
         "icon": "$(copy)"
+      },
+      {
+        "command": "unity-cursor-toolkit.remoteShell.launch",
+        "title": "Unity Toolkit: Launch Unity VDD Shell",
+        "icon": "$(window)"
+      },
+      {
+        "command": "unity-cursor-toolkit.remoteShell.stop",
+        "title": "Unity Toolkit: Stop Unity VDD Shell",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "unity-cursor-toolkit.remoteShell.status",
+        "title": "Unity Toolkit: Unity VDD Shell Status",
+        "icon": "$(pulse)"
       }
     ],
     "debuggers": [
@@ -209,11 +318,36 @@
     "views": {
       "unityCursorToolkit": [
         {
+          "id": "unityHierarchy",
+          "name": "Hierarchy",
+          "visibility": "visible"
+        },
+        {
           "id": "unityConsole",
           "name": "Unity Console",
           "type": "webview",
           "icon": "$(terminal)",
-          "when": "config.unityCursorToolkit.console.enabled"
+          "when": "config.unityCursorToolkit.console.enabled",
+          "visibility": "collapsed"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "unity-cursor-toolkit.hierarchy.refresh",
+          "when": "view == unityHierarchy",
+          "group": "navigation@1"
+        },
+        {
+          "command": "unity-cursor-toolkit.viewport.openSceneView",
+          "when": "view == unityHierarchy",
+          "group": "navigation@2"
+        },
+        {
+          "command": "unity-cursor-toolkit.viewport.openGameView",
+          "when": "view == unityHierarchy",
+          "group": "navigation@3"
         }
       ]
     }
@@ -224,7 +358,24 @@
     "watch": "tsc -watch -p ./",
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
-    "test": "node test/run-tests.js && node test/simplified-context-tests.js",
+    "test": "node test/run-tests.js && node test/simplified-context-tests.js && node test/remote-shell-tests.js",
+    "test:unity-internal": "node scripts/run-internal-unity-smoke.js",
+    "dev:unity-viewport": "node scripts/run-internal-viewport-stream.js",
+    "spike:editor-windows": "node scripts/run-editor-window-capture-spike.js",
+    "probe:editor-window-stream": "node scripts/probe-editor-window-stream.js",
+    "measure:editor-stream": "node scripts/measure-editor-streaming.js",
+    "build:viewport-service": "node scripts/build-viewport-service.js",
+    "run:viewport-service": "node scripts/run-viewport-service.js",
+    "measure:viewport-service": "node scripts/measure-viewport-service.js",
+    "probe:viewport-service": "node scripts/probe-viewport-service.js",
+    "audit:unity-without-editor": "node scripts/audit-unity-without-editor.js",
+    "proof:windows-unity-without-editor": "node scripts/run-windows-unity-without-editor-proof.js",
+    "proof:windows-unity-without-editor:preflight": "node scripts/run-windows-unity-without-editor-proof.js --preflight-only",
+    "proof:windows-unity-without-editor:remote": "node scripts/run-remote-windows-unity-without-editor-proof.js",
+    "proof:windows-unity-without-editor:import": "node scripts/import-windows-unity-without-editor-proof.js",
+    "smoke:installed-cursor-viewports": "node scripts/smoke-installed-cursor-viewports.js",
+    "unity:license": "node scripts/unity-license.js",
+    "remote-shell": "node out/remote-shell/sidecarCli.js",
     "mcp:serve": "node out/mcp/server.js",
     "package": "vsce package",
     "publish": "vsce publish",

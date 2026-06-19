@@ -5,6 +5,7 @@
 
 const assert = require('assert');
 const fs = require('fs');
+const http = require('http');
 const net = require('net');
 const os = require('os');
 const path = require('path');
@@ -37,6 +38,10 @@ function test(name, fn) {
 		failures.push({ name, err });
 		process.stdout.write(`  FAIL  ${name}\n    ${err.message}\n`);
 	}
+}
+
+function sleep(ms) {
+	return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 function parseToolJson(result) {
@@ -98,6 +103,22 @@ async function getUnusedPort() {
 	const port = await listenOnLocalhost(server);
 	await closeServer(server);
 	return port;
+}
+
+function httpGet(url) {
+	return new Promise((resolve, reject) => {
+		http.get(url, (response) => {
+			const chunks = [];
+			response.on('data', (chunk) => chunks.push(chunk));
+			response.on('end', () => {
+				resolve({
+					statusCode: response.statusCode,
+					headers: response.headers,
+					body: Buffer.concat(chunks)
+				});
+			});
+		}).on('error', reject);
+	});
 }
 
 function startMcpServer(env = {}) {
@@ -214,6 +235,12 @@ function testToolMetadata() {
 		assert.strictEqual(isMutatingToolCall('unity_context', { action: 'summary' }), false);
 	});
 
+	test('viewport_stream status is read-only while stream and input actions mutate host state', () => {
+		assert.strictEqual(isMutatingToolCall('viewport_stream', { action: 'status' }), false);
+		assert.strictEqual(isMutatingToolCall('viewport_stream', { action: 'start' }), true);
+		assert.strictEqual(isMutatingToolCall('viewport_stream', { action: 'stop' }), true);
+		assert.strictEqual(isMutatingToolCall('viewport_stream', { action: 'input' }), true);
+	});
 }
 
 async function testGameCommandBatchmode() {
@@ -340,6 +367,150 @@ async function testUnityContextMcpTools() {
 	}
 }
 
+async function testViewportStreamMcpTools() {
+	console.log('\n-- mcp/viewportStreamTools.ts --');
+	const { ViewportStreamMcpTools, buildViewportHostSessionSnapshot } = require(path.join(outDir, 'mcp', 'viewportStreamTools'));
+
+	await testAsync('viewport_stream start/status/frame/stop uses local MJPEG server and Unity frame messages', async () => {
+		const calls = [];
+		const tools = new ViewportStreamMcpTools({
+			send() {},
+			request: async (cmd, payload) => {
+				calls.push({ cmd, payload });
+				return { result: { success: true, echo: payload.args } };
+			}
+		});
+
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-viewport-'));
+		try {
+			const start = parseToolJson(await tools.handleToolCall('viewport_stream', {
+				action: 'start',
+				width: 12,
+				height: 8,
+				fps: 5,
+				quality: 55
+			}));
+
+			assert.strictEqual(start.success, true);
+			assert.strictEqual(start.status.running, true);
+			assert.strictEqual(start.status.width, 12);
+			assert.strictEqual(start.status.height, 8);
+			assert.ok(start.status.streamUrl.includes('/viewport.mjpg'));
+			assert.strictEqual(start.status.hostSession.surface.kind, 'unityEditor');
+			assert.strictEqual(start.status.hostSession.render.kind, 'editorWindow');
+			assert.strictEqual(start.status.hostSession.compute.kind, 'localEditor');
+			assert.strictEqual(start.status.hostSession.compute.supportsOffload, false);
+			assert.strictEqual(start.status.hostSession.input.kind, 'unityMcp');
+			assert.strictEqual(calls[0].payload.toolName, 'viewport_stream');
+			assert.strictEqual(calls[0].payload.args.action, 'start');
+			assert.strictEqual(calls[0].payload.args.captureMode, 'editorWindow');
+
+			const framePath = path.join(tmpDir, 'frame.jpg');
+			const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+			fs.writeFileSync(framePath, jpeg);
+			tools.handleUnityMessage({
+				command: 'viewportFrame',
+				payload: {
+					sessionId: start.status.sessionId,
+					path: framePath,
+					sequence: 7,
+					width: 12,
+					height: 8,
+					timestamp: '2026-01-01T00:00:00Z'
+				}
+			});
+			await sleep(30);
+
+			const latest = await httpGet(start.status.streamUrl.replace('/viewport.mjpg', '/latest.jpg'));
+			assert.strictEqual(latest.statusCode, 200);
+			assert.strictEqual(latest.headers['content-type'], 'image/jpeg');
+			assert.deepStrictEqual([...latest.body], [...jpeg]);
+
+			const inBandJpeg = Buffer.from([0xff, 0xd8, 0x11, 0x22, 0xff, 0xd9]);
+			tools.handleUnityMessage({
+				command: 'viewportFrame',
+				payload: {
+					sessionId: start.status.sessionId,
+					data: inBandJpeg.toString('base64'),
+					sequence: 8,
+					width: 12,
+					height: 8,
+					timestamp: '2026-01-01T00:00:01Z'
+				}
+			});
+			await sleep(30);
+
+			const latestInBand = await httpGet(start.status.streamUrl.replace('/viewport.mjpg', '/latest.jpg'));
+			assert.strictEqual(latestInBand.statusCode, 200);
+			assert.deepStrictEqual([...latestInBand.body], [...inBandJpeg]);
+
+			const status = parseToolJson(await tools.handleToolCall('viewport_stream', { action: 'status' }));
+			assert.strictEqual(status.status.lastFrame.sequence, 8);
+
+			const input = parseToolJson(await tools.handleToolCall('viewport_stream', {
+				action: 'input',
+				inputType: 'tap',
+				x: 3,
+				y: 4
+			}));
+			assert.strictEqual(input.success, true);
+			assert.strictEqual(calls[calls.length - 1].payload.args.inputType, 'tap');
+			assert.strictEqual(calls[calls.length - 1].payload.args.sessionId, start.status.sessionId);
+
+			const stop = parseToolJson(await tools.handleToolCall('viewport_stream', { action: 'stop' }));
+			assert.strictEqual(stop.success, true);
+			assert.strictEqual(stop.stopped.running, true);
+		} finally {
+			await tools.dispose();
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('viewport_stream dryRun returns planned Unity commands without contacting Unity', async () => {
+		let requestCount = 0;
+		const tools = new ViewportStreamMcpTools({
+			send() {},
+			request: async () => {
+				requestCount++;
+				return { result: { success: true } };
+			}
+		});
+
+		const start = parseToolJson(await tools.handleToolCall('viewport_stream', { action: 'start', dryRun: true, port: 8123 }));
+		const input = parseToolJson(await tools.handleToolCall('viewport_stream', { action: 'input', inputType: 'key', key: 'Space', dryRun: true }));
+
+		assert.strictEqual(requestCount, 0);
+		assert.strictEqual(start.dryRun, true);
+		assert.strictEqual(start.localServer.port, 8123);
+		assert.strictEqual(start.hostSession.surface.kind, 'unityEditor');
+		assert.strictEqual(start.hostSession.render.kind, 'editorWindow');
+		assert.strictEqual(start.hostSession.input.kind, 'unityMcp');
+		assert.strictEqual(input.args.inputType, 'key');
+		assert.strictEqual(input.args.key, 'Space');
+		await tools.dispose();
+	});
+
+	await testAsync('viewport host session selects player camera backend independently from Unity MCP input routing', async () => {
+		const session = buildViewportHostSessionSnapshot({
+			sessionId: 'viewport-player-test',
+			host: 'player',
+			view: 'game',
+			captureMode: 'camera',
+			width: 320,
+			height: 180,
+			fps: 12,
+			quality: 60,
+			streamUrl: 'http://127.0.0.1:8123/viewport.mjpg'
+		});
+
+		assert.strictEqual(session.surface.kind, 'unityEditor');
+		assert.strictEqual(session.render.kind, 'playerCamera');
+		assert.strictEqual(session.compute.kind, 'localEditor');
+		assert.strictEqual(session.input.kind, 'unityMcp');
+		assert.strictEqual(session.remote.kind, 'remoteUnityPlayer');
+	});
+}
+
 async function testStandaloneReadOnlyContext() {
 	console.log('\n-- mcp/server.ts unity_context read-only --');
 	const fixture = createUnityContextFixture('uct-stdio-context-');
@@ -404,6 +575,7 @@ async function main() {
 	testToolMetadata();
 	await testGameCommandBatchmode();
 	await testUnityContextMcpTools();
+	await testViewportStreamMcpTools();
 	await testStandaloneReadOnlyContext();
 
 	console.log(`\n${'='.repeat(60)}`);

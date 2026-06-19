@@ -5,6 +5,11 @@ node_modules/
 out/
 out-bundle/
 *.vsix
+unity-cursor-toolkit/native-shell/**/.build/
+experiments/**/obj/
+experiments/**/bin/
+experiments/**/results/
+experiments/**/screenshots/
 
 # System files
 .DS_Store
@@ -26,6 +31,9 @@ yarn-error.log*
 
 # Cursor IDE local state
 .cursor/
+CursorUnityTool/.vscode/
+CursorUnityTool/.cursorindexingignore
+CursorUnityTool/mono_crash.mem.*.blob
 
 # Environment / secrets
 .env

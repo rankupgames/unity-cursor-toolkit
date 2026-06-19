@@ -141,8 +141,9 @@ namespace UnityCursorToolkit.AgentCommands
 			}
 
 			builder.Append("],\"capabilities\":{");
-			builder.Append("\"supportedHosts\":[\"editor\",\"editorBatchmode\",\"auto\"],");
-			builder.Append("\"batchmodeEntry\":\"UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run\"");
+			builder.Append("\"supportedHosts\":[\"editor\",\"editorBatchmode\",\"player\",\"auto\"],");
+			builder.Append("\"batchmodeEntry\":\"UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run\",");
+			builder.Append("\"viewportInputPrefixes\":[\"viewport.tap\",\"viewport.swipe\",\"viewport.key\",\"viewport.text\"]");
 			builder.Append("}}");
 			return builder.ToString();
 		}
