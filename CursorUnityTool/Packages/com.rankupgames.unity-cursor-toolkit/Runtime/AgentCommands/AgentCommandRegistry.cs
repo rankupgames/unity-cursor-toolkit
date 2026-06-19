@@ -140,7 +140,10 @@ namespace UnityCursorToolkit.AgentCommands
 				descriptors[i].AppendJson(builder);
 			}
 
-			builder.Append("]}");
+			builder.Append("],\"capabilities\":{");
+			builder.Append("\"supportedHosts\":[\"editor\",\"editorBatchmode\",\"auto\"],");
+			builder.Append("\"batchmodeEntry\":\"UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run\"");
+			builder.Append("}}");
 			return builder.ToString();
 		}
 

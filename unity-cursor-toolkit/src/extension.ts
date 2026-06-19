@@ -192,7 +192,7 @@ async function attemptConnection(isInitialSetup: boolean): Promise<void> {
 	if (port) {
 		vscode.window.showInformationMessage(`Connected to Unity on port ${port}`);
 	} else {
-		vscode.window.showErrorMessage('Failed to connect to Unity. Is it running with the Hot Reload script?');
+		vscode.window.showErrorMessage('Failed to connect to Unity Toolkit. Open the Unity project with the current com.rankupgames.unity-cursor-toolkit package installed; older package versions may expose a TCP port but will not answer the required toolkit ping.');
 	}
 }
 

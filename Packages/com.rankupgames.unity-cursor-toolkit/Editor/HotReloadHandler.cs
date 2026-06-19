@@ -758,6 +758,11 @@ public class HotReloadHandler : EditorWindow
 
                             if (string.IsNullOrEmpty(line) == false)
                             {
+                                if (TryHandleImmediateClientMessage(line, stream))
+                                {
+                                    continue;
+                                }
+
                                 lock (messageQueue)
                                 {
                                     messageQueue.Enqueue(line);
@@ -811,6 +816,29 @@ public class HotReloadHandler : EditorWindow
                 Debug.Log("Client disconnected from Unity Hot Reload server");
             }
         }
+    }
+
+    /// <summary>
+    /// Handles protocol messages that do not need Unity main-thread APIs.
+    /// Keeping ping/pong on the socket thread makes attach probes reliable even
+    /// while the editor is importing, repainting, or processing queued work.
+    /// </summary>
+    private static bool TryHandleImmediateClientMessage(string message, NetworkStream stream)
+    {
+        if (message.Contains("{") == false || message.Contains("}") == false)
+        {
+            return false;
+        }
+
+        string command = ExtractJsonStringValue(message, "command");
+        if (command != "ping")
+        {
+            return false;
+        }
+
+        byte[] data = Encoding.UTF8.GetBytes("{\"command\":\"pong\"}\n");
+        stream.Write(data, 0, data.Length);
+        return true;
     }
 
     /// <summary>

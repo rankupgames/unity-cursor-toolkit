@@ -15,6 +15,7 @@ import { UnityMcpTools } from './unityMcpTools';
 import { StandaloneUnityConnection } from './standaloneConnection';
 import { StandaloneConsoleMcpTools, StandaloneConsoleStore } from './standaloneConsole';
 import { StandaloneProjectMcpTools } from './standaloneProjectTools';
+import { UnityContextMcpTools } from './unityContextIndex';
 import { isDryRun, isMutatingToolCall } from './toolMetadata';
 import type { ToolDefinition, ToolResult } from '../core/interfaces';
 
@@ -105,6 +106,13 @@ const RESOURCES: readonly ResourceDefinition[] = [
 		title: 'Unity Tool Catalog',
 		description: 'Agent-facing catalog of Unity Cursor Toolkit MCP tools and annotations.',
 		mimeType: 'application/json'
+	},
+	{
+		uri: 'unity://context/summary',
+		name: 'unity-context-summary',
+		title: 'Unity Context Summary',
+		description: 'Compact summary from .umetacontext/index.json.',
+		mimeType: 'application/json'
 	}
 ];
 
@@ -138,6 +146,7 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 
 	connection.onMessage((message) => consoleStore.addFromUnityMessage(message));
 	router.register(new UnityMcpTools(connection));
+	router.register(new UnityContextMcpTools());
 	router.register(new StandaloneConsoleMcpTools(consoleStore));
 	router.register(new StandaloneProjectMcpTools());
 
@@ -270,6 +279,9 @@ async function readResource(
 		case 'unity://tools/catalog':
 			text = JSON.stringify(router.getToolDefinitions().map(toCatalogEntry), null, 2);
 			break;
+		case 'unity://context/summary':
+			text = toolResultToText(await router.routeToolCall('unity_context', { action: 'summary' }));
+			break;
 		default:
 			throw new InvalidParamsError(`Unknown resource URI: ${uri}`);
 	}
@@ -318,7 +330,9 @@ function buildInitializeResult(tools: readonly ToolDefinition[], readOnly: boole
 			'Connect Unity first by installing com.rankupgames.unity-cursor-toolkit and opening the project in Unity.',
 			`Read-only mode is ${readOnly ? 'enabled' : 'disabled'} via ${READ_ONLY_ENV}.`,
 			'Use project_info, read_console, and manage_scene/getHierarchy before mutating a scene.',
+			'Use unity_context action=scan to refresh .umetacontext/index.json, then query/read/summary to avoid broad Unity asset fetches.',
 			'Use profiler_snapshot action=current for session artifacts, then readConsoleTranscript with the returned session id when the compact console timeline is needed.',
+			'Use game_command host=editorBatchmode only for non-rendering command workflows; -nographics is not used for rendered Unity work.',
 			'Use dryRun=true on mutating tools to inspect normalized Unity commands without executing them.',
 			`Available tools: ${tools.map((tool) => tool.name).join(', ')}.`
 		].join(' ')

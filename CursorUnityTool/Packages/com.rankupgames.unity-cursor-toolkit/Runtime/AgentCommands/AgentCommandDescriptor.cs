@@ -46,7 +46,9 @@ namespace UnityCursorToolkit.AgentCommands
 			builder.Append("{");
 			AgentCommandJson.AppendProperty(builder, "name", Name).Append(",");
 			AgentCommandJson.AppendProperty(builder, "description", Description).Append(",");
-			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", true);
+			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", true).Append(",");
+			AgentCommandJson.AppendProperty(builder, "supportsBatchmode", false).Append(",");
+			builder.Append("\"supportedHosts\":[\"editor\",\"auto\"]");
 			builder.Append("}");
 		}
 	}

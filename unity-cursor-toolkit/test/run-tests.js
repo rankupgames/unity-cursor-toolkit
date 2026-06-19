@@ -181,6 +181,18 @@ function closeServer(server) {
 	return new Promise((resolve) => server.close(resolve));
 }
 
+function writePongOnPing(socket, delayMs = 0) {
+	socket.on('data', (data) => {
+		const lines = data.toString().split('\n').filter(Boolean);
+		for (const line of lines) {
+			const parsed = JSON.parse(line);
+			if (parsed.command === 'ping') {
+				setTimeout(() => socket.write('{"command":"pong"}\n'), delayMs);
+			}
+		}
+	});
+}
+
 async function getUnusedPort() {
 	const server = net.createServer();
 	const port = await listenOnLocalhost(server);
@@ -355,7 +367,7 @@ async function testConnectionTcp() {
 	// Uses port 55504 (last port in the PORTS array)
 	await testAsync('connect scans PORTS array and returns found port or null', async () => {
 		const closedPort = await getUnusedPort();
-		const server = net.createServer(() => {});
+		const server = net.createServer(writePongOnPing);
 		const openPort = await listenOnLocalhost(server);
 
 		try {
@@ -365,6 +377,71 @@ async function testConnectionTcp() {
 			assert.strictEqual(conn.info.state, ConnectionState.Connected, 'State should be Connected if a port was found');
 			assert.strictEqual(conn.info.port, openPort);
 			conn.disconnect();
+			conn.dispose();
+		} finally {
+			await closeServer(server);
+		}
+	});
+
+	await testAsync('connect shares an in-flight probe instead of launching duplicate attempts', async () => {
+		let connectionCount = 0;
+		const server = net.createServer((socket) => {
+			connectionCount++;
+			writePongOnPing(socket, 50);
+		});
+		const openPort = await listenOnLocalhost(server);
+
+		try {
+			const conn = new ConnectionManager([openPort]);
+			const [first, second] = await Promise.all([conn.connect(), conn.connect()]);
+
+			assert.strictEqual(first, openPort);
+			assert.strictEqual(second, openPort);
+			assert.strictEqual(connectionCount, 1, 'Only one socket probe should be opened');
+
+			conn.disconnect();
+			conn.dispose();
+		} finally {
+			await closeServer(server);
+		}
+	});
+
+	await testAsync('connect rejects open ports that do not speak toolkit JSON pong', async () => {
+		const server = net.createServer((socket) => {
+			socket.on('data', () => {
+				socket.write('Unity debugger listener\n');
+			});
+		});
+		const openPort = await listenOnLocalhost(server);
+
+		try {
+			const conn = new ConnectionManager([openPort]);
+			const result = await conn.connect();
+
+			assert.strictEqual(result, null);
+			assert.strictEqual(conn.info.state, ConnectionState.Disconnected);
+
+			conn.dispose();
+		} finally {
+			await closeServer(server);
+		}
+	});
+
+	await testAsync('connect rejects malformed JSON handshake data', async () => {
+		const server = net.createServer((socket) => {
+			socket.on('data', () => {
+				socket.write('{not-json}\n');
+			});
+		});
+		const openPort = await listenOnLocalhost(server);
+
+		try {
+			const conn = new ConnectionManager([openPort]);
+			const result = await conn.connect();
+
+			assert.strictEqual(result, null);
+			assert.strictEqual(conn.info.state, ConnectionState.Disconnected);
+
 			conn.dispose();
 		} finally {
 			await closeServer(server);
@@ -428,7 +505,7 @@ async function testConnectionTcp() {
 	});
 
 	await testAsync('state transitions: Disconnected -> Connecting -> Connected', async () => {
-		const server = net.createServer(() => {});
+		const server = net.createServer(writePongOnPing);
 		const portToUse = await listenOnLocalhost(server);
 
 		try {
@@ -489,8 +566,9 @@ async function testConnectionTcp() {
 		let connectionCount = 0;
 		const server = net.createServer((socket) => {
 			connectionCount++;
+			writePongOnPing(socket);
 			if (connectionCount === 1) {
-				setTimeout(() => socket.destroy(), 50);
+				setTimeout(() => socket.destroy(), 150);
 			}
 		});
 		const portToUse = await listenOnLocalhost(server);

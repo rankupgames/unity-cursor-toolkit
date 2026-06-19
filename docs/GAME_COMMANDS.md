@@ -67,6 +67,22 @@ Example agent flow:
 
 The `commandName` field also accepts the alias `name`. The `runId` field also accepts the alias `id`.
 
+## Editor Batchmode Host
+
+Use `host: "editorBatchmode"` for command list/run calls that should execute in a fresh Unity batchmode process instead of the attached editor bridge. This is intended for non-rendering command discovery, CI smoke tests, and deterministic workflows that do not depend on an already-open Unity window.
+
+```json
+{ "action": "list", "host": "editorBatchmode" }
+```
+
+```json
+{ "action": "run", "host": "editorBatchmode", "commandName": "auth.select_us_east", "args": {}, "timeoutMs": 120000 }
+```
+
+The MCP server launches Unity with `-batchmode -quit -executeMethod UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run`. Pass `unityPath` or set `UNITY_CURSOR_TOOLKIT_UNITY_PATH` when Unity cannot be found from `ProjectSettings/ProjectVersion.txt`.
+
+Batchmode commands return the planned Unity command, temp argument/result paths, Unity exit code, parsed result JSON when present, and the tail of the Unity log. Use normal editor-host commands for rendering, play-mode UI, or any flow that depends on an existing interactive editor session.
+
 ## Project Integration Checklist
 
 1. Install the UPM package from GitHub, OpenUPM, or a scoped registry.
@@ -75,6 +91,7 @@ The `commandName` field also accepts the alias `name`. The `runId` field also ac
 4. Keep command handlers thin: find the active subsystem, call existing public game methods, wait for completion, then report `context.Succeed(...)` or `context.Fail(...)`.
 5. Prefer deterministic names such as `auth.select_us_east`, `menu.open_missions`, or `mission.start_smoke_test`.
 6. Keep commands behind development-only compilation when they should not ship in production builds.
+7. For batchmode-safe commands, avoid renderer, scene view, editor window, and interactive input dependencies.
 
 ## WarInArms First Command
 
