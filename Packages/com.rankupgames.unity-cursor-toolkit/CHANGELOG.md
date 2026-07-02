@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Added `BatchCommandEntry` for `game_command` editor batchmode list/run support.
 - Added command catalog capability metadata for the editor batchmode host.
+- Added the `editor_validation` MCP tool and menu command for project-file regeneration plus script compile requests.
 
 ### Fixed
 
