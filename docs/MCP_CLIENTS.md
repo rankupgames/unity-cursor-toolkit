@@ -113,12 +113,13 @@ Add a custom context server to Zed `settings.json`:
 2. Confirm the Unity Editor is running.
 3. Start the MCP client and list tools.
 4. Call `project_info`.
-5. Call `unity_context` with `action: "scan"` to create `.umetacontext/index.json`, then call `action: "summary"` to confirm indexed asset/object counts.
-6. Call `read_console`.
-7. Call `profiler_snapshot` with `action: "current"` to confirm Unity can return the current console/profiler session and compact console transcript path.
-8. Call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id to confirm the MCP client can fetch the grouped whole-console timeline.
-9. Call `game_command` with `action: "list"` to confirm runtime command discovery works when the Unity project has registered commands.
-10. For safety, try `manage_gameobject` with `dryRun: true` before any real scene mutation.
+5. Call `editor_validation` with `action: "status"`, then preview `action: "sync_and_compile"` with `dryRun: true` before requesting project-file synchronization and compilation.
+6. Call `unity_context` with `action: "scan"` to create `.umetacontext/index.json`, then call `action: "summary"` to confirm indexed asset/object counts.
+7. Call `read_console`.
+8. Call `profiler_snapshot` with `action: "current"` to confirm Unity can return the current console/profiler session and compact console transcript path.
+9. Call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id to confirm the MCP client can fetch the grouped whole-console timeline.
+10. Call `game_command` with `action: "list"` to confirm runtime command discovery works when the Unity project has registered commands.
+11. For safety, try `manage_gameobject` with `dryRun: true` before any real scene mutation.
 
 The extension and standalone MCP server require the current Unity package handshake. If attach fails while Unity is running, update `com.rankupgames.unity-cursor-toolkit`; older package versions can expose a TCP port without answering the required toolkit ping.
 

@@ -12,6 +12,7 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 - Inspect active scene hierarchy with `manage_scene` and `action: "getHierarchy"`.
 - Resolve Unity `.meta` files with `resolve_meta`.
 - Discover and schedule game-authored runtime workflows with `game_command`.
+- Regenerate project files and verify script compilation with `editor_validation`.
 - Control play mode, capture screenshots, execute menu items, manage assets, edit GameObjects/components, and trigger builds when allowed.
 
 ## Safe Default Workflow
@@ -23,8 +24,9 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 5. When the compact grouped console timeline is needed, call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id.
 6. Call `manage_scene` with `action: "getHierarchy"` before any scene edit.
 7. Call `game_command` with `action: "list"` before scheduling a project-owned command.
-8. Use `dryRun: true` for the first mutating call.
-9. Execute the real mutating call only after the user has approved the intended change.
+8. After generated C# or project-file changes, preview `editor_validation` with `action: "sync_and_compile"` and `dryRun: true`, then run it and poll `action: "status"` until `pending` is false.
+9. Use `dryRun: true` for the first mutating call.
+10. Execute the real mutating call only after the user has approved the intended change.
 
 ## Safety Controls
 
@@ -35,6 +37,7 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 - Tools include MCP annotations such as `readOnlyHint`, `destructiveHint`, `idempotentHint`, and `openWorldHint` so clients can expose safer approval UX.
 - `profiler_snapshot` read actions are allowed in read-only mode, including `readConsoleTranscript`. Saving or clearing retained profiler sessions is treated as mutating.
 - `game_command` read actions are `list` and `status`; scheduling and cancellation are mutating because they execute or stop game code.
+- `editor_validation` read actions are `list` and `status`; project-file synchronization and compile requests are mutating and support `dryRun`.
 
 ## Runtime Game Commands
 
