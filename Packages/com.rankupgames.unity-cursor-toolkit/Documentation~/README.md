@@ -101,7 +101,7 @@ See the repository docs:
 
 ## Editor Validation
 
-The MCP tool `editor_validation` supports `list`, `status`, `sync_project_files`, `request_compile`, and `sync_and_compile`.
+The MCP tool `editor_validation` supports `list`, `status`, `sync_project_files`, `request_compile`, and `sync_and_compile`. `request_compile` leaves project files unchanged; `sync_and_compile` fails without requesting compilation when Unity cannot provide a project-file synchronization API.
 
 `sync_and_compile` regenerates project files using Unity's active code editor integration, requests script compilation, and writes the latest pollable result to `TestResults/UnityCursorToolkit/EditorValidation/latest.json` under the Unity project root. The same action is available inside Unity at **Tools > Unity Cursor Toolkit > Validation > Regenerate Project Files And Compile**.
 

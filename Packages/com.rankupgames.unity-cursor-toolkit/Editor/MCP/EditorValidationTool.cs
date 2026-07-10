@@ -4,7 +4,7 @@
 // Project: Unity Cursor Toolkit
 // Description: MCP tool handler for editor project file sync and script compile validation.
 // Created: 2026-06-21
-// Last Modified: 2026-06-21
+// Last Modified: 2026-07-10
 // =============================================================================
 
 #if UNITY_EDITOR
@@ -13,6 +13,7 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
+using SystemAssembly = System.Reflection.Assembly;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -84,6 +85,7 @@ namespace UnityCursorToolkit.MCP
 				case "sync_project_files":
 					return EditorValidationState.SyncProjectFilesOnly();
 				case "request_compile":
+					return EditorValidationState.RequestCompileOnly("mcp");
 				case "sync_and_compile":
 					return EditorValidationState.SyncAndRequestCompile("mcp");
 				default:
@@ -187,6 +189,7 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>JSON status after project-file synchronization.</returns>
 		internal static string SyncProjectFilesOnly()
 		{
+			ResetRequestState();
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
 			{
 				SetCompletedStatus("blocked", "Exit play mode before regenerating project files.", GetSyncMethod(), false);
@@ -195,7 +198,37 @@ namespace UnityCursorToolkit.MCP
 
 			AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
 			string syncMethod = SynchronizeProjectFiles();
+			if (string.IsNullOrEmpty(syncMethod))
+			{
+				SetCompletedStatus("failed", "Unity project-file synchronization is unavailable.", string.Empty, false);
+				return GetStatusJson();
+			}
+
 			SetCompletedStatus("succeeded", "Project files synchronized.", syncMethod, true);
+			return GetStatusJson();
+		}
+
+		/// <summary>
+		/// Requests script compilation without regenerating project files.
+		/// </summary>
+		/// <param name="trigger">Short source label for diagnostics.</param>
+		/// <returns>JSON status after the compile request is accepted or rejected.</returns>
+		internal static string RequestCompileOnly(string trigger)
+		{
+			ResetRequestState();
+			if (EditorApplication.isPlayingOrWillChangePlaymode)
+			{
+				SetCompletedStatus("blocked", "Exit play mode before requesting script compilation.", "not_requested", false);
+				return GetStatusJson();
+			}
+
+			if (EditorApplication.isCompiling)
+			{
+				SetRunningStatus("compiling", "Unity is already compiling. Poll editor_validation status for the result.", "existing_compile");
+				return GetStatusJson();
+			}
+
+			RequestScriptCompilation(trigger, "not_requested");
 			return GetStatusJson();
 		}
 
@@ -206,6 +239,7 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>JSON status after the compile request is accepted or rejected.</returns>
 		internal static string SyncAndRequestCompile(string trigger)
 		{
+			ResetRequestState();
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
 			{
 				SetCompletedStatus("blocked", "Exit play mode before requesting script compilation.", GetSyncMethod(), false);
@@ -214,18 +248,37 @@ namespace UnityCursorToolkit.MCP
 
 			if (EditorApplication.isCompiling)
 			{
-				SetRunningStatus("compiling", "Unity is already compiling. Poll editor_validation status for the result.", GetSyncMethod());
+				SetRunningStatus("compiling", "Unity is already compiling. Poll editor_validation status for the result.", "existing_compile");
 				return GetStatusJson();
 			}
 
 			AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
 			string syncMethod = SynchronizeProjectFiles();
-			SetRunningStatus("running", "Project files synchronized and script compilation requested by " + trigger + ".", syncMethod);
+			if (string.IsNullOrEmpty(syncMethod))
+			{
+				SetCompletedStatus("failed", "Unity project-file synchronization is unavailable; script compilation was not requested.", string.Empty, false);
+				return GetStatusJson();
+			}
+
+			RequestScriptCompilation(trigger, syncMethod);
+			return GetStatusJson();
+		}
+
+		/// <summary>
+		/// Starts an asynchronous script compilation request and schedules no-compile detection.
+		/// </summary>
+		/// <param name="trigger">Short source label for diagnostics.</param>
+		/// <param name="syncMethod">Project-file synchronization method, or not_requested.</param>
+		private static void RequestScriptCompilation(string trigger, string syncMethod)
+		{
+			string message = syncMethod == "not_requested"
+				? "Script compilation requested by " + trigger + "."
+				: "Project files synchronized and script compilation requested by " + trigger + ".";
+			SetRunningStatus("running", message, syncMethod);
 			CompilationPipeline.RequestScriptCompilation();
 			SessionState.SetString(CompileTimeoutAtKey, (EditorApplication.timeSinceStartup + NoCompileStartTimeoutSeconds).ToString(CultureInfo.InvariantCulture));
 			EditorApplication.update -= PollCompileStartTimeout;
 			EditorApplication.update += PollCompileStartTimeout;
-			return GetStatusJson();
 		}
 
 		/// <summary>
@@ -246,7 +299,7 @@ namespace UnityCursorToolkit.MCP
 		/// <param name="context">Unity compile context object.</param>
 		private static void OnCompilationStarted(object context)
 		{
-			if (SessionState.GetBool(PendingKey, false) == false)
+			if (!SessionState.GetBool(PendingKey, false))
 			{
 				return;
 			}
@@ -266,7 +319,7 @@ namespace UnityCursorToolkit.MCP
 		/// <param name="messages">Compiler diagnostics emitted for the assembly.</param>
 		private static void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] messages)
 		{
-			if (SessionState.GetBool(PendingKey, false) == false || messages == null)
+			if (!SessionState.GetBool(PendingKey, false) || messages == null)
 			{
 				return;
 			}
@@ -296,7 +349,7 @@ namespace UnityCursorToolkit.MCP
 		/// <param name="context">Unity compile context object.</param>
 		private static void OnCompilationFinished(object context)
 		{
-			if (SessionState.GetBool(PendingKey, false) == false)
+			if (!SessionState.GetBool(PendingKey, false))
 			{
 				return;
 			}
@@ -317,7 +370,7 @@ namespace UnityCursorToolkit.MCP
 		/// </summary>
 		private static void PollCompileStartTimeout()
 		{
-			if (SessionState.GetBool(PendingKey, false) == false)
+			if (!SessionState.GetBool(PendingKey, false))
 			{
 				EditorApplication.update -= PollCompileStartTimeout;
 				return;
@@ -343,7 +396,7 @@ namespace UnityCursorToolkit.MCP
 		/// </summary>
 		private static void UpdateTransientCompileStatus()
 		{
-			if (SessionState.GetBool(PendingKey, false) == false)
+			if (!SessionState.GetBool(PendingKey, false))
 			{
 				return;
 			}
@@ -372,7 +425,25 @@ namespace UnityCursorToolkit.MCP
 			SessionState.SetString(FinishedUtcKey, string.Empty);
 			SessionState.SetInt(ErrorCountKey, 0);
 			SessionState.SetInt(WarningCountKey, 0);
+			SessionState.SetString(CompileTimeoutAtKey, string.Empty);
 			WriteCurrentResult(true);
+		}
+
+		/// <summary>
+		/// Clears state that must not leak from an earlier validation request.
+		/// </summary>
+		private static void ResetRequestState()
+		{
+			SessionState.SetBool(PendingKey, false);
+			SessionState.SetBool(CompilationStartedKey, false);
+			SessionState.SetString(StatusKey, "idle");
+			SessionState.SetString(MessageKey, string.Empty);
+			SessionState.SetString(SyncMethodKey, string.Empty);
+			SessionState.SetString(RequestedUtcKey, DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+			SessionState.SetString(FinishedUtcKey, string.Empty);
+			SessionState.SetString(CompileTimeoutAtKey, string.Empty);
+			SessionState.SetInt(ErrorCountKey, 0);
+			SessionState.SetInt(WarningCountKey, 0);
 		}
 
 		/// <summary>
@@ -395,6 +466,7 @@ namespace UnityCursorToolkit.MCP
 			}
 
 			SessionState.SetString(FinishedUtcKey, DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture));
+			SessionState.SetString(CompileTimeoutAtKey, string.Empty);
 			WriteCurrentResult(success);
 		}
 
@@ -405,18 +477,18 @@ namespace UnityCursorToolkit.MCP
 		private static string SynchronizeProjectFiles()
 		{
 			string codeEditorSync = SynchronizeWithCurrentCodeEditor();
-			if (string.IsNullOrEmpty(codeEditorSync) == false)
+			if (!string.IsNullOrEmpty(codeEditorSync))
 			{
 				return codeEditorSync;
 			}
 
 			string syncVs = InvokeStaticUnityMethod("UnityEditor.SyncVS", "SyncSolution");
-			if (string.IsNullOrEmpty(syncVs) == false)
+			if (!string.IsNullOrEmpty(syncVs))
 			{
 				return syncVs;
 			}
 
-			return "unavailable";
+			return string.Empty;
 		}
 
 		/// <summary>
@@ -484,7 +556,7 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>Matching type or null.</returns>
 		private static Type FindType(string typeName)
 		{
-			Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+			SystemAssembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
 			for (int index = 0; index < assemblies.Length; index++)
 			{
 				Type type = assemblies[index].GetType(typeName);
@@ -571,7 +643,7 @@ namespace UnityCursorToolkit.MCP
 			}
 
 			double parsed;
-			if (double.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed) == false)
+			if (!double.TryParse(rawValue, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed))
 			{
 				return 0.0d;
 			}

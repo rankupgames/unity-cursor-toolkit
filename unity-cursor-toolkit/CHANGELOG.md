@@ -8,12 +8,14 @@ All notable changes to the Unity Cursor Toolkit VS Code/Cursor extension are doc
 
 - Added the `unity_context` MCP tool for scanning, summarizing, querying, and reading `.umetacontext/index.json`.
 - Added `game_command` support for `host: "editorBatchmode"` so non-rendering project-owned command workflows can run through Unity batchmode.
+- Added the discoverable `editor_validation` MCP tool for project-file regeneration, compile requests, and pollable validation status.
 - Added focused coverage for context indexing, batchmode command planning, and standalone MCP read-only behavior.
 
 ### Fixed
 
 - Hardened TCP attach so open Unity-related ports must answer the toolkit `ping`/`pong` handshake before the extension marks them connected.
 - Added a clearer attach failure message when an older Unity package exposes a port but does not support the required toolkit handshake.
+- Kept editor validation results request-scoped and fail-closed when Unity cannot synchronize project files.
 - Updated eligible transitive dev dependency resolutions for `hono` and `js-yaml` through npm's 7-day release-age gate.
 - Updated `form-data` and `undici` transitive dev dependency resolutions under an approved security-hotfix age-gate bypass.
 

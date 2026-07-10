@@ -1144,14 +1144,14 @@ async function testUnityMcpTools() {
 	console.log('\n── mcp/unityMcpTools.ts ──');
 	const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
 
-	test('getTools returns all 13 tool definitions with correct names', () => {
+	test('getTools returns all 14 tool definitions with correct names', () => {
 		const tools = new UnityMcpTools({ send() {}, request: async () => null });
 		const defs = tools.getTools();
-		assert.strictEqual(defs.length, 13);
+		assert.strictEqual(defs.length, 14);
 		const names = defs.map(d => d.name).sort();
 		assert.deepStrictEqual(names, [
-			'batch_execute', 'build_trigger', 'execute_menu_item',
-			'game_command',
+			'batch_execute', 'build_trigger', 'editor_validation',
+			'execute_menu_item', 'game_command',
 			'manage_asset', 'manage_component', 'manage_gameobject',
 			'manage_material', 'manage_scene', 'play_mode',
 			'profiler_snapshot', 'project_info', 'screenshot'
@@ -1203,6 +1203,18 @@ async function testUnityMcpTools() {
 		assert.ok(gameCommand.inputSchema.properties.runId);
 		assert.ok(gameCommand.inputSchema.properties.args);
 		assert.ok(gameCommand.inputSchema.properties.dryRun);
+	});
+
+	test('editor_validation schema exposes read and compile actions', () => {
+		const tools = new UnityMcpTools({ send() {}, request: async () => null });
+		const editorValidation = tools.getTools().find((def) => def.name === 'editor_validation');
+		assert.ok(editorValidation, 'editor_validation tool exists');
+		assert.ok(editorValidation.inputSchema.properties.action.enum.includes('list'));
+		assert.ok(editorValidation.inputSchema.properties.action.enum.includes('status'));
+		assert.ok(editorValidation.inputSchema.properties.action.enum.includes('sync_project_files'));
+		assert.ok(editorValidation.inputSchema.properties.action.enum.includes('request_compile'));
+		assert.ok(editorValidation.inputSchema.properties.action.enum.includes('sync_and_compile'));
+		assert.ok(editorValidation.inputSchema.properties.dryRun);
 	});
 
 	await testAsync('handleToolCall returns isError when Unity does not respond (null)', async () => {
@@ -1325,6 +1337,29 @@ async function testUnityMcpTools() {
 		assert.strictEqual(payload.dryRun, true);
 		assert.strictEqual(payload.toolName, 'manage_gameobject');
 		assert.deepStrictEqual(payload.args, { action: 'setTransform', name: 'Probe', localScale: [2, 3, 4] });
+	});
+
+	await testAsync('editor_validation dryRun blocks compile actions but forwards status', async () => {
+		const calls = [];
+		const tools = new UnityMcpTools({
+			send() {},
+			request: async (cmd, payload) => {
+				calls.push({ cmd, payload });
+				return { result: { success: true, status: 'idle' }, error: false };
+			}
+		});
+
+		const compileResult = await tools.handleToolCall('editor_validation', { action: 'sync_and_compile', dryRun: true });
+		const compilePayload = JSON.parse(compileResult.content[0].text);
+		assert.strictEqual(compilePayload.dryRun, true);
+		assert.strictEqual(compilePayload.toolName, 'editor_validation');
+		assert.deepStrictEqual(compilePayload.args, { action: 'sync_and_compile' });
+		assert.strictEqual(calls.length, 0);
+
+		await tools.handleToolCall('editor_validation', { action: 'status', dryRun: true });
+		assert.strictEqual(calls.length, 1);
+		assert.strictEqual(calls[0].payload.toolName, 'editor_validation');
+		assert.deepStrictEqual(calls[0].payload.args, { action: 'status' });
 	});
 
 	await testAsync('handleToolCall normalizes MCP schema args for Unity handlers', async () => {

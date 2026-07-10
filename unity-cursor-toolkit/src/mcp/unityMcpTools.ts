@@ -154,6 +154,22 @@ export class UnityMcpTools implements IToolProvider {
 				annotations: getToolAnnotations('project_info')
 			},
 			{
+				name: 'editor_validation',
+				title: 'Editor Validation',
+				description: 'Regenerate Unity project files, request script compilation, and poll the latest validation result.',
+				inputSchema: {
+					type: 'object',
+					properties: withDryRunProperty({
+						action: {
+							type: 'string',
+							enum: ['list', 'status', 'sync_project_files', 'request_compile', 'sync_and_compile'],
+							description: 'Editor validation action. Defaults to sync_and_compile.'
+						}
+					})
+				},
+				annotations: getToolAnnotations('editor_validation')
+			},
+			{
 				name: 'game_command',
 				title: 'Game Command',
 				description: 'List, schedule, poll, or cancel game-authored runtime commands and workflows registered inside the Unity project.',
