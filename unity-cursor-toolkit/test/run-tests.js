@@ -4,6 +4,8 @@
  * Run: node test/run-tests.js
  */
 
+// TODO: Split this oversized test suite into focused module-level test files.
+
 const assert = require('assert');
 const path = require('path');
 const fs = require('fs');
@@ -1223,6 +1225,7 @@ function testUnityProfilerSafetySource() {
 	const transcriptSource = fs.readFileSync(path.join(editorRoot, 'ConsoleTranscriptRecorder.cs'), 'utf8');
 	const hotReloadSource = fs.readFileSync(path.join(editorRoot, 'HotReloadHandler.cs'), 'utf8');
 	const validationSource = fs.readFileSync(path.join(editorRoot, 'MCP', 'EditorValidationTool.cs'), 'utf8');
+	const editorControlSource = fs.readFileSync(path.join(editorRoot, 'MCP', 'EditorControlTools.cs'), 'utf8');
 
 	test('background profiler is Play-Mode-only and not reconfigured from Tick', () => {
 		const tickStart = profilerSource.indexOf('private static void Tick()');
@@ -1248,6 +1251,32 @@ function testUnityProfilerSafetySource() {
 		const syncSource = validationSource.slice(syncStart, syncEnd);
 		assert.ok(syncSource.includes('AssetDatabase.Refresh'));
 		assert.ok(!syncSource.includes('RequestScriptCompilation('));
+	});
+
+	test('editor lifecycle saves scenes and assets before scheduling a normal exit', () => {
+		const lifecycleStart = editorControlSource.indexOf('internal sealed class EditorLifecycleTool');
+		const lifecycleEnd = editorControlSource.indexOf('[MCPTool("execute_menu_item")]', lifecycleStart);
+		const lifecycleSource = editorControlSource.slice(lifecycleStart, lifecycleEnd);
+		assert.ok(lifecycleSource.includes('EditorApplication.isPlayingOrWillChangePlaymode'));
+		assert.ok(lifecycleSource.includes('EditorApplication.isCompiling'));
+		assert.ok(lifecycleSource.includes('EditorApplication.isUpdating'));
+		assert.ok(lifecycleSource.includes('hasUntitledDirtyScene'));
+		assert.ok(lifecycleSource.includes('PrefabStageUtility.GetCurrentPrefabStage()'));
+		assert.ok(editorControlSource.includes('#if UNITY_2021_2_OR_NEWER'));
+		assert.ok(editorControlSource.includes('UnityEditor.Experimental.SceneManagement.PrefabStageUtility'));
+		assert.ok(lifecycleSource.includes('prefabStage.prefabAssetPath'));
+		assert.ok(lifecycleSource.includes('GetDirtyAssetPaths()'));
+		assert.ok(lifecycleSource.includes('IsWritableProjectAssetPath(path)'));
+		assert.ok(lifecycleSource.includes('dirtyScenes.Count > 0 && EditorSceneManager.SaveOpenScenes()'));
+		assert.ok(lifecycleSource.indexOf('EditorApplication.delayCall += QuitEditor') < lifecycleSource.indexOf('EditorApplication.Exit(0)'));
+		const quitStart = lifecycleSource.indexOf('private static void QuitEditor()');
+		const quitEnd = lifecycleSource.indexOf('private static bool TrySaveProject', quitStart);
+		assert.ok(lifecycleSource.slice(quitStart, quitEnd).includes('TrySaveProject(out _, out _, out error)'));
+		const saveAttemptStart = lifecycleSource.indexOf('private static bool TrySaveProject');
+		const saveAttemptEnd = lifecycleSource.indexOf('private static List<string> GetDirtySceneIdentifiers', saveAttemptStart);
+		const saveAttemptSource = lifecycleSource.slice(saveAttemptStart, saveAttemptEnd);
+		assert.ok(saveAttemptSource.indexOf('EditorSceneManager.SaveOpenScenes()') < saveAttemptSource.indexOf('AssetDatabase.SaveAssets()'));
+		assert.ok(saveAttemptSource.indexOf('AssetDatabase.SaveAssets()') < saveAttemptSource.indexOf('remainingDirtyAssets'));
 	});
 }
 
@@ -1459,14 +1488,15 @@ async function testToolRouter() {
 async function testUnityMcpTools() {
 	console.log('\n── mcp/unityMcpTools.ts ──');
 	const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
+	const { isDestructiveToolCall, isMutatingToolCall } = require(path.join(outDir, 'mcp', 'toolMetadata'));
 
-	test('getTools returns all 14 tool definitions with correct names', () => {
+	test('getTools returns all 15 tool definitions with correct names', () => {
 		const tools = new UnityMcpTools({ send() {}, request: async () => null });
 		const defs = tools.getTools();
-		assert.strictEqual(defs.length, 14);
+		assert.strictEqual(defs.length, 15);
 		const names = defs.map(d => d.name).sort();
 		assert.deepStrictEqual(names, [
-			'batch_execute', 'build_trigger', 'editor_validation',
+			'batch_execute', 'build_trigger', 'editor_lifecycle', 'editor_validation',
 			'execute_menu_item', 'game_command',
 			'manage_asset', 'manage_component', 'manage_gameobject',
 			'manage_material', 'manage_scene', 'play_mode',
@@ -1493,6 +1523,23 @@ async function testUnityMcpTools() {
 		assert.strictEqual(defs.manage_asset.annotations.destructiveHint, true);
 		assert.strictEqual(defs.profiler_snapshot.annotations.readOnlyHint, false);
 		assert.strictEqual(defs.profiler_snapshot.annotations.destructiveHint, true);
+		assert.strictEqual(defs.editor_lifecycle.annotations.readOnlyHint, false);
+		assert.strictEqual(defs.editor_lifecycle.annotations.destructiveHint, true);
+	});
+
+	test('editor_lifecycle schema exposes fail-closed save and quit actions', () => {
+		const tools = new UnityMcpTools({ send() {}, request: async () => null });
+		const editorLifecycle = tools.getTools().find((def) => def.name === 'editor_lifecycle');
+		assert.ok(editorLifecycle, 'editor_lifecycle tool exists');
+		assert.deepStrictEqual(editorLifecycle.inputSchema.properties.action.enum, ['status', 'save', 'saveAndQuit']);
+		assert.ok(editorLifecycle.inputSchema.properties.dryRun);
+	});
+
+	test('editor_lifecycle metadata keeps status readable and saveAndQuit destructive', () => {
+		assert.strictEqual(isMutatingToolCall('editor_lifecycle', { action: 'status' }), false);
+		assert.strictEqual(isMutatingToolCall('editor_lifecycle', { action: 'save' }), true);
+		assert.strictEqual(isDestructiveToolCall('editor_lifecycle', { action: 'save' }), false);
+		assert.strictEqual(isDestructiveToolCall('editor_lifecycle', { action: 'saveAndQuit' }), true);
 	});
 
 	test('profiler_snapshot schema exposes session actions and detail options', () => {

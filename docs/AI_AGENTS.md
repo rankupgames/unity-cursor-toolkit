@@ -13,6 +13,7 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 - Resolve Unity `.meta` files with `resolve_meta`.
 - Discover and schedule game-authored runtime workflows with `game_command`.
 - Regenerate project files and verify script compilation with `editor_validation`.
+- Inspect save state, save all open scenes and assets, and close Unity safely with `editor_lifecycle`.
 - Control play mode, capture screenshots, execute menu items, manage assets, edit GameObjects/components, and trigger builds when allowed.
 
 ## Safe Default Workflow
@@ -27,6 +28,7 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 8. After generated C# or project-file changes, preview `editor_validation` with `action: "sync_and_compile"` and `dryRun: true`, then run it and poll `action: "status"` until `pending` is false.
 9. Use `dryRun: true` for the first mutating call.
 10. Execute the real mutating call only after the user has approved the intended change.
+11. Before closing or restarting a user editor, exit Play Mode, call `editor_lifecycle` with `action: "status"`, preview `action: "saveAndQuit"` with `dryRun: true`, then run it and wait for Unity's normal process exit.
 
 ## Safety Controls
 
@@ -38,6 +40,8 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 - `profiler_snapshot` read actions are allowed in read-only mode, including `readConsoleTranscript`. Saving or clearing retained profiler sessions is treated as mutating.
 - `game_command` read actions are `list` and `status`; scheduling and cancellation are mutating because they execute or stop game code.
 - `editor_validation` read actions are `list` and `status`; project-file synchronization and compile requests are mutating and support `dryRun`.
+- `editor_lifecycle` action `status` is read-only. `save` and `saveAndQuit` are mutating; `saveAndQuit` closes the editor only after dirty scenes and loaded persistent assets no longer report unsaved changes. Prefab Mode must be closed manually first.
+- Never force-terminate a user editor process. If the bridge cannot save, leave Unity open unless the user explicitly accepts the unsaved-work risk.
 
 ## Runtime Game Commands
 

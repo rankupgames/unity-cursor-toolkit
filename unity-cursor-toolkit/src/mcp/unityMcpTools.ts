@@ -127,6 +127,23 @@ export class UnityMcpTools implements IToolProvider {
 				annotations: getToolAnnotations('play_mode')
 			},
 			{
+				name: 'editor_lifecycle',
+				title: 'Editor Lifecycle',
+				description: 'Inspect save state, save every open scene and project asset, or save and quit Unity safely.',
+				inputSchema: {
+					type: 'object',
+					properties: withDryRunProperty({
+						action: {
+							type: 'string',
+							enum: ['status', 'save', 'saveAndQuit'],
+							description: 'Use saveAndQuit instead of terminating a user editor process.'
+						}
+					}),
+					required: ['action']
+				},
+				annotations: getToolAnnotations('editor_lifecycle')
+			},
+			{
 				name: 'execute_menu_item',
 				title: 'Execute Menu Item',
 				description: 'Execute any Unity menu command by its path (e.g. "Window/General/Console").',
