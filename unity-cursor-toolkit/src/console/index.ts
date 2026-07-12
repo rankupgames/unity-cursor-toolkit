@@ -13,6 +13,8 @@ import { ConsolePanelProvider } from './consolePanel';
 import { ConsoleMcpTools } from './consoleMcpTools';
 import { ConnectionState } from '../core/types';
 
+const MAX_OUTPUT_ENTRIES = 1_000;
+
 export class ConsoleModule implements IModule {
 
 	public readonly id = 'console';
@@ -20,6 +22,7 @@ export class ConsoleModule implements IModule {
 	private bridge: ConsoleBridge | undefined;
 	private provider: ConsolePanelProvider | undefined;
 	private outputChannel: vscode.OutputChannel | undefined;
+	private outputEntryCount = 0;
 	private disposables: vscode.Disposable[] = [];
 	private moduleContext: ModuleContext | undefined;
 
@@ -35,14 +38,20 @@ export class ConsoleModule implements IModule {
 			this.outputChannel,
 			vscode.window.registerWebviewViewProvider(ConsolePanelProvider.viewId, this.provider),
 			this.bridge.onEntry((entry) => {
+				if (this.outputEntryCount >= MAX_OUTPUT_ENTRIES) {
+					this.outputChannel?.clear();
+					this.outputEntryCount = 0;
+				}
 				const prefix = `[${entry.type.toUpperCase()}]`;
 				this.outputChannel?.appendLine(`${prefix} [${entry.timestamp}] ${entry.message}`);
 				if (entry.stackTrace) {
 					this.outputChannel?.appendLine(entry.stackTrace);
 				}
+				this.outputEntryCount++;
 			}),
 			this.bridge.onClear(() => {
 				this.outputChannel?.clear();
+				this.outputEntryCount = 0;
 			})
 		);
 
@@ -89,6 +98,7 @@ export class ConsoleModule implements IModule {
 			d.dispose();
 		}
 		this.disposables.length = 0;
+		this.outputEntryCount = 0;
 	}
 
 	private async captureUnityProfilerSnapshot(): Promise<string | null> {
@@ -102,7 +112,7 @@ export class ConsoleModule implements IModule {
 				action: 'current',
 				format: 'markdown',
 				includeConsole: true,
-				includeRaw: true
+				includeRaw: false
 			}
 		});
 

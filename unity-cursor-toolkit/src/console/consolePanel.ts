@@ -11,8 +11,6 @@ import * as path from 'path';
 import { ConsoleBridge } from './consoleBridge';
 import type { ConsoleEntry } from '../core/types';
 
-const DEFAULT_MAX_ENTRIES = 10_000;
-
 export type UnityProfilerSnapshotProvider = () => Promise<string | null>;
 
 interface ConsoleWebviewMessage {
@@ -29,7 +27,6 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	private readonly bridge: ConsoleBridge;
 	private readonly unityProfilerSnapshotProvider: UnityProfilerSnapshotProvider | undefined;
 	private currentView: vscode.WebviewView | undefined;
-	private entries: ConsoleEntry[] = [];
 	private disposables: vscode.Disposable[] = [];
 
 	constructor(bridge: ConsoleBridge, unityProfilerSnapshotProvider?: UnityProfilerSnapshotProvider) {
@@ -38,15 +35,9 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 
 		this.disposables.push(
 			bridge.onEntry((entry) => {
-				const maxEntries = this.getMaxEntries();
-				this.entries.push(entry);
-				if (this.entries.length > maxEntries) {
-					this.entries.shift();
-				}
 				this.postEntry(entry);
 			}),
 			bridge.onClear(() => {
-				this.entries = [];
 				this.currentView?.webview.postMessage({ type: 'clear' });
 			})
 		);
@@ -75,9 +66,10 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	}
 
 	public async copyToClipboard(): Promise<void> {
-		const content = this.formatEntries(this.entries);
+		const entries = this.bridge.getEntries();
+		const content = this.formatEntries(entries);
 		await vscode.env.clipboard.writeText(content);
-		vscode.window.showInformationMessage(`${this.entries.length} console entries copied to clipboard.`);
+		vscode.window.showInformationMessage(`${entries.length} console entries copied to clipboard.`);
 	}
 
 	public async snapshot(): Promise<void> {
@@ -92,9 +84,10 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 			console.warn(`[ConsolePanel] Unity profiler snapshot unavailable: ${error instanceof Error ? error.message : String(error)}`);
 		}
 
-		const errors = this.entries.filter((e) => e.type === 'error' || e.type === 'exception');
-		const warnings = this.entries.filter((e) => e.type === 'warning');
-		const recent = this.entries.slice(-10);
+		const entries = this.bridge.getEntries();
+		const errors = entries.filter((e) => e.type === 'error' || e.type === 'exception');
+		const warnings = entries.filter((e) => e.type === 'warning');
+		const recent = entries.slice(-10);
 
 		const lines: string[] = [
 			'## Unity Console Snapshot',
@@ -154,16 +147,17 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 			return;
 		}
 
+		const entries = this.bridge.getEntries();
 		let content: string;
 		if (uri.fsPath.endsWith('.json')) {
-			content = JSON.stringify(this.entries, null, 2);
+			content = JSON.stringify(entries, null, 2);
 		} else {
-			content = this.formatEntries(this.entries);
+			content = this.formatEntries(entries);
 		}
 
 		const fs = await import('fs');
 		await fs.promises.writeFile(uri.fsPath, content, 'utf-8');
-		vscode.window.showInformationMessage(`Exported ${this.entries.length} entries to ${uri.fsPath}`);
+		vscode.window.showInformationMessage(`Exported ${entries.length} entries to ${uri.fsPath}`);
 	}
 
 	public dispose(): void {
@@ -185,8 +179,9 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 				this.clear();
 				return;
 			case 'sendToChat': {
-				const content = this.formatEntries(this.entries);
-				await this.bridge.sendToChat(content, this.entries.length);
+				const entries = this.bridge.getEntries();
+				const content = this.formatEntries(entries);
+				await this.bridge.sendToChat(content, entries.length);
 				return;
 			}
 			case 'copy':
@@ -253,11 +248,11 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	}
 
 	private postEntry(entry: ConsoleEntry): void {
-		this.currentView?.webview.postMessage({ type: 'entry', entry });
+		this.currentView?.webview.postMessage({ type: 'entry', entry, maxEntries: this.bridge.getMaxEntries() });
 	}
 
 	private postAllEntries(): void {
-		this.currentView?.webview.postMessage({ type: 'bulk', entries: this.entries });
+		this.currentView?.webview.postMessage({ type: 'bulk', entries: this.bridge.getEntries(), maxEntries: this.bridge.getMaxEntries() });
 	}
 
 	private formatEntries(entries: ConsoleEntry[]): string {
@@ -274,6 +269,7 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 
 	private getHtml(webview: vscode.Webview): string {
 		const nonce = ConsolePanelProvider.createNonce();
+		const maxEntries = this.bridge.getMaxEntries();
 		const csp = [
 			"default-src 'none'",
 			`style-src ${webview.cspSource} 'nonce-${nonce}'`,
@@ -352,10 +348,12 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 		const countEl = document.getElementById('count');
 		const filterEl = document.getElementById('filter');
 		const searchEl = document.getElementById('search');
+		let maxEntries = ${maxEntries};
 		let entries = [];
 		let autoScroll = true;
 		let searchTerm = '';
 		let searchTimer = null;
+		let visibleCount = 0;
 
 		function escapeHtml(s) {
 			var d = document.createElement('div');
@@ -394,18 +392,30 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 			return div;
 		}
 
-		function applyFilter() {
+		function entryIsVisible(el) {
 			var f = filterEl.value;
+			var typeMatch = f === 'all' || el.dataset.type === f || (f === 'error' && el.dataset.type === 'exception');
+			var searchMatch = searchTerm.length === 0 || (el.dataset.search || '').includes(searchTerm.toLowerCase());
+			return typeMatch && searchMatch;
+		}
+
+		function applyFilterToEntry(el) {
+			var show = entryIsVisible(el);
+			el.style.display = show ? '' : 'none';
+			return show;
+		}
+
+		function updateCount() {
+			countEl.textContent = visibleCount + '/' + entries.length;
+		}
+
+		function applyFilter() {
 			var all = logArea.querySelectorAll('.log-entry');
-			var visible = 0;
+			visibleCount = 0;
 			all.forEach(function(el) {
-				var typeMatch = f === 'all' || el.dataset.type === f || (f === 'error' && el.dataset.type === 'exception');
-				var searchMatch = searchTerm.length === 0 || (el.dataset.search || '').includes(searchTerm.toLowerCase());
-				var show = typeMatch && searchMatch;
-				el.style.display = show ? '' : 'none';
-				if (show) visible++;
+				if (applyFilterToEntry(el)) visibleCount++;
 			});
-			countEl.textContent = visible + '/' + entries.length;
+			updateCount();
 		}
 
 		function rebuildAll() {
@@ -413,6 +423,7 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 			if (entries.length === 0) {
 				logArea.innerHTML = '<div class="empty">Waiting for Unity console output...</div>';
 				countEl.textContent = '0';
+				visibleCount = 0;
 				return;
 			}
 			entries.forEach(function(e) { logArea.appendChild(renderEntry(e)); });
@@ -422,10 +433,22 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 
 		function addEntry(e) {
 			entries.push(e);
+			var overflow = Math.max(0, entries.length - maxEntries);
+			if (overflow > 0) entries.splice(0, overflow);
+
+			for (var i = 0; i < overflow; i++) {
+				var oldest = logArea.querySelector('.log-entry');
+				if (!oldest) break;
+				if (oldest.style.display !== 'none') visibleCount--;
+				oldest.remove();
+			}
+
 			var el = document.querySelector('.empty');
 			if (el) el.remove();
-			logArea.appendChild(renderEntry(e));
-			applyFilter();
+			var rendered = renderEntry(e);
+			logArea.appendChild(rendered);
+			if (applyFilterToEntry(rendered)) visibleCount++;
+			updateCount();
 			if (autoScroll) logArea.scrollTop = logArea.scrollHeight;
 		}
 
@@ -472,13 +495,17 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 
 		window.addEventListener('message', function(event) {
 			var msg = event.data || {};
+			if (Number.isFinite(msg.maxEntries)) {
+				maxEntries = Math.min(1000, Math.max(1, Math.floor(msg.maxEntries)));
+			}
 			if (msg.type === 'entry') {
 				addEntry(msg.entry);
 			} else if (msg.type === 'bulk') {
-				entries = msg.entries || [];
+				entries = (msg.entries || []).slice(-maxEntries);
 				rebuildAll();
 			} else if (msg.type === 'clear') {
 				entries = [];
+				visibleCount = 0;
 				logArea.innerHTML = '<div class="empty">Cleared</div>';
 				countEl.textContent = '0';
 			}
@@ -493,15 +520,6 @@ export class ConsolePanelProvider implements vscode.WebviewViewProvider {
 	private toLineNumber(value: unknown): number {
 		const line = typeof value === 'number' ? value : Number(value);
 		return Number.isFinite(line) ? line : 1;
-	}
-
-	private getMaxEntries(): number {
-		const configured = vscode.workspace.getConfiguration('unityCursorToolkit.console').get<number>('maxEntries', DEFAULT_MAX_ENTRIES);
-		if (Number.isFinite(configured) === false || configured < 1) {
-			return DEFAULT_MAX_ENTRIES;
-		}
-
-		return Math.floor(configured);
 	}
 
 	private static isPathInsideWorkspace(workspacePath: string, targetPath: string): boolean {

@@ -16,11 +16,16 @@ namespace UnityCursorToolkit
 {
 	internal static class ConsoleTranscriptRecorder
 	{
-		private static readonly List<ConsoleTranscriptEntry> entries = new List<ConsoleTranscriptEntry>();
+		private const int MaxEntryCount = 1000;
+		private const int MaxMessageLength = 2048;
+		private const int MaxStackTraceLength = 4096;
+
+		private static readonly Queue<ConsoleTranscriptEntry> entries = new Queue<ConsoleTranscriptEntry>();
 		private static readonly object syncRoot = new object();
 
 		private static DateTime sessionStartedAtUtc = DateTime.UtcNow;
 		private static int entryCounter;
+		private static bool trimmed;
 
 		internal static void Reset(DateTime startedAtUtc)
 		{
@@ -29,6 +34,7 @@ namespace UnityCursorToolkit
 				sessionStartedAtUtc = startedAtUtc;
 				entries.Clear();
 				entryCounter = 0;
+				trimmed = false;
 			}
 		}
 
@@ -38,8 +44,10 @@ namespace UnityCursorToolkit
 			{
 				DateTime nowUtc = DateTime.UtcNow;
 				string entryType = ToConsoleType(type);
-				string entryMessage = (message ?? string.Empty).Trim();
-				string entryStackTrace = stackTrace ?? string.Empty;
+				bool messageTrimmed;
+				bool stackTraceTrimmed;
+				string entryMessage = LimitLength(message, MaxMessageLength, out messageTrimmed).Trim();
+				string entryStackTrace = LimitLength(stackTrace, MaxStackTraceLength, out stackTraceTrimmed);
 				string entryFirstFrame = ExtractFirstFrame(entryStackTrace);
 				ConsoleTranscriptEntry entry = new ConsoleTranscriptEntry
 				{
@@ -53,16 +61,27 @@ namespace UnityCursorToolkit
 					firstFrame = entryFirstFrame
 				};
 
-				entries.Add(entry);
+				entries.Enqueue(entry);
+				if (messageTrimmed || stackTraceTrimmed)
+				{
+					trimmed = true;
+				}
+				while (entries.Count > MaxEntryCount)
+				{
+					entries.Dequeue();
+					trimmed = true;
+				}
 			}
 		}
 
 		internal static ConsoleTranscript Capture(string sessionId, string startedUtc, string capturedUtc, string transcriptPath)
 		{
 			List<ConsoleTranscriptEntry> snapshotEntries;
+			bool snapshotTrimmed;
 			lock (syncRoot)
 			{
 				snapshotEntries = new List<ConsoleTranscriptEntry>(entries);
+				snapshotTrimmed = trimmed;
 			}
 
 			return new ConsoleTranscript
@@ -71,10 +90,17 @@ namespace UnityCursorToolkit
 				startedUtc = startedUtc,
 				capturedUtc = capturedUtc,
 				transcriptPath = transcriptPath,
-				trimmed = false,
+				trimmed = snapshotTrimmed,
 				entries = snapshotEntries,
 				groups = BuildLogGroups(snapshotEntries)
 			};
+		}
+
+		private static string LimitLength(string value, int limit, out bool wasTrimmed)
+		{
+			string normalized = value ?? string.Empty;
+			wasTrimmed = normalized.Length > limit;
+			return wasTrimmed ? normalized.Substring(0, limit) : normalized;
 		}
 
 		private static List<ConsoleLogGroup> BuildLogGroups(List<ConsoleTranscriptEntry> snapshotEntries)

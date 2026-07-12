@@ -196,6 +196,12 @@ namespace UnityCursorToolkit.MCP
 				return GetStatusJson();
 			}
 
+			if (EditorApplication.isCompiling || EditorApplication.isUpdating)
+			{
+				SetCompletedStatus("blocked", "Unity is compiling or importing assets. Retry project-file synchronization when the editor is idle.", GetSyncMethod(), false);
+				return GetStatusJson();
+			}
+
 			AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
 			string syncMethod = SynchronizeProjectFiles();
 			if (string.IsNullOrEmpty(syncMethod))
@@ -252,7 +258,12 @@ namespace UnityCursorToolkit.MCP
 				return GetStatusJson();
 			}
 
-			AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+			if (EditorApplication.isUpdating)
+			{
+				SetCompletedStatus("blocked", "Unity is importing assets. Retry sync_and_compile when the editor is idle.", "existing_import", false);
+				return GetStatusJson();
+			}
+
 			string syncMethod = SynchronizeProjectFiles();
 			if (string.IsNullOrEmpty(syncMethod))
 			{
@@ -260,8 +271,30 @@ namespace UnityCursorToolkit.MCP
 				return GetStatusJson();
 			}
 
-			RequestScriptCompilation(trigger, syncMethod);
+			TrackRefreshCompilation(trigger, syncMethod);
+			try
+			{
+				AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport | ImportAssetOptions.ForceUpdate);
+			}
+			catch (Exception exception)
+			{
+				SetCompletedStatus("failed", "Unity asset refresh failed: " + exception.Message, syncMethod, false);
+			}
+
 			return GetStatusJson();
+		}
+
+		/// <summary>
+		/// Tracks compilation caused by an asset refresh without requesting a redundant second compile pass.
+		/// </summary>
+		/// <param name="trigger">Short source label for diagnostics.</param>
+		/// <param name="syncMethod">Project-file synchronization method used for the request.</param>
+		private static void TrackRefreshCompilation(string trigger, string syncMethod)
+		{
+			SetRunningStatus("running", "Project files synchronized and changed scripts are being imported for " + trigger + ".", syncMethod);
+			SessionState.SetString(CompileTimeoutAtKey, (EditorApplication.timeSinceStartup + NoCompileStartTimeoutSeconds).ToString(CultureInfo.InvariantCulture));
+			EditorApplication.update -= PollCompileStartTimeout;
+			EditorApplication.update += PollCompileStartTimeout;
 		}
 
 		/// <summary>
@@ -376,8 +409,24 @@ namespace UnityCursorToolkit.MCP
 				return;
 			}
 
-			if (SessionState.GetBool(CompilationStartedKey, false) || EditorApplication.isCompiling)
+			if (EditorApplication.isCompiling)
 			{
+				return;
+			}
+
+			if (SessionState.GetBool(CompilationStartedKey, false))
+			{
+				int errorCount = SessionState.GetInt(ErrorCountKey, 0);
+				if (errorCount > 0 || EditorUtility.scriptCompilationFailed)
+				{
+					SetCompletedStatus("failed", "Script compilation finished with compiler errors.", GetSyncMethod(), false);
+				}
+				else
+				{
+					SetCompletedStatus("succeeded", "Script compilation finished successfully.", GetSyncMethod(), true);
+				}
+
+				EditorApplication.update -= PollCompileStartTimeout;
 				return;
 			}
 

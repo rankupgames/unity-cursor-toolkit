@@ -9,7 +9,11 @@ import * as vscode from 'vscode';
 import type { IConnectionManager } from '../core/interfaces';
 import type { ConsoleEntry, IncomingMessage } from '../core/types';
 
-const DEFAULT_MAX_ENTRIES = 10_000;
+const DEFAULT_MAX_ENTRIES = 1_000;
+const MAX_CONSOLE_ENTRIES = 1_000;
+const MAX_MESSAGE_CHARS = 4_096;
+const MAX_STACK_TRACE_CHARS = 16_384;
+const TRUNCATION_SUFFIX = '… [truncated]';
 
 export interface ConsoleFilterOptions {
 	level?: string;
@@ -33,6 +37,8 @@ export class ConsoleBridge implements vscode.Disposable {
 	public readonly onClear: vscode.Event<void> = this._onClear.event;
 
 	private entries: ConsoleEntry[] = [];
+	private nextEntryIndex = 0;
+	private maxEntries = DEFAULT_MAX_ENTRIES;
 	private disposables: vscode.Disposable[] = [];
 
 	constructor(connection: IConnectionManager) {
@@ -42,7 +48,8 @@ export class ConsoleBridge implements vscode.Disposable {
 	}
 
 	public getEntries(options?: ConsoleFilterOptions): ConsoleEntry[] {
-		let result = [...this.entries];
+		this.syncMaxEntries();
+		let result = this.getOrderedEntries();
 
 		if (options?.level) {
 			result = result.filter((e) => e.type === options.level);
@@ -60,7 +67,12 @@ export class ConsoleBridge implements vscode.Disposable {
 
 	public clearEntries(): void {
 		this.entries = [];
+		this.nextEntryIndex = 0;
 		this._onClear.fire();
+	}
+
+	public getMaxEntries(): number {
+		return this.readMaxEntries();
 	}
 
 	public dispose(): void {
@@ -98,16 +110,13 @@ export class ConsoleBridge implements vscode.Disposable {
 		if (msg.command === 'consoleEntry') {
 			const entry: ConsoleEntry = {
 				type: this.mapLogType(this.getPayloadString(msg.payload.type)),
-				message: this.getPayloadString(msg.payload.message) ?? '',
-				stackTrace: this.getPayloadString(msg.payload.stackTrace) ?? '',
+				message: this.truncateText(this.getPayloadString(msg.payload.message) ?? '', MAX_MESSAGE_CHARS),
+				stackTrace: this.truncateText(this.getPayloadString(msg.payload.stackTrace) ?? '', MAX_STACK_TRACE_CHARS),
 				timestamp: this.getPayloadString(msg.payload.timestamp) ?? new Date().toISOString()
 			};
 
-			const maxEntries = this.getMaxEntries();
-			this.entries.push(entry);
-			if (this.entries.length > maxEntries) {
-				this.entries.shift();
-			}
+			this.syncMaxEntries();
+			this.addEntry(entry);
 
 			this._onEntry.fire(entry);
 		} else if (msg.command === 'consoleToCursor') {
@@ -121,13 +130,46 @@ export class ConsoleBridge implements vscode.Disposable {
 		}
 	}
 
-	private getMaxEntries(): number {
+	private addEntry(entry: ConsoleEntry): void {
+		if (this.entries.length < this.maxEntries) {
+			this.entries.push(entry);
+			return;
+		}
+
+		this.entries[this.nextEntryIndex] = entry;
+		this.nextEntryIndex = (this.nextEntryIndex + 1) % this.maxEntries;
+	}
+
+	private getOrderedEntries(): ConsoleEntry[] {
+		if (this.entries.length < this.maxEntries || this.nextEntryIndex === 0) {
+			return [...this.entries];
+		}
+
+		return [
+			...this.entries.slice(this.nextEntryIndex),
+			...this.entries.slice(0, this.nextEntryIndex)
+		];
+	}
+
+	private syncMaxEntries(): void {
+		const configuredMax = this.readMaxEntries();
+		if (configuredMax === this.maxEntries) {
+			return;
+		}
+
+		const retained = this.getOrderedEntries().slice(-configuredMax);
+		this.entries = retained;
+		this.nextEntryIndex = 0;
+		this.maxEntries = configuredMax;
+	}
+
+	private readMaxEntries(): number {
 		const configured = vscode.workspace.getConfiguration('unityCursorToolkit.console').get<number>('maxEntries', DEFAULT_MAX_ENTRIES);
 		if (Number.isFinite(configured) === false || configured < 1) {
 			return DEFAULT_MAX_ENTRIES;
 		}
 
-		return Math.floor(configured);
+		return Math.min(Math.floor(configured), MAX_CONSOLE_ENTRIES);
 	}
 
 	private getPayloadString(value: unknown): string | undefined {
@@ -136,6 +178,14 @@ export class ConsoleBridge implements vscode.Disposable {
 
 	private getPayloadNumber(value: unknown): number | undefined {
 		return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
+	}
+
+	private truncateText(value: string, maxChars: number): string {
+		if (value.length <= maxChars) {
+			return value;
+		}
+
+		return value.slice(0, maxChars - TRUNCATION_SUFFIX.length) + TRUNCATION_SUFFIX;
 	}
 
 	private mapLogType(raw: string | undefined): ConsoleEntry['type'] {

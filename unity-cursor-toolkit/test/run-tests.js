@@ -14,11 +14,12 @@ const { EventEmitter } = require('events');
 
 // ── vscode mock ──────────────────────────────────────────────────────────────
 
-function createMockFileSystemWatcher() {
+function createMockFileSystemWatcher(globPattern) {
 	const changeEmitter = new MockEventEmitter();
 	const deleteEmitter = new MockEventEmitter();
 	const createEmitter = new MockEventEmitter();
 	return {
+		globPattern,
 		onDidChange: changeEmitter.event,
 		onDidCreate: createEmitter.event,
 		onDidDelete: deleteEmitter.event,
@@ -38,6 +39,7 @@ class MockEventEmitter {
 
 let _lastCreatedWatcher = null;
 let _allCreatedWatchers = [];
+let _lastOutputChannel = null;
 
 function createMockExtensionContext(tmpDir) {
 	const state = {};
@@ -67,8 +69,8 @@ const vscode = {
 			update: async () => {}
 		}),
 		workspaceFolders: null,
-		createFileSystemWatcher: () => {
-			_lastCreatedWatcher = createMockFileSystemWatcher();
+		createFileSystemWatcher: (globPattern) => {
+			_lastCreatedWatcher = createMockFileSystemWatcher(globPattern);
 			_allCreatedWatchers.push(_lastCreatedWatcher);
 			return _lastCreatedWatcher;
 		},
@@ -78,9 +80,16 @@ const vscode = {
 		createStatusBarItem: () => ({
 			show() {}, hide() {}, text: '', tooltip: '', command: '', color: undefined, backgroundColor: undefined
 		}),
-		createOutputChannel: () => ({
-			appendLine() {}, clear() {}, dispose() {}
-		}),
+		createOutputChannel: () => {
+			_lastOutputChannel = {
+				lines: [],
+				clearCount: 0,
+				appendLine(line) { this.lines.push(line); },
+				clear() { this.lines = []; this.clearCount++; },
+				dispose() {}
+			};
+			return _lastOutputChannel;
+		},
 		showInformationMessage: async () => undefined,
 		showWarningMessage: async () => undefined,
 		showErrorMessage: async () => undefined,
@@ -969,6 +978,32 @@ function testConsoleBridge() {
 		bridge.dispose();
 	});
 
+	test('console retention hard-caps oversized configuration at 1000 entries', () => {
+		const origGetConfig = vscode.workspace.getConfiguration;
+		vscode.workspace.getConfiguration = () => ({
+			get: (key, def) => key === 'maxEntries' ? 100_000 : def
+		});
+
+		const emitter = new vscode.EventEmitter();
+		const bridge = new ConsoleBridge({ onMessage: emitter.event });
+
+		for (let i = 0; i < 1_010; i++) {
+			emitter.fire({
+				command: 'consoleEntry',
+				payload: { command: 'consoleEntry', type: 'Log', message: `msg${i}`, stackTrace: '', timestamp: `t${i}` }
+			});
+		}
+
+		const entries = bridge.getEntries();
+		assert.strictEqual(bridge.getMaxEntries(), 1_000);
+		assert.strictEqual(entries.length, 1_000);
+		assert.strictEqual(entries[0].message, 'msg10');
+		assert.strictEqual(entries[999].message, 'msg1009');
+
+		vscode.workspace.getConfiguration = origGetConfig;
+		bridge.dispose();
+	});
+
 	test('consoleEntry normalizes malformed payload fields', () => {
 		const emitter = new vscode.EventEmitter();
 		const bridge = new ConsoleBridge({ onMessage: emitter.event });
@@ -986,6 +1021,29 @@ function testConsoleBridge() {
 		assert.ok(typeof entries[0].timestamp === 'string' && entries[0].timestamp.length > 0);
 		assert.doesNotThrow(() => bridge.getEntries({ search: 'anything' }));
 
+		bridge.dispose();
+	});
+
+	test('consoleEntry bounds oversized message and stack trace strings', () => {
+		const emitter = new vscode.EventEmitter();
+		const bridge = new ConsoleBridge({ onMessage: emitter.event });
+
+		emitter.fire({
+			command: 'consoleEntry',
+			payload: {
+				command: 'consoleEntry',
+				type: 'Error',
+				message: 'm'.repeat(10_000),
+				stackTrace: 's'.repeat(50_000),
+				timestamp: 't'
+			}
+		});
+
+		const [entry] = bridge.getEntries();
+		assert.strictEqual(entry.message.length, 4_096);
+		assert.strictEqual(entry.stackTrace.length, 16_384);
+		assert.ok(entry.message.endsWith('… [truncated]'));
+		assert.ok(entry.stackTrace.endsWith('… [truncated]'));
 		bridge.dispose();
 	});
 
@@ -1156,6 +1214,92 @@ function testConsoleBridge() {
 		vscode.workspace.getConfiguration = origGetConfig;
 		bridge.dispose();
 	});
+}
+
+function testUnityProfilerSafetySource() {
+	console.log('\n── Unity editor profiler safety contracts ──');
+	const editorRoot = path.join(__dirname, '..', '..', 'Packages', 'com.rankupgames.unity-cursor-toolkit', 'Editor');
+	const profilerSource = fs.readFileSync(path.join(editorRoot, 'ProfilerSnapshot.cs'), 'utf8');
+	const transcriptSource = fs.readFileSync(path.join(editorRoot, 'ConsoleTranscriptRecorder.cs'), 'utf8');
+	const hotReloadSource = fs.readFileSync(path.join(editorRoot, 'HotReloadHandler.cs'), 'utf8');
+	const validationSource = fs.readFileSync(path.join(editorRoot, 'MCP', 'EditorValidationTool.cs'), 'utf8');
+
+	test('background profiler is Play-Mode-only and not reconfigured from Tick', () => {
+		const tickStart = profilerSource.indexOf('private static void Tick()');
+		const tickEnd = profilerSource.indexOf('private static void OnPlayModeStateChanged', tickStart);
+		const tickSource = profilerSource.slice(tickStart, tickEnd);
+		assert.ok(tickSource.includes('EditorApplication.isPlaying == false'));
+		assert.ok(!tickSource.includes('ConfigureProfilerDriver'));
+		assert.ok(!profilerSource.includes('CaptureCurrentSession(true)'));
+	});
+
+	test('console transcripts and temporary profiler storage have hard limits', () => {
+		assert.ok(transcriptSource.includes('private const int MaxEntryCount = 1000;'));
+		assert.ok(transcriptSource.includes('Queue<ConsoleTranscriptEntry>'));
+		assert.ok(transcriptSource.includes('LimitLength(message, MaxMessageLength'));
+		assert.ok(profilerSource.includes('private const long MaxTempSessionBytes = 64L * 1024L * 1024L;'));
+	});
+
+	test('refresh handling avoids duplicate compilation and bounds queued message bytes', () => {
+		assert.ok(hotReloadSource.includes('private const int MAX_QUEUED_MESSAGE_CHARACTERS = 4 * 1024 * 1024;'));
+		assert.ok(hotReloadSource.includes('EnqueueMessage(line);'));
+		const syncStart = validationSource.indexOf('internal static string SyncAndRequestCompile');
+		const syncEnd = validationSource.indexOf('private static void TrackRefreshCompilation', syncStart);
+		const syncSource = validationSource.slice(syncStart, syncEnd);
+		assert.ok(syncSource.includes('AssetDatabase.Refresh'));
+		assert.ok(!syncSource.includes('RequestScriptCompilation('));
+	});
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// console/index.ts
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+async function testConsoleModuleRetention() {
+	console.log('\n── console/index.ts ──');
+	const { ConsoleModule } = require(path.join(outDir, 'console', 'index'));
+	const { ConnectionState } = require(path.join(outDir, 'core', 'types'));
+	const messageEmitter = new MockEventEmitter();
+	const requests = [];
+	const module = new ConsoleModule();
+
+	await module.activate({
+		connectionManager: {
+			info: { state: ConnectionState.Connected, port: 55500 },
+			onMessage: messageEmitter.event
+		},
+		commandSender: {
+			async request(command, payload) {
+				requests.push({ command, payload });
+				return { result: { content: 'snapshot' } };
+			}
+		},
+		registerCommand() {},
+		registerToolProvider() {},
+		registerStatusBarContributor() {}
+	});
+
+	test('output channel clears each fixed 1000-entry batch', () => {
+		for (let i = 0; i < 1_001; i++) {
+			messageEmitter.fire({
+				command: 'consoleEntry',
+				payload: { command: 'consoleEntry', type: 'Log', message: `msg${i}`, stackTrace: '', timestamp: `t${i}` }
+			});
+		}
+
+		assert.strictEqual(_lastOutputChannel.clearCount, 1);
+		assert.deepStrictEqual(_lastOutputChannel.lines, ['[LOG] [t1000] msg1000']);
+	});
+
+	await testAsync('clipboard profiler snapshot omits raw frame arrays by default', async () => {
+		const snapshot = await module.captureUnityProfilerSnapshot();
+		assert.strictEqual(snapshot, 'snapshot');
+		assert.strictEqual(requests.length, 1);
+		assert.strictEqual(requests[0].payload.toolName, 'profiler_snapshot');
+		assert.strictEqual(requests[0].payload.args.includeRaw, false);
+	});
+
+	await module.deactivate();
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2169,10 +2313,13 @@ async function testFileWatcher() {
 			send(cmd, payload) { sent.push({ cmd, payload }); }
 		};
 
+		_allCreatedWatchers = [];
 		const watcher = new FileWatcher(mockConn);
 		watcher.enable();
 
 		assert.ok(_lastCreatedWatcher, 'Should have created a file system watcher');
+		assert.strictEqual(_allCreatedWatchers.length, 1, 'Only the scoped C# watcher should be active');
+		assert.strictEqual(_lastCreatedWatcher.globPattern, '**/{Assets,Packages}/**/*.cs');
 
 		watcher.disable();
 		watcher.enable();
@@ -2191,7 +2338,6 @@ async function testFileWatcher() {
 		const watcher = new FileWatcher(mockConn);
 		watcher.enable();
 
-		// First watcher is *.cs, second is *.{sln,csproj}
 		const csWatcher = _allCreatedWatchers[0];
 
 		csWatcher._fireChange({ fsPath: '/project/Assets/Scripts/Player.cs' });
@@ -2223,15 +2369,15 @@ async function testFileWatcher() {
 		watcher.enable();
 		const csWatcher = _allCreatedWatchers[0];
 
-		csWatcher._fireChange({ fsPath: '/project/A.cs' });
+		csWatcher._fireChange({ fsPath: '/project/Assets/A.cs' });
 		await sleep(500);
 		assert.strictEqual(sent.length, 1);
-		assert.deepStrictEqual(sent[0].payload.files, ['/project/A.cs']);
+		assert.deepStrictEqual(sent[0].payload.files, ['/project/Assets/A.cs']);
 
-		csWatcher._fireChange({ fsPath: '/project/B.cs' });
+		csWatcher._fireChange({ fsPath: '/project/Packages/com.example/B.cs' });
 		await sleep(500);
 		assert.strictEqual(sent.length, 2);
-		assert.deepStrictEqual(sent[1].payload.files, ['/project/B.cs']);
+		assert.deepStrictEqual(sent[1].payload.files, ['/project/Packages/com.example/B.cs']);
 
 		watcher.dispose();
 	});
@@ -2248,11 +2394,61 @@ async function testFileWatcher() {
 		watcher.enable();
 		const csWatcher = _allCreatedWatchers[0];
 
-		csWatcher._fireChange({ fsPath: '/project/A.cs' });
+		csWatcher._fireChange({ fsPath: '/project/Assets/A.cs' });
 		watcher.disable();
 
 		await sleep(500);
 		assert.strictEqual(sent.length, 0, 'Disable should cancel pending refresh');
+	});
+
+	await testAsync('ignores generated folders and project-file regeneration', async () => {
+		const sent = [];
+		const mockConn = {
+			onMessage: new MockEventEmitter().event,
+			send(cmd, payload) { sent.push({ cmd, payload }); }
+		};
+
+		_allCreatedWatchers = [];
+		const watcher = new FileWatcher(mockConn);
+		watcher.enable();
+		const csWatcher = _allCreatedWatchers[0];
+
+		for (const fsPath of [
+			'/project/Library/PackageCache/Generated.cs',
+			'/project/Temp/Generated.cs',
+			'/project/Obj/Generated.cs',
+			'/project/.git/Generated.cs',
+			'/project/Project.csproj',
+			'/project/Project.sln',
+			'/project/Other/OutsideAssets.cs'
+		]) {
+			csWatcher._fireChange({ fsPath });
+		}
+
+		await sleep(500);
+		assert.strictEqual(sent.length, 0, 'Generated and project files must not trigger Unity refresh');
+		watcher.dispose();
+	});
+
+	await testAsync('caps pending changed-file details during a large burst', async () => {
+		const sent = [];
+		const mockConn = {
+			onMessage: new MockEventEmitter().event,
+			send(cmd, payload) { sent.push({ cmd, payload }); }
+		};
+
+		_allCreatedWatchers = [];
+		const watcher = new FileWatcher(mockConn);
+		watcher.enable();
+		const csWatcher = _allCreatedWatchers[0];
+		for (let i = 0; i < 1_010; i++) {
+			csWatcher._fireChange({ fsPath: `/project/Assets/Generated/File${i}.cs` });
+		}
+
+		await sleep(500);
+		assert.strictEqual(sent.length, 1);
+		assert.strictEqual(sent[0].payload.files.length, 1_000);
+		watcher.dispose();
 	});
 
 	test('enable is idempotent (does not create duplicate watchers)', () => {
@@ -2939,6 +3135,21 @@ async function testConsolePanelLogic() {
 		assert.match(html, /<script nonce="[a-f0-9]{32}">/);
 	});
 
+	test('webview caps retained entries and incrementally filters streamed entries', () => {
+		const html = panel.getHtml({ cspSource: 'vscode-webview:' });
+		const addEntryStart = html.indexOf('function addEntry(e)');
+		const addEntryEnd = html.indexOf("logArea.addEventListener('scroll'", addEntryStart);
+		const addEntryBody = html.slice(addEntryStart, addEntryEnd);
+
+		assert.ok(html.includes('let maxEntries = 1000;'));
+		assert.ok(html.includes('maxEntries = Math.min(1000, Math.max(1, Math.floor(msg.maxEntries)));'));
+		assert.ok(addEntryBody.includes('entries.splice(0, overflow)'));
+		assert.ok(addEntryBody.includes("logArea.querySelector('.log-entry')"));
+		assert.ok(addEntryBody.includes('oldest.remove()'));
+		assert.ok(addEntryBody.includes('applyFilterToEntry(rendered)'));
+		assert.ok(!addEntryBody.includes('applyFilter();'), 'Streaming one entry must not rescan the entire DOM');
+	});
+
 	await testAsync('webview clear clears bridge entries', async () => {
 		const localEmitter = new MockEventEmitter();
 		const localBridge = new ConsoleBridge({ onMessage: localEmitter.event });
@@ -3116,6 +3327,8 @@ async function main() {
 	await testConnectionTcp();
 	await testCommandSender();
 	testConsoleBridge();
+	testUnityProfilerSafetySource();
+	await testConsoleModuleRetention();
 	await testConsoleMcpTools();
 	await testToolRouter();
 	await testUnityMcpTools();

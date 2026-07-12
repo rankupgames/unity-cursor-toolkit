@@ -47,6 +47,9 @@ public class HotReloadHandler : EditorWindow
     private static int currentPort = 55500; // Current port being used
     private static int lastSuccessfulPort = 55500; // Last port that successfully connected
     private static readonly Queue<string> messageQueue = new Queue<string>();
+    private static int queuedMessageCharacters = 0;
+    private static bool messageQueueOverflowed = false;
+    private static bool messageQueueOverflowWarningLogged = false;
     private static bool isInitialized = false;
     private static volatile bool isServerRunning = false;
     private static readonly List<TcpClient> connectedClients = new List<TcpClient>();
@@ -72,6 +75,23 @@ public class HotReloadHandler : EditorWindow
 
     private static readonly Queue<Action> mainThreadActions = new Queue<Action>();
     private static readonly object mainThreadActionsLock = new object();
+    private static bool mainThreadActionsOverflowed = false;
+    private static bool mainThreadActionsOverflowWarningLogged = false;
+    private static bool isRefreshInProgress = false;
+
+    private const int MAX_QUEUED_MESSAGES = 1024;
+    private const int MAX_QUEUED_MESSAGE_CHARACTERS = 4 * 1024 * 1024;
+    private const int MAX_MESSAGES_PER_UPDATE = 64;
+    private const int MAX_QUEUED_MAIN_THREAD_ACTIONS = 256;
+    private const int MAX_MAIN_THREAD_ACTIONS_PER_UPDATE = 32;
+    private const int MAX_PENDING_LINE_CHARACTERS = 1024 * 1024;
+
+    #if UNITY_2019_1_OR_NEWER
+    private const double REFRESH_COMPILE_START_TIMEOUT_SECONDS = 2.0d;
+    private static bool refreshCompilationPending = false;
+    private static bool refreshCompilationStarted = false;
+    private static double refreshCompilationTimeoutAt = 0.0d;
+    #endif
 
     /// <summary>
     /// Static constructor called when Unity editor loads.
@@ -383,6 +403,18 @@ public class HotReloadHandler : EditorWindow
     private static void StopServer()
     {
         isServerRunning = false;
+        shouldRequestRefresh = false;
+
+        lock (messageQueue)
+        {
+            messageQueue.Clear();
+            queuedMessageCharacters = 0;
+        }
+
+        lock (mainThreadActionsLock)
+        {
+            mainThreadActions.Clear();
+        }
 
         // Disconnect all clients
         lock (clientListLock)
@@ -495,28 +527,77 @@ public class HotReloadHandler : EditorWindow
     /// </summary>
     private static void OnEditorUpdate()
     {
-        // Process any queued messages
+        // Bound work per update so a client flood cannot monopolize Unity's main thread.
+        for (int index = 0; index < MAX_MESSAGES_PER_UPDATE; index++)
+        {
+            string message;
+            lock (messageQueue)
+            {
+                if (messageQueue.Count == 0)
+                {
+                    break;
+                }
+
+                message = messageQueue.Dequeue();
+                queuedMessageCharacters -= message.Length;
+            }
+
+            ProcessMessage(message);
+        }
+
+        for (int index = 0; index < MAX_MAIN_THREAD_ACTIONS_PER_UPDATE; index++)
+        {
+            Action action;
+            lock (mainThreadActionsLock)
+            {
+                if (mainThreadActions.Count == 0)
+                {
+                    break;
+                }
+
+                action = mainThreadActions.Dequeue();
+            }
+
+            action?.Invoke();
+        }
+
+        bool didOverflowMessageQueue;
         lock (messageQueue)
         {
-            while (messageQueue.Count > 0)
-            {
-                string message = messageQueue.Dequeue();
-                ProcessMessage(message);
-            }
+            didOverflowMessageQueue = messageQueueOverflowed;
+            messageQueueOverflowed = false;
         }
 
-        // Process actions queued for the main thread
+        if (didOverflowMessageQueue && !messageQueueOverflowWarningLogged)
+        {
+            messageQueueOverflowWarningLogged = true;
+            Debug.LogWarning($"Hot Reload: Incoming message queue exceeded {MAX_QUEUED_MESSAGES} items; oldest messages were dropped.");
+        }
+
+        bool didOverflowMainThreadActions;
         lock (mainThreadActionsLock)
         {
-            while (mainThreadActions.Count > 0)
-            {
-                Action action = mainThreadActions.Dequeue();
-                action?.Invoke();
-            }
+            didOverflowMainThreadActions = mainThreadActionsOverflowed;
+            mainThreadActionsOverflowed = false;
         }
 
-        // Check if we should refresh
-        if (shouldRequestRefresh)
+        if (didOverflowMainThreadActions && !mainThreadActionsOverflowWarningLogged)
+        {
+            mainThreadActionsOverflowWarningLogged = true;
+            Debug.LogWarning($"Hot Reload: Main-thread action queue exceeded {MAX_QUEUED_MAIN_THREAD_ACTIONS} items; oldest actions were dropped.");
+        }
+
+        #if UNITY_2019_1_OR_NEWER
+        PollRefreshCompilationCompletion();
+        #endif
+
+        bool canRefreshAssets = !isRefreshInProgress && !EditorApplication.isCompiling && !EditorApplication.isUpdating;
+        #if UNITY_2019_1_OR_NEWER
+        canRefreshAssets = canRefreshAssets && !refreshCompilationPending;
+        #endif
+
+        // Keep one coalesced refresh pending until Unity is safe to import assets.
+        if (shouldRequestRefresh && canRefreshAssets)
         {
             shouldRequestRefresh = false;
             RefreshAssets();
@@ -576,10 +657,7 @@ public class HotReloadHandler : EditorWindow
                     currentPort = portToTry;
                     lastSuccessfulPort = portToTry;
                     // Defer EditorPrefs call to main thread
-                    lock (mainThreadActionsLock)
-                    {
-                        mainThreadActions.Enqueue(() => EditorPrefs.SetInt(lastPortPrefKey, lastSuccessfulPort));
-                    }
+                    EnqueueMainThreadAction(() => EditorPrefs.SetInt(lastPortPrefKey, lastSuccessfulPort));
                     serverStarted = true;
 
                     Debug.Log($"Unity Hot Reload server listening on port {currentPort}");
@@ -758,15 +836,21 @@ public class HotReloadHandler : EditorWindow
 
                             if (string.IsNullOrEmpty(line) == false)
                             {
+                                if (line.Length > MAX_PENDING_LINE_CHARACTERS)
+                                {
+                                    lock (messageQueue)
+                                    {
+                                        messageQueueOverflowed = true;
+                                    }
+                                    continue;
+                                }
+
                                 if (TryHandleImmediateClientMessage(line, stream))
                                 {
                                     continue;
                                 }
 
-                                lock (messageQueue)
-                                {
-                                    messageQueue.Enqueue(line);
-                                }
+                                EnqueueMessage(line);
                             }
                         }
 
@@ -775,6 +859,15 @@ public class HotReloadHandler : EditorWindow
                         if (accumulated.Length > 0)
                         {
                             lineBuffer.Append(accumulated);
+                            if (lineBuffer.Length > MAX_PENDING_LINE_CHARACTERS)
+                            {
+                                lock (messageQueue)
+                                {
+                                    messageQueueOverflowed = true;
+                                }
+
+                                throw new InvalidOperationException("Incoming hot reload message exceeded the maximum supported size.");
+                            }
                         }
                     }
                     else
@@ -1034,17 +1127,33 @@ public class HotReloadHandler : EditorWindow
     /// </summary>
     private static void RefreshAssets()
     {
+        bool isRefreshBlocked = isRefreshInProgress || EditorApplication.isCompiling || EditorApplication.isUpdating;
+        #if UNITY_2019_1_OR_NEWER
+        isRefreshBlocked = isRefreshBlocked || refreshCompilationPending;
+        #endif
+
+        if (isRefreshBlocked)
+        {
+            shouldRequestRefresh = true;
+            return;
+        }
+
+        isRefreshInProgress = true;
         try
         {
             Debug.Log("Hot Reload: Refreshing Unity assets...");
 
-            AssetDatabase.Refresh(ImportAssetOptions.Default);
-
             #if UNITY_2019_1_OR_NEWER
             CompilationPipeline.compilationFinished -= OnCompilationFinished;
             CompilationPipeline.compilationFinished += OnCompilationFinished;
-            CompilationPipeline.RequestScriptCompilation();
+            refreshCompilationPending = true;
+            refreshCompilationStarted = false;
+            refreshCompilationTimeoutAt = EditorApplication.timeSinceStartup + REFRESH_COMPILE_START_TIMEOUT_SECONDS;
             #endif
+
+            // Refresh imports changed scripts and starts compilation when necessary.
+            // An explicit RequestScriptCompilation here creates a redundant second pass.
+            AssetDatabase.Refresh(ImportAssetOptions.Default);
 
             if (showDebugLogs)
             {
@@ -1054,6 +1163,15 @@ public class HotReloadHandler : EditorWindow
         catch (Exception e)
         {
             Debug.LogError($"Hot Reload refresh error: {e.Message}");
+            #if UNITY_2019_1_OR_NEWER
+            refreshCompilationPending = false;
+            CompilationPipeline.compilationFinished -= OnCompilationFinished;
+            #endif
+            BroadcastToClients("{\"command\":\"compilationResult\",\"success\":false}");
+        }
+        finally
+        {
+            isRefreshInProgress = false;
         }
     }
 
@@ -1064,29 +1182,100 @@ public class HotReloadHandler : EditorWindow
     /// </summary>
     private static void OnCompilationStarted(object context)
     {
+        if (refreshCompilationPending)
+        {
+            refreshCompilationStarted = true;
+        }
+
         BroadcastToClients("{\"command\":\"compilationStarted\"}");
     }
 
     private static void OnCompilationFinished(object context)
     {
         CompilationPipeline.compilationFinished -= OnCompilationFinished;
+        refreshCompilationPending = false;
 
         bool _success = !EditorUtility.scriptCompilationFailed;
         string _payload = $"{{\"command\":\"compilationResult\",\"success\":{(_success ? "true" : "false")}}}";
 
-        lock (mainThreadActionsLock)
+        EnqueueMainThreadAction(() =>
         {
-            mainThreadActions.Enqueue(() =>
+            BroadcastToClients(_payload);
+            if (showDebugLogs)
             {
-                BroadcastToClients(_payload);
-                if (showDebugLogs)
-                {
-                    Debug.Log($"Hot Reload: Compilation {(_success ? "succeeded" : "failed")}");
-                }
-            });
+                Debug.Log($"Hot Reload: Compilation {(_success ? "succeeded" : "failed")}");
+            }
+        });
+    }
+
+    /// <summary>
+    /// Completes refresh notifications when no script compilation was needed.
+    /// </summary>
+    private static void PollRefreshCompilationCompletion()
+    {
+        if (!refreshCompilationPending || refreshCompilationStarted || EditorApplication.isCompiling)
+        {
+            return;
         }
+
+        if (EditorApplication.timeSinceStartup < refreshCompilationTimeoutAt)
+        {
+            return;
+        }
+
+        refreshCompilationPending = false;
+        CompilationPipeline.compilationFinished -= OnCompilationFinished;
+        BroadcastToClients("{\"command\":\"compilationResult\",\"success\":true}");
     }
     #endif
+
+    /// <summary>
+    /// Queues bounded work for Unity's main thread, retaining the newest actions.
+    /// </summary>
+    private static void EnqueueMainThreadAction(Action action)
+    {
+        lock (mainThreadActionsLock)
+        {
+            if (mainThreadActions.Count >= MAX_QUEUED_MAIN_THREAD_ACTIONS)
+            {
+                mainThreadActions.Dequeue();
+                mainThreadActionsOverflowed = true;
+            }
+
+            mainThreadActions.Enqueue(action);
+        }
+    }
+
+    /// <summary>
+    /// Queues a bounded client message while enforcing both item and total character limits.
+    /// </summary>
+    private static void EnqueueMessage(string message)
+    {
+        lock (messageQueue)
+        {
+            if (message.Length > MAX_PENDING_LINE_CHARACTERS)
+            {
+                messageQueueOverflowed = true;
+                return;
+            }
+
+            while (messageQueue.Count > 0 && (messageQueue.Count >= MAX_QUEUED_MESSAGES || queuedMessageCharacters + message.Length > MAX_QUEUED_MESSAGE_CHARACTERS))
+            {
+                string removedMessage = messageQueue.Dequeue();
+                queuedMessageCharacters -= removedMessage.Length;
+                messageQueueOverflowed = true;
+            }
+
+            if (queuedMessageCharacters + message.Length > MAX_QUEUED_MESSAGE_CHARACTERS)
+            {
+                messageQueueOverflowed = true;
+                return;
+            }
+
+            messageQueue.Enqueue(message);
+            queuedMessageCharacters += message.Length;
+        }
+    }
 
     /// <summary>
     /// Sends a message to all connected extension clients.
@@ -1208,10 +1397,7 @@ public class HotReloadHandler : EditorWindow
             currentPort = specificPort;
             lastSuccessfulPort = specificPort;
             // Defer EditorPrefs call to main thread
-            lock (mainThreadActionsLock)
-            {
-                mainThreadActions.Enqueue(() => EditorPrefs.SetInt(lastPortPrefKey, lastSuccessfulPort));
-            }
+            EnqueueMainThreadAction(() => EditorPrefs.SetInt(lastPortPrefKey, lastSuccessfulPort));
             isServerRunning = true;
             Debug.Log($"Unity Hot Reload server listening on port {currentPort}");
             RunServerLoop();

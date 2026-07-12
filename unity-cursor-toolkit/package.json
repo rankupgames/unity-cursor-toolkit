@@ -62,8 +62,10 @@
           },
           "unityCursorToolkit.console.maxEntries": {
             "type": "number",
-            "default": 10000,
-            "description": "Maximum console entries retained in the ring buffer."
+            "default": 1000,
+            "minimum": 1,
+            "maximum": 1000,
+            "description": "Maximum console entries retained in the bounded ring buffer."
           },
           "unityCursorToolkit.hotReload.preferILPatch": {
             "type": "boolean",

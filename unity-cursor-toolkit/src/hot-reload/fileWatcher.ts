@@ -9,11 +9,12 @@ import * as vscode from 'vscode';
 import type { IConnectionManager } from '../core/interfaces';
 
 const DEBOUNCE_MS = 300;
+const MAX_PENDING_FILES = 1_000;
+const GENERATED_FOLDERS = new Set(['library', 'temp', 'obj', '.git']);
 
 export class FileWatcher implements vscode.Disposable {
 
 	private csWatcher: vscode.FileSystemWatcher | undefined;
-	private solutionWatcher: vscode.FileSystemWatcher | undefined;
 	private debounceTimer: ReturnType<typeof setTimeout> | undefined;
 	private readonly connection: IConnectionManager;
 	private enabled = false;
@@ -29,24 +30,18 @@ export class FileWatcher implements vscode.Disposable {
 		}
 		this.enabled = true;
 
-		this.csWatcher = vscode.workspace.createFileSystemWatcher('**/*.cs');
+		this.csWatcher = vscode.workspace.createFileSystemWatcher('**/{Assets,Packages}/**/*.cs');
 		this.csWatcher.onDidChange((uri) => this.scheduleRefresh(uri.fsPath));
-
-		this.solutionWatcher = vscode.workspace.createFileSystemWatcher('**/*.{sln,csproj}');
-		this.solutionWatcher.onDidChange(() => this.scheduleRefresh());
 	}
 
 	public disable(): void {
 		this.enabled = false;
 		this.clearDebounce();
+		this.pendingFiles.clear();
 
 		if (this.csWatcher) {
 			this.csWatcher.dispose();
 			this.csWatcher = undefined;
-		}
-		if (this.solutionWatcher) {
-			this.solutionWatcher.dispose();
-			this.solutionWatcher = undefined;
 		}
 	}
 
@@ -55,8 +50,11 @@ export class FileWatcher implements vscode.Disposable {
 	}
 
 	private scheduleRefresh(filePath?: string): void {
-		if (filePath) {
+		if (filePath && this.isRefreshableScript(filePath) && this.pendingFiles.size < MAX_PENDING_FILES) {
 			this.pendingFiles.add(filePath);
+		}
+		if (this.pendingFiles.size === 0) {
+			return;
 		}
 
 		this.clearDebounce();
@@ -65,6 +63,16 @@ export class FileWatcher implements vscode.Disposable {
 			this.pendingFiles.clear();
 			this.connection.send('refresh', { timestamp: Date.now(), files });
 		}, DEBOUNCE_MS);
+	}
+
+	private isRefreshableScript(filePath: string): boolean {
+		const segments = filePath.replace(/\\/g, '/').split('/').filter((segment) => segment.length > 0);
+		if (segments.some((segment) => GENERATED_FOLDERS.has(segment.toLowerCase()))) {
+			return false;
+		}
+
+		return filePath.toLowerCase().endsWith('.cs')
+			&& segments.some((segment) => segment === 'Assets' || segment === 'Packages');
 	}
 
 	private clearDebounce(): void {
