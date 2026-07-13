@@ -5,7 +5,8 @@
   "description": "Editor and runtime tools for Cursor/VS Code integration: hot reload, MCP bridge, console forwarding, runtime game commands, debug adapter, and IL patching.",
   "unity": "2019.4",
   "dependencies": {
-    "com.unity.modules.jsonserialize": "1.0.0"
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.nuget.newtonsoft-json": "3.2.1"
   },
   "author": {
     "name": "Rank Up Games LLC",
