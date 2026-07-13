@@ -80,6 +80,17 @@ namespace Unterm.Editor
         private readonly System.Collections.Generic.Dictionary<IntPtr, Texture2D> _extTex =
             new System.Collections.Generic.Dictionary<IntPtr, Texture2D>();
         private int _extW, _extH;
+        // Size sent to native. Output can dirty the terminal many times without a
+        // resize, so avoid repeating the resize P/Invoke on every rendered frame.
+        private uint _sentW, _sentH;
+        private float _sentPpp;
+        // A restored window can exist before Unity's graphics device is available.
+        // Retry zero-copy setup with a short bounded backoff instead of rendering on
+        // every editor tick indefinitely while the native texture is unavailable.
+        private const double GpuRetryMinSeconds = 0.05;
+        private const double GpuRetryMaxSeconds = 0.5;
+        private double _nextGpuRetryAt;
+        private double _gpuRetryDelay = GpuRetryMinSeconds;
         private string _status = "";
         private bool _alive = true;
 
@@ -134,7 +145,7 @@ namespace Unterm.Editor
             // focus) so the new window cascades off it instead of stacking on top.
             var from = focusedWindow as UntermWindow;
             var w = CreateWindow<UntermWindow>();
-            w.titleContent = new GUIContent("Terminal");
+            w.titleContent = UntermWindowTitle.Create("Terminal", UntermWindowTitle.TerminalIcon, w.titleContent);
             w.minSize = new Vector2(240, 120);
             PlaceCascaded(w, from);
             w.Show();
@@ -165,7 +176,7 @@ namespace Unterm.Editor
             {
                 var from = focusedWindow as UntermWindow;
                 var w = CreateWindow<UntermWindow>();
-                w.titleContent = new GUIContent(title);
+                w.titleContent = UntermWindowTitle.Create(title, UntermWindowTitle.TerminalIcon, w.titleContent);
                 w.minSize = new Vector2(240, 120);
                 PlaceCascaded(w, from);
                 w.Show();
@@ -258,6 +269,9 @@ namespace Unterm.Editor
         {
             s_reloading = false;
             wantsMouseMove = false;
+            _sentW = _sentH = 0;
+            _sentPpp = 0f;
+            ResetGpuRetry();
             AssemblyReloadEvents.beforeAssemblyReload += OnBeforeReload;
             EditorApplication.update += OnEditorUpdate;
             LoadNative();
@@ -462,6 +476,9 @@ namespace Unterm.Editor
             ClearExtCache();
             _extW = 0;
             _extH = 0;
+            _sentW = _sentH = 0;
+            _sentPpp = 0f;
+            ResetGpuRetry();
             if (_tex != null)
             {
                 if (_externalTexPtr == IntPtr.Zero) DestroyImmediate(_tex);
@@ -516,8 +533,10 @@ namespace Unterm.Editor
             if (_native == null || Tid == 0) return;
 
             bool repaint = false;
+            bool rendered = false;
+            bool dirty = _native.Dirty(Tid);
 
-            if (_native.Dirty(Tid) || _tex == null)
+            if (dirty)
             {
                 // Title / liveness changes always arrive with the dirty flag (their
                 // native events set it), so they're synced here rather than
@@ -527,17 +546,20 @@ namespace Unterm.Editor
                 string want = string.IsNullOrEmpty(title) ? "Terminal" : title;
                 if (!_alive) want += " (exited)";
                 if (titleContent.text != want)
-                    titleContent = new GUIContent(want);
+                    titleContent = UntermWindowTitle.Create(want, UntermWindowTitle.TerminalIcon, titleContent);
+            }
 
-                // _tex == null means the shared texture isn't ready yet (Windows:
-                // Unity's D3D device wasn't captured when this terminal was built,
-                // e.g. a window restored at editor startup). Keep re-rendering so
-                // the surface self-heals once the device appears. Cheap; stops as
-                // soon as _tex is set. Also covers an exited terminal's first frame.
+            // A live surface renders dirty output immediately. Without a surface,
+            // coalesce dirty output until the bounded GPU retry is due; the native
+            // dirty state is reflected by that next render.
+            if ((dirty && _tex != null) || (_tex == null && GpuRetryDue()))
+            {
                 RenderNow();
                 repaint = true;
+                rendered = true;
             }
-            else if (_native.Present(Tid))
+
+            if (!rendered && _native.Present(Tid))
             {
                 // No new output, but a finished frame was just promoted to the
                 // front (double-buffered zero-copy); point _tex at it and repaint.
@@ -552,9 +574,31 @@ namespace Unterm.Editor
         {
             if (_native == null || Tid == 0) return;
             var (w, h) = CurrentPixelSize();
-            _native.Resize(Tid, w, h, EditorGUIUtility.pixelsPerPoint);
+            float ppp = EditorGUIUtility.pixelsPerPoint;
+            if (w != _sentW || h != _sentH || ppp != _sentPpp)
+            {
+                _sentW = w;
+                _sentH = h;
+                _sentPpp = ppp;
+                _native.Resize(Tid, w, h, ppp);
+            }
             _native.Render(Tid);
             UploadZeroCopy((int)w, (int)h);
+        }
+
+        private bool GpuRetryDue() =>
+            EditorApplication.timeSinceStartup >= _nextGpuRetryAt;
+
+        private void ResetGpuRetry()
+        {
+            _nextGpuRetryAt = 0d;
+            _gpuRetryDelay = GpuRetryMinSeconds;
+        }
+
+        private void ScheduleGpuRetry()
+        {
+            _nextGpuRetryAt = EditorApplication.timeSinceStartup + _gpuRetryDelay;
+            _gpuRetryDelay = Math.Min(GpuRetryMaxSeconds, _gpuRetryDelay * 2d);
         }
 
         private void ApplyTheme()
@@ -590,8 +634,10 @@ namespace Unterm.Editor
             {
                 _tex = null;
                 _status = "GPU not ready";
+                ScheduleGpuRetry();
                 return;
             }
+            ResetGpuRetry();
             // On resize the native textures are recreated, so drop stale wrappers.
             if (_extW != iw || _extH != ih)
             {
@@ -635,6 +681,12 @@ namespace Unterm.Editor
             Input.imeCompositionMode = IMECompositionMode.On;
 #endif
             if (_native != null && Tid != 0) _native.SetFocus(Tid, true);
+            if (_native != null && Tid != 0 && _tex == null)
+            {
+                ResetGpuRetry();
+                RenderNow();
+                Repaint();
+            }
         }
 
         private void OnLostFocus()
@@ -665,8 +717,14 @@ namespace Unterm.Editor
 
             // Re-render when the draw area no longer matches the texture (resize).
             var (cw, ch) = CurrentPixelSize();
-            if (_native != null && Tid != 0 &&
-                (_tex == null || _tex.width != (int)cw || _tex.height != (int)ch))
+            float ppp = EditorGUIUtility.pixelsPerPoint;
+            bool sizeChanged = cw != _sentW || ch != _sentH || ppp != _sentPpp;
+            if (_native != null && Tid != 0 && sizeChanged)
+            {
+                ResetGpuRetry();
+                RenderNow();
+            }
+            else if (_native != null && Tid != 0 && _tex == null && GpuRetryDue())
             {
                 RenderNow();
             }

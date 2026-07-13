@@ -9,13 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Added `BatchCommandEntry` for `game_command` editor batchmode list/run support.
+- Added command catalog capability metadata for the editor batchmode host.
+- Added the `editor_validation` MCP tool and menu command for project-file regeneration plus script compile requests.
 - Added the audited Unity-Unterm fork as a toolkit-internal terminal, Claude Code, code editor, completion, and debugger feature for Unity 6000.3 on macOS and Windows.
 - Added Unity-Unterm launch aliases under `Tools > Unity Cursor Toolkit > Unterm`.
 
 ### Security
 
-- Unity-Unterm MCP access is disabled by default, mutating tools require one-shot Editor approval, and dynamic code execution cannot be allowlisted.
+- Unity-Unterm MCP access is disabled by default and uses local, uncommitted current-project policies; arbitrary C# requires a separate full-machine-access opt-in, and unclassified tools never auto-run.
 - Vendored source, managed assemblies, and native plugins are pinned to an attested fork commit and verified by SHA-256.
+
+### Fixed
+
+- Declared the built-in JSON serialization module required by runtime game-command argument parsing.
+- Added immediate TCP `ping`/`pong` handling so the extension can verify it attached to a current Unity Cursor Toolkit package.
+- Preserved Unity-Unterm tab icons across live title changes and reduced idle texture, resize, file, and diff polling work.
 
 ## [1.1.0] - 2026-05-28
 

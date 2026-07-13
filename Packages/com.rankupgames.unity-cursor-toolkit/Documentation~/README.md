@@ -55,7 +55,7 @@ Add to your `Packages/manifest.json`:
 
 Do not install the standalone `dev.tnayuki.unterm` package beside this toolkit. Both packages contain the same editor types and native plugin identity, so that combination is unsupported.
 
-Open the bundled tools from **Tools > Unity Cursor Toolkit > Unterm**, then choose **New Terminal**, **Claude Code**, **Code Editor**, or **Settings**. Unity-Unterm MCP access remains disabled until it is explicitly enabled in Preferences.
+Open the bundled tools from **Tools > Unity Cursor Toolkit > Unterm**, then choose **New Terminal**, **Claude Code**, **Code Editor**, **Debugger**, or **Settings**. Unity-Unterm MCP access remains disabled until it is explicitly enabled for the current project in Preferences.
 
 ## Companion Extension Validation
 
@@ -118,7 +118,8 @@ The MCP tool `editor_validation` supports `list`, `status`, `sync_project_files`
 - Console webviews use nonce-based Content Security Policy entries for scripts and styles.
 - MCP tools expose read-only/destructive annotations for clients that surface tool approval context.
 - Bundled Unity-Unterm source, managed assemblies, and native plugins are pinned to an attested fork commit and verified by SHA-256.
-- Unity-Unterm MCP mutations require one-shot Editor approval; dynamic code execution is never allowlisted and unattended approval requests fail closed.
+- Unity-Unterm MCP trust is stored in local, uncommitted current-project settings. Prompt is the default; confirmed policies can allow known mutations or dangerous actions unattended, while unclassified tools never auto-run.
+- Arbitrary C# has full machine access under the Editor user account and runs unattended only when both Allow Dangerous and its separate full-machine-access opt-in are enabled.
 - Packaged VSIX artifacts exclude tests, backups, lockfiles, source maps, and generated bundles.
 
 ## Changelog

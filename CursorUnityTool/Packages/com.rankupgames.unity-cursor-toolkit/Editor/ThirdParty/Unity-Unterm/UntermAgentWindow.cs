@@ -128,12 +128,16 @@ namespace Unterm.Editor
 
         // Transcript panel texture (zero-copy wrap of the native MTLTexture).
         private Texture2D _tex;
-        private IntPtr _externalTexPtr;
+        private readonly Dictionary<IntPtr, Texture2D> _panelTextures =
+            new Dictionary<IntPtr, Texture2D>();
+        private int _panelTextureW, _panelTextureH;
 
         // Input strip texture (the native input box renders the field AND the
         // Send/Stop button into this one surface).
         private Texture2D _inputTex;
-        private IntPtr _inputExternalTexPtr;
+        private readonly Dictionary<IntPtr, Texture2D> _inputTextures =
+            new Dictionary<IntPtr, Texture2D>();
+        private int _inputTextureW, _inputTextureH;
         private float _inputHeight = InputHeight; // logical px, grows with content
 
         private float _scroll; // physical px, 0 = latest
@@ -166,7 +170,7 @@ namespace Unterm.Editor
             // focused one so new windows don't stack exactly on top.
             var from = focusedWindow as UntermAgentWindow;
             var w = CreateWindow<UntermAgentWindow>();
-            w.titleContent = new GUIContent("Claude Code");
+            w.titleContent = UntermWindowTitle.Create("Claude Code", UntermWindowTitle.AgentIcon, w.titleContent);
             w.minSize = new Vector2(320, 200);
 
             Vector2 size = from != null ? from.position.size : new Vector2(420f, 520f);
@@ -371,7 +375,7 @@ namespace Unterm.Editor
             {
                 string agent = _native.AgentviewTitle(Vid);
                 if (!string.IsNullOrEmpty(agent) && titleContent.text != agent)
-                    titleContent = new GUIContent(agent);
+                    titleContent = UntermWindowTitle.Create(agent, UntermWindowTitle.AgentIcon, titleContent);
             }
 
             // Drain any in-flight recent-sessions listing (for the picker dropdown).
@@ -542,16 +546,7 @@ namespace Unterm.Editor
         /// conversation persists; otherwise destroy the view and unload.
         private void Teardown(bool keepView)
         {
-            if (_tex != null)
-            {
-                DestroyImmediate(_tex);
-                _tex = null;
-            }
-            if (_inputTex != null)
-            {
-                DestroyImmediate(_inputTex);
-                _inputTex = null;
-            }
+            ClearRenderTextureCaches();
             if (_imeBgTex != null)
             {
                 DestroyImmediate(_imeBgTex);
@@ -673,65 +668,100 @@ namespace Unterm.Editor
             }
         }
 
+        private static System.Reflection.MethodInfo s_bgMethod;
+        private static bool s_bgLooked;
+        private static Color s_bgColor;
+        private static bool s_bgDark, s_bgValid;
+
         private static Color GetEditorBackground()
         {
-            // Prefer Unity's exact themed background; fall back to standard grays.
-            var m = typeof(EditorGUIUtility).GetMethod(
-                "GetDefaultBackgroundColor",
-                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
-            if (m != null && m.ReturnType == typeof(Color))
-                return (Color)m.Invoke(null, null);
-
-            return EditorGUIUtility.isProSkin
-                ? (Color)new Color32(56, 56, 56, 255)
-                : (Color)new Color32(194, 194, 194, 255);
+            bool dark = EditorGUIUtility.isProSkin;
+            if (s_bgValid && s_bgDark == dark) return s_bgColor;
+            if (!s_bgLooked)
+            {
+                s_bgLooked = true;
+                var m = typeof(EditorGUIUtility).GetMethod(
+                    "GetDefaultBackgroundColor",
+                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static);
+                if (m != null && m.ReturnType == typeof(Color)) s_bgMethod = m;
+            }
+            s_bgColor = s_bgMethod != null
+                ? (Color)s_bgMethod.Invoke(null, null)
+                : dark
+                    ? (Color)new Color32(56, 56, 56, 255)
+                    : (Color)new Color32(194, 194, 194, 255);
+            s_bgDark = dark;
+            s_bgValid = true;
+            return s_bgColor;
         }
 
         // Wrap the native transcript texture directly — no CPU copy (zero-copy
         // only, like the terminal). The pointer alternates on Windows' double
-        // buffer, so re-wrap whenever it changes; null means the frame isn't ready
-        // yet (e.g. Windows D3D device not captured) — skip this tick.
+        // buffer. Cache one Unity wrapper per pointer so the alternating buffers do
+        // not allocate and destroy Texture2D objects every rendered frame.
         private void UploadPanel(int iw, int ih)
         {
             IntPtr texPtr = _native.AgentviewPanelTexture(Vid);
             if (texPtr == IntPtr.Zero) return;
 
-            if (_tex == null || _tex.width != iw || _tex.height != ih || _externalTexPtr != texPtr)
+            if (_panelTextureW != iw || _panelTextureH != ih)
             {
-                if (_tex != null) DestroyImmediate(_tex);
-                _tex = Texture2D.CreateExternalTexture(
+                ClearTextureCache(_panelTextures);
+                _panelTextureW = iw;
+                _panelTextureH = ih;
+            }
+            if (!_panelTextures.TryGetValue(texPtr, out var tex) || tex == null)
+            {
+                tex = Texture2D.CreateExternalTexture(
                     iw, ih, TextureFormat.RGBA32, false, false, texPtr);
-                _tex.filterMode = FilterMode.Bilinear;
-                _tex.hideFlags = HideFlags.HideAndDontSave;
-                _externalTexPtr = texPtr;
+                tex.filterMode = FilterMode.Bilinear;
+                tex.hideFlags = HideFlags.HideAndDontSave;
+                _panelTextures[texPtr] = tex;
             }
-            else
-            {
-                _tex.UpdateExternalTexture(texPtr);
-            }
+            _tex = tex;
         }
 
-        // Wrap the native input strip texture (zero-copy only); re-wrap when the
-        // pointer changes (Windows double buffer), skip a null frame.
+        // Wrap the native input strip texture (zero-copy only), caching both sides
+        // of the Windows double buffer just like the transcript panel.
         private void UploadInput(int iw, int ih)
         {
             IntPtr texPtr = _native.AgentviewInputTexture(Vid);
             if (texPtr == IntPtr.Zero) return;
 
-            if (_inputTex == null || _inputTex.width != iw || _inputTex.height != ih
-                || _inputExternalTexPtr != texPtr)
+            if (_inputTextureW != iw || _inputTextureH != ih)
             {
-                if (_inputTex != null) DestroyImmediate(_inputTex);
-                _inputTex = Texture2D.CreateExternalTexture(
+                ClearTextureCache(_inputTextures);
+                _inputTextureW = iw;
+                _inputTextureH = ih;
+            }
+            if (!_inputTextures.TryGetValue(texPtr, out var tex) || tex == null)
+            {
+                tex = Texture2D.CreateExternalTexture(
                     iw, ih, TextureFormat.RGBA32, false, false, texPtr);
-                _inputTex.filterMode = FilterMode.Bilinear;
-                _inputTex.hideFlags = HideFlags.HideAndDontSave;
-                _inputExternalTexPtr = texPtr;
+                tex.filterMode = FilterMode.Bilinear;
+                tex.hideFlags = HideFlags.HideAndDontSave;
+                _inputTextures[texPtr] = tex;
             }
-            else
+            _inputTex = tex;
+        }
+
+        private void ClearRenderTextureCaches()
+        {
+            ClearTextureCache(_panelTextures);
+            ClearTextureCache(_inputTextures);
+            _tex = null;
+            _inputTex = null;
+            _panelTextureW = _panelTextureH = 0;
+            _inputTextureW = _inputTextureH = 0;
+        }
+
+        private void ClearTextureCache(Dictionary<IntPtr, Texture2D> cache)
+        {
+            foreach (var texture in cache.Values)
             {
-                _inputTex.UpdateExternalTexture(texPtr);
+                if (texture != null) DestroyImmediate(texture);
             }
+            cache.Clear();
         }
 
         private void OnGUI()
@@ -923,9 +953,10 @@ namespace Unterm.Editor
 
                 case EventType.MouseUp when _selecting:
                     _selecting = false;
-                    // A plain click (no drag-selection) on a file path opens it through
-                    // the configured script editor. OpenFromAgent no-ops for non-file /
-                    // non-editable tokens (the underline only marks files that exist).
+                    // A plain click (no drag-selection) on a file path opens it: the
+                    // configured script editor first, then Unity's asset pipeline or
+                    // the OS default app on decline. OpenFromAgent no-ops for tokens
+                    // that aren't existing files (matching the underline).
                     if (!_native.AgentviewPanelHasSelection(Vid))
                     {
                         string tok = _native.AgentviewPanelTokenAt(Vid, lx, ly);
@@ -1697,7 +1728,8 @@ namespace Unterm.Editor
             var (pw, ph) = CurrentPanelSize();
             var (iw, ih) = CurrentInputSize();
             _viewId = (long)_native.AgentviewLoad(ProjectRoot, id, pw, ph, iw, ih, _effort, ClaudeCode.ClaudePath);
-            if (!string.IsNullOrEmpty(title)) titleContent = new GUIContent(title);
+            if (!string.IsNullOrEmpty(title))
+                titleContent = UntermWindowTitle.Create(title, UntermWindowTitle.AgentIcon, titleContent);
             ApplyFonts();
             ApplyAgentSettings();
             RenderView(); Repaint();

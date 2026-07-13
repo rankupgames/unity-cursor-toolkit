@@ -20,8 +20,9 @@ namespace Unterm.Editor
     /// reload, no temp files, and a compile error is isolated to this call.
     ///
     /// WARNING: runs arbitrary code in the editor. The central MCP policy classifies
-    /// this tool as dangerous, requires one-shot Editor approval for every call, and
-    /// denies it in batch mode.
+    /// this tool as dangerous. It requires one-shot Editor approval unless this
+    /// project has both Allow Dangerous and the separate full-machine-access opt-in;
+    /// unattended requests that do not satisfy both gates are denied.
     /// </summary>
     internal sealed class UntermExecuteCodeTools : IUntermToolGroup
     {

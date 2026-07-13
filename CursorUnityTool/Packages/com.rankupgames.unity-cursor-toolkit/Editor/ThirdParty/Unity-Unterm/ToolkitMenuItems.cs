@@ -6,6 +6,7 @@ namespace Unterm.Editor
     internal static class ToolkitMenuItems
     {
         private const string ClaudeMenuPath = "Tools/Unity Cursor Toolkit/Unterm/Claude Code";
+        private const string DebuggerMenuPath = "Tools/Unity Cursor Toolkit/Unterm/Debugger (Standalone Process)";
 
         [MenuItem("Tools/Unity Cursor Toolkit/Unterm/New Terminal", priority = 300)]
         private static void OpenTerminal() => UntermWindow.OpenNew();
@@ -19,7 +20,13 @@ namespace Unterm.Editor
         [MenuItem("Tools/Unity Cursor Toolkit/Unterm/Code Editor", priority = 302)]
         private static void OpenCodeEditor() => UntermCodeEditorWindow.OpenEmpty();
 
-        [MenuItem("Tools/Unity Cursor Toolkit/Unterm/Settings", priority = 303)]
+        [MenuItem(DebuggerMenuPath, priority = 303)]
+        private static void OpenDebugger() => UntermDebuggerLauncher.Open();
+
+        [MenuItem(DebuggerMenuPath, validate = true)]
+        private static bool OpenDebuggerValidate() => UntermDebuggerLauncher.OpenValidate();
+
+        [MenuItem("Tools/Unity Cursor Toolkit/Unterm/Settings", priority = 304)]
         private static void OpenSettings() => SettingsService.OpenUserPreferences("Preferences/Unterm");
     }
 }

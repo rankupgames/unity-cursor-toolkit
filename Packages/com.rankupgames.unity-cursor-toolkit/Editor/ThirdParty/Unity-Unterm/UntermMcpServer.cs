@@ -35,6 +35,7 @@ namespace Unterm.Editor
         /// Register default tools once and subscribe to console logs.
         public static void StartLogCapture()
         {
+            if (!UntermMcpSecurity.Enabled) return;
             EnsureTools();
             if (!_logHooked)
             {
@@ -53,10 +54,13 @@ namespace Unterm.Editor
         }
 
         /// The tool catalog as a JSON array for the native MCP server (set_tools).
-        public static string ToolsJson()
+        public static string ToolsJson() => ToolsJson(UntermMcpSecurity.Enabled);
+
+        /// <summary>Build the catalog only when the caller's project-scoped setting is enabled.</summary>
+        internal static string ToolsJson(bool enabled)
         {
+            if (!enabled) return "[]";
             EnsureTools();
-            if (!UntermMcpSecurity.Enabled) return "[]";
             var arr = new JArray();
             foreach (var t in _tools.Values)
                 arr.Add(new JObject
@@ -69,6 +73,37 @@ namespace Unterm.Editor
             return arr.ToString(Formatting.None);
         }
 
+        /// <summary>Reject active work, unpublish tools, and release all managed MCP state.</summary>
+        public static void Stop(UntermNative native)
+        {
+            string disabledResult = ToolResult("error: Unterm MCP tools were disabled for this project.", true);
+            try
+            {
+                if (native != null)
+                {
+                    native.McpSetTools("[]");
+                    foreach ((ulong id, UntermDeferredResult _) in _pending)
+                        native.McpRespond(id, disabledResult);
+                    string callJson;
+                    while (!string.IsNullOrEmpty(callJson = native.McpNextCall()))
+                    {
+                        JObject call = JObject.Parse(callJson);
+                        native.McpRespond((ulong)call["id"], disabledResult);
+                    }
+                }
+            }
+            finally
+            {
+                _pending.Clear();
+                StopLogCapture();
+                _tools.Clear();
+                lock (_logs) _logs.Clear();
+            }
+        }
+
+        /// <summary>Test seam proving disabled catalog requests do not initialize tools.</summary>
+        internal static bool ToolsInitialized => _tools.Count > 0;
+
         // Calls whose handler returned an UntermDeferredResult: polled each tick
         // until the result is ready. Lost on a domain reload — the native side
         // then times the call out (~30s), which is the intended backstop.
@@ -78,7 +113,7 @@ namespace Unterm.Editor
         /// (current) main thread, and post results back. Call from EditorApplication.update.
         public static void Poll(UntermNative native)
         {
-            if (native == null) return;
+            if (!UntermMcpSecurity.Enabled || native == null) return;
 
             // Finish deferred calls whose result is now available.
             for (int i = _pending.Count - 1; i >= 0; i--)

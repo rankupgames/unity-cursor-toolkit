@@ -11,13 +11,13 @@ const smokePackageRoot = path.join(repositoryRoot, smokePackageRelativePath);
 const canonicalVendorRoot = path.join(canonicalPackageRoot, vendorRelativePath);
 const smokeVendorRoot = path.join(smokePackageRoot, vendorRelativePath);
 const manifestFileName = 'VENDOR.json';
-const expectedUpstreamBaseCommit = 'b4d8bd2d91751e251f0efb9b72e606471d168969';
+const expectedUpstreamBaseCommit = 'ead1391bd38532eebfb9f13f10064eddc372b769';
 const expectedPackageReleaseCommit = '3d35648c564dafab2a8df9df02cc424d321446e8';
-const expectedSourceCommit = '875882fe074eb9a4698acd838fc1274ee22373d1';
-const expectedSourceRef = 'refs/heads/feat/harden-unterm-for-toolkit';
+const expectedSourceCommit = 'f3f0adb3ee09e99947b830a2ce387b736d824da2';
+const expectedSourceRef = 'refs/heads/feat/toolkit-icon-performance-mcp';
 const expectedBuildWorkflow = 'https://github.com/rankupgames/Unity-Unterm/actions/workflows/split-upm.yml';
 const expectedLicenseHash = '5eadd917298382489f3a1d97bdd2befed92564bf163b642309f31ed21aff7383';
-const expectedThirdPartyNoticesHash = '1eb4d1317cab74a4ba22e5052e2de155532ac209a227d48764e9e025e2ae5321';
+const expectedThirdPartyNoticesHash = '35ba1713c710b059b54e9a1d9cab7d087d646fa22dfa76db060c9fd95e809464';
 const expectedRoslynNoticeHash = 'f8f25b9c793067178b41d736f9aa6f9a97265d02e2677d4ca9f48fce8f994814';
 const expectedPrecompiledReferences = [
 	'Microsoft.CodeAnalysis.CSharp.dll',
@@ -230,12 +230,19 @@ function validateVendorManifest(vendorRoot) {
 		relativePath => relativePath === 'ToolkitMenuItems.cs',
 		relativePath => relativePath === 'Third Party Notices.md',
 		relativePath => relativePath === 'Plugins/macOS/unterm.dylib',
-		relativePath => relativePath === 'Plugins/Windows/x86_64/unterm.dll'
+		relativePath => relativePath === 'Plugins/macOS/unterm-debugger',
+		relativePath => relativePath === 'Plugins/Windows/x86_64/unterm.dll',
+		relativePath => relativePath === 'Plugins/Windows/x86_64/unterm-debugger.exe'
 	];
 	for (const requiredFileCheck of requiredFileChecks) {
 		if (sortedManifestFiles.some(requiredFileCheck) === false) {
 			fail(`${normalizeRelativePath(repositoryRoot, vendorRoot)} is missing a required source, notice, or plugin file`);
 		}
+	}
+
+	const macDebuggerPath = path.join(vendorRoot, 'Plugins', 'macOS', 'unterm-debugger');
+	if ((fs.statSync(macDebuggerPath).mode & 0o111) === 0) {
+		fail(`${normalizeRelativePath(repositoryRoot, macDebuggerPath)} must retain executable permissions`);
 	}
 
 	const asmdef = readJson(path.join(vendorRoot, 'Unterm.Editor.asmdef'));
