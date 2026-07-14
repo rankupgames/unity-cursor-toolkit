@@ -7,9 +7,11 @@ Editor tools for Cursor/VS Code and MCP-capable AI agents integrating with Unity
 - **Hot Reload**: TCP server that triggers asset refresh when code changes are detected
 - **Console Forwarding**: Streams Unity console output to Cursor/VS Code
 - **MCP Bridge**: Model Context Protocol tool dispatch for AI-assisted Unity editing
+- **Editor Validation**: Regenerates Unity project files and requests script compilation from Cursor/VS Code
 - **Runtime Game Commands**: Project-owned coroutine workflows callable through MCP without UI automation
 - **Debug Bridge**: Broadcasts Mono soft debugger port for attach debugging
 - **IL Patcher**: Runtime method body swapping during play mode (avoids domain reload)
+- **Unity-Unterm**: Toolkit-internal terminal, Claude Code, code editor, completion, and debugger windows on supported Unity 6000.3 editors
 - **Agent Safety**: Supports read-only MCP sessions and dry-run previews from the companion extension
 
 ## Installation
@@ -47,8 +49,15 @@ Add to your `Packages/manifest.json`:
 
 ## Requirements
 
-- Unity 2019.4 or later
+- Unity 2019.4 or later for the core toolkit
+- Unity 6000.3 or later on macOS or Windows for the bundled Unity-Unterm features
 - Cursor or VS Code with the Unity Cursor Toolkit extension
+
+Do not install the standalone `dev.tnayuki.unterm` package beside this toolkit. Both packages contain the same editor types and native plugin identity, so that combination is unsupported.
+
+Open the bundled tools from **Tools > Unity Cursor Toolkit > Unterm**, then choose **New Terminal**, **Claude Code**, **Code Editor**, **Debugger**, or **Settings**. Unity-Unterm MCP access remains disabled until it is explicitly enabled for the current project in Preferences.
+
+The optional Claude Code panel uses an existing user-managed `claude` executable discovered from `UNTERM_CLAUDE_PATH`, `PATH`, common install locations, or a legacy Unterm install. The toolkit does not download or update Claude Code.
 
 ## Companion Extension Validation
 
@@ -60,7 +69,7 @@ npm ci
 npm run validate
 ```
 
-`npm run validate` compiles the extension, runs strict unused-code checks, executes the runtime test harness, and runs dependency audits.
+`npm run validate` compiles the extension, runs strict unused-code checks, executes the runtime test harness, verifies the complete vendored Unity-Unterm checksum manifest and smoke-project mirror, and runs dependency audits.
 
 ## AI Agent Usage
 
@@ -72,8 +81,9 @@ Recommended agent flow:
 2. Start the companion MCP server from an MCP client.
 3. Inspect with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"`.
 4. Use `profiler_snapshot` with `action: "current"`, then `action: "readConsoleTranscript"` with the captured session id when an agent needs the compact grouped whole-console timeline.
-5. Use `game_command` with `action: "list"` to discover project-owned runtime workflows.
-6. Use `dryRun: true` before mutating assets, scenes, GameObjects, components, play mode, menus, or builds.
+5. Use `editor_validation` with `action: "sync_and_compile"` after file generation changes, then poll `action: "status"` until the result is no longer pending.
+6. Use `game_command` with `action: "list"` to discover project-owned runtime workflows.
+7. Use `dryRun: true` before mutating assets, scenes, GameObjects, components, play mode, menus, or builds.
 
 Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` for agent sessions that should inspect Unity without changing Editor state.
 
@@ -97,12 +107,21 @@ See the repository docs:
 - `docs/MCP_CLIENTS.md`
 - `docs/FEATURE_ROADMAP.md`
 
+## Editor Validation
+
+The MCP tool `editor_validation` supports `list`, `status`, `sync_project_files`, `request_compile`, and `sync_and_compile`. `request_compile` leaves project files unchanged; `sync_and_compile` fails without requesting compilation when Unity cannot provide a project-file synchronization API.
+
+`sync_and_compile` regenerates project files using Unity's active code editor integration, requests script compilation, and writes the latest pollable result to `TestResults/UnityCursorToolkit/EditorValidation/latest.json` under the Unity project root. The same action is available inside Unity at **Tools > Unity Cursor Toolkit > Validation > Regenerate Project Files And Compile**.
+
 ## Security Notes
 
 - The companion extension validates Unity/MCP/webview payloads before using them.
 - `.meta` resolution and clickable console stack traces are constrained to workspace-safe paths.
 - Console webviews use nonce-based Content Security Policy entries for scripts and styles.
 - MCP tools expose read-only/destructive annotations for clients that surface tool approval context.
+- Bundled Unity-Unterm source, managed assemblies, and native plugins are pinned to an attested fork commit and verified by SHA-256.
+- Unity-Unterm MCP trust is stored in local, uncommitted current-project settings. Prompt is the default; confirmed policies can allow known mutations or dangerous actions unattended, while unclassified tools never auto-run.
+- Arbitrary C# has full machine access under the Editor user account and runs unattended only when both Allow Dangerous and its separate full-machine-access opt-in are enabled.
 - Packaged VSIX artifacts exclude tests, backups, lockfiles, source maps, and generated bundles.
 
 ## Changelog

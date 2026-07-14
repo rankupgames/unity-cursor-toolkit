@@ -11,6 +11,7 @@ Editor tools for Cursor/VS Code and MCP-capable AI agents integrating with Unity
 - **Runtime Game Commands**: Project-owned coroutine workflows callable through MCP without UI automation
 - **Debug Bridge**: Broadcasts Mono soft debugger port for attach debugging
 - **IL Patcher**: Runtime method body swapping during play mode (avoids domain reload)
+- **Unity-Unterm**: Toolkit-internal terminal, Claude Code, code editor, completion, and debugger windows on supported Unity 6000.3 editors
 - **Agent Safety**: Supports read-only MCP sessions and dry-run previews from the companion extension
 
 ## Installation
@@ -48,8 +49,15 @@ Add to your `Packages/manifest.json`:
 
 ## Requirements
 
-- Unity 2019.4 or later
+- Unity 2019.4 or later for the core toolkit
+- Unity 6000.3 or later on macOS or Windows for the bundled Unity-Unterm features
 - Cursor or VS Code with the Unity Cursor Toolkit extension
+
+Do not install the standalone `dev.tnayuki.unterm` package beside this toolkit. Both packages contain the same editor types and native plugin identity, so that combination is unsupported.
+
+Open the bundled tools from **Tools > Unity Cursor Toolkit > Unterm**, then choose **New Terminal**, **Claude Code**, **Code Editor**, **Debugger**, or **Settings**. Unity-Unterm MCP access remains disabled until it is explicitly enabled for the current project in Preferences.
+
+The optional Claude Code panel uses an existing user-managed `claude` executable discovered from `UNTERM_CLAUDE_PATH`, `PATH`, common install locations, or a legacy Unterm install. The toolkit does not download or update Claude Code.
 
 ## Companion Extension Validation
 
@@ -61,7 +69,7 @@ npm ci
 npm run validate
 ```
 
-`npm run validate` compiles the extension, runs strict unused-code checks, executes the runtime test harness, and runs dependency audits.
+`npm run validate` compiles the extension, runs strict unused-code checks, executes the runtime test harness, verifies the complete vendored Unity-Unterm checksum manifest and smoke-project mirror, and runs dependency audits.
 
 ## AI Agent Usage
 
@@ -111,6 +119,9 @@ The MCP tool `editor_validation` supports `list`, `status`, `sync_project_files`
 - `.meta` resolution and clickable console stack traces are constrained to workspace-safe paths.
 - Console webviews use nonce-based Content Security Policy entries for scripts and styles.
 - MCP tools expose read-only/destructive annotations for clients that surface tool approval context.
+- Bundled Unity-Unterm source, managed assemblies, and native plugins are pinned to an attested fork commit and verified by SHA-256.
+- Unity-Unterm MCP trust is stored in local, uncommitted current-project settings. Prompt is the default; confirmed policies can allow known mutations or dangerous actions unattended, while unclassified tools never auto-run.
+- Arbitrary C# has full machine access under the Editor user account and runs unattended only when both Allow Dangerous and its separate full-machine-access opt-in are enabled.
 - Packaged VSIX artifacts exclude tests, backups, lockfiles, source maps, and generated bundles.
 
 ## Changelog

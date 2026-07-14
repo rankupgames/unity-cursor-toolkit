@@ -1,0 +1,25 @@
+{
+    "name": "UnityCursorToolkit.Vendor.Unterm.Editor",
+    "rootNamespace": "Unterm.Editor",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "Newtonsoft.Json.dll",
+        "Microsoft.CodeAnalysis.dll",
+        "Microsoft.CodeAnalysis.CSharp.dll",
+        "System.Collections.Immutable.dll",
+        "System.Reflection.Metadata.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_6000_3_OR_NEWER",
+        "UNITY_EDITOR_OSX || UNITY_EDITOR_WIN"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

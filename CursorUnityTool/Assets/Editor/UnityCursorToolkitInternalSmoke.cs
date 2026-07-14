@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
 using System.Text;
@@ -39,6 +40,7 @@ namespace UnityCursorToolkit.InternalSmoke
 
 		public static void Run()
 		{
+			ValidateUntermIntegration();
 			SessionState.SetBool(RunningKey, true);
 			SessionState.SetString(PhaseKey, "enterPlay");
 			SessionState.SetString(ResultPathKey, GetArg("-uctSmokeResultPath", "/tmp/uct-internal-smoke-result.json"));
@@ -48,6 +50,57 @@ namespace UnityCursorToolkit.InternalSmoke
 			SessionState.SetString(FailureRunIdKey, string.Empty);
 			SessionState.SetInt(AttemptsKey, 0);
 			HookUpdate();
+		}
+
+		/// <summary>
+		/// Proves that the vendored Unterm assembly and toolkit menu aliases compiled without opening an Editor window.
+		/// </summary>
+		private static void ValidateUntermIntegration()
+		{
+			Type menuItemsType = Type.GetType("Unterm.Editor.ToolkitMenuItems, UnityCursorToolkit.Vendor.Unterm.Editor", false);
+			if (menuItemsType == null)
+			{
+				throw new InvalidOperationException("Vendored Unity-Unterm menu assembly was not loaded.");
+			}
+
+			string[] expectedMenuPaths =
+			{
+				"Tools/Unity Cursor Toolkit/Unterm/New Terminal",
+				"Tools/Unity Cursor Toolkit/Unterm/Claude Code",
+				"Tools/Unity Cursor Toolkit/Unterm/Code Editor",
+				"Tools/Unity Cursor Toolkit/Unterm/Settings"
+			};
+			PropertyInfo menuItemProperty = typeof(MenuItem).GetProperty("menuItem", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			FieldInfo menuItemField = typeof(MenuItem).GetField("menuItem", BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+			if (menuItemProperty == null && menuItemField == null)
+			{
+				throw new InvalidOperationException("Unity MenuItem metadata is unavailable for integration validation.");
+			}
+
+			HashSet<string> registeredMenuPaths = new HashSet<string>();
+			MethodInfo[] menuMethods = menuItemsType.GetMethods(BindingFlags.Static | BindingFlags.NonPublic);
+			foreach (MethodInfo menuMethod in menuMethods)
+			{
+				object[] menuAttributes = menuMethod.GetCustomAttributes(typeof(MenuItem), false);
+				foreach (object menuAttribute in menuAttributes)
+				{
+					string menuPath = menuItemProperty != null
+						? menuItemProperty.GetValue(menuAttribute) as string
+						: menuItemField.GetValue(menuAttribute) as string;
+					if (!string.IsNullOrEmpty(menuPath))
+					{
+						registeredMenuPaths.Add(menuPath);
+					}
+				}
+			}
+
+			foreach (string expectedMenuPath in expectedMenuPaths)
+			{
+				if (!registeredMenuPaths.Contains(expectedMenuPath))
+				{
+					throw new InvalidOperationException("Missing Unity-Unterm toolkit menu alias: " + expectedMenuPath);
+				}
+			}
 		}
 
 		public static void StartViewportStream()
