@@ -26,6 +26,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Declared the built-in JSON serialization module required by runtime game-command argument parsing.
 - Added immediate TCP `ping`/`pong` handling so the extension can verify it attached to a current Unity Cursor Toolkit package.
 - Restored Unity-Unterm's terminal tab icon across editor reloads and live title changes, and reduced idle texture, resize, file, and diff polling work.
+- Restored ANSI colors in Unity-Unterm sessions launched from non-interactive agent hosts without overriding an interactive user's explicit `NO_COLOR` preference.
 
 ## [1.1.0] - 2026-05-28
 
