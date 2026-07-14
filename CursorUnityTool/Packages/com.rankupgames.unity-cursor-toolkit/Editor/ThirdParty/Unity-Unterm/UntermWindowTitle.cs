@@ -15,17 +15,35 @@ namespace Unterm.Editor
 
         internal static GUIContent Create(string text, string iconName, GUIContent current = null)
         {
-            Texture icon = current?.image;
-            if (icon == null && !string.IsNullOrEmpty(iconName))
+            Texture icon = null;
+            if (!string.IsNullOrEmpty(iconName))
             {
-                if (!Icons.TryGetValue(iconName, out icon) || icon == null)
-                {
-                    icon = EditorGUIUtility.IconContent(iconName)?.image;
-                    if (icon != null) Icons[iconName] = icon;
-                }
+                string themedIconName = EditorGUIUtility.isProSkin && !iconName.StartsWith("d_")
+                    ? "d_" + iconName
+                    : iconName;
+                icon = ResolveIcon(themedIconName);
+                if (icon == null && themedIconName != iconName)
+                    icon = ResolveIcon(iconName);
             }
 
+            // Unity may restore a generic serialized image before OnEnable. Prefer
+            // the named tool icon above, using the restored image only as a final
+            // fallback when the active Unity version does not expose that icon.
+            icon ??= current?.image;
             return new GUIContent(text ?? string.Empty, icon, current?.tooltip ?? string.Empty);
+        }
+
+        private static Texture ResolveIcon(string iconName)
+        {
+            if (!Icons.TryGetValue(iconName, out Texture icon) || icon == null)
+            {
+                icon = EditorGUIUtility.IconContent(iconName)?.image;
+                if (icon != null)
+                {
+                    Icons[iconName] = icon;
+                }
+            }
+            return icon;
         }
     }
 }

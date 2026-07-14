@@ -13,11 +13,11 @@ const smokeVendorRoot = path.join(smokePackageRoot, vendorRelativePath);
 const manifestFileName = 'VENDOR.json';
 const expectedUpstreamBaseCommit = 'ead1391bd38532eebfb9f13f10064eddc372b769';
 const expectedPackageReleaseCommit = '3d35648c564dafab2a8df9df02cc424d321446e8';
-const expectedSourceCommit = 'f3f0adb3ee09e99947b830a2ce387b736d824da2';
+const expectedSourceCommit = 'b056990babba629c8505a345ddc5a7a2d845ad6d';
 const expectedSourceRef = 'refs/heads/feat/toolkit-icon-performance-mcp';
 const expectedBuildWorkflow = 'https://github.com/rankupgames/Unity-Unterm/actions/workflows/split-upm.yml';
 const expectedLicenseHash = '5eadd917298382489f3a1d97bdd2befed92564bf163b642309f31ed21aff7383';
-const expectedThirdPartyNoticesHash = '35ba1713c710b059b54e9a1d9cab7d087d646fa22dfa76db060c9fd95e809464';
+const expectedThirdPartyNoticesHash = '6ee517c20de6d83263c67fe6727ff4ef15e482feb343742f9dd7b0744b615234';
 const expectedRoslynNoticeHash = 'f8f25b9c793067178b41d736f9aa6f9a97265d02e2677d4ca9f48fce8f994814';
 const expectedPrecompiledReferences = [
 	'Microsoft.CodeAnalysis.CSharp.dll',

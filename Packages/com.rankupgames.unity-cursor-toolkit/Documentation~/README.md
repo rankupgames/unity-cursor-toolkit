@@ -57,6 +57,8 @@ Do not install the standalone `dev.tnayuki.unterm` package beside this toolkit. 
 
 Open the bundled tools from **Tools > Unity Cursor Toolkit > Unterm**, then choose **New Terminal**, **Claude Code**, **Code Editor**, **Debugger**, or **Settings**. Unity-Unterm MCP access remains disabled until it is explicitly enabled for the current project in Preferences.
 
+The optional Claude Code panel uses an existing user-managed `claude` executable discovered from `UNTERM_CLAUDE_PATH`, `PATH`, common install locations, or a legacy Unterm install. The toolkit does not download or update Claude Code.
+
 ## Companion Extension Validation
 
 The VS Code/Cursor companion extension is maintained in the repository's `unity-cursor-toolkit/` folder.

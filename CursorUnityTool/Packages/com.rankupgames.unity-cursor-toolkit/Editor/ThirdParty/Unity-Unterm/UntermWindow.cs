@@ -268,6 +268,8 @@ namespace Unterm.Editor
         private void OnEnable()
         {
             s_reloading = false;
+            string restoredTitle = string.IsNullOrEmpty(titleContent?.text) ? "Terminal" : titleContent.text;
+            titleContent = UntermWindowTitle.Create(restoredTitle, UntermWindowTitle.TerminalIcon, titleContent);
             wantsMouseMove = false;
             _sentW = _sentH = 0;
             _sentPpp = 0f;
