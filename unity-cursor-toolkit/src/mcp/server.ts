@@ -15,6 +15,8 @@ import { UnityMcpTools } from './unityMcpTools';
 import { StandaloneUnityConnection } from './standaloneConnection';
 import { StandaloneConsoleMcpTools, StandaloneConsoleStore } from './standaloneConsole';
 import { StandaloneProjectMcpTools } from './standaloneProjectTools';
+import { UnityContextMcpTools } from './unityContextIndex';
+import { ViewportStreamMcpTools } from './viewportStreamTools';
 import { isDryRun, isMutatingToolCall } from './toolMetadata';
 import type { ToolDefinition, ToolResult } from '../core/interfaces';
 
@@ -65,6 +67,7 @@ export interface StandaloneMcpRuntime {
 	readonly router: ToolRouter;
 	readonly connection: StandaloneUnityConnection;
 	readonly consoleStore: StandaloneConsoleStore;
+	readonly viewportTools: ViewportStreamMcpTools;
 	readonly readOnly: boolean;
 	handleRequest(request: JsonRpcRequest): Promise<unknown>;
 	dispose(): void;
@@ -105,6 +108,13 @@ const RESOURCES: readonly ResourceDefinition[] = [
 		title: 'Unity Tool Catalog',
 		description: 'Agent-facing catalog of Unity Cursor Toolkit MCP tools and annotations.',
 		mimeType: 'application/json'
+	},
+	{
+		uri: 'unity://context/summary',
+		name: 'unity-context-summary',
+		title: 'Unity Context Summary',
+		description: 'Compact summary from .umetacontext/index.json.',
+		mimeType: 'application/json'
 	}
 ];
 
@@ -135,9 +145,13 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 	const router = new ToolRouter();
 	const connection = new StandaloneUnityConnection();
 	const consoleStore = new StandaloneConsoleStore();
+	const viewportTools = new ViewportStreamMcpTools(connection);
 
 	connection.onMessage((message) => consoleStore.addFromUnityMessage(message));
+	connection.onMessage((message) => viewportTools.handleUnityMessage(message));
 	router.register(new UnityMcpTools(connection));
+	router.register(new UnityContextMcpTools());
+	router.register(viewportTools);
 	router.register(new StandaloneConsoleMcpTools(consoleStore));
 	router.register(new StandaloneProjectMcpTools());
 
@@ -145,9 +159,13 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 		router,
 		connection,
 		consoleStore,
+		viewportTools,
 		readOnly,
 		handleRequest: (request) => handleRequest(router, consoleStore, readOnly, request),
-		dispose: () => connection.dispose()
+		dispose: () => {
+			void viewportTools.dispose();
+			connection.dispose();
+		}
 	};
 }
 
@@ -270,6 +288,9 @@ async function readResource(
 		case 'unity://tools/catalog':
 			text = JSON.stringify(router.getToolDefinitions().map(toCatalogEntry), null, 2);
 			break;
+		case 'unity://context/summary':
+			text = toolResultToText(await router.routeToolCall('unity_context', { action: 'summary' }));
+			break;
 		default:
 			throw new InvalidParamsError(`Unknown resource URI: ${uri}`);
 	}
@@ -318,7 +339,9 @@ function buildInitializeResult(tools: readonly ToolDefinition[], readOnly: boole
 			'Connect Unity first by installing com.rankupgames.unity-cursor-toolkit and opening the project in Unity.',
 			`Read-only mode is ${readOnly ? 'enabled' : 'disabled'} via ${READ_ONLY_ENV}.`,
 			'Use project_info, read_console, and manage_scene/getHierarchy before mutating a scene.',
+			'Use unity_context action=scan to refresh .umetacontext/index.json, then query/read/summary to avoid broad Unity asset fetches.',
 			'Use profiler_snapshot action=current for session artifacts, then readConsoleTranscript with the returned session id when the compact console timeline is needed.',
+			'Use viewport_stream action=start only when a graphics-capable Unity host is available; -nographics is for non-rendering batch workflows.',
 			'Use dryRun=true on mutating tools to inspect normalized Unity commands without executing them.',
 			`Available tools: ${tools.map((tool) => tool.name).join(', ')}.`
 		].join(' ')

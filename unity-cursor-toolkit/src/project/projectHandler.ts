@@ -12,6 +12,7 @@ import * as fs from 'fs';
 import { MetaManager } from './metaManager';
 
 const CURRENT_PROJECT_KEY = 'unityCursorToolkit.currentProjectUri';
+const ENV_PROJECT_PATH = 'UNITY_CURSOR_TOOLKIT_PROJECT_PATH';
 const PACKAGE_NAME = 'com.rankupgames.unity-cursor-toolkit';
 const PACKAGE_VERSION = '1.0.0';
 const MIN_UPM_VERSION = '1.0.0';
@@ -42,7 +43,7 @@ export const hasLinkedUnityProject = (): boolean => {
 		return false;
 	}
 
-	const savedProjectUri = getCurrentProjectUri();
+	const savedProjectUri = getConfiguredProjectUri();
 	if (savedProjectUri == null) {
 		return false;
 	}
@@ -55,7 +56,7 @@ export const getLinkedProjectPath = (): string | undefined => {
 		return undefined;
 	}
 
-	const savedProjectUri = getCurrentProjectUri();
+	const savedProjectUri = getConfiguredProjectUri();
 	if (savedProjectUri == null) {
 		return undefined;
 	}
@@ -233,6 +234,12 @@ export const handleUnityProjectSetup = async (): Promise<boolean> => {
 		return false;
 	}
 
+	const configuredProjectUri = getEnvironmentProjectUri();
+	if (configuredProjectUri && fs.existsSync(path.join(configuredProjectUri.fsPath, 'Assets'))) {
+		saveCurrentProjectUri(configuredProjectUri);
+		return await setupUpmForProject(configuredProjectUri);
+	}
+
 	const savedProjectUri = getCurrentProjectUri();
 
 	if (savedProjectUri && fs.existsSync(path.join(savedProjectUri.fsPath, 'Assets'))) {
@@ -339,6 +346,22 @@ export const getCurrentProjectUri = (): vscode.Uri | undefined => {
 
 	const uriString = extensionContext.workspaceState.get<string>(CURRENT_PROJECT_KEY);
 	return uriString ? vscode.Uri.parse(uriString) : undefined;
+};
+
+const getConfiguredProjectUri = (): vscode.Uri | undefined => {
+	return getEnvironmentProjectUri() ?? getCurrentProjectUri();
+};
+
+const getEnvironmentProjectUri = (): vscode.Uri | undefined => {
+	const envProjectPath = process.env[ENV_PROJECT_PATH]?.trim();
+	if (envProjectPath) {
+		const projectPath = path.resolve(envProjectPath);
+		if (fs.existsSync(path.join(projectPath, 'Assets'))) {
+			return vscode.Uri.file(projectPath);
+		}
+	}
+
+	return undefined;
 };
 
 const saveCurrentProjectUri = (projectUri: vscode.Uri): void => {

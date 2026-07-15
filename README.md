@@ -25,7 +25,7 @@ Real-time streaming, severity filtering, text search across messages and stack t
 
 ### Connection
 
-TCP state machine with heartbeat, exponential backoff reconnect, and multi-port auto-select (55500-55504).
+TCP state machine with toolkit ping/pong validation, heartbeat, exponential backoff reconnect, and multi-port auto-select (55500-55504). Open ports that do not answer the Unity Cursor Toolkit handshake are ignored so the extension does not attach to unrelated Unity listeners.
 
 ### Status Bar
 
@@ -37,7 +37,7 @@ Enter, exit, pause, and single-frame step directly from VS Code / Cursor -- no n
 
 ### MCP Server
 
-AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, inspect profiler snapshots, run game-authored command sequences, and use read-only or dry-run safeguards before mutating Unity state.
+AI agents (Cursor, Claude Code, Copilot, Zed, and other MCP clients) can read console output, inspect project state, control play mode, manage scenes/assets, query project info, capture screenshots, inspect profiler snapshots, query a compact Unity context index, run game-authored command sequences, and use read-only or dry-run safeguards before mutating Unity state.
 
 ### Mono Debugger
 
@@ -76,6 +76,7 @@ Agent safety defaults:
 - Set `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` to block mutating tools.
 - Pass `dryRun: true` to mutating tools to inspect the normalized Unity command without executing it.
 - Start with `project_info`, `read_console`, and `manage_scene` using `action: "getHierarchy"` before scene or asset edits.
+- Use `unity_context` with `action: "scan"` to refresh `.umetacontext/index.json`, then use `summary`, `query`, and `read` to inspect assets, GUIDs, serialized objects, components, and references without broad file reads.
 - Use `game_command` with `action: "list"` to discover project-authored runtime workflows before scheduling them.
 
 See [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
@@ -140,6 +141,8 @@ Then poll with:
 
 See [Runtime Game Commands](docs/GAME_COMMANDS.md) for registration patterns and project integration notes.
 
+For non-rendering command discovery and execution in CI or headless automation, pass `host: "editorBatchmode"`. The MCP server launches Unity with `UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run`, writes structured arguments to a temp file, and returns the Unity log tail plus the command result JSON.
+
 ## Configuration
 
 | Setting | Default | Description |
@@ -177,6 +180,7 @@ The VSIX package is intentionally limited to runtime extension assets: compiled 
 
 - Dependency audits run through `npm run validate` and GitHub Actions.
 - Dependency updates follow a 7-day npm release-age gate unless an explicit security hotfix exception is documented.
+- TCP attach requires the current Unity package handshake; if Unity exposes an older package server, the extension reports that the package should be updated instead of treating the port as connected.
 - Console webviews use nonce-based CSP for scripts and styles.
 - Console payloads are normalized before rendering, filtering, copying, or forwarding to chat.
 - Clickable stack traces and `.meta` resolution reject paths that escape the current workspace.

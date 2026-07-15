@@ -27,6 +27,17 @@ namespace UnityCursorToolkit.AgentCommands
 		public string Description { get; }
 
 		/// <summary>
+		/// True when this command is intended as a viewport input adapter.
+		/// </summary>
+		public bool SupportsViewportInput
+		{
+			get
+			{
+				return string.IsNullOrEmpty(Name) == false && Name.StartsWith("viewport.");
+			}
+		}
+
+		/// <summary>
 		/// Creates command metadata for registry discovery.
 		/// </summary>
 		/// <param name="name">Stable command identifier used by MCP callers.</param>
@@ -46,7 +57,10 @@ namespace UnityCursorToolkit.AgentCommands
 			builder.Append("{");
 			AgentCommandJson.AppendProperty(builder, "name", Name).Append(",");
 			AgentCommandJson.AppendProperty(builder, "description", Description).Append(",");
-			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", true);
+			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", true).Append(",");
+			AgentCommandJson.AppendProperty(builder, "supportsBatchmode", false).Append(",");
+			AgentCommandJson.AppendProperty(builder, "supportsViewportInput", SupportsViewportInput).Append(",");
+			builder.Append("\"supportedHosts\":[\"editor\",\"player\",\"auto\"]");
 			builder.Append("}");
 		}
 	}

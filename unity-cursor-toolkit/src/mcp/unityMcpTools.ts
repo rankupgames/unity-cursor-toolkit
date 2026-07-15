@@ -8,6 +8,7 @@
  */
 
 import type { IToolProvider, ICommandSender, ToolDefinition, ToolResult } from '../core/interfaces';
+import { buildBatchmodeCommandPlan, runBatchmodeGameCommand, shouldUseEditorBatchmode } from './gameCommandBatchmode';
 import { getToolAnnotations, isDryRun, isMutatingToolCall, withDryRunProperty } from './toolMetadata';
 
 export class UnityMcpTools implements IToolProvider {
@@ -126,6 +127,23 @@ export class UnityMcpTools implements IToolProvider {
 				annotations: getToolAnnotations('play_mode')
 			},
 			{
+				name: 'editor_lifecycle',
+				title: 'Editor Lifecycle',
+				description: 'Inspect save state, save every open scene and project asset, or save and quit Unity safely.',
+				inputSchema: {
+					type: 'object',
+					properties: withDryRunProperty({
+						action: {
+							type: 'string',
+							enum: ['status', 'save', 'saveAndQuit'],
+							description: 'Use saveAndQuit instead of terminating a user editor process.'
+						}
+					}),
+					required: ['action']
+				},
+				annotations: getToolAnnotations('editor_lifecycle')
+			},
+			{
 				name: 'execute_menu_item',
 				title: 'Execute Menu Item',
 				description: 'Execute any Unity menu command by its path (e.g. "Window/General/Console").',
@@ -153,6 +171,22 @@ export class UnityMcpTools implements IToolProvider {
 				annotations: getToolAnnotations('project_info')
 			},
 			{
+				name: 'editor_validation',
+				title: 'Editor Validation',
+				description: 'Regenerate Unity project files, request script compilation, and poll the latest validation result.',
+				inputSchema: {
+					type: 'object',
+					properties: withDryRunProperty({
+						action: {
+							type: 'string',
+							enum: ['list', 'status', 'sync_project_files', 'request_compile', 'sync_and_compile'],
+							description: 'Editor validation action. Defaults to sync_and_compile.'
+						}
+					})
+				},
+				annotations: getToolAnnotations('editor_validation')
+			},
+			{
 				name: 'game_command',
 				title: 'Game Command',
 				description: 'List, schedule, poll, or cancel game-authored runtime commands and workflows registered inside the Unity project.',
@@ -164,7 +198,10 @@ export class UnityMcpTools implements IToolProvider {
 						name: { type: 'string', description: 'Alias for commandName.' },
 						runId: { type: 'string', description: 'Run id returned by action run, used by status and cancel.' },
 						id: { type: 'string', description: 'Alias for runId.' },
-						args: { type: 'object', description: 'Command-specific argument object forwarded to the registered Unity handler.' }
+						args: { type: 'object', description: 'Command-specific argument object forwarded to the registered Unity handler.' },
+						host: { type: 'string', enum: ['editor', 'editorBatchmode', 'player', 'auto'], description: 'Execution host. Defaults to auto/editor bridge behavior.' },
+						unityPath: { type: 'string', description: 'Unity executable path for host editorBatchmode.' },
+						timeoutMs: { type: 'number', description: 'Batchmode timeout in milliseconds. Defaults to 120000.' }
 					})
 				},
 				annotations: getToolAnnotations('game_command')
@@ -239,6 +276,10 @@ export class UnityMcpTools implements IToolProvider {
 		}
 
 		const unityArgs = UnityMcpTools.normalizeToolArgs(name, args);
+		if (name === 'game_command' && shouldUseEditorBatchmode(unityArgs)) {
+			return this.handleEditorBatchmodeGameCommand(args, unityArgs);
+		}
+
 		if (isDryRun(args) && isMutatingToolCall(name, args)) {
 			return UnityMcpTools.buildDryRunResult(name, unityArgs);
 		}
@@ -486,5 +527,43 @@ export class UnityMcpTools implements IToolProvider {
 		}
 
 		return { content: [{ type: 'text', text: results.join('\n') }] };
+	}
+
+	private async handleEditorBatchmodeGameCommand(originalArgs: Record<string, unknown>, unityArgs: Record<string, unknown>): Promise<ToolResult> {
+		const action = typeof unityArgs.action === 'string' ? unityArgs.action : 'list';
+		if (action !== 'list' && action !== 'run') {
+			return {
+				content: [{ type: 'text', text: JSON.stringify({ success: false, error: `game_command host editorBatchmode supports list and run, not ${action}.` }) }],
+				isError: true
+			};
+		}
+
+		try {
+			if (isDryRun(originalArgs)) {
+				const plan = await buildBatchmodeCommandPlan(unityArgs);
+				return {
+					content: [{
+						type: 'text',
+						text: JSON.stringify({
+							success: true,
+							dryRun: true,
+							host: 'editorBatchmode',
+							batchmode: plan
+						}, null, 2)
+					}]
+				};
+			}
+
+			const result = await runBatchmodeGameCommand(unityArgs);
+			return {
+				content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
+				isError: result.success === false
+			};
+		} catch (error) {
+			return {
+				content: [{ type: 'text', text: JSON.stringify({ success: false, error: error instanceof Error ? error.message : String(error) }) }],
+				isError: true
+			};
+		}
 	}
 }

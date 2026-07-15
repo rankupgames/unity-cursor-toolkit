@@ -15,6 +15,7 @@ import { CommandSender } from './core/commandSender';
 import { ModuleLoader } from './core/moduleLoader';
 import { StatusBarController } from './core/statusBarController';
 import { ConnectionState } from './core/types';
+import { hideUnityEditor, launchUnityEditor, UnityEditorLaunchResult } from './core/unityEditorLauncher';
 import {
 	ModuleContext,
 	IMessageHandler,
@@ -28,11 +29,18 @@ import { McpModule } from './mcp/index';
 import { createCombinedMcpConfigText, getMcpServerPath } from './mcp/clientConfig';
 import { DebugModule } from './debug/index';
 import { ProjectModule, hasLinkedUnityProject, getLinkedProjectPath, isScriptInstalledInLinkedProject, handleUnityProjectSetup } from './project/index';
+import { RemoteShellModule } from './remote-shell/index';
+import { ViewportPrototypeModule } from './viewport/index';
 
 let connection: ConnectionManager;
 let commandSender: CommandSender;
 let moduleLoader: ModuleLoader;
 let statusBar: StatusBarController;
+let pendingEditorLaunch: Promise<UnityEditorLaunchResult> | undefined;
+let pendingConnectionAttempt: Promise<void> | undefined;
+
+const EDITOR_BRIDGE_BOOT_TIMEOUT_MS = 90_000;
+const EDITOR_BRIDGE_RETRY_MS = 2_000;
 
 export function activate(context: vscode.ExtensionContext): void {
 	connection = new ConnectionManager();
@@ -68,6 +76,8 @@ export function activate(context: vscode.ExtensionContext): void {
 	moduleLoader.register(new HotReloadModule());
 	moduleLoader.register(new McpModule());
 	moduleLoader.register(new DebugModule());
+	moduleLoader.register(new RemoteShellModule());
+	moduleLoader.register(new ViewportPrototypeModule());
 
 	context.subscriptions.push(connection, moduleLoader);
 
@@ -148,7 +158,7 @@ function getScreenshotPath(result: unknown): string | undefined {
 function registerCoreCommands(context: vscode.ExtensionContext): void {
 	context.subscriptions.push(
 		vscode.commands.registerCommand('unity-cursor-toolkit.startConnection', async () => {
-			await attemptConnection(true);
+			await runConnectionAttempt(true);
 		}),
 
 		vscode.commands.registerCommand('unity-cursor-toolkit.reloadConnection', async () => {
@@ -157,7 +167,7 @@ function registerCoreCommands(context: vscode.ExtensionContext): void {
 				return;
 			}
 			connection.disconnect();
-			await attemptConnection(false);
+			await runConnectionAttempt(false);
 		}),
 
 		vscode.commands.registerCommand('unity-cursor-toolkit.stopConnection', () => {
@@ -165,6 +175,20 @@ function registerCoreCommands(context: vscode.ExtensionContext): void {
 			vscode.window.showInformationMessage('Unity connection stopped.');
 		})
 	);
+}
+
+async function runConnectionAttempt(isInitialSetup: boolean): Promise<void> {
+	if (pendingConnectionAttempt != null) {
+		await pendingConnectionAttempt;
+		return;
+	}
+
+	pendingConnectionAttempt = attemptConnection(isInitialSetup);
+	try {
+		await pendingConnectionAttempt;
+	} finally {
+		pendingConnectionAttempt = undefined;
+	}
 }
 
 async function attemptConnection(isInitialSetup: boolean): Promise<void> {
@@ -191,9 +215,64 @@ async function attemptConnection(isInitialSetup: boolean): Promise<void> {
 	const port = await connection.connect();
 	if (port) {
 		vscode.window.showInformationMessage(`Connected to Unity on port ${port}`);
-	} else {
-		vscode.window.showErrorMessage('Failed to connect to Unity. Is it running with the Hot Reload script?');
+		return;
 	}
+
+	const autoLaunch = vscode.workspace.getConfiguration('unityCursorToolkit').get<boolean>('autoLaunchEditor', true);
+	if (autoLaunch === false) {
+		vscode.window.showErrorMessage('Failed to connect to Unity. Auto-launch is disabled; start the linked Unity project, then attach again.');
+		return;
+	}
+
+	let launchResult: UnityEditorLaunchResult;
+	try {
+		launchResult = await launchLinkedUnityEditor(projectPath);
+	} catch (error: unknown) {
+		vscode.window.showErrorMessage(`Failed to launch Unity Editor: ${error instanceof Error ? error.message : String(error)}`);
+		return;
+	}
+
+	vscode.window.showInformationMessage(`Launching hidden Unity Editor for ${path.basename(projectPath)}...`);
+	const launchedPort = await waitForUnityBridge(EDITOR_BRIDGE_BOOT_TIMEOUT_MS);
+	if (launchedPort) {
+		hideUnityEditor(launchResult.pid);
+		vscode.window.showInformationMessage(`Connected to Unity on port ${launchedPort}`);
+	} else {
+		vscode.window.showErrorMessage(`Unity Editor launched, but the toolkit bridge did not answer within ${EDITOR_BRIDGE_BOOT_TIMEOUT_MS / 1000}s. Unity log: ${launchResult.logPath}`);
+	}
+}
+
+async function launchLinkedUnityEditor(projectPath: string): Promise<UnityEditorLaunchResult> {
+	if (pendingEditorLaunch != null) {
+		return pendingEditorLaunch;
+	}
+
+	pendingEditorLaunch = Promise.resolve().then(() => {
+		const configuredPath = vscode.workspace.getConfiguration('unityCursorToolkit').get<string>('unityEditorPath', '');
+		return launchUnityEditor(projectPath, { editorPathOverride: configuredPath });
+	});
+
+	try {
+		return await pendingEditorLaunch;
+	} finally {
+		pendingEditorLaunch = undefined;
+	}
+}
+
+async function waitForUnityBridge(timeoutMs: number): Promise<number | null> {
+	const deadline = Date.now() + timeoutMs;
+	while (Date.now() < deadline) {
+		const port = await connection.connect();
+		if (port) {
+			return port;
+		}
+		await sleep(EDITOR_BRIDGE_RETRY_MS);
+	}
+	return null;
+}
+
+function sleep(ms: number): Promise<void> {
+	return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 function listenToConnectionState(): void {

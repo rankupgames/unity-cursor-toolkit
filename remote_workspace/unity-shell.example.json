@@ -1,0 +1,21 @@
+{
+  "sshTarget": "unity-vdd-host",
+  "remoteWorkspacePath": "C:\\remote_workspace\\unity-shell-demo",
+  "remoteRepoPath": "C:\\remote_workspace\\unity-cursor-toolkit",
+  "unityEditorPath": "C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.9f1\\Editor\\Unity.exe",
+  "unityPlayerPath": "C:\\remote_workspace\\unity-shell-demo\\Build\\UnityShellDemo.exe",
+  "vddMonitor": 2,
+  "display": {
+    "width": 1280,
+    "height": 720,
+    "fps": 30,
+    "quality": 70
+  },
+  "ports": {
+    "stream": 48170,
+    "control": 48171
+  },
+  "windowTitle": "Unity VDD Shell",
+  "ffmpegPath": "ffmpeg",
+  "remoteSidecarPath": "C:\\remote_workspace\\unity-shell-demo\\tools\\unity-vdd-shell\\unity-vdd-sidecar.ps1"
+}

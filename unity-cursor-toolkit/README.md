@@ -1,6 +1,6 @@
 # Unity Cursor Toolkit Extension
 
-VS Code / Cursor extension for Unity hot reload, live console streaming, MCP tool routing, runtime game commands, play mode controls, `.meta` resolution, Mono debugger attach support, and standalone MCP access for AI agents.
+VS Code / Cursor extension for Unity hot reload, live console streaming, MCP tool routing, context indexing, runtime game commands, play mode controls, `.meta` resolution, Mono debugger attach support, and standalone MCP access for AI agents.
 
 ## Development
 
@@ -27,10 +27,13 @@ Useful environment variables:
 - `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1` blocks mutating tools.
 - `UNITY_CURSOR_TOOLKIT_PROJECT_PATH=/path/to/unity/project` sets the project root for `.meta` resolution.
 - `UNITY_CURSOR_TOOLKIT_MCP_PORTS=55500,55501,55502,55503,55504` overrides the Unity TCP port scan.
+- `UNITY_CURSOR_TOOLKIT_UNITY_PATH=/path/to/Unity` optionally sets the executable used by `game_command` with `host: "editorBatchmode"`.
 
 Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy client snippets.
 
 Use the `game_command` MCP tool to list, schedule, poll, or cancel runtime workflows registered by the Unity project through the UPM package's `UnityCursorToolkit.AgentCommands` API.
+
+Use the `unity_context` MCP tool to refresh `.umetacontext/index.json` with `action: "scan"`, then inspect compact project context with `summary`, `query`, and `read`.
 
 ## Packaging
 
@@ -47,6 +50,7 @@ GitHub Actions builds separate VS Code Marketplace and OpenVSX artifacts. Publis
 - Console webviews use nonce-based CSP for scripts and styles.
 - Console payloads are normalized before they are stored, filtered, copied, or sent to chat.
 - Clickable stack traces and `.meta` resolution reject paths that escape the active workspace.
+- TCP attach requires the Unity package to answer the toolkit ping/pong handshake; update `com.rankupgames.unity-cursor-toolkit` if Unity is running but attach reports an older package.
 - The standalone MCP server supports read-only mode and dry-run previews for mutating Unity tools.
 - Dependency audits are part of `npm run validate` and the GitHub Actions workflows.
 

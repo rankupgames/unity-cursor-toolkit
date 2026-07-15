@@ -1,0 +1,31 @@
+{
+  "folders": [
+    {
+      "name": "Unity Cursor Toolkit",
+      "path": "."
+    },
+    {
+      "name": "CursorUnityTool",
+      "path": "CursorUnityTool"
+    }
+  ],
+  "settings": {
+    "unityCursorToolkit.console.enabled": true,
+    "unityCursorToolkit.console.autoStream": true,
+    "unityCursorToolkit.remoteShell.manifestPath": "${workspaceFolder}/remote_workspace/unity-shell.json",
+    "unityCursorToolkit.remoteShell.localPortBase": 48170,
+    "files.exclude": {
+      "**/.git": true,
+      "**/.svn": true,
+      "**/.hg": true,
+      "**/.DS_Store": true,
+      "**/Thumbs.db": true,
+      "**/*.meta": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "rankupgames.unity-cursor-toolkit"
+    ]
+  }
+}

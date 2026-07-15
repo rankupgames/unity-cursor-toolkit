@@ -2,9 +2,9 @@
 // Author: Miguel A. Lopez
 // Company: Rank Up Games LLC
 // Project: Unity Cursor Toolkit
-// Description: MCP tool handlers for play mode, menu, screenshot, and build.
+// Description: MCP tool handlers for editor lifecycle, play mode, menu, screenshot, and build.
 // Created: 2026-03-12
-// Last Modified: 2026-03-12
+// Last Modified: 2026-07-11
 // =============================================================================
 
 #if UNITY_EDITOR
@@ -12,9 +12,18 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.SceneManagement;
+using UnityEngine.SceneManagement;
 using UnityCursorToolkit.Core;
+using Object = UnityEngine.Object;
+#if UNITY_2021_2_OR_NEWER
+using PrefabStageUtility = UnityEditor.SceneManagement.PrefabStageUtility;
+#else
+using PrefabStageUtility = UnityEditor.Experimental.SceneManagement.PrefabStageUtility;
+#endif
 
 namespace UnityCursorToolkit.MCP
 {
@@ -47,6 +56,257 @@ namespace UnityCursorToolkit.MCP
 					return EditorControlHelpers.JsonError($"Unknown action: {action}");
 			}
 		}
+	}
+
+	[MCPTool("editor_lifecycle")]
+	internal sealed class EditorLifecycleTool : IToolHandler
+	{
+		/// <summary>
+		/// Bounds dirty-path details returned through the editor bridge while preserving exact total counts.
+		/// </summary>
+		private const int MaxReportedDirtyPaths = 50;
+
+		public string ToolName => "editor_lifecycle";
+		public string Description => "Inspect editor save state, save all open scenes and assets, or save and quit safely.";
+
+		public string HandleCommand(string argsJson)
+		{
+			var args = EditorControlHelpers.ParseArgs(argsJson);
+			var action = EditorControlHelpers.GetString(args, "action", "status");
+
+			switch (action)
+			{
+				case "status":
+					return GetStatus();
+				case "save":
+					return SaveProject(false);
+				case "saveAndQuit":
+					return SaveProject(true);
+				default:
+					return EditorControlHelpers.JsonError($"Unknown action: {action}");
+			}
+		}
+
+		/// <summary>
+		/// Returns the editor state and every open scene that still has unsaved changes.
+		/// </summary>
+		private static string GetStatus()
+		{
+			bool hasUntitledDirtyScene;
+			List<string> dirtyScenes = GetDirtySceneIdentifiers(out hasUntitledDirtyScene);
+			List<string> dirtyAssets = GetDirtyAssetPaths();
+			var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+			return "{\"success\":true,\"isPlaying\":" + ToJsonBool(EditorApplication.isPlayingOrWillChangePlaymode)
+				+ ",\"isCompiling\":" + ToJsonBool(EditorApplication.isCompiling)
+				+ ",\"isUpdating\":" + ToJsonBool(EditorApplication.isUpdating)
+				+ ",\"dirtySceneCount\":" + dirtyScenes.Count
+				+ ",\"hasUntitledDirtyScene\":" + ToJsonBool(hasUntitledDirtyScene)
+				+ ",\"dirtyScenes\":" + ToJsonArray(dirtyScenes)
+				+ ",\"dirtySceneListTrimmed\":" + ToJsonBool(dirtyScenes.Count > MaxReportedDirtyPaths)
+				+ ",\"dirtyAssetCount\":" + dirtyAssets.Count
+				+ ",\"dirtyAssets\":" + ToJsonArray(dirtyAssets)
+				+ ",\"dirtyAssetListTrimmed\":" + ToJsonBool(dirtyAssets.Count > MaxReportedDirtyPaths)
+				+ ",\"prefabStageOpen\":" + ToJsonBool(prefabStage != null)
+				+ ",\"prefabStageDirty\":" + ToJsonBool(prefabStage != null && prefabStage.scene.isDirty)
+				+ ",\"prefabAssetPath\":\"" + EditorControlHelpers.Escape(GetCurrentPrefabAssetPath()) + "\"}";
+		}
+
+		/// <summary>
+		/// Reads the active Prefab Stage asset path across the package's supported Unity editor versions.
+		/// </summary>
+		private static string GetCurrentPrefabAssetPath()
+		{
+			var prefabStage = PrefabStageUtility.GetCurrentPrefabStage();
+			if (prefabStage == null)
+				return string.Empty;
+
+			#if UNITY_2021_2_OR_NEWER
+			return prefabStage.assetPath;
+			#else
+			return prefabStage.prefabAssetPath;
+			#endif
+		}
+
+		/// <summary>
+		/// Saves every open scene and project asset before optionally scheduling a normal editor exit.
+		/// </summary>
+		private static string SaveProject(bool shouldQuit)
+		{
+			int savedSceneCount;
+			int savedAssetCount;
+			string error;
+			if (TrySaveProject(out savedSceneCount, out savedAssetCount, out error) == false)
+				return EditorControlHelpers.JsonError(error);
+
+			if (shouldQuit)
+				EditorApplication.delayCall += QuitEditor;
+
+			return "{\"success\":true,\"savedSceneCount\":" + savedSceneCount
+				+ ",\"savedAssetCount\":" + savedAssetCount
+				+ ",\"quitScheduled\":" + ToJsonBool(shouldQuit) + "}";
+		}
+
+		/// <summary>
+		/// Exits through Unity's normal editor lifecycle after the save result has been returned to the caller.
+		/// </summary>
+		private static void QuitEditor()
+		{
+			EditorApplication.delayCall -= QuitEditor;
+			string error;
+			if (TrySaveProject(out _, out _, out error) == false)
+			{
+				Debug.LogWarning("Safe editor shutdown was cancelled: " + error);
+				return;
+			}
+			EditorApplication.Exit(0);
+		}
+
+		/// <summary>
+		/// Saves and verifies all tracked dirty scenes and persistent assets without ever forcing an editor exit.
+		/// </summary>
+		private static bool TrySaveProject(out int savedSceneCount, out int savedAssetCount, out string error)
+		{
+			savedSceneCount = 0;
+			savedAssetCount = 0;
+			error = string.Empty;
+
+			if (EditorApplication.isPlayingOrWillChangePlaymode)
+			{
+				error = "Exit Play Mode before saving or closing the Unity Editor.";
+				return false;
+			}
+			if (EditorApplication.isCompiling)
+			{
+				error = "Wait for script compilation to finish before saving or closing the Unity Editor.";
+				return false;
+			}
+			if (EditorApplication.isUpdating)
+			{
+				error = "Wait for the Asset Database or Package Manager update to finish before saving or closing the Unity Editor.";
+				return false;
+			}
+			if (PrefabStageUtility.GetCurrentPrefabStage() != null)
+			{
+				error = "Close Prefab Mode through Unity before automated editor shutdown so prefab edits can be reviewed and saved normally.";
+				return false;
+			}
+
+			bool hasUntitledDirtyScene;
+			List<string> dirtyScenes = GetDirtySceneIdentifiers(out hasUntitledDirtyScene);
+			if (hasUntitledDirtyScene)
+			{
+				error = "An untitled scene has unsaved work. Save it to an explicit path before automated editor shutdown.";
+				return false;
+			}
+
+			if (dirtyScenes.Count > 0 && EditorSceneManager.SaveOpenScenes() == false)
+			{
+				error = "Unity could not save every open scene. The editor will remain open.";
+				return false;
+			}
+			savedSceneCount = dirtyScenes.Count;
+
+			List<string> dirtyAssets = GetDirtyAssetPaths();
+			AssetDatabase.SaveAssets();
+			savedAssetCount = dirtyAssets.Count;
+
+			bool hasRemainingUntitledScene;
+			List<string> remainingDirtyScenes = GetDirtySceneIdentifiers(out hasRemainingUntitledScene);
+			if (remainingDirtyScenes.Count > 0 || hasRemainingUntitledScene)
+			{
+				error = "Unity still reports unsaved scene changes after the save attempt. The editor will remain open.";
+				return false;
+			}
+
+			List<string> remainingDirtyAssets = GetDirtyAssetPaths();
+			if (remainingDirtyAssets.Count > 0)
+			{
+				error = "Unity still reports " + remainingDirtyAssets.Count + " unsaved persistent asset(s) after the save attempt: " + string.Join(", ", remainingDirtyAssets.GetRange(0, Math.Min(remainingDirtyAssets.Count, MaxReportedDirtyPaths)));
+				return false;
+			}
+
+			return true;
+		}
+
+		/// <summary>
+		/// Collects dirty scene identifiers and reports whether any dirty scene lacks a persistent asset path.
+		/// </summary>
+		private static List<string> GetDirtySceneIdentifiers(out bool hasUntitledDirtyScene)
+		{
+			var dirtyScenes = new List<string>();
+			hasUntitledDirtyScene = false;
+			for (int i = 0; i < SceneManager.sceneCount; i++)
+			{
+				Scene scene = SceneManager.GetSceneAt(i);
+				if (scene.isDirty == false)
+					continue;
+
+				if (string.IsNullOrEmpty(scene.path))
+				{
+					hasUntitledDirtyScene = true;
+					dirtyScenes.Add(scene.name);
+					continue;
+				}
+
+				dirtyScenes.Add(scene.path);
+			}
+
+			return dirtyScenes;
+		}
+
+		/// <summary>
+		/// Finds loaded persistent project assets whose dirty flags remain set.
+		/// </summary>
+		private static List<string> GetDirtyAssetPaths()
+		{
+			var paths = new HashSet<string>(StringComparer.Ordinal);
+			Object[] loadedObjects = Resources.FindObjectsOfTypeAll<Object>();
+			foreach (Object loadedObject in loadedObjects)
+			{
+				if (loadedObject == null || EditorUtility.IsPersistent(loadedObject) == false || EditorUtility.IsDirty(loadedObject) == false)
+					continue;
+
+				string path = AssetDatabase.GetAssetPath(loadedObject);
+				if (IsWritableProjectAssetPath(path))
+					paths.Add(path);
+			}
+
+			var sortedPaths = new List<string>(paths);
+			sortedPaths.Sort(StringComparer.Ordinal);
+			return sortedPaths;
+		}
+
+		/// <summary>
+		/// Excludes Unity's built-in Library and Resources objects from project-asset save verification.
+		/// </summary>
+		private static bool IsWritableProjectAssetPath(string path)
+		{
+			return string.IsNullOrEmpty(path) == false
+				&& (path.StartsWith("Assets/", StringComparison.Ordinal)
+					|| path.StartsWith("Packages/", StringComparison.Ordinal)
+					|| path.StartsWith("ProjectSettings/", StringComparison.Ordinal));
+		}
+
+		/// <summary>
+		/// Serializes scene identifiers without introducing a dependency on an external JSON package.
+		/// </summary>
+		private static string ToJsonArray(List<string> values)
+		{
+			var builder = new StringBuilder("[");
+			int reportedCount = Math.Min(values.Count, MaxReportedDirtyPaths);
+			for (int i = 0; i < reportedCount; i++)
+			{
+				if (i > 0)
+					builder.Append(',');
+				builder.Append('"').Append(EditorControlHelpers.Escape(values[i])).Append('"');
+			}
+			return builder.Append(']').ToString();
+		}
+
+		/// <summary>
+		/// Formats a boolean for direct use in a JSON response.
+		/// </summary>
+		private static string ToJsonBool(bool value) => value ? "true" : "false";
 	}
 
 	[MCPTool("execute_menu_item")]

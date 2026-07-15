@@ -1,0 +1,291 @@
+name: Unity-Unterm Vendor
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  attestations: read
+
+concurrency:
+  group: unity-unterm-vendor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  vendor-integrity:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: unity-cursor-toolkit
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 26.4.0
+          cache: npm
+          cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
+      - name: Verify age-gated npm
+        run: |
+          node -e "const version=process.version.slice(1); if(version!=='26.4.0') throw new Error('Unexpected Node version: '+version)"
+          node -e "const version=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim().split('.').map(Number); if(version[0]<11 || (version[0]===11 && version[1]<14)) throw new Error('npm 11.14.1 or newer is required')"
+          test "$(npm config get min-release-age)" = "7"
+
+      - run: npm ci
+      - run: npm run validate
+
+      - name: Verify fork artifact attestations
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          source_commit="$(node -p "require('../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/VENDOR.json').sourceCommit")"
+          source_ref="$(node -p "require('../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/VENDOR.json').sourceRef")"
+          verify_attestation() {
+            gh attestation verify "$1" \
+              --repo rankupgames/Unity-Unterm \
+              --signer-workflow rankupgames/Unity-Unterm/.github/workflows/split-upm.yml \
+              --source-digest "$source_commit" \
+              --source-ref "$source_ref" \
+              --deny-self-hosted-runners
+          }
+          verify_attestation ../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/macOS/unterm.dylib
+          verify_attestation ../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/macOS/unterm-debugger
+          verify_attestation ../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/Windows/x86_64/unterm.dll
+          verify_attestation ../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/Windows/x86_64/unterm-debugger.exe
+          verify_attestation "../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Third Party Notices.md"
+
+  unity-6000-macos-smoke:
+    if: github.event_name == 'workflow_dispatch'
+    needs: vendor-integrity
+    runs-on: macos-15
+    environment: unity-ci
+    env:
+      UNITY_CURSOR_TOOLKIT_UNITY_PATH: /Applications/Unity/Unity.app/Contents/MacOS/Unity
+    defaults:
+      run:
+        working-directory: unity-cursor-toolkit
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 26.4.0
+          cache: npm
+          cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
+      - name: Require protected Unity license
+        env:
+          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
+        run: test -n "$UNITY_LICENSE_B64"
+
+      - name: Verify age-gated npm
+        run: |
+          node -e "const version=process.version.slice(1); if(version!=='26.4.0') throw new Error('Unexpected Node version: '+version)"
+          node -e "const version=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim().split('.').map(Number); if(version[0]<11 || (version[0]===11 && version[1]<14)) throw new Error('npm 11.14.1 or newer is required')"
+          test "$(npm config get min-release-age)" = "7"
+
+      - run: npm ci
+      - run: npm run compile
+
+      - name: Install pinned Unity Editor
+        env:
+          UNITY_INSTALLER_SHA256: ${{ vars.UNITY_6000_3_9F1_MAC_SHA256 }}
+          UNITY_INSTALLER_URL: https://download.unity3d.com/download_unity/7a9955a4f2fa/MacEditorInstaller/Unity-6000.3.9f1.pkg
+        run: |
+          test "${#UNITY_INSTALLER_SHA256}" -eq 64
+          curl --fail --location --retry 3 --output "$RUNNER_TEMP/Unity.pkg" "$UNITY_INSTALLER_URL"
+          printf '%s  %s\n' "$UNITY_INSTALLER_SHA256" "$RUNNER_TEMP/Unity.pkg" | shasum -a 256 --check
+          pkgutil --check-signature "$RUNNER_TEMP/Unity.pkg" | grep -q "Status: signed"
+          pkgutil --check-signature "$RUNNER_TEMP/Unity.pkg" | grep -q "Developer ID Installer: Unity"
+          sudo installer -pkg "$RUNNER_TEMP/Unity.pkg" -target /
+          test -x "$UNITY_CURSOR_TOOLKIT_UNITY_PATH"
+
+      - name: Import protected Unity license
+        env:
+          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
+        run: |
+          printf '%s' "$UNITY_LICENSE_B64" | openssl base64 -d -A -out "$RUNNER_TEMP/Unity.ulf"
+          chmod 600 "$RUNNER_TEMP/Unity.ulf"
+          "$UNITY_CURSOR_TOOLKIT_UNITY_PATH" -quit -batchmode -nographics -manualLicenseFile "$RUNNER_TEMP/Unity.ulf" -logFile "$RUNNER_TEMP/unity-license.log"
+
+      - name: Run Unity 6000.3 internal smoke
+        run: npm run test:unity-internal
+
+      - name: Remove license material
+        if: always()
+        run: rm -f "$RUNNER_TEMP/Unity.ulf" "$RUNNER_TEMP/unity-license.log"
+
+  unity-6000-windows-smoke:
+    if: github.event_name == 'workflow_dispatch'
+    needs: vendor-integrity
+    runs-on: windows-latest
+    environment: unity-ci
+    env:
+      UNITY_CURSOR_TOOLKIT_UNITY_PATH: C:\Unity\Editor\Unity.exe
+    defaults:
+      run:
+        working-directory: unity-cursor-toolkit
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 26.4.0
+          cache: npm
+          cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
+      - name: Require protected Unity license
+        shell: pwsh
+        env:
+          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
+        run: if ([string]::IsNullOrWhiteSpace($env:UNITY_LICENSE_B64)) { throw 'UNITY_LICENSE_B64 is required' }
+
+      - name: Verify age-gated npm
+        shell: pwsh
+        run: |
+          if ((node --version).Trim() -ne 'v26.4.0') { throw 'Unexpected Node version' }
+          if ([Version](npm --version) -lt [Version]'11.14.1') { throw 'npm 11.14.1 or newer is required' }
+          if ((npm config get min-release-age).Trim() -ne '7') { throw 'npm min-release-age=7 is required' }
+
+      - run: npm ci
+      - run: npm run compile
+
+      - name: Install pinned Unity Editor
+        shell: pwsh
+        env:
+          UNITY_INSTALLER_SHA256: ${{ vars.UNITY_6000_3_9F1_WINDOWS_SHA256 }}
+          UNITY_INSTALLER_URL: https://download.unity3d.com/download_unity/7a9955a4f2fa/Windows64EditorInstaller/UnitySetup64-6000.3.9f1.exe
+        run: |
+          if ($env:UNITY_INSTALLER_SHA256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'UNITY_INSTALLER_SHA256 is required' }
+          $installerPath = Join-Path $env:RUNNER_TEMP 'UnitySetup64.exe'
+          Invoke-WebRequest -Uri $env:UNITY_INSTALLER_URL -OutFile $installerPath
+          $actualHash = (Get-FileHash -Algorithm SHA256 $installerPath).Hash.ToLowerInvariant()
+          if ($actualHash -ne $env:UNITY_INSTALLER_SHA256.ToLowerInvariant()) { throw 'Unity installer SHA-256 mismatch' }
+          $signature = Get-AuthenticodeSignature $installerPath
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Unity') { throw 'Unity installer signature is invalid' }
+          $installer = Start-Process -FilePath $installerPath -ArgumentList '/S','/D=C:\Unity' -PassThru -Wait
+          if ($installer.ExitCode -ne 0) { throw "Unity installer failed with exit code $($installer.ExitCode)" }
+          if ((Test-Path $env:UNITY_CURSOR_TOOLKIT_UNITY_PATH -PathType Leaf) -eq $false) { throw 'Unity executable was not installed' }
+
+      - name: Import protected Unity license
+        shell: pwsh
+        env:
+          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
+        run: |
+          $licensePath = Join-Path $env:RUNNER_TEMP 'Unity.ulf'
+          $logPath = Join-Path $env:RUNNER_TEMP 'unity-license.log'
+          [IO.File]::WriteAllBytes($licensePath, [Convert]::FromBase64String($env:UNITY_LICENSE_B64))
+          $licenseProcess = Start-Process -FilePath $env:UNITY_CURSOR_TOOLKIT_UNITY_PATH -ArgumentList '-quit','-batchmode','-nographics','-manualLicenseFile',$licensePath,'-logFile',$logPath -PassThru -Wait
+          if ($licenseProcess.ExitCode -ne 0) { throw "Unity license import failed with exit code $($licenseProcess.ExitCode)" }
+
+      - name: Run Unity 6000.3 internal smoke
+        run: npm run test:unity-internal
+
+      - name: Remove license material
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $env:RUNNER_TEMP 'Unity.ulf'), (Join-Path $env:RUNNER_TEMP 'unity-license.log')
+
+  unity-2019-windows-exclusion:
+    if: github.event_name == 'workflow_dispatch'
+    needs: vendor-integrity
+    runs-on: windows-latest
+    environment: unity-ci
+    env:
+      UNITY_LEGACY_PATH: C:\Unity2019\Editor\Unity.exe
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
+
+      - name: Require protected Unity license
+        shell: pwsh
+        env:
+          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
+        run: if ([string]::IsNullOrWhiteSpace($env:UNITY_LICENSE_B64)) { throw 'UNITY_LICENSE_B64 is required' }
+
+      - name: Install pinned Unity Editor
+        shell: pwsh
+        env:
+          UNITY_INSTALLER_SHA256: ${{ vars.UNITY_2019_4_40F1_WINDOWS_SHA256 }}
+          UNITY_INSTALLER_URL: https://download.unity3d.com/download_unity/ffc62b691db5/Windows64EditorInstaller/UnitySetup64-2019.4.40f1.exe
+        run: |
+          if ($env:UNITY_INSTALLER_SHA256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'UNITY_INSTALLER_SHA256 is required' }
+          $installerPath = Join-Path $env:RUNNER_TEMP 'UnitySetup64-2019.4.40f1.exe'
+          Invoke-WebRequest -Uri $env:UNITY_INSTALLER_URL -OutFile $installerPath
+          $actualHash = (Get-FileHash -Algorithm SHA256 $installerPath).Hash.ToLowerInvariant()
+          if ($actualHash -ne $env:UNITY_INSTALLER_SHA256.ToLowerInvariant()) { throw 'Unity installer SHA-256 mismatch' }
+          $signature = Get-AuthenticodeSignature $installerPath
+          if ($signature.Status -ne 'Valid' -or $signature.SignerCertificate.Subject -notmatch 'Unity') { throw 'Unity installer signature is invalid' }
+          $installer = Start-Process -FilePath $installerPath -ArgumentList '/S','/D=C:\Unity2019' -PassThru -Wait
+          if ($installer.ExitCode -ne 0) { throw "Unity installer failed with exit code $($installer.ExitCode)" }
+          if ((Test-Path $env:UNITY_LEGACY_PATH -PathType Leaf) -eq $false) { throw 'Unity executable was not installed' }
+
+      - name: Import protected Unity license
+        shell: pwsh
+        env:
+          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
+        run: |
+          $licensePath = Join-Path $env:RUNNER_TEMP 'Unity.ulf'
+          $logPath = Join-Path $env:RUNNER_TEMP 'unity-license.log'
+          [IO.File]::WriteAllBytes($licensePath, [Convert]::FromBase64String($env:UNITY_LICENSE_B64))
+          $licenseProcess = Start-Process -FilePath $env:UNITY_LEGACY_PATH -ArgumentList '-quit','-batchmode','-nographics','-manualLicenseFile',$licensePath,'-logFile',$logPath -PassThru -Wait
+          if ($licenseProcess.ExitCode -ne 0) { throw "Unity license import failed with exit code $($licenseProcess.ExitCode)" }
+
+      - name: Create Unity 2019 package compatibility project
+        shell: pwsh
+        run: |
+          $projectPath = Join-Path $env:RUNNER_TEMP 'unity-2019-vendor-exclusion'
+          $assetsPath = Join-Path $projectPath 'Assets\Editor'
+          $packagesPath = Join-Path $projectPath 'Packages'
+          $embeddedPackagePath = Join-Path $packagesPath 'com.rankupgames.unity-cursor-toolkit'
+          New-Item -ItemType Directory -Force $assetsPath, $embeddedPackagePath, (Join-Path $projectPath 'ProjectSettings') | Out-Null
+          Copy-Item -Recurse -Force (Join-Path $env:GITHUB_WORKSPACE 'Packages\com.rankupgames.unity-cursor-toolkit\*') $embeddedPackagePath
+          '{"dependencies":{"com.rankupgames.unity-cursor-toolkit":"file:com.rankupgames.unity-cursor-toolkit"}}' | Set-Content -Encoding utf8 (Join-Path $packagesPath 'manifest.json')
+          "m_EditorVersion: 2019.4.40f1`nm_EditorVersionWithRevision: 2019.4.40f1 (ffc62b691db5)" | Set-Content -Encoding utf8 (Join-Path $projectPath 'ProjectSettings\ProjectVersion.txt')
+          @'
+          using System;
+          using UnityEditor;
+          using UnityEditor.Compilation;
+
+          public static class LegacyVendorExclusionSmoke
+          {
+              public static void Run()
+              {
+                  bool toolkitFound = false;
+                  bool vendorFound = false;
+                  Assembly[] assemblies = CompilationPipeline.GetAssemblies();
+                  foreach (Assembly assembly in assemblies)
+                  {
+                      toolkitFound |= assembly.name == "UnityCursorToolkit.Editor";
+                      vendorFound |= assembly.name == "UnityCursorToolkit.Vendor.Unterm.Editor";
+                  }
+
+                  if (toolkitFound == false)
+                  {
+                      throw new InvalidOperationException("Unity Cursor Toolkit Editor assembly did not compile.");
+                  }
+
+                  if (vendorFound)
+                  {
+                      throw new InvalidOperationException("Unity-Unterm vendor assembly must be excluded before Unity 6000.3.");
+                  }
+
+                  EditorApplication.Exit(0);
+              }
+          }
+          '@ | Set-Content -Encoding utf8 (Join-Path $assetsPath 'LegacyVendorExclusionSmoke.cs')
+          "UNITY_LEGACY_SMOKE_PROJECT=$projectPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Prove Unity 2019.4 vendor exclusion
+        shell: pwsh
+        run: |
+          $logPath = Join-Path $env:RUNNER_TEMP 'unity-2019-smoke.log'
+          $smokeProcess = Start-Process -FilePath $env:UNITY_LEGACY_PATH -ArgumentList '-quit','-batchmode','-nographics','-projectPath',$env:UNITY_LEGACY_SMOKE_PROJECT,'-executeMethod','LegacyVendorExclusionSmoke.Run','-logFile',$logPath -PassThru -Wait
+          if ($smokeProcess.ExitCode -ne 0) { throw "Unity 2019.4 compatibility smoke failed with exit code $($smokeProcess.ExitCode)" }
+
+      - name: Remove license material
+        if: always()
+        shell: pwsh
+        run: Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $env:RUNNER_TEMP 'Unity.ulf'), (Join-Path $env:RUNNER_TEMP 'unity-license.log')

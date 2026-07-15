@@ -34,6 +34,7 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 	private heartbeatTimer: ReturnType<typeof setInterval> | undefined;
 	private heartbeatTimeout: ReturnType<typeof setTimeout> | undefined;
 	private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+	private connectPromise: Promise<number | null> | undefined;
 	private backoffMs = INITIAL_BACKOFF_MS;
 
 	private isNeeded: () => boolean = () => false;
@@ -51,10 +52,26 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 	}
 
 	public async connect(): Promise<number | null> {
-		if (this.state === ConnectionState.Connecting) {
-			return null;
+		if (this.state === ConnectionState.Connected && this.socket != null && this.socket.writable && this.port != null) {
+			return this.port;
 		}
 
+		if (this.connectPromise != null) {
+			return this.connectPromise;
+		}
+
+		const promise = this.connectOnce();
+		this.connectPromise = promise;
+		try {
+			return await promise;
+		} finally {
+			if (this.connectPromise === promise) {
+				this.connectPromise = undefined;
+			}
+		}
+	}
+
+	private async connectOnce(): Promise<number | null> {
 		this.setState(ConnectionState.Connecting);
 		this.destroySocket();
 
@@ -125,6 +142,7 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 		return new Promise<boolean>((resolve) => {
 			const sock = new net.Socket();
 			let settled = false;
+			let buffer = '';
 
 			const settle = (success: boolean) => {
 				if (settled) {
@@ -145,8 +163,26 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 
 			sock.setTimeout(2_000);
 			sock.once('connect', () => {
-				sock.setTimeout(0);
-				settle(true);
+				sock.write('{"command":"ping"}\n');
+			});
+			sock.on('data', (raw: Buffer) => {
+				buffer += raw.toString();
+				const lines = buffer.split('\n');
+				buffer = lines.pop() ?? '';
+				for (const line of lines) {
+					let parsed: Record<string, unknown> | null;
+					try {
+						parsed = safeJsonParse(line);
+					} catch {
+						settle(false);
+						return;
+					}
+					if (parsed?.command === 'pong') {
+						sock.setTimeout(0);
+						settle(true);
+						return;
+					}
+				}
 			});
 			sock.once('error', () => settle(false));
 			sock.once('timeout', () => settle(false));
@@ -161,7 +197,13 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 			this.dataBuffer = lines.pop() ?? '';
 
 			for (const line of lines) {
-				const parsed = safeJsonParse(line);
+				let parsed: Record<string, unknown> | null;
+				try {
+					parsed = safeJsonParse(line);
+				} catch (error) {
+					console.warn(`[Connection] Ignoring malformed JSON from Unity: ${error instanceof Error ? error.message : String(error)}`);
+					continue;
+				}
 				if (parsed == null) {
 					continue;
 				}

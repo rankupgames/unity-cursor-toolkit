@@ -13,11 +13,15 @@ const MUTATING_TOOLS = {
 	manage_gameobject: true,
 	manage_material: true,
 	play_mode: true,
+	editor_lifecycle: true,
 	execute_menu_item: true,
+	editor_validation: true,
 	game_command: true,
 	build_trigger: true,
 	clear_console: true,
-	profiler_snapshot: true
+	profiler_snapshot: true,
+	unity_context: true,
+	viewport_stream: true
 } as const;
 
 const READ_ONLY_TOOLS = {
@@ -31,18 +35,27 @@ const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	manage_scene: ['getHierarchy'],
 	manage_gameobject: ['find'],
 	manage_component: ['getProperties'],
+	editor_lifecycle: ['status'],
+	editor_validation: ['list', 'status'],
 	game_command: ['list', 'status'],
-	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters']
+	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters'],
+	unity_context: ['query', 'read', 'summary'],
+	viewport_stream: ['status']
 };
 
 const DEFAULT_ACTIONS: Record<string, string> = {
+	editor_lifecycle: 'status',
+	editor_validation: 'sync_and_compile',
 	game_command: 'list',
-	profiler_snapshot: 'current'
+	profiler_snapshot: 'current',
+	unity_context: 'summary',
+	viewport_stream: 'status'
 };
 
 const DESTRUCTIVE_ACTIONS: Record<string, readonly string[]> = {
 	manage_asset: ['delete'],
 	manage_gameobject: ['destroy'],
+	editor_lifecycle: ['saveAndQuit'],
 	profiler_snapshot: ['clearSessions']
 };
 
@@ -132,6 +145,7 @@ function isAlwaysReadOnlyTool(toolName: string): boolean {
 function canBeDestructiveTool(toolName: string): boolean {
 	return toolName === 'manage_asset'
 		|| toolName === 'manage_gameobject'
+		|| toolName === 'editor_lifecycle'
 		|| toolName === 'batch_execute'
 		|| toolName === 'clear_console'
 		|| toolName === 'profiler_snapshot';
@@ -139,8 +153,10 @@ function canBeDestructiveTool(toolName: string): boolean {
 
 function isUsuallyIdempotentTool(toolName: string): boolean {
 	return toolName === 'project_info'
+		|| toolName === 'editor_validation'
 		|| toolName === 'read_console'
-		|| toolName === 'resolve_meta';
+		|| toolName === 'resolve_meta'
+		|| toolName === 'unity_context';
 }
 
 function toToolTitle(toolName: string): string {
