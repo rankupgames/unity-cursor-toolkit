@@ -1,0 +1,19 @@
+{
+  "schema": "skills-project/v4",
+  "projectId": "unity-cursor-toolkit",
+  "repository": {
+    "remote": "github.com/rankupgames/unity-cursor-toolkit"
+  },
+  "policy": {
+    "catalogGenerationHash": "sha256:f75035d38b021eb8a048965c5745f9c59d87be78cc357656997c16ef98be5382",
+    "profileRevisionHash": "sha256:1611cc4cc25a35671cb7a69c1dc393da2eba599d3970fe129ba533feb6c4900c",
+    "partitionId": "repository"
+  },
+  "publish": {
+    "mode": "direct"
+  },
+  "tracker": {
+    "provider": "backlog-md",
+    "location": "git-common-dir"
+  }
+}
