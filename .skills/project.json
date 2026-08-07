@@ -5,9 +5,120 @@
     "remote": "github.com/rankupgames/unity-cursor-toolkit"
   },
   "policy": {
-    "catalogGenerationHash": "sha256:f75035d38b021eb8a048965c5745f9c59d87be78cc357656997c16ef98be5382",
-    "profileRevisionHash": "sha256:1611cc4cc25a35671cb7a69c1dc393da2eba599d3970fe129ba533feb6c4900c",
-    "partitionId": "repository"
+    "catalogGenerationId": "v3-shadow-1",
+    "packIds": [
+      "capability.csharp-dotnet",
+      "capability.javascript-typescript",
+      "capability.package-resolution",
+      "capability.tests",
+      "capability.unity",
+      "project-profile-runtime",
+      "shared-baseline"
+    ],
+    "partitionId": "repository",
+    "ruleOverrides": [
+      {
+        "ruleId": "project.profile-settings",
+        "state": "enabled",
+        "parameters": {
+          "selection": "touched",
+          "integrationBranch": "origin/main",
+          "lockRequired": true,
+          "generatedPaths": [],
+          "unityRoots": [],
+          "packageRoots": [
+            "unity-cursor-toolkit"
+          ],
+          "dockerAllowedExposures": [],
+          "dockerAllowedExposureRules": [],
+          "manifests": {
+            "hardcodedPolicy": null,
+            "packageFamily": null,
+            "outputContracts": null,
+            "riskBoundaries": null
+          },
+          "analyzer": null
+        }
+      },
+      {
+        "ruleId": "project.required-checks",
+        "state": "enabled",
+        "parameters": {
+          "commands": [
+            {
+              "id": "extension-validate",
+              "kind": "test",
+              "command": "npm --prefix unity-cursor-toolkit run validate"
+            }
+          ]
+        }
+      }
+    ],
+    "partitions": [
+      {
+        "partitionId": "repository",
+        "roots": [
+          "."
+        ],
+        "ruleOverrides": [
+          {
+            "ruleId": "checker.csharp",
+            "state": "enabled",
+            "parameters": {
+              "ownedRoots": [
+                "experiments/editor-dll-mount-probe"
+              ],
+              "vendorRoots": []
+            }
+          },
+          {
+            "ruleId": "checker.javascript",
+            "state": "enabled",
+            "parameters": {
+              "ownedRoots": [
+                "unity-cursor-toolkit"
+              ],
+              "vendorRoots": []
+            }
+          },
+          {
+            "ruleId": "checker.package-resolution",
+            "state": "enabled",
+            "parameters": {
+              "ownedRoots": [
+                "CursorUnityTool/Packages",
+                "unity-cursor-toolkit"
+              ],
+              "vendorRoots": []
+            }
+          },
+          {
+            "ruleId": "checker.tests",
+            "state": "enabled",
+            "parameters": {
+              "ownedRoots": [
+                "unity-cursor-toolkit"
+              ],
+              "vendorRoots": []
+            }
+          },
+          {
+            "ruleId": "checker.unity",
+            "state": "enabled",
+            "parameters": {
+              "ownedRoots": [
+                "CursorUnityTool",
+                "CursorUnityTool/Packages/com.rankupgames.unity-cursor-toolkit",
+                "Packages/com.rankupgames.unity-cursor-toolkit"
+              ],
+              "vendorRoots": []
+            }
+          }
+        ]
+      }
+    ],
+    "reason": "TASK-11 project-intent setup",
+    "approvalRef": "scope:TASK-11"
   },
   "publish": {
     "mode": "direct"
