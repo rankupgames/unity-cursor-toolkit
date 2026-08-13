@@ -1,6 +1,10 @@
 # Agent Prompt: "Unity Without The Editor" Experiment Series
 
-Copy everything below into a fresh AI coding agent session opened at the repo root (`unity-cursor-toolkit/`, branch `feat/simplified-context-engine` or its successor).
+Status: reusable experiment prompt with historical evidence. Last reviewed:
+2026-08-13. Recheck exact versions and current results before execution.
+
+Copy everything below into a fresh AI coding agent session opened at the
+repository root on the active approved work branch.
 
 ---
 
@@ -46,7 +50,10 @@ Current working state (verified):
 - A spike harness for real-EditorWindow capture exists: `CursorUnityTool/Assets/Editor/UCTEditorWindowCaptureSpike.cs` + `unity-cursor-toolkit/scripts/run-editor-window-capture-spike.js` (`npm run spike:editor-windows`). Reuse its conventions (result JSON to the OS temp directory, Node runner polls, `resolveUnityPath()` from `ProjectSettings/ProjectVersion.txt`, env override `UNITY_CURSOR_TOOLKIT_UNITY_PATH`).
 - Bundled Unity project: `CursorUnityTool/` (Unity 6000.3.9f1, URP, has `SampleScene` with Main Camera, Directional Light, Global Volume, Cube; Input System package installed).
 - E1 macOS result is archived under `experiments/editor-dll-mount-probe/results/`; it confirms pure-managed Unity code can run outside the editor but editor/engine icalls fail. Windows E1 remains pending.
-- Extension validation: `npm run validate` from `unity-cursor-toolkit/` currently passes with 169 runtime tests, 9 simplified-context tests, 9 remote-shell tests, compile/unused checks, and npm audit. Keep it green.
+- Extension validation on 2026-08-13 passed 205 runtime tests, 10
+  simplified-context tests, 10 remote-shell tests, compile and unused checks,
+  vendored Unity-Unterm validation, and npm audit with zero findings. Re-run it
+  in the executing branch.
 
 Environment: macOS (Apple Silicon) and Windows editor hosts are both in scope. Default Unity Hub paths: `/Applications/Unity/Hub/Editor/<version>/Unity.app/Contents/MacOS/Unity` on macOS and `C:\Program Files\Unity\Hub\Editor\<version>\Editor\Unity.exe` on Windows. `dotnet` 8 SDK may need installing. The Unity editor must be CLOSED for runners that launch the bundled project (they check `CursorUnityTool/Temp/UnityLockfile`).
 

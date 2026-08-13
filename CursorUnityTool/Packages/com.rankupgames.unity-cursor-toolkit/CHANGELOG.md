@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added the `editor_validation` MCP tool and menu command for project-file regeneration plus script compile requests.
 - Added the audited Unity-Unterm fork as a toolkit-internal terminal, Claude Code, code editor, completion, and debugger feature for Unity 6000.3 on macOS and Windows.
 - Added Unity-Unterm launch aliases under `Tools > Unity Cursor Toolkit > Unterm`.
+- Added a native toolbar copy action that captures the current main-camera
+  application view, overwrites one stable temporary PNG on every click, and
+  appends its absolute path to the copied console and profiler context.
+
+### Documentation
+
+- Added the canonical Unity 7 readiness plan and evidence-gated WS1 through
+  WS8 workstreams.
+- Clarified that Unity 2019.4 and Unity 6000.3 are declared baselines, while
+  CoreCLR transition and Unity 7 support need exact-version proof.
 
 ### Security
 

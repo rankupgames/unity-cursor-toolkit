@@ -4,6 +4,33 @@ All notable repository and VS Code/Cursor extension changes are documented in th
 
 The Unity UPM package has its own changelog at `Packages/com.rankupgames.unity-cursor-toolkit/CHANGELOG.md`.
 
+## Unreleased
+
+### Documentation
+
+- Replaced retired dynamic Marketplace badges with a stable install badge that
+  links to the existing Marketplace item.
+- Added one documentation index, a canonical Unity 7 readiness plan, and
+  evidence-gated WS1 through WS8 implementation plans.
+- Clarified the difference between declared, validated, shipped, planned, and
+  historical compatibility statements across all public README surfaces.
+
+## [0.6.7081326] - 2026-08-13
+
+Release CI assigned `0.6.7081326` to the published distribution artifacts. The
+source `package.json` keeps its base development version between releases.
+
+### Added
+
+- The Unity toolbar copy action now captures the main-camera application view,
+  overwrites one stable PNG in `Application.temporaryCachePath`, and appends
+  the absolute path to the copied console and profiler context.
+
+### Security
+
+- Updated the locked `js-yaml` transitive dependency to `4.3.1` to resolve the
+  remaining high-severity development dependency advisory.
+
 ## [0.6.1052826] - 2026-05-28
 
 ### Added

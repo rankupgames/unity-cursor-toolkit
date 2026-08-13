@@ -1,5 +1,10 @@
 # Unity Without The Editor: DLL Mounting, Facade Bindings, License Passthrough, And No-Editor Rendering
 
+Status: **historical experiment record**. Keep measured results tied to their
+recorded Editor, platform, and date. Re-run the applicable gates before a
+CoreCLR or Unity 7 claim. Current status is in the
+[Unity 7 readiness plan](UNITY_7_READINESS.md).
+
 Question this doc answers: can we trigger Scene View / editor rendering **without running the Unity editor process at all** -- for example by mounting Unity's DLLs into our own host process -- and can we do it with our own license entitlements so every action stays licensed?
 
 Companion: `docs/EDITOR_WINDOW_STREAMING_PLAN.md` (streaming the real editor, hidden). Agent handoff prompt: `docs/prompts/unity-without-editor-agent-prompt.md`. Experiment scaffold: `experiments/editor-dll-mount-probe/`.
@@ -90,7 +95,13 @@ Caveat: this table is engineering's reading of the ToS, not legal advice. Before
 4. E5 picks the licensing model for remote: per-VM serial vs floating server (pools >2 VMs => floating server).
 5. E4/E6 only graduate if a concrete UX need appears (native shell embedding, instant attach).
 
-## 6. Current status
+## 6. Recorded Status
+
+Last reviewed: 2026-08-13. The proof entries below are historical evidence,
+not a current cross-platform or Unity 7 compatibility statement. Distribution
+artifact `0.6.1052828` appears in the archived installed-Cursor proofs; the
+source package uses its own base version and release CI can assign a different
+distribution version.
 
 - [x] Research + lanes ranked (this doc)
 - [x] E1 scaffold committed: `experiments/editor-dll-mount-probe/`
@@ -122,7 +133,7 @@ This section tracks the handoff prompt as an acceptance checklist, not just as a
 | E4: UaaL/native-shell probe | Fulfilled as macOS desk check; Windows hands-on deferred | The feasibility note below records Windows `UnityPlayer.dll` / `-parentHWND` as a future GO path when a Windows host exists, and macOS native embedding as NO-GO; streaming remains the macOS answer. |
 | E5: license automation | Fulfilled for dry-run/local CLI wrapper | `unity-cursor-toolkit/scripts/unity-license.js` provides dry-run-first `activate`, `return`, and `status` commands, masks `UNITY_EMAIL`, `UNITY_PASSWORD`, and `UNITY_SERIAL`, and requires `--execute` before running Unity. Production VM pool rollout still needs the chosen org licensing backend. |
 | E6: instant attach | Skipped per spec | E3 is green on macOS and warm editor attach is already sub-second against a running bridge. Reopen only if cold instant-attach becomes a product requirement. |
-| Repeatable fulfillment audit | Partial by design | `npm --prefix unity-cursor-toolkit run audit:unity-without-editor` checks legal guardrails, E1/E2/E3/E5 artifacts, Cursor command wiring, isolated installed-Cursor smoke, installed-Cursor live editor UI proof, automated installed-Cursor editor frame proof, Unity capture implementation, player perf, the Windows proof runner, and the remaining Windows gate. If `experiments/windows-unity-without-editor/results/**/windows-proof-summary.json` exists from an executed Windows run, the audit validates the summary, Windows preflight artifact, E1 verdict, E2 capture/input result, E2 measure JSON, installed-Cursor Scene/Game frame-hash proof JSON, E3 probe transcript, and E3 `1280x720@30` perf JSON before passing `windows-proof`; dry-runs stay pending. Latest result: `experiments/unity-without-editor-audit/results/2026-06-10-current.json` -> 12 pass, 1 pending, 0 fail. |
+| Repeatable fulfillment audit | Partial by design | `npm --prefix unity-cursor-toolkit run audit:unity-without-editor` checks legal guardrails, E1/E2/E3/E5 artifacts, Cursor command wiring, isolated installed-Cursor smoke, installed-Cursor live editor UI proof, automated installed-Cursor editor frame proof, Unity capture implementation, player perf, the Windows proof runner, and the remaining Windows gate. If `experiments/windows-unity-without-editor/results/**/windows-proof-summary.json` exists from an executed Windows run, the audit validates the summary and required artifacts before passing `windows-proof`; dry-runs stay pending. Archived 2026-06-10 result: `experiments/unity-without-editor-audit/results/2026-06-10-current.json` -> 12 pass, 1 pending, 0 fail. |
 | Final recommendation section | Preliminary recommendation written | Local default is L0 hidden editor; deployed/license-less lane is L2 player service; remote real-editor hosts need their own licensed editor seats. Final sign-off is blocked only by the executed Windows proof; cold/soak/E7 are opt-in follow-ups. |
 
 ### E1 results -- Unity 6000.3.9f1 / macOS

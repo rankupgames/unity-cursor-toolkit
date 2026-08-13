@@ -2,6 +2,11 @@
 
 Runtime game commands let a Unity project expose project-owned gameplay workflows to MCP agents without UI automation. The command lives in the game code, runs on Unity's main thread, and can wait across frames or network responses through a coroutine.
 
+Compatibility status: the package declares Unity 2019.4 or later. Local proof
+must name the exact Editor and platform. CoreCLR transition and Unity 7 coverage
+are planned under the [Unity 7 readiness plan](UNITY_7_READINESS.md); do not
+silently substitute a newer Editor when an exact project version is missing.
+
 Use this for flows such as login steps, server selection, menu navigation, mission setup, debug-only content unlocks, or deterministic test setup that should follow the same internal handlers a player-triggered UI path uses.
 
 ## Unity Package Side
