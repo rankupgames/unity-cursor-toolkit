@@ -11,6 +11,13 @@ All notable changes to the Unity Cursor Toolkit VS Code/Cursor extension are doc
 - Added the discoverable `editor_validation` MCP tool for project-file regeneration, compile requests, and pollable validation status.
 - Added focused coverage for context indexing, batchmode command planning, and standalone MCP read-only behavior.
 
+### Documentation
+
+- Replaced retired dynamic Marketplace badges with a stable install badge that
+  links to the existing Marketplace item.
+- Added the canonical Unity 7 readiness plan and synchronized public status
+  wording with the Unity package and workstream documents.
+
 ### Fixed
 
 - Hardened TCP attach so open Unity-related ports must answer the toolkit `ping`/`pong` handshake before the extension marks them connected.

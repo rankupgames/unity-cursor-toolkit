@@ -1,5 +1,10 @@
 # Editor Window Streaming Plan
 
+Status: **experimental plan with dated evidence**. Recorded results must keep
+their exact Editor version and platform. They do not prove Unity 7 support. See
+the [Unity 7 readiness plan](UNITY_7_READINESS.md) and
+[WS7](tasks/WS7_REMOTE_SHELL.md) for current gates.
+
 Goal: stop re-rendering cameras with our own HTML toolbar and instead stream the *real* Unity editor windows -- Scene View (with its actual toolbar, gizmos, handles, tools), Game View, Inspector, Package Manager, and any custom `EditorWindow` -- into Cursor panels, with Unity running invisibly in the background and auto-launched by the extension.
 
 This builds on the working v0 loop (camera -> RenderTexture -> JPEG -> `viewportFrame` -> webview), which stays as the batchmode/headless fallback.
@@ -86,9 +91,12 @@ On Windows, there are more native-window tricks, but they split by surface:
 - SSHFS/NFS project mount for casual browsing: fine for `Assets/`, exclude `Library/Temp` (lock + perf).
 - Preferred per existing docs: `.umetacontext` summaries + narrow file fetch instead of bulk mounts.
 
-## 7. Spike harness (included in this commit)
+## 7. Spike Harness And Recorded Proof
 
-The riskiest assumptions are (1) `GrabPixels` exists and produces non-blank captures of SceneView/Inspector/PackageManager/custom windows on Unity 6.3, hidden; (2) `SendEvent` actually drives SceneView orbit. The spike proves both in one shot, with Unity closed beforehand:
+The spike tests whether `GrabPixels` produces non-blank captures of
+SceneView, Inspector, Package Manager, and custom windows, and whether
+`SendEvent` drives SceneView orbit. The recorded macOS sample used Unity
+6000.3.9f1. Other Editor versions and Windows remain separate gates.
 
 ```bash
 # close Unity first (runner refuses if Temp/UnityLockfile is held)
@@ -105,15 +113,15 @@ Interpreting results:
 
 ## 8. Milestones with test gates
 
-| # | Deliverable | Test gate |
-| --- | --- | --- |
-| M0 | Spike passes on Unity 6.3 | `run-editor-window-capture-spike.js` exit 0 |
-| M1 | `EditorWindowStreamTool`: GrabPixels sessions for scene/game targets, in-band frames, RT reuse, loopback bind | `probe:editor-window-stream` proves scene/game `captureMode:"editorWindow"` frames with in-band data; existing node tests stay green |
-| M2 | Real input: pointer/wheel/key -> `SendEvent`, coordinate normalization; delete HTML toolbar clones from panels | Scripted asserts: orbit changes rotation, click changes `Selection`, W/E/R switches `Tools.current`; local p50 input->frame < 100ms |
-| M3 | Editor Session Manager: auto-launch hidden, no-throttle prefs, health/relaunch, Stop command | Cold start -> first frame < 60s with no visible Unity window; kill -9 recovery |
-| M4 | Inspector + Package Manager + custom-window targets; `manage_scene select` bridge; aux popup overlay capture | Click cube in hierarchy -> inspector panel shows it < 300ms; object picker popup streams |
-| M5 | Remote: token auth, in-band frames over SSH tunnel; Remote-SSH validated; WebRTC decision spike | Stream from a second machine; no unauthenticated LAN listener (scan) |
-| M6 | Perf: AsyncGPUReadback, frame-hash skip, dynamic res | 1280x720@30 game + 720p@12 scene simultaneously < ~25% of one core Unity-side |
+| # | Deliverable | Status | Test gate |
+| --- | --- | --- | --- |
+| M0 | Editor-window capture spike | Validated on the macOS sample; Windows pending | `run-editor-window-capture-spike.js` exit 0 with exact Editor/platform evidence |
+| M1 | `EditorWindowStreamTool`: GrabPixels sessions for scene/game targets, in-band frames, RT reuse, loopback bind | Shipped with macOS sample proof | `probe:editor-window-stream` proves scene/game `captureMode:"editorWindow"` frames with in-band data; existing node tests stay green |
+| M2 | Real input: pointer/wheel/key -> `SendEvent`, coordinate normalization; delete HTML toolbar clones from panels | Partial | Scripted asserts: orbit changes rotation, click changes `Selection`, W/E/R switches `Tools.current`; local p50 input-to-frame < 100ms |
+| M3 | Editor Session Manager: auto-launch hidden, no-throttle preferences, health/relaunch, Stop command | Experimental and partial | Cold start to first frame < 60s with no visible Unity window; an agent-owned proof instance exits unexpectedly and recovers without risking a user Editor |
+| M4 | Inspector + Package Manager + custom-window targets; `manage_scene select` bridge; auxiliary popup overlay capture | Partial | Click cube in hierarchy -> Inspector panel shows it < 300ms; object picker popup streams |
+| M5 | Remote: token auth, in-band frames over SSH tunnel; Remote-SSH validation; transport decision spike | Planned | Stream from a second machine; no unauthenticated LAN listener |
+| M6 | Performance: AsyncGPUReadback, frame-hash skip, dynamic resolution | Planned | 1280x720@30 game plus 720p@12 scene simultaneously within the measured budget |
 
 ## 9. Decision log
 
@@ -123,15 +131,19 @@ Interpreting results:
 - Hierarchy stays native; everything pixel-streamed keeps a semantic command side-channel so agents are not click-bots.
 - Windows editor hosts are first-class for the spike and hidden-editor lane; Windows player embedding/VDD capture remain the preferred no-editor remote path.
 
-## 10. Current Implementation Evidence
+## 10. Implemented Paths And Historical Evidence
+
+Evidence in this section is tied to its recorded date, Editor, platform,
+extension artifact, and test count. Re-run the named proof before a current or
+Unity 7 compatibility claim.
 
 - `viewport_stream` now supports `captureMode: "editorWindow"` for `view: "scene"`, `view: "game"`, `view: "inspector"`, `view: "packageManager"`, and custom `view: "window:<full-type-name>"`. Unity captures the actual `EditorWindow` HostView backbuffer with `GUIView.GrabPixels`, broadcasts JPEG data in-band on `viewportFrame.data`, and keeps the legacy camera capture path as `captureMode: "camera"`.
 - The editor-window capture helper now reuses `RenderTexture`/`Texture2D` resources and downscales to the requested stream dimensions before JPEG encoding. This avoids the previous full-window allocation churn where Inspector/Package Manager streamed at `2024x2040` every frame.
 - Cursor panels are first-class for Scene View, Game View, Inspector, Package Manager, and arbitrary custom EditorWindows. The extension contributes `Unity Toolkit: Open Scene View`, `Unity Toolkit: Open Game View`, `Unity Toolkit: Open Inspector`, `Unity Toolkit: Open Package Manager`, and `Unity Toolkit: Open Custom EditorWindow`; Quick Actions expose all five. Custom windows prompt for a full type name and stream through `view: "window:<type>"`.
 - The same Cursor shell now exposes the legitimate no-editor player lane separately: `Unity Toolkit: Open Player Scene View` and `Unity Toolkit: Open Player Game View`. Those panels request `host:"player"` with `captureMode:"camera"` and attach to a running Viewport Service player without triggering hidden-editor launch. They are not real editor UI; they are the player/runtime adapter called out in `docs/UNITY_WITHOUT_EDITOR_EXPERIMENTS.md`. Installed Cursor visual proof on macOS rendered both player panels live from the Viewport Service with the editor not running.
 - macOS player perf proof for that lane is recorded at `experiments/player-viewport-service/results/2026-06-10-6000.3.9f1-macos-game-1280x720-30fps.json`: `1280x720@30` game stream, `866` frames, `28.89fps` effective, `6572ms` port-ready startup, `11692ms` first frame from launch, average stream RSS `199.5 MB`, average stream CPU `40.3%`, no leftover listener/process after cleanup.
-- Repeatable fulfillment audit: `npm --prefix unity-cursor-toolkit run audit:unity-without-editor` writes the current acceptance state. Latest result `experiments/unity-without-editor-audit/results/2026-06-10-current.json` is `PARTIAL`: legal/macOS editor-window/player evidence passes, Windows installed-host proof remains pending. When an executed Windows run writes `experiments/windows-unity-without-editor/results/**/windows-proof-summary.json`, the audit validates the summary plus E1/E2/installed-Cursor/E3 artifacts before passing the Windows gate; dry-runs stay pending.
-- Isolated installed-Cursor smoke: `npm --prefix unity-cursor-toolkit run smoke:installed-cursor-viewports` packages the VSIX, installs it into temp Cursor user-data/extensions dirs, and verifies `rankupgames.unity-cursor-toolkit@0.6.1052828` plus the viewport command surface. Latest command-surface result: `experiments/installed-cursor-smoke/results/2026-06-10-isolated-install.json`. The same runner now supports opt-in automated editor frame proof with `--viewport-proof-out`, which opens editor Scene/Game panels from the packaged extension and waits for live editorWindow frame hashes. Latest automated proof: `experiments/installed-cursor-smoke/results/2026-06-10-installed-editor-scene-game-auto-proof.json`.
+- Repeatable fulfillment audit: `npm --prefix unity-cursor-toolkit run audit:unity-without-editor` writes an acceptance snapshot. The archived 2026-06-10 result `experiments/unity-without-editor-audit/results/2026-06-10-current.json` is `PARTIAL`: legal/macOS editor-window/player evidence passes, while Windows installed-host proof remains pending. An executed Windows summary and its artifacts are required before the audit can pass that gate.
+- Isolated installed-Cursor smoke: `npm --prefix unity-cursor-toolkit run smoke:installed-cursor-viewports` packages the VSIX, installs it into temporary Cursor directories, and verifies the viewport command surface. The archived proof used distribution artifact `rankupgames.unity-cursor-toolkit@0.6.1052828`; it is not the current source package version. Archived results are `experiments/installed-cursor-smoke/results/2026-06-10-isolated-install.json` and `experiments/installed-cursor-smoke/results/2026-06-10-installed-editor-scene-game-auto-proof.json`.
 - Installed-Cursor editor UI proof: `experiments/installed-cursor-smoke/results/2026-06-10-installed-editor-scene-game-ui.json` records Cursor command-palette availability, official Unity editor process launch, bridge `55500`, live `Unity Scene View` frame `1108x720 #307`, and live `Unity Game View` frame `1279x704 #126`. Screenshot: `experiments/installed-cursor-smoke/screenshots/2026-06-10-installed-cursor-editor-scene-game.png`.
 - Automated installed-Cursor editor frame proof: `experiments/installed-cursor-smoke/results/2026-06-10-installed-editor-scene-game-auto-proof.json` records packaged extension activation in Cursor `3.6.31`, bridge `55500`, Scene `host:"editor"`/`captureMode:"editorWindow"` frame `1108x720 #1` with SHA-256 `c72f842fdd99e6abc258476683807f5cb37872178bd2560632c5d6d3264c07b8`, and Game `host:"editor"`/`captureMode:"editorWindow"` frame `1280x704 #1` with SHA-256 `bae3b7998f95fa743ced83402f9403cb041b9ae9bdb1359a6df63d1d32361f0d`.
 - Windows gate runner: `npm --prefix unity-cursor-toolkit run proof:windows-unity-without-editor` now orchestrates the required Windows evidence run for E1 DLL mount, E2 hidden `GUIView.GrabPixels` spike, packaged installed-Cursor Scene/Game frame-hash proof, E3 Windows player build/probe, and E3 player perf, and writes `windows-proof-summary.json` incrementally so failed attempts still leave usable evidence. This is a runner only until it is executed on a Windows Unity host.
@@ -145,7 +157,9 @@ Interpreting results:
 - Stability note from the live proof: before the resource-clamp patch, concurrent full-resolution editor-window streams triggered a Unity native segfault in the graphics/profiler path and left a stale `Temp/UnityLockfile`. After the patch, the five-surface probe completed without crashing, but Unity still logged profiler buffering pressure during validation; sustained multi-window streaming still needs longer soak tests and adaptive FPS/resolution before product completion.
 - Connection hardening: Cursor now rejects open TCP ports that do not answer toolkit JSON `pong`, which prevents false attachment to Unity's built-in editor/player listener on `55504`.
 - Fresh installed-VSIX retest after panel cleanup: stale disposed webviews no longer throw when Scene/Game panels are closed and reopened from Unity Quick Actions; Scene/Game streams reopened cleanly and kept toolkit status/meta text in the bottom status bar instead of overlaying HUD text on captured Unity pixels.
-- `npm run validate` passes after the implementation: TypeScript compile, unused checks, 162 runtime tests, 9 simplified-context tests, 7 remote-shell tests, and npm audit.
+- Validation on 2026-08-13 passed TypeScript compile and unused checks, 205
+  runtime tests, 10 simplified-context tests, 10 remote-shell tests, vendored
+  Unity-Unterm validation, and npm audit with zero findings.
 - Repeatable bridge check: open the Unity project with the toolkit bridge running, then run `npm --prefix unity-cursor-toolkit run probe:editor-window-stream`.
 
 Remaining before calling the cross-platform/product program done: run the same installed-extension visual proof on a Windows editor host, record hidden repaint/input behavior under PowerShell/user32 hiding, then complete player perf and Windows build/run/probe numbers for deployed/license-less hosts.

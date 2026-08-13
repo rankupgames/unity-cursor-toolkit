@@ -1,6 +1,27 @@
 # Unity Cursor Toolkit Extension
 
-VS Code / Cursor extension for Unity hot reload, live console streaming, MCP tool routing, context indexing, runtime game commands, play mode controls, `.meta` resolution, Mono debugger attach support, and standalone MCP access for AI agents.
+[![VS Code Marketplace](https://img.shields.io/badge/VS_Code_Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
+[![Open VSX](https://img.shields.io/open-vsx/v/rankupgames/unity-cursor-toolkit?label=Open%20VSX)](https://open-vsx.org/extension/rankupgames/unity-cursor-toolkit)
+
+VS Code / Cursor extension for Unity live console and profiler context, MCP
+tool routing, context indexing, runtime game commands, play mode controls,
+`.meta` resolution, debugger attach, hot reload, and standalone MCP access for
+AI agents.
+
+## Current Support and Unity 7
+
+- The companion Unity package declares Unity 2019.4 or later for core features.
+- Bundled Unity-Unterm features require Unity 6000.3 or later on macOS or
+  Windows.
+- Mono debugging and IL-patch hot reload remain the current legacy-runtime
+  paths.
+- CoreCLR capability gates, migration assistance, a replacement debugger, and
+  Unity 7 compatibility evidence are planned work. Unity 7 support is not yet a
+  shipped claim.
+
+Read the repository's [Unity 7 readiness plan](../docs/UNITY_7_READINESS.md),
+[documentation index](../docs/README.md), and
+[workstream task index](../docs/tasks/README.md).
 
 ## Development
 
@@ -34,6 +55,11 @@ Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy cli
 Use the `game_command` MCP tool to list, schedule, poll, or cancel runtime workflows registered by the Unity project through the UPM package's `UnityCursorToolkit.AgentCommands` API.
 
 Use the `unity_context` MCP tool to refresh `.umetacontext/index.json` with `action: "scan"`, then inspect compact project context with `summary`, `query`, and `read`.
+
+The Unity toolbar copy action builds compact profiler and console context,
+captures the current main-camera application view, overwrites one stable PNG in
+`Application.temporaryCachePath`, and appends the absolute image path to the
+clipboard text.
 
 ## Packaging
 
