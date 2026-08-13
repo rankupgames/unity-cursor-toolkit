@@ -1226,6 +1226,8 @@ function testUnityProfilerSafetySource() {
 	const hotReloadSource = fs.readFileSync(path.join(editorRoot, 'HotReloadHandler.cs'), 'utf8');
 	const validationSource = fs.readFileSync(path.join(editorRoot, 'MCP', 'EditorValidationTool.cs'), 'utf8');
 	const editorControlSource = fs.readFileSync(path.join(editorRoot, 'MCP', 'EditorControlTools.cs'), 'utf8');
+	const copySource = fs.readFileSync(path.join(editorRoot, 'ConsoleLogCopyTool.cs'), 'utf8');
+	const screenshotSource = fs.readFileSync(path.join(editorRoot, 'ApplicationScreenshotCapture.cs'), 'utf8');
 
 	test('background profiler is Play-Mode-only and not reconfigured from Tick', () => {
 		const tickStart = profilerSource.indexOf('private static void Tick()');
@@ -1241,6 +1243,25 @@ function testUnityProfilerSafetySource() {
 		assert.ok(transcriptSource.includes('Queue<ConsoleTranscriptEntry>'));
 		assert.ok(transcriptSource.includes('LimitLength(message, MaxMessageLength'));
 		assert.ok(profilerSource.includes('private const long MaxTempSessionBytes = 64L * 1024L * 1024L;'));
+	});
+
+	test('console copy captures a stable application screenshot and preserves fallback copy', () => {
+		assert.ok(fs.existsSync(path.join(editorRoot, 'ApplicationScreenshotCapture.cs.meta')));
+		assert.ok(screenshotSource.includes('Application.temporaryCachePath'));
+		assert.ok(screenshotSource.includes('private const string ScreenshotFileName = "unity-cursor-toolkit-application.png"'));
+		assert.ok(screenshotSource.includes('Path.Combine(Application.temporaryCachePath, ScreenshotFileName)'));
+		assert.ok(screenshotSource.includes('Camera.main'));
+		assert.ok(screenshotSource.includes('File.WriteAllBytes(path, texture.EncodeToPNG())'));
+		assert.ok(screenshotSource.includes('RenderTexture.active = previousActive'));
+		assert.ok(screenshotSource.includes('camera.targetTexture = previousTarget'));
+		assert.ok(screenshotSource.includes('UnityEngine.Object.DestroyImmediate(texture)'));
+		assert.ok(screenshotSource.includes('RenderTexture.ReleaseTemporary(renderTexture)'));
+		assert.ok(screenshotSource.includes('finally'));
+		assert.ok(!screenshotSource.includes('DateTime.UtcNow.Ticks'));
+		assert.ok(copySource.includes('ApplicationScreenshotCapture.TryCapture'));
+		assert.ok(copySource.includes('Application screenshot: '));
+		assert.ok(copySource.includes('GUIUtility.systemCopyBuffer = clipboardContent'));
+		assert.ok(copySource.includes('Debug.LogWarning'));
 	});
 
 	test('refresh handling avoids duplicate compilation and bounds queued message bytes', () => {

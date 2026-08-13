@@ -36,7 +36,7 @@ public static class ConsoleLogCopyTool
 	{
 		Texture2D _icon = EditorGUIUtility.IconContent("Clipboard").image as Texture2D;
 		return new MainToolbarButton(
-			new MainToolbarContent(_icon, "Copy profiler session and console transcript context"),
+			new MainToolbarContent(_icon, "Copy profiler session, console transcript, and application screenshot path"),
 			() => CopyConsoleLogs());
 	}
 #endif
@@ -49,7 +49,19 @@ public static class ConsoleLogCopyTool
 	[MenuItem("Tools/Unity Cursor Toolkit/Copy Console Logs %#l")]
 	internal static void CopyConsoleLogs()
 	{
-		GUIUtility.systemCopyBuffer = ProfilerSessionRecorder.BuildClipboardSnapshot(ProfilerSnapshotSettings.Current.IncludeRawFrameArrays);
+		string clipboardContent = ProfilerSessionRecorder.BuildClipboardSnapshot(ProfilerSnapshotSettings.Current.IncludeRawFrameArrays);
+		string screenshotPath;
+		string screenshotError;
+		if (ApplicationScreenshotCapture.TryCapture(out screenshotPath, out screenshotError))
+		{
+			clipboardContent += "\n\nApplication screenshot: " + screenshotPath;
+		}
+		else
+		{
+			Debug.LogWarning("(ConsoleLogCopyTool - CopyConsoleLogs) Application screenshot was not captured: " + screenshotError);
+		}
+
+		GUIUtility.systemCopyBuffer = clipboardContent;
 		Debug.Log("(ConsoleLogCopyTool - CopyConsoleLogs) Copied current profiler session path, console transcript path, and error summary to clipboard");
 	}
 }
