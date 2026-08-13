@@ -2,7 +2,7 @@
  * Author: Miguel A. Lopez
  * Company: Rank Up Games LLC
  * Project: Unity Cursor Toolkit
- * Description: Editor tool to copy all Unity console log entries to the clipboard.
+ * Description: Editor tool to copy Unity console/profiler context and a temporary application screenshot path.
  *              Adds a button to the main toolbar and a menu item under Tools.
  * Created: 2026-04-13
  * Last Modified: 2026-04-19
@@ -41,7 +41,7 @@ public static class ConsoleLogCopyTool
 	{
 		Texture2D _icon = EditorGUIUtility.IconContent("Clipboard").image as Texture2D;
 		return new MainToolbarButton(
-			new MainToolbarContent(_icon, "Copy all console logs to clipboard"),
+			new MainToolbarContent(_icon, "Copy profiler session, console transcript, and application screenshot path"),
 			() => CopyConsoleLogs());
 	}
 #endif
@@ -55,8 +55,19 @@ public static class ConsoleLogCopyTool
 	internal static void CopyConsoleLogs()
 	{
 		var _entries = GetConsoleLogEntries();
+		string clipboardContent = ProfilerSessionRecorder.BuildClipboardSnapshot(_entries, ProfilerSnapshotSettings.Current.IncludeRawFrameArrays);
+		string screenshotPath;
+		string screenshotError;
+		if (ApplicationScreenshotCapture.TryCapture(out screenshotPath, out screenshotError))
+		{
+			clipboardContent += "\n\nApplication screenshot: " + screenshotPath;
+		}
+		else
+		{
+			Debug.LogWarning("(ConsoleLogCopyTool - CopyConsoleLogs) Application screenshot was not captured: " + screenshotError);
+		}
 
-		GUIUtility.systemCopyBuffer = ProfilerSessionRecorder.BuildClipboardSnapshot(_entries, ProfilerSnapshotSettings.Current.IncludeRawFrameArrays);
+		GUIUtility.systemCopyBuffer = clipboardContent;
 		if (string.IsNullOrEmpty(_entries))
 		{
 			Debug.Log("(ConsoleLogCopyTool - CopyConsoleLogs) Console is empty; copied current profiler session snapshot to clipboard");

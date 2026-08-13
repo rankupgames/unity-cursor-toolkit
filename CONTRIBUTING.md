@@ -40,8 +40,22 @@ The first `cd unity-cursor-toolkit` enters the repository root. The second enter
 
 Changes to `unity-assets/` C# files must:
 
-- Compile in Unity 2019+
+- Preserve the package's declared Unity 2019.4 baseline
 - Wrap editor-only code in `#if UNITY_EDITOR` / `#endif`
+
+The declared baseline is not a tested compatibility claim. Record the exact
+Unity Editor version and platform for each proof run. For CoreCLR or Unity 7
+work, update `docs/UNITY_7_READINESS.md`, the affected file under `docs/tasks/`,
+and public compatibility wording together.
+
+## Documentation Status
+
+- Use the status terms in `docs/README.md`.
+- Keep both package documentation mirrors byte-identical.
+- Do not advertise Unity 7 or CoreCLR support until the readiness gates have
+  exact-version evidence.
+- Keep research and experiment results dated. Recheck external product facts
+  before using them for implementation or marketing.
 
 ## Code Style
 

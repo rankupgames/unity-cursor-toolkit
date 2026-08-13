@@ -14,6 +14,13 @@ The standalone MCP server path is:
 <repo>/unity-cursor-toolkit/out/mcp/server.js
 ```
 
+The server uses the current toolkit bridge. Package metadata declares a Unity
+2019.4+ baseline, but that declaration is not a per-version certification.
+Unity CLI, Pipeline, CoreCLR-specific behavior, and Unity 7 are tracked in
+`docs/UNITY_7_READINESS.md`. Client configuration stays stable, but future
+backend selection must be explicit and must report its origin; it must not
+silently replace the project's declared Editor.
+
 Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy ready-to-edit snippets for Cursor, Claude Code, VS Code, and Zed.
 
 ## Environment Variables

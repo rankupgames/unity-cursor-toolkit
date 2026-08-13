@@ -2,10 +2,25 @@
 
 Unity Cursor Toolkit is designed to give agents direct Unity Editor context without requiring users to paste console logs, scene state, or `.meta` files manually.
 
+## Unity Version and Backend Status
+
+The core package declares Unity 2019.4 or later. Current operations use the
+toolkit bridge or an explicitly requested batchmode Editor. Standalone Unity
+CLI, Pipeline, CoreCLR-specific behavior, and Unity 7 support are planned or
+evidence-gated backends; agents must not claim they are shipped until the
+capability response and recorded matrix prove them.
+
+Never silently switch to another Editor version or backend. Report the selected
+Editor, backend, and capability set in plans and results. See
+`docs/UNITY_7_READINESS.md` and `docs/tasks/README.md`.
+
 ## What Agents Can Do
 
 - Read recent Unity console output with `read_console`.
 - Capture current console/profiler context with `profiler_snapshot`.
+- Use the Unity toolbar copy action when a human wants clipboard context plus a
+  current main-camera application screenshot path. Each click overwrites the
+  same temporary PNG.
 - Read compact whole-console session transcripts with `profiler_snapshot` using `action: "readConsoleTranscript"` after capturing or listing a session id.
 - Scan, summarize, query, and read the local Unity asset/object/reference graph with `unity_context`.
 - Inspect project state with `project_info`.
@@ -98,3 +113,5 @@ These prompts are intentionally conservative: inspect first, summarize state, th
 - Unity Test Runner tools: list tests, run EditMode/PlayMode tests, and return structured failures.
 - Build report tools: parse build output, surface warnings/errors, and compare artifact sizes.
 - Package Manager tools: list packages, inspect versions, and propose dependency changes with dry-run output.
+- CoreCLR and Unity 7 work is tracked in `docs/UNITY_7_READINESS.md`; do not
+  present unchecked workstream tasks as available tools.

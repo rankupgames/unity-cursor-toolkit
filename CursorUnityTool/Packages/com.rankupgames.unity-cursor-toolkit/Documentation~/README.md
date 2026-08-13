@@ -6,6 +6,7 @@ Editor tools for Cursor/VS Code and MCP-capable AI agents integrating with Unity
 
 - **Hot Reload**: TCP server that triggers asset refresh when code changes are detected
 - **Console Forwarding**: Streams Unity console output to Cursor/VS Code
+- **Copy Snapshot**: Copies profiler/console context and overwrites one stable temporary main-camera screenshot on each click
 - **MCP Bridge**: Model Context Protocol tool dispatch for AI-assisted Unity editing
 - **Editor Validation**: Regenerates Unity project files and requests script compilation from Cursor/VS Code
 - **Runtime Game Commands**: Project-owned coroutine workflows callable through MCP without UI automation
@@ -50,8 +51,26 @@ Add to your `Packages/manifest.json`:
 ## Requirements
 
 - Unity 2019.4 or later for the core toolkit
-- Unity 6000.3 or later on macOS or Windows for the bundled Unity-Unterm features
+- Declared Unity 6000.3 or later requirement on macOS or Windows for the
+  bundled Unity-Unterm features; the local sample proof is Unity 6000.3.9f1 on
+  macOS, and Windows proof is pending
 - Cursor or VS Code with the Unity Cursor Toolkit extension
+
+## Unity Version Support and Unity 7 Readiness
+
+- Core package metadata declares Unity 2019.4 or later.
+- Unity-Unterm declares Unity 6000.3 or later on macOS or Windows. The local
+  sample proof is Unity 6000.3.9f1 on macOS; Windows proof is pending.
+- Mono debugging and IL-patch hot reload are legacy-runtime paths. They must be
+  capability-gated before a CoreCLR-only Editor is claimed.
+- Unity 7 is a planned, evidence-gated target. The CoreCLR audit, migration
+  assistant, replacement debugger, compatibility matrix, and first-party
+  CLI/Pipeline composition are not yet complete.
+
+The canonical status and acceptance gates are in the
+[Unity 7 readiness plan](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/UNITY_7_READINESS.md).
+Detailed work is in the
+[WS1–WS8 task index](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/tasks/README.md).
 
 Do not install the standalone `dev.tnayuki.unterm` package beside this toolkit. Both packages contain the same editor types and native plugin identity, so that combination is unsupported.
 
@@ -102,10 +121,14 @@ Commands run on Unity's main thread as coroutines. They should call existing gam
 
 See the repository docs:
 
-- `docs/AI_AGENTS.md`
-- `docs/GAME_COMMANDS.md`
-- `docs/MCP_CLIENTS.md`
-- `docs/FEATURE_ROADMAP.md`
+- [AI agent guide](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/AI_AGENTS.md)
+- [Runtime game commands](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/GAME_COMMANDS.md)
+- [MCP client setup](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/MCP_CLIENTS.md)
+- [Feature roadmap](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/FEATURE_ROADMAP.md)
+- [Unity 7 readiness](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/UNITY_7_READINESS.md)
+- [WS1–WS8 task index](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/tasks/README.md)
+- [Package changelog](../CHANGELOG.md)
+- [Package license](../LICENSE.md)
 
 ## Editor Validation
 

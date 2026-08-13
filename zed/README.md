@@ -8,6 +8,14 @@ Zed does not run VS Code extensions natively. Instead, Zed connects to Unity Cur
 - Built companion extension output at `unity-cursor-toolkit/out/mcp/server.js`
 - Node.js available on your PATH
 
+## Unity Version Status
+
+The Unity package declares Unity 2019.4 or later for core features. The same
+standalone MCP server and public tool schemas are intended to remain stable as
+projects move through Unity 6, CoreCLR, and Unity 7. Unity 7 compatibility is a
+planned, evidence-gated target and is not yet certified. See the
+[Unity 7 readiness plan](../docs/UNITY_7_READINESS.md).
+
 ## Setup
 
 Build the server:
@@ -39,7 +47,7 @@ Replace `<path-to-extension>` with the absolute path to the built extension dire
 
 ## Available Tools
 
-Once connected, the MCP server exposes tools for:
+Once connected, the MCP server exposes tools including:
 
 - `read_console` -- fetch Unity console logs with filtering
 - `clear_console` -- clear the Unity console
@@ -55,6 +63,10 @@ Once connected, the MCP server exposes tools for:
 - `batch_execute` -- run multiple tools in sequence
 
 The server also exposes MCP resources for project info, scene hierarchy, recent console output, console errors, and the tool catalog. Prompts are available for diagnosing errors, inspecting scenes, preparing builds, and planning safe scene edits.
+
+The server reports the selected backend and Unity project information where
+available. Future CLI, Pipeline, and Unity 7 backends must remain explicit; the
+toolkit will not silently switch Editors or backends after a failure.
 
 ## How It Works
 

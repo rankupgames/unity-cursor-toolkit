@@ -1,13 +1,15 @@
 # Unity Cursor Toolkit
 
-[![VS Code Marketplace](https://img.shields.io/vscode-marketplace/v/rankupgames.unity-cursor-toolkit.svg?label=Marketplace)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
-[![Marketplace Installs](https://img.shields.io/vscode-marketplace/d/rankupgames.unity-cursor-toolkit.svg?label=Installs)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
+[![VS Code Marketplace](https://img.shields.io/badge/VS_Code_Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
 [![Open VSX](https://img.shields.io/open-vsx/v/rankupgames/unity-cursor-toolkit?label=Open%20VSX)](https://open-vsx.org/extension/rankupgames/unity-cursor-toolkit)
 [![Open VSX Downloads](https://img.shields.io/open-vsx/dt/rankupgames/unity-cursor-toolkit?label=Open%20VSX%20Downloads)](https://open-vsx.org/extension/rankupgames/unity-cursor-toolkit)
 [![CI](https://img.shields.io/github/actions/workflow/status/rankupgames/unity-cursor-toolkit/ci.yml?branch=main&label=CI)](https://github.com/rankupgames/unity-cursor-toolkit/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A VS Code / Cursor extension that bridges your editor and the Unity Editor -- hot reload, live console, MCP server for AI agents, Mono debugging, and stable TCP connectivity.
+A VS Code / Cursor extension and Unity package for live console context, safe
+MCP automation, debugging, hot reload, and remote Unity workflows. The package
+declares Unity 2019.4 as its core baseline; Unity 7 is an explicit,
+evidence-gated readiness target.
 
 ## Disclaimer
 
@@ -21,7 +23,7 @@ Save-to-refresh with debounced file watching and compilation feedback in the sta
 
 ### Live Console
 
-Real-time streaming, severity filtering, text search across messages and stack traces, safe clickable `Assets/...` stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable). Console snapshots can include the current Unity profiler session so agents get logs, frame trends, hot frames, and hot paths together.
+Real-time streaming, severity filtering, text search across messages and stack traces, safe clickable `Assets/...` stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable). Console snapshots can include the current Unity profiler session so agents get logs, frame trends, hot frames, and hot paths together. The native Unity copy button also captures the current main-camera application view to one stable temporary PNG, overwrites it on every click, and appends its absolute path to the copied context.
 
 ### Connection
 
@@ -79,12 +81,28 @@ Agent safety defaults:
 - Use `unity_context` with `action: "scan"` to refresh `.umetacontext/index.json`, then use `summary`, `query`, and `read` to inspect assets, GUIDs, serialized objects, components, and references without broad file reads.
 - Use `game_command` with `action: "list"` to discover project-authored runtime workflows before scheduling them.
 
-See [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
+See the [documentation index](docs/README.md), [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Unity 7 Readiness Plan](docs/UNITY_7_READINESS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
 
 ## Requirements
 
 - VS Code or Cursor 1.60+
-- Unity 2019.4+
+- Unity 2019.4+ as the declared core package baseline; see the evidence table
+  below
+
+## Unity Version Support and Unity 7 Readiness
+
+| Editor family | Current position |
+| --- | --- |
+| Unity 2019.4 through 2022 LTS | Declared core package range; preserve the Mono debugger and legacy hot-reload path and add exact-version evidence |
+| Current Unity 6 releases | Unity-Unterm declares Unity 6000.3+ on macOS or Windows; the local sample baseline is Unity 6000.3.9f1 on macOS |
+| CoreCLR transition releases | Capability gates, reload fixes, migration checks, and a debugger replacement are planned and not yet complete |
+| Unity 7 | Readiness target only; do not treat this README as a compatibility certification |
+
+The plan is one stable agent interface across Editor generations, with an
+explicit backend and capability set for every operation. See the
+[Unity 7 Readiness Plan](docs/UNITY_7_READINESS.md), the dated
+[landscape assessment](docs/UNITY_7_LANDSCAPE_ASSESSMENT.md), and the
+[WS1–WS8 task index](docs/tasks/README.md).
 
 ## Unity Package Installation
 
@@ -194,7 +212,7 @@ The VSIX package is intentionally limited to runtime extension assets: compiled 
 | `unity-cursor-toolkit.stopConnection` | Stop the connection |
 | `unity-cursor-toolkit.console.clear` | Clear the console panel |
 | `unity-cursor-toolkit.console.sendToChat` | Send console output to AI chat |
-| `unity-cursor-toolkit.console.copy` | Copy console output to clipboard |
+| `unity-cursor-toolkit.console.copy` | Copy console/profiler context to the clipboard |
 | `unity-cursor-toolkit.console.snapshot` | Take a console/profiler snapshot |
 | `unity-cursor-toolkit.console.export` | Export console logs to file |
 | `unity-cursor-toolkit.resolveMeta` | Resolve `.meta` file for a path (for AI) |
@@ -237,7 +255,7 @@ unity-cursor-toolkit/
 │           └── MCP/                     # MCP bridge, scene/asset/editor tools
 ├── CursorUnityTool/                # Unity test project
 ├── zed/                            # Zed editor integration (MCP)
-├── docs/                           # Agent and MCP setup docs
+├── docs/                           # Product guides, Unity 7 readiness, research, and workstreams
 ├── AGENTS.md                       # Coding-agent repo instructions
 ├── llms.txt                        # AI-readable documentation index
 ├── .github/workflows/              # CI and release pipelines
@@ -269,4 +287,5 @@ See [SECURITY.md](SECURITY.md) for vulnerability reporting.
 
 ## License
 
-MIT License -- Copyright (c) 2025 Rank Up Games LLC. See [LICENSE](LICENSE) for details.
+MIT License -- Copyright (c) 2025 Rank Up Games LLC. See
+[LICENSE](unity-cursor-toolkit/LICENSE) for details.
