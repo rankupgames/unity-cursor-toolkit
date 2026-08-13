@@ -1,5 +1,10 @@
 # Remote Unity Native Shell And Streaming
 
+Status: **experimental implementation and historical evidence**. Existing
+proofs use named Unity 6000.3.9f1 environments. Windows and Unity 7 validation
+remain pending. See the [Unity 7 readiness plan](UNITY_7_READINESS.md) and
+[WS7](tasks/WS7_REMOTE_SHELL.md).
+
 ## Goal
 
 Build a VS Code Remote SSH-style experience for Unity: the local Mac keeps a native-feeling app shell, while Unity processing, project files, asset indexing, builds, tests, and rendering run on a remote workstation or VM. The local app should feel like opening a local Unity tool, but the heavy work happens over the network.
