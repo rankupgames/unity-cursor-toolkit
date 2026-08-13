@@ -392,15 +392,13 @@
     "bump": "node scripts/bump-version.js && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
     "bump:minor": "npm version minor && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix 2>/dev/null || code --install-extension *.vsix)",
     "local": "npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
-    "audit": "npm audit --omit=dev && npm audit"
+    "audit": "npm audit"
   },
   "overrides": {
     "form-data": "4.0.6",
-    "hono": "4.12.25",
-    "undici": "7.28.0"
+    "undici": "7.29.0"
   },
   "devDependencies": {
-    "@modelcontextprotocol/sdk": "^1.29.0",
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.60.0",
     "@vscode/vsce": "^3.7.1",
