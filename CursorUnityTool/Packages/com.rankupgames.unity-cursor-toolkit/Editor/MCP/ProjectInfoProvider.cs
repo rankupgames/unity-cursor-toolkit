@@ -32,9 +32,18 @@ namespace UnityCursorToolkit.MCP
 			sb.Append("\"platform\":\"").Append(Escape(Application.platform.ToString())).Append("\",");
 			sb.Append("\"isPlaying\":").Append(Application.isPlaying ? "true" : "false").Append(",");
 			sb.Append("\"isPaused\":").Append(EditorApplication.isPaused ? "true" : "false").Append(",");
-			sb.Append("\"projectPath\":\"").Append(Escape(Application.dataPath.Replace("/Assets", ""))).Append("\"");
+			sb.Append("\"projectPath\":\"").Append(Escape(GetProjectPath())).Append("\"");
 			sb.Append("}");
 			return sb.ToString();
+		}
+
+		private static string GetProjectPath()
+		{
+			const string assetsSuffix = "/Assets";
+			string dataPath = Application.dataPath;
+			return dataPath.EndsWith(assetsSuffix, System.StringComparison.Ordinal)
+				? dataPath.Substring(0, dataPath.Length - assetsSuffix.Length)
+				: dataPath;
 		}
 
 		private static string Escape(string s)

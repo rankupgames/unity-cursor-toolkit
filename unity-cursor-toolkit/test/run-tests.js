@@ -27,7 +27,7 @@ function createMockFileSystemWatcher(globPattern) {
 		onDidDelete: deleteEmitter.event,
 		dispose() {},
 		_fireChange: (uri) => changeEmitter.fire(uri),
-		_fireDelete: (uri) => deleteEmitter.fire(uri),
+		_fireDelete: (uri) => deleteEmitter.fireAsync(uri),
 		_fireCreate: (uri) => createEmitter.fire(uri)
 	};
 }
@@ -36,6 +36,7 @@ class MockEventEmitter {
 	constructor() { this._listeners = []; }
 	get event() { return (fn) => { this._listeners.push(fn); return { dispose: () => {} }; }; }
 	fire(data) { for (const fn of this._listeners) fn(data); }
+	fireAsync(data) { return Promise.all(this._listeners.map(fn => fn(data))); }
 	dispose() { this._listeners = []; }
 }
 
@@ -173,8 +174,87 @@ async function testAsync(name, fn) {
 	}
 }
 
-function sleep(ms) {
-	return new Promise((res) => setTimeout(res, ms));
+function createDeferred() {
+	let resolve;
+	let reject;
+	const promise = new Promise((resolvePromise, rejectPromise) => {
+		resolve = resolvePromise;
+		reject = rejectPromise;
+	});
+	return { promise, resolve, reject };
+}
+
+function installFakeTimers() {
+	const originalSetTimeout = global.setTimeout;
+	const originalClearTimeout = global.clearTimeout;
+	const originalSetInterval = global.setInterval;
+	const originalClearInterval = global.clearInterval;
+	const timeouts = [];
+	const intervals = [];
+	let sequence = 0;
+
+	const schedule = (collection, callback, delayMs, args) => {
+		const cleared = createDeferred();
+		const timer = {
+			callback,
+			delayMs: Number(delayMs) || 0,
+			args,
+			active: true,
+			sequence: sequence++,
+			cleared,
+			unref() {}
+		};
+		collection.push(timer);
+		return timer;
+	};
+	const clear = (timer) => {
+		if (timer?.active) {
+			timer.active = false;
+			timer.cleared.resolve();
+		}
+	};
+	const nextActive = (collection) => collection
+		.filter(timer => timer.active)
+		.sort((left, right) => left.delayMs - right.delayMs || left.sequence - right.sequence)[0];
+
+	global.setTimeout = (callback, delayMs, ...args) => schedule(timeouts, callback, delayMs, args);
+	global.clearTimeout = clear;
+	global.setInterval = (callback, delayMs, ...args) => schedule(intervals, callback, delayMs, args);
+	global.clearInterval = clear;
+
+	return {
+		activeTimeouts: () => timeouts.filter(timer => timer.active),
+		activeIntervals: () => intervals.filter(timer => timer.active),
+		runNextTimeout() {
+			const timer = nextActive(timeouts);
+			assert.ok(timer, 'Expected an active fake timeout');
+			timer.active = false;
+			return timer.callback(...timer.args);
+		},
+		runNextInterval() {
+			const timer = nextActive(intervals);
+			assert.ok(timer, 'Expected an active fake interval');
+			return timer.callback(...timer.args);
+		},
+		waitUntilCleared(timer) {
+			return timer.active ? timer.cleared.promise : Promise.resolve();
+		},
+		restore() {
+			global.setTimeout = originalSetTimeout;
+			global.clearTimeout = originalClearTimeout;
+			global.setInterval = originalSetInterval;
+			global.clearInterval = originalClearInterval;
+		}
+	};
+}
+
+async function withFakeTimers(callback) {
+	const clock = installFakeTimers();
+	try {
+		return await callback(clock);
+	} finally {
+		clock.restore();
+	}
 }
 
 function listenOnLocalhost(server, port = 0) {
@@ -213,6 +293,7 @@ async function getUnusedPort() {
 }
 
 function startMcpServer(env = {}) {
+	const responseTimeoutMs = 4_000;
 	const child = spawn(process.execPath, [path.join(outDir, 'mcp', 'server.js')], {
 		env: { ...process.env, ...env },
 		stdio: ['pipe', 'pipe', 'pipe']
@@ -230,10 +311,11 @@ function startMcpServer(env = {}) {
 				continue;
 			}
 			const message = JSON.parse(line);
-			const callback = pending.get(message.id);
-			if (callback) {
+			const request = pending.get(message.id);
+			if (request) {
 				pending.delete(message.id);
-				callback(message);
+				request.cleanup();
+				request.resolve(message);
 			}
 		}
 	});
@@ -241,6 +323,15 @@ function startMcpServer(env = {}) {
 	child.stderr.on('data', (chunk) => {
 		stderr += chunk.toString();
 	});
+	const rejectPending = (reason) => {
+		for (const [id, request] of pending) {
+			pending.delete(id);
+			request.cleanup();
+			request.reject(new Error(`${reason}. Waiting for MCP response to ${request.method}. stderr: ${stderr}`));
+		}
+	};
+	child.once('error', (error) => rejectPending(`MCP server failed: ${error.message}`));
+	child.once('exit', (code, signal) => rejectPending(`MCP server exited with code ${code} and signal ${signal}`));
 
 	let requestId = 0;
 	return {
@@ -250,15 +341,14 @@ function startMcpServer(env = {}) {
 			const id = ++requestId;
 			const payload = { jsonrpc: '2.0', id, method, params };
 			return new Promise((resolve, reject) => {
-				const timer = setTimeout(() => {
+				const signal = AbortSignal.timeout(responseTimeoutMs);
+				const onAbort = () => {
 					pending.delete(id);
-					reject(new Error(`Timed out waiting for MCP response to ${method}. stderr: ${stderr}`));
-				}, 4_000);
-
-				pending.set(id, (message) => {
-					clearTimeout(timer);
-					resolve(message);
-				});
+					reject(new Error(`MCP response deadline exceeded for ${method}. stderr: ${stderr}`));
+				};
+				const cleanup = () => signal.removeEventListener('abort', onAbort);
+				signal.addEventListener('abort', onAbort, { once: true });
+				pending.set(id, { method, resolve, reject, cleanup });
 				child.stdin.write(JSON.stringify(payload) + '\n');
 			});
 		},
@@ -371,12 +461,16 @@ function testConnectionUnit() {
 // core/unityEditorLauncher.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
-function testUnityEditorLauncher() {
+async function testUnityEditorLauncher() {
 	console.log('\n── core/unityEditorLauncher.ts ──');
 	const {
 		resolveUnityEditorPath,
 		createUnityEditorLaunchPlan,
-		launchUnityEditor
+		launchUnityEditor,
+		launchOrReuseUnityEditor,
+		hideUnityEditor,
+		readUnityEditorLaunchFailure,
+		matchesUnityProjectInfo
 	} = require(path.join(outDir, 'core', 'unityEditorLauncher'));
 
 	test('resolves macOS Unity Hub editor from ProjectVersion.txt', () => {
@@ -403,6 +497,36 @@ function testUnityEditorLauncher() {
 			env: { UNITY_CURSOR_TOOLKIT_UNITY_PATH: appPath },
 			fileExists: candidate => candidate === expected,
 			readFile: () => ''
+		});
+
+		assert.strictEqual(resolved, expected);
+	});
+
+	test('rejects ProjectVersion.txt values that escape the Unity install root', () => {
+		const projectPath = '/workspace/CursorUnityTool';
+		let fileExistsCalls = 0;
+		const resolved = resolveUnityEditorPath(projectPath, {
+			platform: 'darwin',
+			env: {},
+			fileExists: candidate => {
+				fileExistsCalls++;
+				return candidate.includes('/tmp/uct-attacker/');
+			},
+			readFile: () => 'm_EditorVersion: ../../../../tmp/uct-attacker\n'
+		});
+
+		assert.strictEqual(resolved, null);
+		assert.strictEqual(fileExistsCalls, 0, 'invalid ProjectVersion values must fail before probing an executable path');
+	});
+
+	test('accepts Unity revision suffixes without allowing path separators', () => {
+		const projectPath = '/workspace/CursorUnityTool';
+		const expected = '/Applications/Unity/Hub/Editor/6000.3.9f1c1/Unity.app/Contents/MacOS/Unity';
+		const resolved = resolveUnityEditorPath(projectPath, {
+			platform: 'darwin',
+			env: {},
+			fileExists: candidate => candidate === expected,
+			readFile: () => 'm_EditorVersion: 6000.3.9f1c1\n'
 		});
 
 		assert.strictEqual(resolved, expected);
@@ -473,10 +597,18 @@ function testUnityEditorLauncher() {
 				fileExists: candidate => candidate === editorPath,
 				readFile: () => '',
 				processExists: pid => livePids.has(pid),
-				spawnProcess
+				spawnProcess,
+				hideRetryDelaysMs: []
 			});
 			assert.strictEqual(spawnCount, 1);
+			assert.strictEqual(first.reused, false);
+			assert.strictEqual(first.sessionOwned, true);
 			assert.ok(fs.existsSync(first.launchLockPath), 'launch lock should be written next to temp logs');
+			const launchRecord = JSON.parse(fs.readFileSync(first.launchLockPath, 'utf8'));
+			assert.strictEqual(launchRecord.owner, 'unity-cursor-toolkit');
+			assert.strictEqual(launchRecord.sessionOwned, true);
+			assert.match(launchRecord.launchId, /^[a-f0-9]{32}$/);
+			assert.strictEqual(first.launchId, launchRecord.launchId);
 
 			assert.throws(() => launchUnityEditor(projectPath, {
 				platform: 'darwin',
@@ -486,12 +618,633 @@ function testUnityEditorLauncher() {
 				fileExists: candidate => candidate === editorPath,
 				readFile: () => '',
 				processExists: pid => livePids.has(pid),
-				spawnProcess
+				spawnProcess,
+				hideRetryDelaysMs: []
 			}), /already in progress/);
 			assert.strictEqual(spawnCount, 1, 'second launch must not spawn another Unity process');
 		} finally {
 			fs.rmSync(tmpDir, { recursive: true, force: true });
 		}
+	});
+
+	test('launch cleanup cannot remove a replacement same-project ownership lock', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-lock-owner-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		let child;
+		try {
+			const result = launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				hideRetryDelaysMs: [],
+				spawnProcess: () => {
+					child = new EventEmitter();
+					child.pid = 23463;
+					child.unref = () => {};
+					return child;
+				}
+			});
+
+			const replacement = JSON.parse(fs.readFileSync(result.launchLockPath, 'utf8'));
+			replacement.launchId = 'replacement-session';
+			delete replacement.pid;
+			fs.writeFileSync(result.launchLockPath, JSON.stringify(replacement, null, 2) + '\n', 'utf8');
+			child.emit('exit', 0, null);
+
+			assert.strictEqual(fs.existsSync(result.launchLockPath), true, 'an exited session must not remove another launch\'s lock');
+			assert.strictEqual(JSON.parse(fs.readFileSync(result.launchLockPath, 'utf8')).launchId, 'replacement-session');
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	test('child exit contains launch-lock cleanup filesystem errors', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-cleanup-error-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const originalFstatSync = fs.fstatSync;
+		const originalWarn = console.warn;
+		let child;
+		try {
+			const result = launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				hideRetryDelaysMs: [],
+				spawnProcess: () => {
+					child = new EventEmitter();
+					child.pid = 23467;
+					child.unref = () => {};
+					return child;
+				}
+			});
+
+			console.warn = () => {};
+			fs.fstatSync = () => {
+				throw new Error('simulated cleanup filesystem failure');
+			};
+			assert.doesNotThrow(() => child.emit('exit', 0, null));
+			assert.ok(result.processError, 'the process exit must remain visible to the caller');
+		} finally {
+			fs.fstatSync = originalFstatSync;
+			console.warn = originalWarn;
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	test('launch lock update cannot overwrite a replacement after ownership validation', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-lock-race-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const originalFstatSync = fs.fstatSync;
+		const originalRenameSync = fs.renameSync;
+		let replacementInjected = false;
+		let child;
+		try {
+			const replaceLock = lockPath => {
+				const replacement = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+				replacement.launchId = 'replacement-during-update';
+				delete replacement.pid;
+				const displacedPath = `${lockPath}.displaced`;
+				originalRenameSync(lockPath, displacedPath);
+				fs.writeFileSync(lockPath, JSON.stringify(replacement, null, 2) + '\n', 'utf8');
+				replacementInjected = true;
+			};
+			fs.fstatSync = fd => {
+				if (!replacementInjected) {
+					const lockPath = fs.readdirSync(tmpDir).map(name => path.join(tmpDir, name)).find(candidate => candidate.endsWith('.lock.json'));
+					if (lockPath != null) {
+						replaceLock(lockPath);
+					}
+				}
+				return originalFstatSync(fd);
+			};
+
+			const result = launchUnityEditor(projectPath, {
+					platform: 'darwin',
+					editorPathOverride: editorPath,
+					tempDir: tmpDir,
+					lockRoot: tmpDir,
+					fileExists: candidate => candidate === editorPath,
+					readFile: () => '',
+					hideRetryDelaysMs: [],
+					spawnProcess: () => {
+						child = new EventEmitter();
+						child.pid = 23465;
+						child.unref = () => {};
+						return child;
+					}
+				});
+
+			assert.strictEqual(replacementInjected, true, 'the race harness should replace the lock during the ownership transition');
+			const lockPath = fs.readdirSync(tmpDir).map(name => path.join(tmpDir, name)).find(candidate => candidate.endsWith('.lock.json'));
+			assert.ok(lockPath, 'the replacement lock should remain addressable');
+			assert.strictEqual(JSON.parse(fs.readFileSync(lockPath, 'utf8')).launchId, 'replacement-during-update');
+			assert.ok(result.ownershipError, 'the returned process result must report degraded ownership');
+			assert.strictEqual(result.ownershipError.code, 'lock-failed');
+		} finally {
+			fs.fstatSync = originalFstatSync;
+			child?.emit('exit', 0, null);
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('reuses a locked editor only after the toolkit handshake succeeds', async () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-reuse-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const projectLockPath = path.join(projectPath, 'Temp', 'UnityLockfile');
+		let handshakeCalls = 0;
+		let spawnCalls = 0;
+		fs.mkdirSync(path.dirname(projectLockPath), { recursive: true });
+		fs.writeFileSync(projectLockPath, 'locked');
+		try {
+			const result = await launchOrReuseUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath || candidate === projectLockPath,
+				readFile: () => '',
+				spawnProcess: () => {
+					spawnCalls++;
+					throw new Error('spawn should not be reached when reusing');
+				},
+				isToolkitResponsive: async () => {
+					handshakeCalls++;
+					return true;
+				}
+			});
+
+			assert.strictEqual(handshakeCalls, 1);
+			assert.strictEqual(spawnCalls, 0);
+			assert.strictEqual(result.reused, true);
+			assert.strictEqual(result.sessionOwned, false);
+			assert.strictEqual(result.pid, undefined);
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('responsive reuse does not require Unity executable discovery', async () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-reuse-no-editor-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const projectLockPath = path.join(projectPath, 'Temp', 'UnityLockfile');
+		fs.mkdirSync(path.dirname(projectLockPath), { recursive: true });
+		fs.writeFileSync(projectLockPath, 'locked');
+		try {
+			const result = await launchOrReuseUnityEditor(projectPath, {
+				platform: 'darwin',
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: () => {
+					throw new Error('reuse must not probe an editor executable');
+				},
+				isToolkitResponsive: async () => true
+			});
+
+			assert.strictEqual(result.reused, true);
+			assert.strictEqual(result.editorPath, '');
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('forceNewInstance bypasses responsive project reuse', async () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-forced-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const projectLockPath = path.join(projectPath, 'Temp', 'UnityLockfile');
+		let child;
+		let handshakeCalls = 0;
+		fs.mkdirSync(path.dirname(projectLockPath), { recursive: true });
+		fs.writeFileSync(projectLockPath, 'locked');
+		try {
+			const result = await launchOrReuseUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				forceNewInstance: true,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				hideRetryDelaysMs: [],
+				isToolkitResponsive: async () => {
+					handshakeCalls++;
+					return true;
+				},
+				spawnProcess: () => {
+					child = new EventEmitter();
+					child.pid = 23466;
+					child.unref = () => {};
+					return child;
+				}
+			});
+
+			assert.strictEqual(handshakeCalls, 0);
+			assert.strictEqual(result.reused, false);
+			assert.strictEqual(result.pid, 23466);
+		} finally {
+			child?.emit('exit', 0, null);
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('locked editor reuse fails explicitly when the toolkit handshake does not respond', async () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-reuse-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const projectLockPath = path.join(projectPath, 'Temp', 'UnityLockfile');
+		fs.mkdirSync(path.dirname(projectLockPath), { recursive: true });
+		fs.writeFileSync(projectLockPath, 'locked');
+		try {
+			await assert.rejects(
+				launchOrReuseUnityEditor(projectPath, {
+					platform: 'darwin',
+					editorPathOverride: editorPath,
+					tempDir: tmpDir,
+					lockRoot: tmpDir,
+					fileExists: candidate => candidate === editorPath || candidate === projectLockPath,
+					readFile: () => '',
+					isToolkitResponsive: async () => false
+				}),
+				error => error && error.code === 'project-locked' && /Toolkit handshake/.test(error.message)
+			);
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	test('project-scoped reuse requires the linked project and Unity version', () => {
+		const projectPath = '/workspace/CursorUnityTool';
+		const response = {
+			result: {
+				projectPath,
+				unityVersion: '6000.3.9f1'
+			}
+		};
+
+		assert.strictEqual(matchesUnityProjectInfo(projectPath, '6000.3.9f1', response), true);
+		assert.strictEqual(matchesUnityProjectInfo('/workspace/OtherProject', '6000.3.9f1', response), false);
+		assert.strictEqual(matchesUnityProjectInfo(projectPath, '6000.3.10f1', response), false);
+		assert.strictEqual(matchesUnityProjectInfo(projectPath, null, response), false);
+		assert.strictEqual(matchesUnityProjectInfo(projectPath, '6000.3.9f1', { result: JSON.stringify(response.result) }), true);
+	});
+
+	test('Unity project_info removes only the trailing Assets directory', () => {
+		const projectInfoPath = path.join(__dirname, '..', '..', 'Packages', 'com.rankupgames.unity-cursor-toolkit', 'Editor', 'MCP', 'ProjectInfoProvider.cs');
+		const duplicateProjectInfoPath = path.join(__dirname, '..', '..', 'CursorUnityTool', 'Packages', 'com.rankupgames.unity-cursor-toolkit', 'Editor', 'MCP', 'ProjectInfoProvider.cs');
+		const projectInfoSource = fs.readFileSync(projectInfoPath, 'utf8');
+		assert.ok(projectInfoSource.includes('dataPath.EndsWith(assetsSuffix, System.StringComparison.Ordinal)'));
+		assert.ok(projectInfoSource.includes('dataPath.Substring(0, dataPath.Length - assetsSuffix.Length)'));
+		assert.ok(!projectInfoSource.includes('Application.dataPath.Replace("/Assets", "")'));
+		assert.strictEqual(projectInfoSource, fs.readFileSync(duplicateProjectInfoPath, 'utf8'));
+	});
+
+	test('asynchronous editor process failures are typed and release session ownership', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-child-failure-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		let child;
+		try {
+			const result = launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				hideRetryDelaysMs: [],
+				spawnProcess: () => {
+					child = new EventEmitter();
+					child.pid = 23456;
+					child.unref = () => {};
+					return child;
+				}
+			});
+
+			child.emit('error', new Error('editor executable failed after spawn'));
+			assert.ok(result.processError);
+			assert.strictEqual(result.processError.code, 'launch-failed');
+			assert.match(result.processError.message, /failed after spawn/);
+			assert.strictEqual(fs.existsSync(result.launchLockPath), false);
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	test('editor exit before bridge readiness is typed even with exit code zero', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-zero-exit-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		let child;
+		try {
+			const result = launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				hideRetryDelaysMs: [],
+				spawnProcess: () => {
+					child = new EventEmitter();
+					child.pid = 23459;
+					child.unref = () => {};
+					return child;
+				}
+			});
+
+			child.emit('exit', 0, null);
+			assert.ok(result.processError);
+			assert.strictEqual(result.processError.code, 'launch-failed');
+			assert.match(result.processError.message, /exited before the toolkit bridge was ready/);
+			assert.strictEqual(fs.existsSync(result.launchLockPath), false);
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	test('post-spawn ownership failures remain caller-visible after the process starts', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-lock-failure-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		let child;
+		try {
+			const result = launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				hideRetryDelaysMs: [],
+				spawnProcess: () => {
+					const plan = createUnityEditorLaunchPlan(projectPath, {
+						platform: 'darwin',
+						editorPathOverride: editorPath,
+						tempDir: tmpDir,
+						lockRoot: tmpDir,
+						fileExists: candidate => candidate === editorPath,
+						readFile: () => ''
+					});
+					fs.rmSync(plan.launchLockPath, { force: true });
+					fs.mkdirSync(plan.launchLockPath);
+					child = new EventEmitter();
+					child.pid = 23457;
+					child.unref = () => {};
+					return child;
+				}
+			});
+			assert.strictEqual(result.pid, 23457);
+			assert.ok(result.ownershipError);
+			assert.strictEqual(result.ownershipError.code, 'lock-failed');
+			assert.match(result.ownershipError.message, /ownership lock/);
+		} finally {
+			child?.emit('exit', 0, null);
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	test('post-spawn lock failures preserve the process, replacement path, and hide schedule', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-lock-cleanup-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const originalSetTimeout = global.setTimeout;
+		const originalClearTimeout = global.clearTimeout;
+		const timers = [];
+		const clearedTimers = [];
+		let child;
+		let plan;
+		global.setTimeout = (callback, delayMs) => {
+			const timer = { callback, delayMs, unref: () => {} };
+			timers.push(timer);
+			return timer;
+		};
+		global.clearTimeout = timer => clearedTimers.push(timer);
+		try {
+			const result = launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				spawnProcess: () => {
+					plan = createUnityEditorLaunchPlan(projectPath, {
+						platform: 'darwin',
+						editorPathOverride: editorPath,
+						tempDir: tmpDir,
+						lockRoot: tmpDir,
+						fileExists: candidate => candidate === editorPath,
+						readFile: () => ''
+					});
+					fs.rmSync(plan.launchLockPath, { force: true });
+					fs.mkdirSync(plan.launchLockPath);
+					child = new EventEmitter();
+					child.pid = 23460;
+					child.unref = () => {};
+					return child;
+				}
+			});
+
+			assert.ok(result.ownershipError);
+			assert.strictEqual(result.ownershipError.code, 'lock-failed');
+			assert.strictEqual(timers.length, 4, 'the production default hide schedule should be installed');
+			assert.strictEqual(clearedTimers.length, 0, 'ownership degradation must not discard visibility tracking for the live process');
+			assert.strictEqual(fs.existsSync(plan.launchLockPath), true, 'lock failure must not remove a replacement ownership path');
+			assert.strictEqual(fs.statSync(plan.launchLockPath).isDirectory(), true, 'the replacement path should remain untouched');
+		} finally {
+			global.setTimeout = originalSetTimeout;
+			global.clearTimeout = originalClearTimeout;
+			child?.emit('exit', 0, null);
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('hide retries remove fired timers and stop after a successful attempt', async () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-hide-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const clock = installFakeTimers();
+		let child;
+		let hideCalls = 0;
+		try {
+			launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				hideRetryDelaysMs: [0, 10, 20],
+				hideProcess: () => {
+					hideCalls++;
+					return hideCalls > 1;
+				},
+				spawnProcess: () => {
+					child = new EventEmitter();
+					child.pid = 23458;
+					child.unref = () => {};
+					return child;
+				}
+			});
+
+			await clock.runNextTimeout();
+			await Promise.resolve();
+			await clock.runNextTimeout();
+			await Promise.resolve();
+			assert.strictEqual(hideCalls, 2, 'a failed first hide should use one retry, then cancel the remaining schedule');
+			assert.strictEqual(clock.activeTimeouts().length, 0, 'a successful hide should cancel later retries');
+		} finally {
+			clock.restore();
+			child?.emit('exit', 0, null);
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('scheduled hide work is invalidated when its launch session exits', async () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-hide-owner-'));
+		const projectPath = path.join(tmpDir, 'CursorUnityTool');
+		const editorPath = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		const originalSetTimeout = global.setTimeout;
+		const originalClearTimeout = global.clearTimeout;
+		const timers = [];
+		let child;
+		let hideCalls = 0;
+		global.setTimeout = (callback, delayMs) => {
+			const timer = { callback, delayMs, unref: () => {} };
+			timers.push(timer);
+			return timer;
+		};
+		global.clearTimeout = () => {};
+		try {
+			launchUnityEditor(projectPath, {
+				platform: 'darwin',
+				editorPathOverride: editorPath,
+				tempDir: tmpDir,
+				lockRoot: tmpDir,
+				fileExists: candidate => candidate === editorPath,
+				readFile: () => '',
+				hideRetryDelaysMs: [0],
+				hideProcess: () => {
+					hideCalls++;
+					return true;
+				},
+				spawnProcess: () => {
+					child = new EventEmitter();
+					child.pid = 23464;
+					child.unref = () => {};
+					return child;
+				}
+			});
+			global.setTimeout = originalSetTimeout;
+			global.clearTimeout = originalClearTimeout;
+
+			assert.strictEqual(timers.length, 1);
+			timers[0].callback();
+			child.emit('exit', 0, null);
+			await Promise.resolve();
+			await Promise.resolve();
+			assert.strictEqual(hideCalls, 0, 'an exit must invalidate an already-fired but not-yet-invoked hide attempt');
+		} finally {
+			global.setTimeout = originalSetTimeout;
+			global.clearTimeout = originalClearTimeout;
+			child?.emit('exit', 0, null);
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('Windows hide reports a failed window operation to the retry layer', async () => {
+		const childProcess = require('child_process');
+		const originalExecFile = childProcess.execFile;
+		let hideScript = '';
+		childProcess.execFile = (command, args, callback) => {
+			assert.strictEqual(command, 'powershell.exe');
+			hideScript = args[args.indexOf('-Command') + 1];
+			callback(new Error('PowerShell reported an unsuccessful hide'));
+		};
+		try {
+			const hidden = await hideUnityEditor(23461, 'win32');
+			assert.strictEqual(hidden, false);
+			assert.match(hideScript, /(?:exit|Environment::Exit)\s+1/);
+		} finally {
+			childProcess.execFile = originalExecFile;
+		}
+	});
+
+	await testAsync('Windows hide accepts a successful PowerShell hide result', async () => {
+		const childProcess = require('child_process');
+		const originalExecFile = childProcess.execFile;
+		let hideScript = '';
+		childProcess.execFile = (command, args, callback) => {
+			assert.strictEqual(command, 'powershell.exe');
+			hideScript = args[args.indexOf('-Command') + 1];
+			callback(null);
+		};
+		try {
+			const hidden = await hideUnityEditor(23462, 'win32');
+				assert.strictEqual(hidden, true);
+				assert.match(hideScript, /MainWindowHandle -eq 0/);
+				assert.match(hideScript, /IsWindowVisible/);
+				assert.ok(hideScript.indexOf('ShowWindowAsync') < hideScript.indexOf('IsWindowVisible'), 'Windows hide must verify final visibility after requesting the hide');
+				assert.match(hideScript, /exit 0/);
+		} finally {
+			childProcess.execFile = originalExecFile;
+		}
+	});
+
+	test('license failures are classified from the Unity launch log', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-launch-license-'));
+		const logPath = path.join(tmpDir, 'unity.log');
+		try {
+			fs.writeFileSync(logPath, 'License activation failed: no valid entitlement.\n', 'utf8');
+			const failure = readUnityEditorLaunchFailure(logPath);
+			assert.ok(failure);
+			assert.strictEqual(failure.code, 'license-failed');
+			assert.match(failure.message, /license activation failed/i);
+			assert.strictEqual(readUnityEditorLaunchFailure(path.join(tmpDir, 'missing.log')), null);
+		} finally {
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+
+	await testAsync('hidden editor visibility always requires a concrete process id', async () => {
+		const launcherSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'core', 'unityEditorLauncher.ts'), 'utf8');
+		assert.strictEqual(await hideUnityEditor(undefined, 'darwin'), false, 'visibility changes must be skipped without a PID');
+		assert.strictEqual(await hideUnityEditor(0, 'win32'), false, 'visibility changes must reject a non-positive PID');
+		assert.ok(!launcherSource.includes('every process whose name contains "Unity"'), 'visibility changes must never target every Unity process');
+		assert.ok(launcherSource.includes('cancelScheduledHide'), 'scheduled visibility retries must be cancellable');
+		assert.ok(launcherSource.includes('activeHideSessions'), 'scheduled visibility retries must be bound to a launch generation');
+		assert.ok(launcherSource.includes('hideProcess'), 'visibility retries must use a mockable platform seam');
+	});
+
+	test('the Start/Attach command uses the session launcher and reports licensing failures', () => {
+		const extensionSource = fs.readFileSync(path.join(__dirname, '..', 'src', 'extension.ts'), 'utf8');
+		assert.ok(extensionSource.includes("unity-cursor-toolkit.startConnection"), 'Start/Attach remains the single editor lifecycle command');
+		assert.ok(extensionSource.includes('launchOrReuseUnityEditor'), 'Start/Attach should use the shared launch-or-reuse path');
+		assert.ok(extensionSource.includes('isToolkitResponsive'), 'reuse must be gated by a toolkit handshake');
+		assert.ok(extensionSource.includes("toolName: 'project_info'"), 'reuse must identify the linked Unity project');
+		assert.ok(extensionSource.includes('matchesUnityProjectInfo'), 'reuse must reject a bridge for another project or editor version');
+		assert.ok(extensionSource.includes('connectExcludingPorts(excludedPorts)'), 'project selection must continue past a responsive bridge for another project');
+		assert.ok(extensionSource.includes('setReconnectCallback'), 'automatic reconnect must reuse the project-validating connection path');
+		assert.ok(extensionSource.includes('setNeededCallback(() => connectionRequested)'), 'automatic reconnect demand must not depend on the temporary connection state');
+		assert.ok(extensionSource.includes('pendingProjectConnectionAttempt?.generation === generation'), 'same-generation project validation must share one active scan');
+		assert.ok(extensionSource.includes('cancelConnectionRequests();'), 'Stop and deactivation must invalidate active attach work');
+		assert.ok(extensionSource.includes('isConnectionRequestCurrent(generation)'), 'attach, launch, hide, and reconnect work must reject stale generations');
+		assert.ok(extensionSource.includes('readUnityEditorLaunchFailure'), 'launch failures should be classified from the Unity log');
+		assert.ok(extensionSource.includes('const launchFailure = readUnityEditorLaunchFailure(launchResult.logPath) ?? launchResult.processError'), 'license diagnostics should take precedence over generic process exits');
+		assert.ok(extensionSource.includes('launchResult.launchId'), 'explicit hiding must retain launch-generation ownership');
+		assert.ok(extensionSource.includes('launchResult.ownershipError'), 'post-spawn ownership degradation must remain visible to the user');
+		assert.ok(extensionSource.includes('active Unity license'), 'launch timeout should report the licensing requirement');
+		assert.ok(extensionSource.includes('hideRetryDelaysMs: []'), 'a bridge timeout must not leave an unverified editor hidden');
 	});
 }
 
@@ -566,6 +1319,8 @@ function testUnityLicenseScript() {
 async function testConnectionTcp() {
 	console.log('\n── core/connection.ts (TCP integration) ──');
 	const { ConnectionManager } = require(path.join(outDir, 'core', 'connection'));
+	const { CommandSender } = require(path.join(outDir, 'core', 'commandSender'));
+	const { matchesUnityProjectInfo } = require(path.join(outDir, 'core', 'unityEditorLauncher'));
 	const { ConnectionState } = require(path.join(outDir, 'core', 'types'));
 
 	// Uses port 55504 (last port in the PORTS array)
@@ -587,13 +1342,143 @@ async function testConnectionTcp() {
 		}
 	});
 
+	await testAsync('disconnect invalidates an in-flight port probe before a delayed pong', async () => {
+		let probedSocket;
+		let resolvePing;
+		const pingReceived = new Promise(resolve => {
+			resolvePing = resolve;
+		});
+		const server = net.createServer((socket) => {
+			probedSocket = socket;
+			socket.on('data', (data) => {
+				if (data.toString().includes('"ping"')) {
+					resolvePing();
+				}
+			});
+		});
+		const openPort = await listenOnLocalhost(server);
+
+		try {
+			const conn = new ConnectionManager([openPort]);
+			const pendingConnect = conn.connect();
+			await pingReceived;
+			conn.disconnect();
+			probedSocket.write('{"command":"pong"}\n');
+
+			assert.strictEqual(await pendingConnect, null);
+			assert.strictEqual(conn.info.state, ConnectionState.Disconnected);
+			assert.strictEqual(conn.info.port, null);
+			conn.dispose();
+		} finally {
+			await closeServer(server);
+		}
+	});
+
+	await testAsync('project_info handshake identifies the expected project before reuse', async () => {
+		const expectedProjectPath = '/workspace/CursorUnityTool';
+		const expectedVersion = '6000.3.9f1';
+		const server = net.createServer((socket) => {
+			socket.on('data', (data) => {
+				const lines = data.toString().split('\n').filter(Boolean);
+				for (const line of lines) {
+					const parsed = JSON.parse(line);
+					if (parsed.command === 'ping') {
+						socket.write('{"command":"pong"}\n');
+					}
+					if (parsed.command === 'mcpToolCall' && parsed.toolName === 'project_info') {
+						socket.write(JSON.stringify({
+							command: 'mcpToolResult',
+							tool: 'project_info',
+							_requestId: parsed._requestId,
+							result: { projectPath: expectedProjectPath, unityVersion: expectedVersion }
+						}) + '\n');
+					}
+				}
+			});
+		});
+		const portToUse = await listenOnLocalhost(server);
+
+		try {
+			const conn = new ConnectionManager([portToUse]);
+			const sender = new CommandSender(conn);
+			assert.strictEqual(await conn.connect(), portToUse);
+			const response = await sender.request('mcpToolCall', { toolName: 'project_info', args: {} });
+			assert.strictEqual(matchesUnityProjectInfo(expectedProjectPath, expectedVersion, response), true);
+			assert.strictEqual(matchesUnityProjectInfo('/workspace/OtherProject', expectedVersion, response), false);
+			sender.dispose();
+			conn.disconnect();
+			conn.dispose();
+		} finally {
+			await closeServer(server);
+		}
+	});
+
+	await testAsync('project selection skips a responsive Unity bridge for another project', async () => {
+		const expectedProjectPath = '/workspace/ExpectedProject';
+		const expectedVersion = '6000.3.9f1';
+		const createProjectInfoServer = projectPath => net.createServer((socket) => {
+			socket.on('data', (data) => {
+				const lines = data.toString().split('\n').filter(Boolean);
+				for (const line of lines) {
+					const parsed = JSON.parse(line);
+					if (parsed.command === 'ping') {
+						socket.write('{"command":"pong"}\n');
+					}
+					if (parsed.command === 'mcpToolCall' && parsed.toolName === 'project_info') {
+						socket.write(JSON.stringify({
+							command: 'mcpToolResult',
+							tool: 'project_info',
+							_requestId: parsed._requestId,
+							result: { projectPath, unityVersion: expectedVersion }
+						}) + '\n');
+					}
+				}
+			});
+		});
+		const otherProjectServer = createProjectInfoServer('/workspace/OtherProject');
+		const expectedProjectServer = createProjectInfoServer(expectedProjectPath);
+		const otherProjectPort = await listenOnLocalhost(otherProjectServer);
+		const expectedProjectPort = await listenOnLocalhost(expectedProjectServer);
+
+		try {
+			const conn = new ConnectionManager([otherProjectPort, expectedProjectPort]);
+			const sender = new CommandSender(conn);
+			const excludedPorts = new Set();
+			let selectedPort = null;
+
+			while (true) {
+				const candidatePort = await conn.connectExcludingPorts(excludedPorts);
+				if (candidatePort == null) {
+					break;
+				}
+				const response = await sender.request('mcpToolCall', { toolName: 'project_info', args: {} });
+				if (matchesUnityProjectInfo(expectedProjectPath, expectedVersion, response)) {
+					selectedPort = candidatePort;
+					break;
+				}
+				excludedPorts.add(candidatePort);
+				conn.disconnect();
+			}
+
+			assert.strictEqual(selectedPort, expectedProjectPort);
+			assert.deepStrictEqual([...excludedPorts], [otherProjectPort]);
+			assert.strictEqual(conn.info.port, expectedProjectPort);
+			sender.dispose();
+			conn.disconnect();
+			conn.dispose();
+		} finally {
+			await closeServer(otherProjectServer);
+			await closeServer(expectedProjectServer);
+		}
+	});
+
 	await testAsync('connect shares an in-flight probe instead of launching duplicate attempts', async () => {
 		let connectionCount = 0;
 		const server = net.createServer((socket) => {
 			connectionCount++;
 			socket.on('data', (data) => {
 				if (data.toString().includes('"ping"')) {
-					setTimeout(() => socket.write('{"command":"pong"}\n'), 50);
+					setImmediate(() => socket.write('{"command":"pong"}\n'));
 				}
 			});
 		});
@@ -633,6 +1518,8 @@ async function testConnectionTcp() {
 
 	await testAsync('connects to TCP server, exchanges messages, fires onMessage', async () => {
 		const received = [];
+		const helloReceived = createDeferred();
+		const responseReceived = createDeferred();
 
 		const server = net.createServer((socket) => {
 			socket.on('data', (data) => {
@@ -640,6 +1527,9 @@ async function testConnectionTcp() {
 				for (const line of lines) {
 					received.push(JSON.parse(line));
 					const parsed = JSON.parse(line);
+					if (parsed.command === 'hello') {
+						helloReceived.resolve(parsed);
+					}
 					if (parsed.command === 'ping') {
 						socket.write('{"command":"pong"}\n');
 					}
@@ -662,19 +1552,20 @@ async function testConnectionTcp() {
 			assert.strictEqual(conn.info.port, portToUse);
 
 			conn.send('hello', { data: 99 });
-			await sleep(100);
-			assert.ok(received.length > 0, 'Server should receive messages');
-			const helloMsg = received.find(m => m.command === 'hello');
+			const helloMsg = await helloReceived.promise;
 			assert.ok(helloMsg, 'Server received hello');
 			assert.strictEqual(helloMsg.data, 99);
 
 			const clientMessages = [];
-			conn.onMessage((msg) => clientMessages.push(msg));
+			conn.onMessage((msg) => {
+				clientMessages.push(msg);
+				if (msg.command === 'testResponse') {
+					responseReceived.resolve(msg);
+				}
+			});
 			conn.send('testCmd', { _requestId: 'r1' });
-			await sleep(200);
 
-			assert.ok(clientMessages.length > 0, 'Client should receive non-pong messages');
-			const testResp = clientMessages.find(m => m.command === 'testResponse');
+			const testResp = await responseReceived.promise;
 			assert.ok(testResp, 'Got testResponse');
 			assert.strictEqual(testResp.payload.data, 42);
 
@@ -683,7 +1574,6 @@ async function testConnectionTcp() {
 			conn.dispose();
 		} finally {
 			await closeServer(server);
-			await sleep(100);
 		}
 	});
 
@@ -706,23 +1596,25 @@ async function testConnectionTcp() {
 			conn.dispose();
 		} finally {
 			await closeServer(server);
-			await sleep(100);
 		}
 	});
 
 	await testAsync('heartbeat: pong resets timeout (no premature disconnect)', async () => {
+		let pingCount = 0;
 		const server = net.createServer((socket) => {
 			socket.on('data', (data) => {
 				const lines = data.toString().split('\n').filter(Boolean);
 				for (const line of lines) {
 					const parsed = JSON.parse(line);
 					if (parsed.command === 'ping') {
+						pingCount++;
 						socket.write('{"command":"pong"}\n');
 					}
 				}
 			});
 		});
 		const portToUse = await listenOnLocalhost(server);
+		const clock = installFakeTimers();
 
 		try {
 			const conn = new ConnectionManager([portToUse]);
@@ -732,53 +1624,123 @@ async function testConnectionTcp() {
 			assert.strictEqual(port, portToUse);
 			assert.strictEqual(conn.info.state, ConnectionState.Connected);
 
-			// Wait long enough that a heartbeat should fire (10s interval)
-			// but not so long the test hangs. We just verify still connected after 1s.
-			await sleep(500);
+			assert.strictEqual(pingCount, 1, 'the connection probe should send the first ping');
+			clock.runNextInterval();
+			const [heartbeatTimeout] = clock.activeTimeouts();
+			assert.ok(heartbeatTimeout, 'the heartbeat should arm its timeout');
+			await clock.waitUntilCleared(heartbeatTimeout);
+			assert.strictEqual(pingCount, 2, 'the deterministic heartbeat tick should send another ping');
 			assert.strictEqual(conn.info.state, ConnectionState.Connected, 'Should still be connected');
 
 			conn.disconnect();
 			conn.dispose();
 		} finally {
+			clock.restore();
 			await closeServer(server);
-			await sleep(100);
 		}
 	});
 
 	await testAsync('reconnects after server-initiated close', async () => {
 		let connectionCount = 0;
+		let reconnectAttemptCount = 0;
 		const server = net.createServer((socket) => {
 			connectionCount++;
 			writePongOnPing(socket);
 			if (connectionCount === 1) {
-				setTimeout(() => socket.destroy(), 150);
+				socket.once('data', () => setImmediate(() => socket.destroy()));
 			}
 		});
 		const portToUse = await listenOnLocalhost(server);
+		const clock = installFakeTimers();
 
 		try {
 			const conn = new ConnectionManager([portToUse]);
 			conn.setNeededCallback(() => true);
+			conn.setReconnectCallback(async () => {
+				reconnectAttemptCount++;
+				if (reconnectAttemptCount === 1) {
+					conn.disconnect();
+					return null;
+				}
+				return conn.connect();
+			});
 
 			const stateLog = [];
-			conn.onStateChanged((info) => stateLog.push(info.state));
+			const reconnecting = createDeferred();
+			const reconnected = createDeferred();
+			conn.onStateChanged((info) => {
+				stateLog.push(info.state);
+				if (info.state === ConnectionState.Reconnecting) {
+					reconnecting.resolve();
+				}
+				if (info.state === ConnectionState.Connected && connectionCount > 1) {
+					reconnected.resolve();
+				}
+			});
 
 			const port = await conn.connect();
 			assert.strictEqual(port, portToUse);
 
-			// Wait for server to drop us and reconnect to start
-			await sleep(2500);
+			await reconnecting.promise;
+			await clock.runNextTimeout();
+			assert.strictEqual(conn.info.state, ConnectionState.Reconnecting, 'A failed retry should remain requested and schedule another backoff');
+			assert.strictEqual(clock.activeTimeouts().length, 1, 'A failed retry should arm the next backoff');
+			await clock.runNextTimeout();
+			await reconnected.promise;
 
 			assert.ok(
 				stateLog.includes(ConnectionState.Reconnecting),
 				`Should enter Reconnecting after server drops. States: ${stateLog.join(' -> ')}`
 			);
+			assert.strictEqual(conn.info.state, ConnectionState.Connected, 'Should reconnect after the deterministic backoff tick');
+			assert.strictEqual(connectionCount, 2, 'Should open one replacement connection');
+			assert.strictEqual(reconnectAttemptCount, 2, 'Should retry after the first reconnect attempt fails');
 
 			conn.disconnect();
 			conn.dispose();
 		} finally {
+			clock.restore();
 			await closeServer(server);
-			await sleep(100);
+		}
+	});
+
+	await testAsync('direct connections retain reconnect demand after server close', async () => {
+		let connectionCount = 0;
+		const server = net.createServer((socket) => {
+			connectionCount++;
+			writePongOnPing(socket);
+			if (connectionCount === 1) {
+				socket.once('data', () => setImmediate(() => socket.destroy()));
+			}
+		});
+		const portToUse = await listenOnLocalhost(server);
+		const clock = installFakeTimers();
+
+		try {
+			const conn = new ConnectionManager([portToUse]);
+			const reconnecting = createDeferred();
+			const reconnected = createDeferred();
+			conn.onStateChanged((info) => {
+				if (info.state === ConnectionState.Reconnecting) {
+					reconnecting.resolve();
+			}
+				if (info.state === ConnectionState.Connected && connectionCount > 1) {
+					reconnected.resolve();
+				}
+			});
+
+			assert.strictEqual(await conn.connect(), portToUse);
+			await reconnecting.promise;
+			await clock.runNextTimeout();
+			await reconnected.promise;
+			assert.strictEqual(conn.info.state, ConnectionState.Connected);
+			assert.ok(connectionCount >= 2, 'a direct player-style connection should reconnect without extension demand');
+
+			conn.disconnect();
+			conn.dispose();
+		} finally {
+			clock.restore();
+			await closeServer(server);
 		}
 	});
 }
@@ -812,12 +1774,12 @@ async function testCommandSender() {
 		const mockConn = {
 			onMessage: emitter.event,
 			send(cmd, payload) {
-				setTimeout(() => {
+				queueMicrotask(() => {
 					emitter.fire({
 						command: 'response',
 						payload: { _requestId: payload._requestId, result: 'ok' }
 					});
-				}, 10);
+				});
 			}
 		};
 		const sender = new CommandSender(mockConn);
@@ -834,18 +1796,18 @@ async function testCommandSender() {
 		const mockConn = {
 			onMessage: emitter.event,
 			send(cmd, payload) {
-				setTimeout(() => {
+				queueMicrotask(() => {
 					emitter.fire({
 						command: 'response',
 						payload: { _requestId: 'wrong_id', result: 'nope' }
 					});
-				}, 10);
-				setTimeout(() => {
-					emitter.fire({
-						command: 'response',
-						payload: { _requestId: payload._requestId, result: 'correct' }
+					queueMicrotask(() => {
+						emitter.fire({
+							command: 'response',
+							payload: { _requestId: payload._requestId, result: 'correct' }
+						});
 					});
-				}, 30);
+				});
 			}
 		};
 		const sender = new CommandSender(mockConn);
@@ -855,23 +1817,22 @@ async function testCommandSender() {
 		sender.dispose();
 	});
 
-	await testAsync('request() returns null on timeout (10s default, shortened for test)', async () => {
+	await testAsync('request() returns null on a deterministic timeout tick', async () => {
 		const emitter = new vscode.EventEmitter();
+		const clock = installFakeTimers();
 		const mockConn = {
 			onMessage: emitter.event,
 			send() {} // never responds
 		};
-		const sender = new CommandSender(mockConn);
-
-		const result = await Promise.race([
-			sender.request('neverRespond'),
-			sleep(300).then(() => 'race_timeout')
-		]);
-
-		// Either the request's 10s timeout returns null, or our 300ms race wins
-		assert.ok(result === 'race_timeout' || result === null,
-			'Should either race-timeout or resolve null');
-		sender.dispose();
+		try {
+			const sender = new CommandSender(mockConn);
+			const resultPromise = sender.request('neverRespond');
+			clock.runNextTimeout();
+			assert.strictEqual(await resultPromise, null, 'Should resolve null after the request timeout tick');
+			sender.dispose();
+		} finally {
+			clock.restore();
+		}
 	});
 
 	await testAsync('request() generates unique _requestId per call', async () => {
@@ -1228,6 +2189,8 @@ function testUnityProfilerSafetySource() {
 	const editorControlSource = fs.readFileSync(path.join(editorRoot, 'MCP', 'EditorControlTools.cs'), 'utf8');
 	const copySource = fs.readFileSync(path.join(editorRoot, 'ConsoleLogCopyTool.cs'), 'utf8');
 	const screenshotSource = fs.readFileSync(path.join(editorRoot, 'ApplicationScreenshotCapture.cs'), 'utf8');
+	const editorWindowCaptureSource = fs.readFileSync(path.join(editorRoot, 'MCP', 'EditorWindowViewportCapture.cs'), 'utf8');
+	const duplicateEditorRoot = path.join(__dirname, '..', '..', 'CursorUnityTool', 'Packages', 'com.rankupgames.unity-cursor-toolkit', 'Editor');
 
 	test('background profiler is Play-Mode-only and not reconfigured from Tick', () => {
 		const tickStart = profilerSource.indexOf('private static void Tick()');
@@ -1250,18 +2213,50 @@ function testUnityProfilerSafetySource() {
 		assert.ok(screenshotSource.includes('Application.temporaryCachePath'));
 		assert.ok(screenshotSource.includes('private const string ScreenshotFileName = "unity-cursor-toolkit-application.png"'));
 		assert.ok(screenshotSource.includes('Path.Combine(Application.temporaryCachePath, ScreenshotFileName)'));
-		assert.ok(screenshotSource.includes('Camera.main'));
-		assert.ok(screenshotSource.includes('File.WriteAllBytes(path, texture.EncodeToPNG())'));
-		assert.ok(screenshotSource.includes('RenderTexture.active = previousActive'));
-		assert.ok(screenshotSource.includes('camera.targetTexture = previousTarget'));
-		assert.ok(screenshotSource.includes('UnityEngine.Object.DestroyImmediate(texture)'));
-		assert.ok(screenshotSource.includes('RenderTexture.ReleaseTemporary(renderTexture)'));
-		assert.ok(screenshotSource.includes('finally'));
-		assert.ok(!screenshotSource.includes('DateTime.UtcNow.Ticks'));
+		assert.ok(screenshotSource.includes('EditorWindowViewportCapture.TryCaptureMainEditorWindow'));
+		assert.ok(screenshotSource.includes('File.WriteAllBytes(path, frame.bytes)'));
+		assert.ok(screenshotSource.includes('Main editor root view capture returned no PNG bytes.'));
+		assert.ok(!screenshotSource.includes('Camera.main'));
+		const unstableTimestampExpression = ['DateTime', 'UtcNow', 'Ticks'].join('.');
+		assert.ok(!screenshotSource.includes(unstableTimestampExpression));
+		assert.ok(editorWindowCaptureSource.includes('UnityEditor.ContainerWindow'));
+		assert.ok(editorWindowCaptureSource.includes('mainWindow'));
+		assert.ok(editorWindowCaptureSource.includes('m_RootView'));
+		assert.ok(editorWindowCaptureSource.includes('GUIView.GrabPixels unavailable'));
+		assert.ok(editorWindowCaptureSource.includes('new CaptureResources(captureSize.x, captureSize.y, captureSize.x, captureSize.y, flipVertical)'));
+		assert.ok(editorWindowCaptureSource.includes('new Rect(0f, 0f, rootPosition.width, rootPosition.height)'));
+		assert.ok(editorWindowCaptureSource.includes('"GrabPixels", typeof(RenderTexture), typeof(Rect)'));
+		assert.ok(editorWindowCaptureSource.includes('resources.texture.EncodeToPNG()'));
+		assert.ok(editorWindowCaptureSource.includes('RenderTexture.active = previousActive'));
+		assert.strictEqual(
+			screenshotSource,
+			fs.readFileSync(path.join(duplicateEditorRoot, 'ApplicationScreenshotCapture.cs'), 'utf8'),
+			'application screenshot implementations must stay identical in both package copies'
+		);
+		assert.strictEqual(
+			editorWindowCaptureSource,
+			fs.readFileSync(path.join(duplicateEditorRoot, 'MCP', 'EditorWindowViewportCapture.cs'), 'utf8'),
+			'editor-window capture implementations must stay identical in both package copies'
+		);
 		assert.ok(copySource.includes('ApplicationScreenshotCapture.TryCapture'));
 		assert.ok(copySource.includes('Application screenshot: '));
 		assert.ok(copySource.includes('GUIUtility.systemCopyBuffer = clipboardContent'));
 		assert.ok(copySource.includes('Debug.LogWarning'));
+	});
+
+	test('editor-window capture releases stale same-view resources before resizing', () => {
+		const getResourcesStart = editorWindowCaptureSource.indexOf('private static CaptureResources GetResources');
+		const disposeForViewStart = editorWindowCaptureSource.indexOf('private static void DisposeCachedResourcesForView', getResourcesStart);
+		const getResourcesSource = editorWindowCaptureSource.slice(getResourcesStart, disposeForViewStart);
+		const disposeForViewEnd = editorWindowCaptureSource.indexOf('private static bool ShouldFlipReadbackVertically', disposeForViewStart);
+		const disposeForViewSource = editorWindowCaptureSource.slice(disposeForViewStart, disposeForViewEnd);
+
+		assert.ok(getResourcesStart >= 0 && disposeForViewStart > getResourcesStart, 'the same-view eviction helper must follow GetResources');
+		assert.ok(getResourcesSource.indexOf('resourcesByKey.TryGetValue(key, out resources)') < getResourcesSource.indexOf('DisposeCachedResourcesForView(view);'), 'an exact-size cache hit should remain reusable');
+		assert.ok(getResourcesSource.indexOf('DisposeCachedResourcesForView(view);') < getResourcesSource.indexOf('new CaptureResources('), 'stale GPU resources must be released before replacement allocation');
+		assert.ok(disposeForViewSource.includes('entry.Key.StartsWith(prefix, StringComparison.Ordinal)'), 'eviction must be limited to the resized view');
+		assert.ok(disposeForViewSource.includes('resourcesByKey.Remove(staleKey);'), 'stale cache entries must be removed');
+		assert.ok(disposeForViewSource.includes('resources.Dispose();'), 'stale render textures must be destroyed immediately');
 	});
 
 	test('refresh handling avoids duplicate compilation and bounds queued message bytes', () => {
@@ -2394,7 +3389,7 @@ async function testFileWatcher() {
 		watcher.disable();
 	});
 
-	await testAsync('debounces rapid changes into single refresh', async () => {
+	await testAsync('debounces rapid changes into single refresh', () => withFakeTimers(async (clock) => {
 		const sent = [];
 		const mockConn = {
 			onMessage: new MockEventEmitter().event,
@@ -2414,7 +3409,7 @@ async function testFileWatcher() {
 
 		assert.strictEqual(sent.length, 0, 'Should not send yet (debouncing)');
 
-		await sleep(500);
+		clock.runNextTimeout();
 
 		assert.strictEqual(sent.length, 1, `Should send exactly 1 refresh, got ${sent.length}`);
 		assert.strictEqual(sent[0].cmd, 'refresh');
@@ -2423,9 +3418,9 @@ async function testFileWatcher() {
 		assert.strictEqual(sent[0].payload.files.length, 2, 'Deduplicates Player.cs');
 
 		watcher.dispose();
-	});
+	}));
 
-	await testAsync('pending files reset after each refresh', async () => {
+	await testAsync('pending files reset after each refresh', () => withFakeTimers(async (clock) => {
 		const sent = [];
 		const mockConn = {
 			onMessage: new MockEventEmitter().event,
@@ -2438,19 +3433,19 @@ async function testFileWatcher() {
 		const csWatcher = _allCreatedWatchers[0];
 
 		csWatcher._fireChange({ fsPath: '/project/Assets/A.cs' });
-		await sleep(500);
+		clock.runNextTimeout();
 		assert.strictEqual(sent.length, 1);
 		assert.deepStrictEqual(sent[0].payload.files, ['/project/Assets/A.cs']);
 
 		csWatcher._fireChange({ fsPath: '/project/Packages/com.example/B.cs' });
-		await sleep(500);
+		clock.runNextTimeout();
 		assert.strictEqual(sent.length, 2);
 		assert.deepStrictEqual(sent[1].payload.files, ['/project/Packages/com.example/B.cs']);
 
 		watcher.dispose();
-	});
+	}));
 
-	await testAsync('disable cancels pending debounce', async () => {
+	await testAsync('disable cancels pending debounce', () => withFakeTimers(async (clock) => {
 		const sent = [];
 		const mockConn = {
 			onMessage: new MockEventEmitter().event,
@@ -2465,9 +3460,9 @@ async function testFileWatcher() {
 		csWatcher._fireChange({ fsPath: '/project/Assets/A.cs' });
 		watcher.disable();
 
-		await sleep(500);
+		assert.strictEqual(clock.activeTimeouts().length, 0, 'Disable should clear the pending debounce timer');
 		assert.strictEqual(sent.length, 0, 'Disable should cancel pending refresh');
-	});
+	}));
 
 	await testAsync('ignores generated folders and project-file regeneration', async () => {
 		const sent = [];
@@ -2493,12 +3488,11 @@ async function testFileWatcher() {
 			csWatcher._fireChange({ fsPath });
 		}
 
-		await sleep(500);
 		assert.strictEqual(sent.length, 0, 'Generated and project files must not trigger Unity refresh');
 		watcher.dispose();
 	});
 
-	await testAsync('caps pending changed-file details during a large burst', async () => {
+	await testAsync('caps pending changed-file details during a large burst', () => withFakeTimers(async (clock) => {
 		const sent = [];
 		const mockConn = {
 			onMessage: new MockEventEmitter().event,
@@ -2513,11 +3507,11 @@ async function testFileWatcher() {
 			csWatcher._fireChange({ fsPath: `/project/Assets/Generated/File${i}.cs` });
 		}
 
-		await sleep(500);
+		clock.runNextTimeout();
 		assert.strictEqual(sent.length, 1);
 		assert.strictEqual(sent[0].payload.files.length, 1_000);
 		watcher.dispose();
-	});
+	}));
 
 	test('enable is idempotent (does not create duplicate watchers)', () => {
 		const mockConn = {
@@ -2781,9 +3775,7 @@ async function testMetaManager() {
 		const manager = new MetaManager();
 		const fsWatcher = _lastCreatedWatcher;
 
-		fsWatcher._fireDelete({ fsPath: assetPath });
-
-		await sleep(200);
+		await fsWatcher._fireDelete({ fsPath: assetPath });
 
 		assert.ok(!fs.existsSync(metaPath), 'Meta file should be deleted');
 
@@ -2804,8 +3796,7 @@ async function testMetaManager() {
 		const manager = new MetaManager();
 		const fsWatcher = _lastCreatedWatcher;
 
-		fsWatcher._fireDelete({ fsPath: assetPath });
-		await sleep(200);
+		await fsWatcher._fireDelete({ fsPath: assetPath });
 
 		assert.ok(fs.existsSync(assetPath), 'Asset file should still exist (only meta is deleted)');
 
@@ -3390,7 +4381,7 @@ async function main() {
 
 	testTypes();
 	testConnectionUnit();
-	testUnityEditorLauncher();
+	await testUnityEditorLauncher();
 	testUnityLicenseScript();
 	await testConnectionTcp();
 	await testCommandSender();

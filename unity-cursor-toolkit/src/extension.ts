@@ -15,7 +15,7 @@ import { CommandSender } from './core/commandSender';
 import { ModuleLoader } from './core/moduleLoader';
 import { StatusBarController } from './core/statusBarController';
 import { ConnectionState } from './core/types';
-import { hideUnityEditor, launchUnityEditor, UnityEditorLaunchResult } from './core/unityEditorLauncher';
+import { hideUnityEditor, launchOrReuseUnityEditor, matchesUnityProjectInfo, readUnityEditorLaunchFailure, readUnityProjectVersion, UnityEditorLaunchError, UnityEditorLaunchResult } from './core/unityEditorLauncher';
 import {
 	ModuleContext,
 	IMessageHandler,
@@ -38,15 +38,36 @@ let moduleLoader: ModuleLoader;
 let statusBar: StatusBarController;
 let pendingEditorLaunch: Promise<UnityEditorLaunchResult> | undefined;
 let pendingConnectionAttempt: Promise<void> | undefined;
+let pendingConnectionGeneration: number | undefined;
+let pendingProjectConnectionAttempt: {
+	readonly generation: number;
+	readonly projectPath: string;
+	readonly promise: Promise<number | null>;
+} | undefined;
+let connectionRequested = false;
+let connectionRequestGeneration = 0;
 
 const EDITOR_BRIDGE_BOOT_TIMEOUT_MS = 90_000;
 const EDITOR_BRIDGE_RETRY_MS = 2_000;
 
 export function activate(context: vscode.ExtensionContext): void {
 	connection = new ConnectionManager();
-	connection.setNeededCallback(() => connection.info.state !== ConnectionState.Disconnected);
+	connection.setNeededCallback(() => connectionRequested);
 
 	commandSender = new CommandSender(connection);
+	connection.setReconnectCallback(async () => {
+		if (connectionRequested === false) {
+			return undefined;
+		}
+		const generation = connectionRequestGeneration;
+		const projectPath = getLinkedProjectPath();
+		if (projectPath == null) {
+			abandonConnectionRequest(generation);
+			return undefined;
+		}
+		const port = await connectToLinkedUnityProject(projectPath, generation);
+		return isConnectionRequestCurrent(generation) ? port : undefined;
+	});
 	statusBar = new StatusBarController(context);
 	moduleLoader = new ModuleLoader();
 
@@ -95,6 +116,7 @@ export function activate(context: vscode.ExtensionContext): void {
 }
 
 export async function deactivate(): Promise<void> {
+	cancelConnectionRequests();
 	await moduleLoader?.deactivateAll();
 	commandSender?.dispose();
 	connection?.disconnect();
@@ -171,6 +193,7 @@ function registerCoreCommands(context: vscode.ExtensionContext): void {
 		}),
 
 		vscode.commands.registerCommand('unity-cursor-toolkit.stopConnection', () => {
+			cancelConnectionRequests();
 			connection.disconnect();
 			vscode.window.showInformationMessage('Unity connection stopped.');
 		})
@@ -178,27 +201,41 @@ function registerCoreCommands(context: vscode.ExtensionContext): void {
 }
 
 async function runConnectionAttempt(isInitialSetup: boolean): Promise<void> {
+	const generation = beginConnectionRequest();
 	if (pendingConnectionAttempt != null) {
-		await pendingConnectionAttempt;
-		return;
+		const activeAttempt = pendingConnectionAttempt;
+		const activeGeneration = pendingConnectionGeneration;
+		await activeAttempt;
+		if (isConnectionRequestCurrent(generation) === false || activeGeneration === generation) {
+			return;
+		}
 	}
 
-	pendingConnectionAttempt = attemptConnection(isInitialSetup);
+	const attempt = attemptConnection(isInitialSetup, generation);
+	pendingConnectionAttempt = attempt;
+	pendingConnectionGeneration = generation;
 	try {
-		await pendingConnectionAttempt;
+		await attempt;
 	} finally {
-		pendingConnectionAttempt = undefined;
+		if (pendingConnectionAttempt === attempt) {
+			pendingConnectionAttempt = undefined;
+			pendingConnectionGeneration = undefined;
+		}
 	}
 }
 
-async function attemptConnection(isInitialSetup: boolean): Promise<void> {
+async function attemptConnection(isInitialSetup: boolean, generation: number): Promise<void> {
 	let projectPath = getLinkedProjectPath();
 	const canSkip = hasLinkedUnityProject() && isScriptInstalledInLinkedProject();
 
 	if (canSkip === false && (isInitialSetup || projectPath == null)) {
 		const success = await handleUnityProjectSetup();
+		if (isConnectionRequestCurrent(generation) === false) {
+			return;
+		}
 		if (success === false) {
 			vscode.window.showErrorMessage('Failed to attach Unity project.');
+			abandonConnectionRequest(generation);
 			return;
 		}
 		projectPath = getLinkedProjectPath();
@@ -206,13 +243,17 @@ async function attemptConnection(isInitialSetup: boolean): Promise<void> {
 
 	if (projectPath == null) {
 		vscode.window.showErrorMessage('No Unity project path found.');
+		abandonConnectionRequest(generation);
 		return;
 	}
 
 	statusBar.setProjectName(path.basename(projectPath));
 	vscode.window.showInformationMessage(`Connecting to Unity project: ${path.basename(projectPath)}...`);
 
-	const port = await connection.connect();
+	const port = await connectToLinkedUnityProject(projectPath, generation);
+	if (isConnectionRequestCurrent(generation) === false) {
+		return;
+	}
 	if (port) {
 		vscode.window.showInformationMessage(`Connected to Unity on port ${port}`);
 		return;
@@ -221,35 +262,76 @@ async function attemptConnection(isInitialSetup: boolean): Promise<void> {
 	const autoLaunch = vscode.workspace.getConfiguration('unityCursorToolkit').get<boolean>('autoLaunchEditor', true);
 	if (autoLaunch === false) {
 		vscode.window.showErrorMessage('Failed to connect to Unity. Auto-launch is disabled; start the linked Unity project, then attach again.');
+		abandonConnectionRequest(generation);
 		return;
 	}
 
 	let launchResult: UnityEditorLaunchResult;
 	try {
-		launchResult = await launchLinkedUnityEditor(projectPath);
+		launchResult = await launchLinkedUnityEditor(projectPath, generation);
 	} catch (error: unknown) {
-		vscode.window.showErrorMessage(`Failed to launch Unity Editor: ${error instanceof Error ? error.message : String(error)}`);
+		if (isConnectionRequestCurrent(generation) === false) {
+			return;
+		}
+		vscode.window.showErrorMessage(`Failed to prepare Unity Editor: ${formatUnityEditorLaunchError(error)}`);
+		abandonConnectionRequest(generation);
+		return;
+	}
+	if (isConnectionRequestCurrent(generation) === false) {
 		return;
 	}
 
+	if (launchResult.reused) {
+		const reusedPort = connection.info.port;
+		if (reusedPort == null) {
+			vscode.window.showErrorMessage('Unity Editor reuse completed without a connected toolkit bridge. Refusing to continue.');
+			abandonConnectionRequest(generation);
+			return;
+		}
+		vscode.window.showInformationMessage(`Reused responsive Unity Editor for ${path.basename(projectPath)} on port ${reusedPort}`);
+		return;
+	}
+	if (launchResult.ownershipError != null) {
+		vscode.window.showWarningMessage(`Unity Editor started, but duplicate-launch protection is degraded: ${formatUnityEditorLaunchError(launchResult.ownershipError)}`);
+	}
+
 	vscode.window.showInformationMessage(`Launching hidden Unity Editor for ${path.basename(projectPath)}...`);
-	const launchedPort = await waitForUnityBridge(EDITOR_BRIDGE_BOOT_TIMEOUT_MS);
+	const launchedPort = await waitForUnityBridge(projectPath, EDITOR_BRIDGE_BOOT_TIMEOUT_MS, generation, launchResult);
+	if (isConnectionRequestCurrent(generation) === false) {
+		return;
+	}
 	if (launchedPort) {
-		hideUnityEditor(launchResult.pid);
+		const hidden = await hideUnityEditor(launchResult.pid, process.platform, launchResult.launchId);
+		if (isConnectionRequestCurrent(generation) === false) {
+			return;
+		}
+		if (hidden === false) {
+			vscode.window.showWarningMessage('Connected to Unity, but the toolkit could not hide the Editor window. The Editor remains open and usable.');
+		}
 		vscode.window.showInformationMessage(`Connected to Unity on port ${launchedPort}`);
 	} else {
-		vscode.window.showErrorMessage(`Unity Editor launched, but the toolkit bridge did not answer within ${EDITOR_BRIDGE_BOOT_TIMEOUT_MS / 1000}s. Unity log: ${launchResult.logPath}`);
+		const launchFailure = readUnityEditorLaunchFailure(launchResult.logPath) ?? launchResult.processError;
+		if (launchFailure != null) {
+			vscode.window.showErrorMessage(`Unity Editor launch failed: ${formatUnityEditorLaunchError(launchFailure)} Unity log: ${launchResult.logPath}`);
+		} else {
+			vscode.window.showErrorMessage(`Unity Editor launched, but the toolkit bridge did not answer within ${EDITOR_BRIDGE_BOOT_TIMEOUT_MS / 1000}s. The Editor remains open and visible. Confirm it has an active Unity license and inspect the Unity log: ${launchResult.logPath}`);
+		}
+		abandonConnectionRequest(generation);
 	}
 }
 
-async function launchLinkedUnityEditor(projectPath: string): Promise<UnityEditorLaunchResult> {
+async function launchLinkedUnityEditor(projectPath: string, generation: number): Promise<UnityEditorLaunchResult> {
 	if (pendingEditorLaunch != null) {
 		return pendingEditorLaunch;
 	}
 
 	pendingEditorLaunch = Promise.resolve().then(() => {
 		const configuredPath = vscode.workspace.getConfiguration('unityCursorToolkit').get<string>('unityEditorPath', '');
-		return launchUnityEditor(projectPath, { editorPathOverride: configuredPath });
+		return launchOrReuseUnityEditor(projectPath, {
+			editorPathOverride: configuredPath,
+			hideRetryDelaysMs: [],
+			isToolkitResponsive: async () => (await waitForUnityBridge(projectPath, EDITOR_BRIDGE_BOOT_TIMEOUT_MS, generation)) != null
+		});
 	});
 
 	try {
@@ -259,16 +341,103 @@ async function launchLinkedUnityEditor(projectPath: string): Promise<UnityEditor
 	}
 }
 
-async function waitForUnityBridge(timeoutMs: number): Promise<number | null> {
-	const deadline = Date.now() + timeoutMs;
-	while (Date.now() < deadline) {
-		const port = await connection.connect();
-		if (port) {
+async function connectToLinkedUnityProject(projectPath: string, generation: number): Promise<number | null> {
+	if (pendingProjectConnectionAttempt?.generation === generation && pendingProjectConnectionAttempt.projectPath === projectPath) {
+		return pendingProjectConnectionAttempt.promise;
+	}
+
+	const promise = connectToLinkedUnityProjectOnce(projectPath, generation);
+	pendingProjectConnectionAttempt = { generation, projectPath, promise };
+	try {
+		return await promise;
+	} finally {
+		if (pendingProjectConnectionAttempt?.promise === promise) {
+			pendingProjectConnectionAttempt = undefined;
+		}
+	}
+}
+
+async function connectToLinkedUnityProjectOnce(projectPath: string, generation: number): Promise<number | null> {
+	const excludedPorts = new Set<number>();
+	const expectedVersion = readUnityProjectVersion(projectPath);
+
+	while (isConnectionRequestCurrent(generation)) {
+		const port = await connection.connectExcludingPorts(excludedPorts);
+		if (isConnectionRequestCurrent(generation) === false) {
+			return null;
+		}
+		if (port == null) {
+			return null;
+		}
+
+		const response = await commandSender.request('mcpToolCall', { toolName: 'project_info', args: {} });
+		if (isConnectionRequestCurrent(generation) === false) {
+			return null;
+		}
+		if (matchesUnityProjectInfo(projectPath, expectedVersion, response)) {
 			return port;
+		}
+
+		excludedPorts.add(port);
+		connection.disconnect();
+	}
+	return null;
+}
+
+function formatUnityEditorLaunchError(error: unknown): string {
+	if (error instanceof UnityEditorLaunchError) {
+		return `${error.code}: ${error.message}`;
+	}
+	return error instanceof Error ? error.message : String(error);
+}
+
+async function waitForUnityBridge(projectPath: string, timeoutMs: number, generation: number, launchResult?: UnityEditorLaunchResult): Promise<number | null> {
+	const deadline = Date.now() + timeoutMs;
+	while (isConnectionRequestCurrent(generation) && Date.now() < deadline) {
+		if (launchResult?.processError != null) {
+			connection.disconnect();
+			return null;
+		}
+		const port = await connectToLinkedUnityProject(projectPath, generation);
+		if (isConnectionRequestCurrent(generation) === false) {
+			return null;
+		}
+		if (port) {
+			if (launchResult?.processError != null) {
+				connection.disconnect();
+				return null;
+			}
+			return port;
+		}
+		if (launchResult?.processError != null) {
+			return null;
 		}
 		await sleep(EDITOR_BRIDGE_RETRY_MS);
 	}
 	return null;
+}
+
+function beginConnectionRequest(): number {
+	if (connectionRequested === false) {
+		connectionRequested = true;
+		connectionRequestGeneration++;
+	}
+	return connectionRequestGeneration;
+}
+
+function cancelConnectionRequests(): void {
+	connectionRequested = false;
+	connectionRequestGeneration++;
+}
+
+function abandonConnectionRequest(generation: number): void {
+	if (isConnectionRequestCurrent(generation)) {
+		cancelConnectionRequests();
+	}
+}
+
+function isConnectionRequestCurrent(generation: number): boolean {
+	return connectionRequested && connectionRequestGeneration === generation;
 }
 
 function sleep(ms: number): Promise<void> {

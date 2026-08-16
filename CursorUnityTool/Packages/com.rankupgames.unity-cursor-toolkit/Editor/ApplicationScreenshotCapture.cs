@@ -2,7 +2,7 @@
  * Author: Miguel A. Lopez
  * Company: Rank Up Games LLC
  * Project: Unity Cursor Toolkit
- * Description: Captures the current application camera view for editor diagnostics.
+ * Description: Captures the complete Unity Editor application view for diagnostics.
  */
 
 #if UNITY_EDITOR
@@ -10,11 +10,12 @@ using System;
 using System.IO;
 
 using UnityEngine;
+using UnityCursorToolkit.MCP;
 
 namespace UnityCursorToolkit
 {
 	/// <summary>
-	/// Captures the current application view from the main camera to one stable temp file.
+	/// Captures the complete Unity Editor application view to one stable temp file.
 	/// </summary>
 	internal static class ApplicationScreenshotCapture
 	{
@@ -27,50 +28,27 @@ namespace UnityCursorToolkit
 			path = ScreenshotPath;
 			error = null;
 
-			Camera camera = Camera.main;
-			if (camera == null)
+			EditorWindowViewportCapture.Frame frame;
+			if (EditorWindowViewportCapture.TryCaptureMainEditorWindow(out frame, out error) == false)
 			{
-				error = "No main camera found";
 				return false;
 			}
 
-			int width = Math.Max(1, Screen.width);
-			int height = Math.Max(1, Screen.height);
-			RenderTexture previousTarget = camera.targetTexture;
-			RenderTexture previousActive = RenderTexture.active;
-			RenderTexture renderTexture = null;
-			Texture2D texture = null;
-
 			try
 			{
-				renderTexture = RenderTexture.GetTemporary(width, height, 24);
-				camera.targetTexture = renderTexture;
-				camera.Render();
+				if (frame == null || frame.bytes == null || frame.bytes.Length == 0)
+				{
+					error = "Main editor root view capture returned no PNG bytes.";
+					return false;
+				}
 
-				RenderTexture.active = renderTexture;
-				texture = new Texture2D(width, height, TextureFormat.RGB24, false);
-				texture.ReadPixels(new Rect(0, 0, width, height), 0, 0);
-				texture.Apply();
-				File.WriteAllBytes(path, texture.EncodeToPNG());
+				File.WriteAllBytes(path, frame.bytes);
 				return true;
 			}
 			catch (Exception exception)
 			{
-				error = exception.Message;
+				error = "Failed to write application screenshot: " + exception.Message;
 				return false;
-			}
-			finally
-			{
-				camera.targetTexture = previousTarget;
-				RenderTexture.active = previousActive;
-				if (texture != null)
-				{
-					UnityEngine.Object.DestroyImmediate(texture);
-				}
-				if (renderTexture != null)
-				{
-					RenderTexture.ReleaseTemporary(renderTexture);
-				}
 			}
 		}
 	}
