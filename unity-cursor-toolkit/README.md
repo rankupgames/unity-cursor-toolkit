@@ -57,7 +57,7 @@ Use the `game_command` MCP tool to list, schedule, poll, or cancel runtime workf
 Use the `unity_context` MCP tool to refresh `.umetacontext/index.json` with `action: "scan"`, then inspect compact project context with `summary`, `query`, and `read`.
 
 The Unity toolbar copy action builds compact profiler and console context,
-captures the current main-camera application view, overwrites one stable PNG in
+captures the visible main Unity Editor window, overwrites one stable PNG in
 `Application.temporaryCachePath`, and appends the absolute image path to the
 clipboard text.
 

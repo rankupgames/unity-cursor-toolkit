@@ -86,13 +86,15 @@ export class MetaManager implements vscode.Disposable {
 		}
 	}
 
-	private handleAssetDeleted(uri: vscode.Uri): void {
+	private async handleAssetDeleted(uri: vscode.Uri): Promise<void> {
 		const metaPath = uri.fsPath + '.meta';
 		if (fs.existsSync(metaPath)) {
-			fs.promises.unlink(metaPath).catch((error: unknown) => {
+			try {
+				await fs.promises.unlink(metaPath);
+			} catch (error: unknown) {
 				const message = error instanceof Error ? error.message : String(error);
 				console.error(`[MetaManager] Failed to delete meta file: ${message}`);
-			});
+			}
 		}
 	}
 
