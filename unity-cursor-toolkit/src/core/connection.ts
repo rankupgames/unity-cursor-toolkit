@@ -35,9 +35,13 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 	private heartbeatTimeout: ReturnType<typeof setTimeout> | undefined;
 	private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
 	private connectPromise: Promise<number | null> | undefined;
+	private connectExcludedPorts: ReadonlySet<number> | undefined;
+	private connectGeneration = 0;
 	private backoffMs = INITIAL_BACKOFF_MS;
 
 	private isNeeded: () => boolean = () => false;
+	private reconnect: (() => Promise<number | null | undefined>) | undefined;
+	private directConnectionRequested = false;
 	private disposed = false;
 	private heartbeatPaused = false;
 
@@ -51,27 +55,61 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 		this.isNeeded = callback;
 	}
 
+	public setReconnectCallback(callback: () => Promise<number | null | undefined>): void {
+		this.reconnect = callback;
+	}
+
 	public async connect(): Promise<number | null> {
+		this.directConnectionRequested = true;
+		const port = await this.connectWithExcludedPorts(new Set<number>());
+		if (port == null) {
+			this.directConnectionRequested = false;
+		}
+		return port;
+	}
+
+	/**
+	 * Connect to the first responsive configured port that is not excluded.
+	 *
+	 * A rejected port only applies to this connection attempt. Calls with the
+	 * same exclusions share the in-flight scan; a conflicting scan fails closed
+	 * so it cannot accidentally connect to a port the caller rejected.
+	 */
+	public async connectExcludingPorts(excludedPorts: ReadonlySet<number> | readonly number[]): Promise<number | null> {
+		const exclusions = new Set(excludedPorts);
+		return this.connectWithExcludedPorts(exclusions);
+	}
+
+	private async connectWithExcludedPorts(excludedPorts: ReadonlySet<number>): Promise<number | null> {
 		if (this.state === ConnectionState.Connected && this.socket != null && this.socket.writable && this.port != null) {
-			return this.port;
+			if (excludedPorts.has(this.port) === false) {
+				return this.port;
+			}
+
+			this.disconnect();
 		}
 
 		if (this.connectPromise != null) {
-			return this.connectPromise;
+			return this.connectExcludedPorts != null && this.haveSameExcludedPorts(this.connectExcludedPorts, excludedPorts)
+				? this.connectPromise
+				: null;
 		}
 
-		const promise = this.connectOnce();
+		const promise = this.connectOnce(excludedPorts);
 		this.connectPromise = promise;
+		this.connectExcludedPorts = excludedPorts;
 		try {
 			return await promise;
 		} finally {
 			if (this.connectPromise === promise) {
 				this.connectPromise = undefined;
+				this.connectExcludedPorts = undefined;
 			}
 		}
 	}
 
-	private async connectOnce(): Promise<number | null> {
+	private async connectOnce(excludedPorts: ReadonlySet<number>): Promise<number | null> {
+		const generation = ++this.connectGeneration;
 		this.setState(ConnectionState.Connecting);
 		this.destroySocket();
 
@@ -79,9 +117,18 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 			if (this.disposed) {
 				break;
 			}
+			if (excludedPorts.has(candidate)) {
+				continue;
+			}
 
-			const result = await this.tryPort(candidate);
-			if (result) {
+			const socket = await this.tryPort(candidate);
+			if (this.disposed || generation !== this.connectGeneration) {
+				socket?.destroy();
+				return null;
+			}
+			if (socket) {
+				this.socket = socket;
+				this.attachSocketListeners(socket);
 				this.port = candidate;
 				this.backoffMs = INITIAL_BACKOFF_MS;
 				this.setState(ConnectionState.Connected);
@@ -90,8 +137,24 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 			}
 		}
 
-		this.setState(ConnectionState.Disconnected);
+		if (generation === this.connectGeneration) {
+			this.setState(ConnectionState.Disconnected);
+		}
 		return null;
+	}
+
+	private haveSameExcludedPorts(left: ReadonlySet<number>, right: ReadonlySet<number>): boolean {
+		if (left.size !== right.size) {
+			return false;
+		}
+
+		for (const port of left) {
+			if (right.has(port) === false) {
+				return false;
+			}
+		}
+
+		return true;
 	}
 
 	public send(command: string, payload?: Record<string, unknown>): void {
@@ -104,6 +167,10 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 	}
 
 	public disconnect(): void {
+		this.directConnectionRequested = false;
+		this.connectGeneration++;
+		this.connectPromise = undefined;
+		this.connectExcludedPorts = undefined;
 		this.clearTimers();
 		this.destroySocket();
 		this.port = null;
@@ -138,8 +205,8 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 		this._onStateChanged.fire({ state: next, port: this.port });
 	}
 
-	private tryPort(port: number): Promise<boolean> {
-		return new Promise<boolean>((resolve) => {
+	private tryPort(port: number): Promise<net.Socket | null> {
+		return new Promise<net.Socket | null>((resolve) => {
 			const sock = new net.Socket();
 			let settled = false;
 			let buffer = '';
@@ -152,12 +219,10 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 				sock.removeAllListeners();
 
 				if (success) {
-					this.socket = sock;
-					this.attachSocketListeners(sock);
-					resolve(true);
+					resolve(sock);
 				} else {
 					sock.destroy();
-					resolve(false);
+					resolve(null);
 				}
 			};
 
@@ -228,7 +293,7 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 	private handleDisconnect(): void {
 		this.stopHeartbeat();
 
-		if (this.disposed || this.isNeeded() === false) {
+		if (this.disposed || this.hasConnectionDemand() === false) {
 			this.setState(ConnectionState.Disconnected);
 			return;
 		}
@@ -243,18 +308,31 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 		}
 
 		this.reconnectTimer = setTimeout(async () => {
-			if (this.disposed || this.isNeeded() === false) {
+			if (this.disposed || this.hasConnectionDemand() === false) {
 				this.setState(ConnectionState.Disconnected);
 				return;
 			}
 
-			const port = await this.connect();
+			const port = this.isNeeded()
+				? await (this.reconnect?.() ?? this.connectWithExcludedPorts(new Set<number>()))
+				: await this.connectWithExcludedPorts(new Set<number>());
+			if (this.disposed || this.hasConnectionDemand() === false) {
+				this.setState(ConnectionState.Disconnected);
+				return;
+			}
+			if (port === undefined) {
+				return;
+			}
 			if (port == null) {
 				this.backoffMs = Math.min(this.backoffMs * 2, MAX_BACKOFF_MS);
 				this.setState(ConnectionState.Reconnecting);
 				this.scheduleReconnect();
 			}
 		}, this.backoffMs);
+	}
+
+	private hasConnectionDemand(): boolean {
+		return this.directConnectionRequested || this.isNeeded();
 	}
 
 	private startHeartbeat(): void {

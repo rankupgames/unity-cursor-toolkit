@@ -6,7 +6,7 @@ Editor tools for Cursor/VS Code and MCP-capable AI agents integrating with Unity
 
 - **Hot Reload**: TCP server that triggers asset refresh when code changes are detected
 - **Console Forwarding**: Streams Unity console output to Cursor/VS Code
-- **Copy Snapshot**: Copies profiler/console context and overwrites one stable temporary main-camera screenshot on each click
+- **Copy Snapshot**: Copies profiler/console context and overwrites one stable temporary screenshot of the visible main Unity Editor window on each click
 - **MCP Bridge**: Model Context Protocol tool dispatch for AI-assisted Unity editing
 - **Editor Validation**: Regenerates Unity project files and requests script compilation from Cursor/VS Code
 - **Runtime Game Commands**: Project-owned coroutine workflows callable through MCP without UI automation

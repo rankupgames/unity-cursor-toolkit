@@ -20,6 +20,8 @@ namespace UnityCursorToolkit.MCP
 {
 	internal static class EditorWindowViewportCapture
 	{
+		private const int MaxMainEditorCaptureWidth = 4096;
+		private const int MaxMainEditorCaptureHeight = 4096;
 		private static readonly Dictionary<string, CaptureResources> resourcesByKey = new Dictionary<string, CaptureResources>();
 
 		static EditorWindowViewportCapture()
@@ -62,7 +64,7 @@ namespace UnityCursorToolkit.MCP
 					return false;
 				}
 
-				MethodInfo grab = FindMethod(parent.GetType(), "GrabPixels");
+				MethodInfo grab = FindMethod(parent.GetType(), "GrabPixels", typeof(RenderTexture), typeof(Rect));
 				if (grab == null)
 				{
 					error = "GUIView.GrabPixels missing. Methods: " + DescribeMethods(parent.GetType());
@@ -109,6 +111,103 @@ namespace UnityCursorToolkit.MCP
 			finally
 			{
 				RenderTexture.active = previousActive;
+			}
+		}
+
+		internal static bool TryCaptureMainEditorWindow(out Frame frame, out string error)
+		{
+			frame = null;
+			error = string.Empty;
+			object rootView;
+			try
+			{
+				rootView = GetMainEditorRootView(out error);
+			}
+			catch (Exception ex)
+			{
+				error = "Main editor root view unavailable; root-view capture unavailable. " + ex.GetType().Name + ": " + ex.Message;
+				return false;
+			}
+
+			if (rootView == null)
+			{
+				return false;
+			}
+
+			RenderTexture previousActive = RenderTexture.active;
+			CaptureResources resources = null;
+			try
+			{
+				MethodInfo grab = FindMethod(rootView.GetType(), "GrabPixels", typeof(RenderTexture), typeof(Rect));
+				if (grab == null)
+				{
+					error = "GUIView.GrabPixels unavailable on the main editor root view (" + rootView.GetType().FullName + ").";
+					return false;
+				}
+
+				Rect rootPosition;
+				if (TryGetViewPosition(rootView, out rootPosition) == false)
+				{
+					error = "Main editor root view position unavailable; root-view capture unavailable.";
+					return false;
+				}
+
+				float ppp = Mathf.Max(0.01f, EditorGUIUtility.pixelsPerPoint);
+				int requestedWidth = Mathf.Max(8, Mathf.RoundToInt(rootPosition.width * ppp));
+				int requestedHeight = Mathf.Max(8, Mathf.RoundToInt(rootPosition.height * ppp));
+				Vector2Int captureSize = FitWithin(requestedWidth, requestedHeight, MaxMainEditorCaptureWidth, MaxMainEditorCaptureHeight);
+				bool flipVertical = ShouldFlipReadbackVertically("main-editor");
+				resources = new CaptureResources(captureSize.x, captureSize.y, captureSize.x, captureSize.y, flipVertical);
+
+				RepaintViewImmediately(rootView);
+				// GrabPixels reads a view-space rectangle in points and scales it into
+				// the target render texture, matching Unity's CaptureEditorWindow path.
+				grab.Invoke(rootView, new object[]
+				{
+					resources.captureRt,
+					new Rect(0f, 0f, rootPosition.width, rootPosition.height)
+				});
+
+				RenderTexture readRt = resources.captureRt;
+				if (resources.scaledRt != null)
+				{
+					Vector2 scale = flipVertical ? new Vector2(1f, -1f) : Vector2.one;
+					Vector2 offset = flipVertical ? new Vector2(0f, 1f) : Vector2.zero;
+					Graphics.Blit(resources.captureRt, resources.scaledRt, scale, offset);
+					readRt = resources.scaledRt;
+				}
+
+				RenderTexture.active = readRt;
+				resources.texture.ReadPixels(new Rect(0f, 0f, resources.outputWidth, resources.outputHeight), 0, 0);
+				resources.texture.Apply();
+				byte[] bytes = resources.texture.EncodeToPNG();
+				if (bytes == null || bytes.Length == 0)
+				{
+					error = "Main editor root view capture returned an empty PNG.";
+					return false;
+				}
+
+				frame = new Frame
+				{
+					bytes = bytes,
+					width = resources.outputWidth,
+					height = resources.outputHeight,
+					flippedVertical = flipVertical
+				};
+				return true;
+			}
+			catch (Exception ex)
+			{
+				error = ex.GetType().Name + ": " + ex.Message;
+				return false;
+			}
+			finally
+			{
+				RenderTexture.active = previousActive;
+				if (resources != null)
+				{
+					resources.Dispose();
+				}
 			}
 		}
 
@@ -254,9 +353,30 @@ namespace UnityCursorToolkit.MCP
 				return resources;
 			}
 
+			DisposeCachedResourcesForView(view);
 			resources = new CaptureResources(sourceWidth, sourceHeight, outputWidth, outputHeight, flipVertical);
 			resourcesByKey[key] = resources;
 			return resources;
+		}
+
+		private static void DisposeCachedResourcesForView(string view)
+		{
+			string prefix = view + "|";
+			List<string> staleKeys = new List<string>();
+			foreach (KeyValuePair<string, CaptureResources> entry in resourcesByKey)
+			{
+				if (entry.Key.StartsWith(prefix, StringComparison.Ordinal))
+				{
+					staleKeys.Add(entry.Key);
+				}
+			}
+
+			foreach (string staleKey in staleKeys)
+			{
+				CaptureResources resources = resourcesByKey[staleKey];
+				resourcesByKey.Remove(staleKey);
+				resources.Dispose();
+			}
 		}
 
 		private static bool ShouldFlipReadbackVertically(string view)
@@ -331,6 +451,146 @@ namespace UnityCursorToolkit.MCP
 		{
 			FieldInfo parentField = typeof(EditorWindow).GetField("m_Parent", BindingFlags.NonPublic | BindingFlags.Instance);
 			return parentField == null ? null : parentField.GetValue(window);
+		}
+
+		private static object GetMainEditorRootView(out string error)
+		{
+			error = string.Empty;
+			Type containerWindowType = typeof(Editor).Assembly.GetType("UnityEditor.ContainerWindow");
+			if (containerWindowType == null)
+			{
+				error = "UnityEditor.ContainerWindow unavailable; root-view capture unavailable.";
+				return null;
+			}
+
+			object mainWindow = GetStaticMemberValue(containerWindowType, "mainWindow");
+			if (mainWindow == null)
+			{
+				mainWindow = GetStaticMemberValue(containerWindowType, "s_MainWindow");
+			}
+
+			object rootView = mainWindow == null ? null : GetMemberValue(mainWindow, "m_RootView");
+			if (rootView == null && mainWindow != null)
+			{
+				rootView = GetMemberValue(mainWindow, "rootView");
+			}
+
+			if (rootView == null)
+			{
+				EditorWindow focusedWindow = EditorWindow.focusedWindow;
+				object focusedView = focusedWindow == null ? null : GetHostView(focusedWindow);
+				rootView = FindRootView(focusedView);
+			}
+
+			if (rootView == null)
+			{
+				error = "UnityEditor.ContainerWindow main window root view unavailable; root-view capture unavailable.";
+			}
+
+			return rootView;
+		}
+
+		private static object FindRootView(object view)
+		{
+			object current = view;
+			for (int depth = 0; current != null && depth < 64; depth++)
+			{
+				object parent = GetMemberValue(current, "parent");
+				if (parent == null)
+				{
+					parent = GetMemberValue(current, "m_Parent");
+				}
+
+				if (parent == null || object.ReferenceEquals(parent, current))
+				{
+					return current;
+				}
+
+				current = parent;
+			}
+
+			return current;
+		}
+
+		private static object GetStaticMemberValue(Type type, string memberName)
+		{
+			for (Type current = type; current != null; current = current.BaseType)
+			{
+				PropertyInfo property = current.GetProperty(memberName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+				if (property != null && property.GetIndexParameters().Length == 0)
+				{
+					return property.GetValue(null, null);
+				}
+
+				FieldInfo field = current.GetField(memberName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Static);
+				if (field != null)
+				{
+					return field.GetValue(null);
+				}
+			}
+
+			return null;
+		}
+
+		private static object GetMemberValue(object target, string memberName)
+		{
+			if (target == null)
+			{
+				return null;
+			}
+
+			for (Type current = target.GetType(); current != null; current = current.BaseType)
+			{
+				PropertyInfo property = current.GetProperty(memberName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+				if (property != null && property.GetIndexParameters().Length == 0)
+				{
+					return property.GetValue(target, null);
+				}
+
+				FieldInfo field = current.GetField(memberName, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+				if (field != null)
+				{
+					return field.GetValue(target);
+				}
+			}
+
+			return null;
+		}
+
+		private static bool TryGetViewPosition(object view, out Rect position)
+		{
+			position = new Rect();
+			try
+			{
+				object value = GetMemberValue(view, "position");
+				if (value is Rect)
+				{
+					position = (Rect) value;
+					return position.width > 0f && position.height > 0f;
+				}
+			}
+			catch
+			{
+				// The editor can invalidate a root view while it is rebuilding its layout.
+			}
+
+			return false;
+		}
+
+		private static void RepaintViewImmediately(object view)
+		{
+			MethodInfo repaintNow = FindMethod(view.GetType(), "RepaintImmediately");
+			if (repaintNow != null)
+			{
+				repaintNow.Invoke(view, null);
+				return;
+			}
+
+			MethodInfo repaint = FindMethod(view.GetType(), "Repaint");
+			if (repaint != null)
+			{
+				repaint.Invoke(view, null);
+			}
 		}
 
 		private static void RepaintImmediately(EditorWindow window)
@@ -415,11 +675,16 @@ namespace UnityCursorToolkit.MCP
 			return trimmed;
 		}
 
-		private static MethodInfo FindMethod(Type type, string name)
+		private static MethodInfo FindMethod(Type type, string name, params Type[] parameterTypes)
 		{
 			for (Type current = type; current != null; current = current.BaseType)
 			{
-				MethodInfo method = current.GetMethod(name, BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance);
+				MethodInfo method = current.GetMethod(
+					name,
+					BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly,
+					null,
+					parameterTypes,
+					null);
 				if (method != null)
 				{
 					return method;
