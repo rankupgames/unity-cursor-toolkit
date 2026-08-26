@@ -5,7 +5,7 @@
 // Description: Loads Unity's installed managed assemblies (UnityEngine.*,
 //              UnityEditor.*) into a plain .NET 8 host and records, probe by
 //              probe, exactly where execution dies outside the editor binary.
-//              Evidence collector for docs/UNITY_WITHOUT_EDITOR_EXPERIMENTS.md.
+//              Evidence collector for docs/REMOTE_SHELL.md.
 //              Reflection-only inspection on a licensed install; no license
 //              code is touched, patched, or bypassed.
 //

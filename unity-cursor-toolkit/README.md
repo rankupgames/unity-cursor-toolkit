@@ -19,9 +19,8 @@ AI agents.
   Unity 7 compatibility evidence are planned work. Unity 7 support is not yet a
   shipped claim.
 
-Read the repository's [Unity 7 readiness plan](../docs/UNITY_7_READINESS.md),
-[documentation index](../docs/README.md), and
-[workstream task index](../docs/tasks/README.md).
+Read the repository's [roadmap](../docs/ROADMAP.md) and
+[documentation index](../docs/README.md).
 
 ## Development
 

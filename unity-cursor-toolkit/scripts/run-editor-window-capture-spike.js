@@ -12,7 +12,7 @@
  * Close Unity first -- the runner refuses to start while the project lock is
  * held (use --force to override after a crash left a stale lock).
  *
- * See docs/EDITOR_WINDOW_STREAMING_PLAN.md.
+ * See docs/REMOTE_SHELL.md.
  */
 
 const fs = require('fs');
@@ -144,7 +144,7 @@ function report() {
 	finishMeasurement(pass);
 	console.log('\nVerdict: ' + (pass
 		? 'GREEN -- GrabPixels + SendEvent are viable on this editor. Proceed with M1/M2 of the plan.'
-		: 'NOT GREEN -- see failures above and the GUIView method dump in the result JSON; consult the fallback ladder in docs/EDITOR_WINDOW_STREAMING_PLAN.md section 7.'));
+		: 'NOT GREEN -- see failures above and the GUIView method dump in the result JSON; consult the fallback ladder in docs/REMOTE_SHELL.md.'));
 	if (options.measure) {
 		console.log(`Measurement: ${measurePath}`);
 	}

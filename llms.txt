@@ -13,12 +13,11 @@ Unity 7 is a planned, evidence-gated target, not a current support claim.
 - AI agent guide: docs/AI_AGENTS.md
 - MCP client setup: docs/MCP_CLIENTS.md
 - Runtime game command guide: docs/GAME_COMMANDS.md
-- Feature roadmap: docs/FEATURE_ROADMAP.md
+- Roadmap: docs/ROADMAP.md
 - Documentation index: docs/README.md
-- Unity 7 readiness plan: docs/UNITY_7_READINESS.md
-- Unity 7 landscape assessment: docs/UNITY_7_LANDSCAPE_ASSESSMENT.md
-- Unity CLI and Pipeline assessment: docs/UNITY_CLI_AND_PIPELINE_ASSESSMENT.md
-- Unity 7 workstreams: docs/tasks/README.md
+- Unity landscape research: docs/UNITY_LANDSCAPE.md
+- Remote shell and no-editor experiments: docs/REMOTE_SHELL.md
+- Planned work: https://github.com/rankupgames/unity-cursor-toolkit/issues
 - Extension README: unity-cursor-toolkit/README.md
 - Unity package docs: Packages/com.rankupgames.unity-cursor-toolkit/Documentation~/README.md
 - Zed setup: zed/README.md

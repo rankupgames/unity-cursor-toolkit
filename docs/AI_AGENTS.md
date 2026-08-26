@@ -12,7 +12,7 @@ capability response and recorded matrix prove them.
 
 Never silently switch to another Editor version or backend. Report the selected
 Editor, backend, and capability set in plans and results. See
-`docs/UNITY_7_READINESS.md` and `docs/tasks/README.md`.
+`docs/ROADMAP.md`.
 
 ## What Agents Can Do
 
@@ -113,5 +113,5 @@ These prompts are intentionally conservative: inspect first, summarize state, th
 - Unity Test Runner tools: list tests, run EditMode/PlayMode tests, and return structured failures.
 - Build report tools: parse build output, surface warnings/errors, and compare artifact sizes.
 - Package Manager tools: list packages, inspect versions, and propose dependency changes with dry-run output.
-- CoreCLR and Unity 7 work is tracked in `docs/UNITY_7_READINESS.md`; do not
-  present unchecked workstream tasks as available tools.
+- CoreCLR and Unity 7 work is tracked in `docs/ROADMAP.md` and GitHub issues; do not
+  present open issues as available tools.

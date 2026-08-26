@@ -45,8 +45,8 @@ Changes to `unity-assets/` C# files must:
 
 The declared baseline is not a tested compatibility claim. Record the exact
 Unity Editor version and platform for each proof run. For CoreCLR or Unity 7
-work, update `docs/UNITY_7_READINESS.md`, the affected file under `docs/tasks/`,
-and public compatibility wording together.
+work, update `docs/ROADMAP.md`, the related GitHub issue, and public
+compatibility wording together.
 
 ## Documentation Status
 

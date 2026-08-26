@@ -68,9 +68,9 @@ Add to your `Packages/manifest.json`:
   CLI/Pipeline composition are not yet complete.
 
 The canonical status and acceptance gates are in the
-[Unity 7 readiness plan](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/UNITY_7_READINESS.md).
-Detailed work is in the
-[WS1–WS8 task index](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/tasks/README.md).
+[roadmap](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/ROADMAP.md).
+Detailed work is tracked as
+[GitHub issues](https://github.com/rankupgames/unity-cursor-toolkit/issues).
 
 Do not install the standalone `dev.tnayuki.unterm` package beside this toolkit. Both packages contain the same editor types and native plugin identity, so that combination is unsupported.
 
@@ -124,9 +124,7 @@ See the repository docs:
 - [AI agent guide](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/AI_AGENTS.md)
 - [Runtime game commands](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/GAME_COMMANDS.md)
 - [MCP client setup](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/MCP_CLIENTS.md)
-- [Feature roadmap](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/FEATURE_ROADMAP.md)
-- [Unity 7 readiness](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/UNITY_7_READINESS.md)
-- [WS1–WS8 task index](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/tasks/README.md)
+- [Roadmap](https://github.com/rankupgames/unity-cursor-toolkit/blob/main/docs/ROADMAP.md)
 - [Package changelog](../CHANGELOG.md)
 - [Package license](../LICENSE.md)
 

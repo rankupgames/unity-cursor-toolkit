@@ -3,8 +3,8 @@
 Status: experimental remote-rendering workspace. It is part of the Unity 7
 readiness program because first-party semantic control does not replace a
 rendered Editor-window and input plane. Unity 7 compatibility is not yet
-validated. See [Unity 7 readiness](../docs/UNITY_7_READINESS.md) and
-[WS7](../docs/tasks/WS7_REMOTE_SHELL.md).
+validated. See [the roadmap](../docs/ROADMAP.md) and
+[remote shell notes](../docs/REMOTE_SHELL.md).
 
 Run `Unity Shell: Init Manifest` from VS Code/Cursor to create the local `unity-shell.json` manifest from the checked-in example. The real manifest is ignored because it contains machine-specific SSH targets and remote paths.
 

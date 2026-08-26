@@ -4,7 +4,7 @@
 // Project: Unity Cursor Toolkit
 // Description: Spike that proves real EditorWindow capture (GUIView.GrabPixels)
 //              and synthetic input (EditorWindow.SendEvent) for window streaming.
-//              See docs/EDITOR_WINDOW_STREAMING_PLAN.md. Run via
+//              See docs/REMOTE_SHELL.md. Run via
 //              scripts/run-editor-window-capture-spike.js or the Tools menu.
 // =============================================================================
 

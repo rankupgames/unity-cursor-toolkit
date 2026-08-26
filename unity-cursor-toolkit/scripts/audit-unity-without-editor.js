@@ -76,15 +76,13 @@ if (report.counts.fail > 0 || (strict && report.counts.pending > 0)) {
 }
 
 function checkLegalBoundary() {
-	const doc = readText('docs/UNITY_WITHOUT_EDITOR_EXPERIMENTS.md');
-	const prompt = readText('docs/prompts/unity-without-editor-agent-prompt.md');
+	const doc = readText('docs/REMOTE_SHELL.md');
 	requireIncludes(doc, 'never Unity\'s private native state or a forged icall table');
 	requireIncludes(doc, 'DLL mounting is not a viable editor-rendering lane');
 	requireIncludes(doc, 'No editor seat at runtime');
-	requireIncludes(prompt, 'Never patch, spoof, proxy, hook, or bypass Unity license checks');
+	requireIncludes(doc, 'Never patch, spoof, proxy, hook, or bypass Unity license checks');
 	return pass('legal-boundary', 'Docs preserve the no-EULA-bypass boundary and the legal player-runtime lane.', [
-		'docs/UNITY_WITHOUT_EDITOR_EXPERIMENTS.md',
-		'docs/prompts/unity-without-editor-agent-prompt.md'
+		'docs/REMOTE_SHELL.md'
 	]);
 }
 
@@ -361,7 +359,7 @@ function checkLicenseAutomation() {
 }
 
 function checkWindowsGate() {
-	const doc = readText('docs/UNITY_WITHOUT_EDITOR_EXPERIMENTS.md');
+	const doc = readText('docs/REMOTE_SHELL.md');
 	const packageJson = readJson('unity-cursor-toolkit/package.json');
 	requireIncludes(doc, 'Windows remains a hard acceptance gate');
 	requireIncludes(doc, 'Windows build/run/probe');
@@ -384,7 +382,7 @@ function checkWindowsGate() {
 	const proof = selectLatestExecutedWindowsProof(summaries);
 	if (!proof) {
 		return pending('windows-proof', 'Windows E1/E2/installed-Cursor/E3 installed-host proof is still pending and remains a required gate before the full series is complete.', [
-			'docs/UNITY_WITHOUT_EDITOR_EXPERIMENTS.md',
+			'docs/REMOTE_SHELL.md',
 			'unity-cursor-toolkit/scripts/run-windows-unity-without-editor-proof.js',
 			'unity-cursor-toolkit/scripts/run-remote-windows-unity-without-editor-proof.js',
 			'unity-cursor-toolkit/scripts/import-windows-unity-without-editor-proof.js',

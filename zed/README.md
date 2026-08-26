@@ -14,7 +14,7 @@ The Unity package declares Unity 2019.4 or later for core features. The same
 standalone MCP server and public tool schemas are intended to remain stable as
 projects move through Unity 6, CoreCLR, and Unity 7. Unity 7 compatibility is a
 planned, evidence-gated target and is not yet certified. See the
-[Unity 7 readiness plan](../docs/UNITY_7_READINESS.md).
+[roadmap](../docs/ROADMAP.md).
 
 ## Setup
 

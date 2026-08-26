@@ -81,7 +81,7 @@ Agent safety defaults:
 - Use `unity_context` with `action: "scan"` to refresh `.umetacontext/index.json`, then use `summary`, `query`, and `read` to inspect assets, GUIDs, serialized objects, components, and references without broad file reads.
 - Use `game_command` with `action: "list"` to discover project-authored runtime workflows before scheduling them.
 
-See the [documentation index](docs/README.md), [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Unity 7 Readiness Plan](docs/UNITY_7_READINESS.md), [Feature Roadmap](docs/FEATURE_ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
+See the [documentation index](docs/README.md), [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Roadmap](docs/ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
 
 ## Requirements
 
@@ -100,9 +100,9 @@ See the [documentation index](docs/README.md), [AI Agent Guide](docs/AI_AGENTS.m
 
 The plan is one stable agent interface across Editor generations, with an
 explicit backend and capability set for every operation. See the
-[Unity 7 Readiness Plan](docs/UNITY_7_READINESS.md), the dated
-[landscape assessment](docs/UNITY_7_LANDSCAPE_ASSESSMENT.md), and the
-[WS1–WS8 task index](docs/tasks/README.md).
+[roadmap](docs/ROADMAP.md), the dated
+[landscape research](docs/UNITY_LANDSCAPE.md), and the
+[GitHub issues](https://github.com/rankupgames/unity-cursor-toolkit/issues).
 
 ## Unity Package Installation
 
