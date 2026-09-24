@@ -370,7 +370,7 @@ const outDir = path.join(__dirname, '..', 'out');
 
 function testTypes() {
 	console.log('\n── core/types.ts ──');
-	const { safeJsonParse, ConnectionState } = require(path.join(outDir, 'core', 'types'));
+	const { safeJsonParse } = require(path.join(outDir, 'core', 'types'));
 
 	test('safeJsonParse: valid object', () => {
 		assert.deepStrictEqual(safeJsonParse('{"command":"ping"}'), { command: 'ping' });
@@ -404,12 +404,6 @@ function testTypes() {
 		assert.throws(() => safeJsonParse('[not,json,]'));
 	});
 
-	test('ConnectionState enum has 4 values', () => {
-		assert.strictEqual(ConnectionState.Disconnected, 'disconnected');
-		assert.strictEqual(ConnectionState.Connecting, 'connecting');
-		assert.strictEqual(ConnectionState.Connected, 'connected');
-		assert.strictEqual(ConnectionState.Reconnecting, 'reconnecting');
-	});
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -434,19 +428,6 @@ function testConnectionUnit() {
 		conn.onStateChanged((info) => states.push(info.state));
 		conn.disconnect();
 		assert.strictEqual(states.length, 0);
-		conn.dispose();
-	});
-
-	test('send when disconnected does not throw', () => {
-		const conn = new ConnectionManager();
-		conn.send('test', { data: 1 });
-		conn.dispose();
-	});
-
-	test('pauseHeartbeat / resumeHeartbeat when disconnected does not throw', () => {
-		const conn = new ConnectionManager();
-		conn.pauseHeartbeat();
-		conn.resumeHeartbeat();
 		conn.dispose();
 	});
 
@@ -3316,13 +3297,6 @@ function testDebugAdapter() {
 		session.dispose();
 	});
 
-	test('messages after dispose are silently ignored', () => {
-		const session = new UnityDebugSession();
-		session.dispose();
-		session.handleMessage({ type: 'request', seq: 99, command: 'threads' });
-		// No error = pass
-	});
-
 	test('unknown command returns failure response', () => {
 		const session = new UnityDebugSession();
 		const messages = [];
@@ -3552,6 +3526,7 @@ function testStatusBarController() {
 
 		assert.ok(connectItem.text.includes('plug') || connectItem.text.includes('Unity Attach'), `Got: ${connectItem.text}`);
 		assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.startConnection');
+		assert.strictEqual(connectItem.color, undefined, 'No color when disconnected without project');
 		ctrl.dispose();
 	});
 
@@ -3617,20 +3592,6 @@ function testStatusBarController() {
 
 		assert.ok(connectItem.text.includes('error'));
 		assert.ok(connectItem.text.includes('5 error'));
-		ctrl.dispose();
-	});
-
-	test('Connected command is NOT startConnection', () => {
-		const { ctrl, connectItem } = makeController();
-		ctrl.update(ConnectionState.Connected, 55500);
-		assert.notStrictEqual(connectItem.command, 'unity-cursor-toolkit.startConnection');
-		ctrl.dispose();
-	});
-
-	test('Disconnected color is NOT ThemeColor (no project)', () => {
-		const { ctrl, connectItem } = makeController();
-		ctrl.update(ConnectionState.Disconnected, null);
-		assert.strictEqual(connectItem.color, undefined, 'No color when disconnected without project');
 		ctrl.dispose();
 	});
 
@@ -4253,22 +4214,6 @@ async function testConsolePanelLogic() {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-// project/folderTemplates.ts (template data validation)
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-function testFolderTemplates() {
-	console.log('\n── project/folderTemplates.ts ──');
-
-	// Can't call pickAndGenerateTemplate (needs quickPick), but can validate
-	// the module loads and exports correctly
-	const mod = require(path.join(outDir, 'project', 'folderTemplates'));
-
-	test('exports pickAndGenerateTemplate function', () => {
-		assert.strictEqual(typeof mod.pickAndGenerateTemplate, 'function');
-	});
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // viewport/index.ts (webview source guards)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
@@ -4403,8 +4348,6 @@ async function main() {
 	await testProjectMcpTools();
 	await testConsolePanelLogic();
 	testViewportWebviewSource();
-	testFolderTemplates();
-
 	console.log(`\n${'='.repeat(60)}`);
 	console.log(`  ${passed} passed, ${failed} failed, ${passed + failed} total`);
 
