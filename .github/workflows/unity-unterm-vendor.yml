@@ -58,7 +58,7 @@ jobs:
           verify_attestation "../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Third Party Notices.md"
 
   unity-6000-macos-smoke:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: vendor-integrity
     runs-on: macos-15
     environment: unity-ci
@@ -70,16 +70,25 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
+      - name: Require protected Unity inputs
+        env:
+          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
+          UNITY_INSTALLER_SHA256: ${{ vars.UNITY_6000_3_9F1_MAC_SHA256 }}
+        run: |
+          if [[ -z "$UNITY_LICENSE_B64" ]]; then
+            echo "::error::UNITY_LICENSE_B64 is required in the unity-ci environment."
+            exit 1
+          fi
+          if [[ ! "$UNITY_INSTALLER_SHA256" =~ ^[a-fA-F0-9]{64}$ ]]; then
+            echo "::error::UNITY_6000_3_9F1_MAC_SHA256 must be a SHA-256 digest in the unity-ci environment."
+            exit 1
+          fi
+
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 26.4.0
           cache: npm
           cache-dependency-path: unity-cursor-toolkit/package-lock.json
-
-      - name: Require protected Unity license
-        env:
-          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
-        run: test -n "$UNITY_LICENSE_B64"
 
       - name: Verify age-gated npm
         run: |
@@ -119,7 +128,7 @@ jobs:
         run: rm -f "$RUNNER_TEMP/Unity.ulf" "$RUNNER_TEMP/unity-license.log"
 
   unity-6000-windows-smoke:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: vendor-integrity
     runs-on: windows-latest
     environment: unity-ci
@@ -131,17 +140,20 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
+      - name: Require protected Unity inputs
+        shell: pwsh
+        env:
+          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
+          UNITY_INSTALLER_SHA256: ${{ vars.UNITY_6000_3_9F1_WINDOWS_SHA256 }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:UNITY_LICENSE_B64)) { throw 'UNITY_LICENSE_B64 is required in the unity-ci environment' }
+          if ($env:UNITY_INSTALLER_SHA256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'UNITY_6000_3_9F1_WINDOWS_SHA256 must be a SHA-256 digest in the unity-ci environment' }
+
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 26.4.0
           cache: npm
           cache-dependency-path: unity-cursor-toolkit/package-lock.json
-
-      - name: Require protected Unity license
-        shell: pwsh
-        env:
-          UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
-        run: if ([string]::IsNullOrWhiteSpace($env:UNITY_LICENSE_B64)) { throw 'UNITY_LICENSE_B64 is required' }
 
       - name: Verify age-gated npm
         shell: pwsh
@@ -190,7 +202,7 @@ jobs:
         run: Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $env:RUNNER_TEMP 'Unity.ulf'), (Join-Path $env:RUNNER_TEMP 'unity-license.log')
 
   unity-2019-windows-exclusion:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: vendor-integrity
     runs-on: windows-latest
     environment: unity-ci
@@ -199,11 +211,14 @@ jobs:
     steps:
       - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
-      - name: Require protected Unity license
+      - name: Require protected Unity inputs
         shell: pwsh
         env:
           UNITY_LICENSE_B64: ${{ secrets.UNITY_LICENSE_B64 }}
-        run: if ([string]::IsNullOrWhiteSpace($env:UNITY_LICENSE_B64)) { throw 'UNITY_LICENSE_B64 is required' }
+          UNITY_INSTALLER_SHA256: ${{ vars.UNITY_2019_4_40F1_WINDOWS_SHA256 }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:UNITY_LICENSE_B64)) { throw 'UNITY_LICENSE_B64 is required in the unity-ci environment' }
+          if ($env:UNITY_INSTALLER_SHA256 -notmatch '^[a-fA-F0-9]{64}$') { throw 'UNITY_2019_4_40F1_WINDOWS_SHA256 must be a SHA-256 digest in the unity-ci environment' }
 
       - name: Install pinned Unity Editor
         shell: pwsh
@@ -289,3 +304,29 @@ jobs:
         if: always()
         shell: pwsh
         run: Remove-Item -Force -ErrorAction SilentlyContinue (Join-Path $env:RUNNER_TEMP 'Unity.ulf'), (Join-Path $env:RUNNER_TEMP 'unity-license.log')
+
+  unity-runtime-gate:
+    name: Unity runtime gate
+    if: always()
+    needs: [vendor-integrity, unity-6000-macos-smoke, unity-6000-windows-smoke, unity-2019-windows-exclusion]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all Unity checks to pass
+        env:
+          VENDOR_INTEGRITY: ${{ needs.vendor-integrity.result }}
+          UNITY_6000_MACOS: ${{ needs.unity-6000-macos-smoke.result }}
+          UNITY_6000_WINDOWS: ${{ needs.unity-6000-windows-smoke.result }}
+          UNITY_2019_WINDOWS: ${{ needs.unity-2019-windows-exclusion.result }}
+        run: |
+          failed=0
+          for check in VENDOR_INTEGRITY UNITY_6000_MACOS UNITY_6000_WINDOWS UNITY_2019_WINDOWS; do
+            result="${!check}"
+            if [[ "$result" != success ]]; then
+              echo "::error::$check result was $result; success is required."
+              failed=1
+            fi
+          done
+          if [[ "$failed" -ne 0 ]]; then
+            echo "::error::Fork pull requests require a runtime run from a trusted branch in this repository."
+            exit 1
+          fi

@@ -53,7 +53,7 @@ namespace UnityCursorToolkit.InternalSmoke
 		}
 
 		/// <summary>
-		/// Proves that the vendored Unterm assembly and toolkit menu aliases compiled without opening an Editor window.
+		/// Proves menu registration, native API binding, editor text round-trip, and GPU rendering.
 		/// </summary>
 		private static void ValidateUntermIntegration()
 		{
@@ -99,6 +99,39 @@ namespace UnityCursorToolkit.InternalSmoke
 				if (!registeredMenuPaths.Contains(expectedMenuPath))
 				{
 					throw new InvalidOperationException("Missing Unity-Unterm toolkit menu alias: " + expectedMenuPath);
+				}
+			}
+
+			Type windowType = menuItemsType.Assembly.GetType("Unterm.Editor.UntermWindow", true);
+			Type nativeType = menuItemsType.Assembly.GetType("Unterm.Editor.UntermNative", true);
+			windowType.GetMethod("EnsureNativeImageLoaded", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null);
+			string pluginPath = (string)windowType.GetProperty("PluginPath", BindingFlags.Static | BindingFlags.NonPublic).GetValue(null);
+			using (IDisposable native = (IDisposable)Activator.CreateInstance(nativeType, true))
+			{
+				nativeType.GetMethod("Load").Invoke(native, new object[] { pluginPath });
+				ulong editorId = (ulong)nativeType.GetMethod("EditorCreate").Invoke(native, new object[] { 256u, 128u, 1f });
+				try
+				{
+					if (!(bool)nativeType.GetMethod("EditorExists").Invoke(native, new object[] { editorId }))
+					{
+						throw new InvalidOperationException("Unity-Unterm native editor was not created.");
+					}
+					const string text = "// Unity-Unterm runtime smoke\n";
+					nativeType.GetMethod("EditorSetText").Invoke(native, new object[] { editorId, text });
+					if ((string)nativeType.GetMethod("EditorText").Invoke(native, new object[] { editorId }) != text)
+					{
+						throw new InvalidOperationException("Unity-Unterm native editor text did not round-trip.");
+					}
+					nativeType.GetMethod("EditorRender").Invoke(native, new object[] { editorId });
+					if ((IntPtr)nativeType.GetMethod("EditorRawTexture").Invoke(native, new object[] { editorId }) == IntPtr.Zero)
+					{
+						throw new InvalidOperationException("Unity-Unterm native editor did not render a GPU texture.");
+					}
+					Debug.Log("Unity-Unterm runtime smoke passed: native API, editor text, and GPU texture.");
+				}
+				finally
+				{
+					nativeType.GetMethod("EditorDestroy").Invoke(native, new object[] { editorId });
 				}
 			}
 		}
@@ -280,7 +313,7 @@ namespace UnityCursorToolkit.InternalSmoke
 
 		private static void StartViewportTests()
 		{
-			string start = CallMcpTool("UnityCursorToolkit.MCP.ViewportStreamTool, UnityCursorToolkit.Editor", "{\"action\":\"start\",\"sessionId\":\"internal_smoke_view\",\"width\":160,\"height\":90,\"fps\":5,\"quality\":40}");
+			string start = CallMcpTool("UnityCursorToolkit.MCP.ViewportStreamTool, UnityCursorToolkit.Editor", "{\"action\":\"start\",\"sessionId\":\"internal_smoke_view\",\"view\":\"game\",\"captureMode\":\"camera\",\"width\":160,\"height\":90,\"fps\":5,\"quality\":40}");
 			AssertContains(start, "\"success\":true");
 			AssertContains(start, "\"sessionId\":\"internal_smoke_view\"");
 			SessionState.SetInt(AttemptsKey, 0);
