@@ -117,23 +117,23 @@ On Windows, a virtual display driver gives Unity or Sunshine a stable display wi
 
 ## 3. Licensing Boundary
 
-A license activates an editor installation or seat, not a DLL. These are the licensed ways to pass entitlements to automated, hidden, or remote editors.
+Read [Unity licensing for remote workflows](LICENSING.md) for the current lane
+table, supported activation models, BYOL boundary, and operator approval steps.
+Hidden and remote Editors require valid entitlements. Player runtime and build
+licensing are separate. Activation does not grant third-party hosting or agent access.
 
-| Mechanism | Use | How |
-| --- | --- | --- |
-| CLI activation | One-shot activation of a machine or seat | `Unity -batchmode -quit -username "$UNITY_EMAIL" -password "$UNITY_PASSWORD" -serial "$UNITY_SERIAL"` |
-| Manual license file (`.ulf`) | Air-gapped or CI hosts | `-createManualActivationFile`, then license.unity3d.com, then `-manualLicenseFile <file>.ulf` |
-| Unity Licensing Server (floating) | VM pools or an editor farm | Editors lease and return seats |
-| Build Server licenses | Headless build seats at scale | Separate SKU for non-interactive editors |
-| Player builds | Deployed viewport service | No editor license at runtime; players are freely redistributable, per-tier splash rules apply |
-
-Guardrails: Never patch, spoof, proxy, hook, or bypass Unity license checks; never extract or redistribute the native engine; never ship Unity-derived stub assemblies or generated API clones; never multiplex one seat across concurrent users; never decompile editor code to copy it. Reflection-only inspection of installed DLLs on a licensed machine is fine. `UNITY_EMAIL`, `UNITY_PASSWORD`, and `UNITY_SERIAL` live in environment or CI secrets, and `remote_workspace/unity-shell.json` stays gitignored.
+Guardrails: Never patch, spoof, proxy, hook, or bypass Unity license checks.
+Never extract or redistribute standalone native engine components.
+Never multiplex one seat across concurrent users.
+`UNITY_EMAIL`, `UNITY_PASSWORD`, and `UNITY_SERIAL` live in environment or CI
+secrets, and `remote_workspace/unity-shell.json` stays gitignored.
 
 The clean-room facade: outside Unity we own the DTOs, TypeScript types, JSON-RPC and MCP schemas, and helpers such as `SceneViewProxy`, `InspectorProxy`, `SelectionProxy`, and `AssetDatabaseProxy`. Inside Unity a normal package, compiled by the official editor or player, calls public APIs and selected reflection probes. Across the boundary travel pixels, events, object IDs, serialized metadata, and command results, never Unity's private native state or a forged icall table.
 
-### Workaround ladder (reviewed 2026-06-10)
+### Workaround ladder (historical review: 2026-06-10)
 
-No loophole is needed. The EULA licenses running the official editor per seat and restricts redistribution, derivation, license tampering, and offering Unity as a hosted service to third parties. It does not restrict where a licensed, installed editor's own pixels and data go on behalf of that same licensed user.
+The table records technical directions, not legal approval.
+The [licensing guide](LICENSING.md) supersedes the historical licensing assumptions.
 
 | # | Workaround | Output parity | Licensing posture | Status |
 | --- | --- | --- | --- | --- |
@@ -141,10 +141,13 @@ No loophole is needed. The EULA licenses running the official editor per seat an
 | W1 | Offscreen UI Toolkit re-host: bind real `InspectorElement` and editor UITK controls to a runtime panel rendering into a RenderTexture | Real editor widgets, our compositor, window-size independent, maybe batchmode-viable | Public API inside the licensed editor | Unproven |
 | W2 | Batchmode semantic mirror: `-batchmode` editor as data server (SerializedObject dumps, `UnityEditor.PackageManager.Client`, menu enumeration) plus native panels | Same information, our pixels; custom IMGUI inspectors are the long tail | Public API inside the licensed editor | Seeds exist (`manage_scene`, `manage_component`) |
 | W3 | Player Viewport Service | Same engine output for content; editor chrome re-implemented | No editor seat at runtime | Green on macOS |
-| W4 | Remote editors on hosts we control for our own licensed users; BYOL for third parties | Pixel-exact, displaced | Own-org use is normal seat usage; hosting for third parties needs a Unity agreement, which BYOL avoids | Virtual-display lane prototyped |
+| W4 | Remote editors for our licensed users; proposed BYOL for third parties | Pixel-exact, displaced | BYOL supplies an entitlement, not hosting rights. Counsel must confirm a Unity grant or applicable exception | Virtual-display lane prototyped |
 | W5 | Unity Enterprise or source-access negotiation | Whatever is contracted | The only official route: pay for the rights | Business decision |
 
-W0 is what the toolkit already does: an editor package plus an extension. Every machine brings its own Hub-installed, activated editor, and we ship no Unity bits. This is engineering's reading of the terms, not legal advice. Before selling a hosted or streamed editor product to third parties, have counsel or Unity's partner team confirm the W4 boundary.
+W0 uses an editor package plus an extension, with no Unity binaries shipped.
+The installed Editor still needs a valid entitlement.
+Before offering hosted or streamed Editors to third parties, seek counsel and
+confirm the required Unity agreement or grant. BYOL does not remove this boundary.
 
 ### Lanes ranked by "no editor running"
 
@@ -314,13 +317,10 @@ Script `unity-cursor-toolkit/scripts/unity-license.js`. Verdict: **GREEN for a l
 
 Credential rules: the three variables come from the environment only; dry-run output masks every value including email and serial; `--execute` fails before launching Unity if variables or files are missing; Windows sidecar manifests reference variable names supplied by the host or CI secret store. `npm run validate` covers the dry-run planner, masking, manual activation and import, return safety, and Windows status paths.
 
-| Lane | Runtime license | Build/automation |
-| --- | --- | --- |
-| L0 hidden editor | Editor seat on the local machine | `unity:license activate --execute` after operator approval, or a pre-activated Hub |
-| L1 warm editor/daemon | Editor seat per warm host | Floating Licensing Server preferred above two hosts |
-| L2 player Viewport Service | None | Editor seat or Build Server license for the build step only |
-| L3 UaaL/player shell | None | Same as L2 |
-| Remote Windows virtual-display editor | Editor seat per active Windows editor host | Licensing Server for VM pools; per-VM serials for one or two stable hosts |
+Use the [licensing lane table](LICENSING.md#editor-and-player-lanes) for runtime
+and build requirements. Obtain explicit operator approval before adding
+`--execute` to activation, manual request/import, or return commands.
+The helper's `status` output does not prove an active entitlement.
 
 ### E6 -- Instant attach
 
@@ -338,9 +338,9 @@ Skipped per its own spec condition ("skip if E3 succeeded and E2 showed acceptab
 - The Hierarchy stays a native tree. Everything pixel-streamed keeps a semantic command side-channel, so agents are not click-bots.
 - Windows editor hosts are first-class for the spike and the hidden-editor lane. Windows player embedding and virtual-display capture stay the preferred no-editor remote path.
 - E1 closed the DLL-mount lane permanently. E4 closed macOS native embedding. E6 is skipped because warm-daemon attach already covers the need.
-- Local default lane is L0, the hidden installed editor with `captureMode:"editorWindow"`. It is shipped, proven end-to-end in installed Cursor on macOS, and licensing-clean under W0. Adaptive fps and resolution are the default policy, not an option: the full-resolution 12fps Scene stream averaged `242%` CPU, while the downscaled path is stable.
-- Deployed and license-less lane is L2, the player Viewport Service: exact engine rendering plus the scene-like rig, about `200 MB` RSS and about `29fps` at 720p, no editor seat at runtime. Seats are consumed only by build steps and remote *editor* hosts.
-- Remote real-editor needs use own-seat editors on the virtual-display lane, a floating Licensing Server above two hosts, and BYOL for third parties. Never host our seats for external users without a Unity agreement.
+- Local default lane is L0, the hidden installed editor with `captureMode:"editorWindow"`. It is shipped and proven end-to-end in installed Cursor on macOS. See the licensing guide for applicable permissions. Adaptive fps and resolution are the default policy, not an option: the full-resolution 12fps Scene stream averaged `242%` CPU, while the downscaled path is stable.
+- Deployed Player lane is L2, the Viewport Service: exact engine rendering plus the scene-like rig, about `200 MB` RSS and about `29fps` at 720p. It needs no Editor seat at runtime. Build and distribution rights still apply.
+- Remote Editors need valid own-user entitlements. Floating licensing above two hosts is an operational recommendation. BYOL does not authorize third-party hosting. See [the licensing guide](LICENSING.md).
 - MJPEG stays the debug transport. WebRTC is the v1 interactive candidate. Sunshine and Moonlight remain a parallel whole-display lane.
 
 ## 7. References

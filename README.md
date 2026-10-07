@@ -161,6 +161,13 @@ See [Runtime Game Commands](docs/GAME_COMMANDS.md) for registration patterns and
 
 For non-rendering command discovery and execution in CI or headless automation, pass `host: "editorBatchmode"`. The MCP server launches Unity with `UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run`, writes structured arguments to a temp file, and returns the Unity log tail plus the command result JSON.
 
+## Remote Unity Workflows
+
+The experimental [remote shell](docs/REMOTE_SHELL.md) streams Editor or Player
+surfaces from a host. See the [remote workspace](remote_workspace/README.md)
+for setup and [Unity licensing guide](docs/LICENSING.md) for seats, build licenses,
+BYOL, and operator approval before activation.
+
 ## Configuration
 
 | Setting | Default | Description |
