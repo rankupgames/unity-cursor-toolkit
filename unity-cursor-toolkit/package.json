@@ -397,7 +397,7 @@
   },
   "overrides": {
     "form-data": "4.0.6",
-    "undici": "7.29.0"
+    "undici": "7.29.1"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
