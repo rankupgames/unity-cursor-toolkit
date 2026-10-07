@@ -38,7 +38,21 @@ The first `cd unity-cursor-toolkit` enters the repository root. The second enter
 
 ## Unity Scripts
 
-Changes to `unity-assets/` C# files must:
+The root `Packages/com.rankupgames.unity-cursor-toolkit/` directory is the
+source of truth. The embedded copy in `CursorUnityTool/Packages/` is generated.
+Edit the root package, then run these commands from `unity-cursor-toolkit/`:
+
+```bash
+npm run sync:package -- --check
+npm run sync:package
+npm run sync:package -- --check
+```
+
+Check mode reports drift without writing files. Sync copies all package files,
+including `.meta` files, and removes sample files absent from the root package.
+Review both package diffs together. CI fails when the copies differ.
+
+Changes to package C# files must:
 
 - Preserve the package's declared Unity 2019.4 baseline
 - Wrap editor-only code in `#if UNITY_EDITOR` / `#endif`

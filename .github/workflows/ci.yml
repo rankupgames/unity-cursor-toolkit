@@ -103,6 +103,9 @@ jobs:
             console.log('UPM package valid:', pkg.name, pkg.version, '(unity >=', pkg.unity + ')');
           "
 
+      - name: Check sample package sync
+        run: npm run sync:package -- --check
+
       - name: Package VS Code Marketplace VSIX
         run: |
           VERSION="${{ needs.check-changes.outputs.build_version }}"

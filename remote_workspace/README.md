@@ -6,6 +6,10 @@ rendered Editor-window and input plane. Unity 7 compatibility is not yet
 validated. See [the roadmap](../docs/ROADMAP.md) and
 [remote shell notes](../docs/REMOTE_SHELL.md).
 
+Read the [Unity licensing guide](../docs/LICENSING.md) before using Editor hosts
+or building the Player. BYOL does not itself authorize third-party hosting.
+License activation and return require explicit operator approval.
+
 Run `Unity Shell: Init Manifest` from VS Code/Cursor to create the local `unity-shell.json` manifest from the checked-in example. The real manifest is ignored because it contains machine-specific SSH targets and remote paths.
 
 The MVP assumes a Windows host with a VDD monitor, FFmpeg, an exact-version

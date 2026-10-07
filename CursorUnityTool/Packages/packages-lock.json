@@ -5,6 +5,7 @@
       "depth": 0,
       "source": "embedded",
       "dependencies": {
+        "com.unity.modules.jsonserialize": "1.0.0",
         "com.unity.nuget.newtonsoft-json": "3.2.1"
       }
     },

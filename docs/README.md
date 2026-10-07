@@ -8,8 +8,12 @@ records for Unity Cursor Toolkit.
 - [AI agent guide](AI_AGENTS.md)
 - [MCP client setup](MCP_CLIENTS.md)
 - [Runtime game commands](GAME_COMMANDS.md)
+- [Unity licensing for remote workflows](LICENSING.md) — Editor and Player lanes,
+  BYOL, hosting boundaries, and approved activation
 
 ## Roadmap and Research
+
+- [CoreCLR package API inventory](../experiments/coreclr-package-audit/results/inventory.md) — dated source sites and documented replacements
 
 - [Roadmap](ROADMAP.md) — shipped capabilities, support baseline, planned
   work, and Unity 7 readiness gates

@@ -151,6 +151,11 @@ namespace UnityCursorToolkit
 		internal bool frameTimingStatsEnabled;
 		internal string bottleneck;
 		internal string sessionPath;
+		internal string consoleTranscriptPath;
+		internal int consoleEntryCount;
+		internal int consoleErrorGroupCount;
+		internal bool consoleTrimmed;
+		internal ConsoleTranscript consoleTranscript;
 		internal List<MetricSnapshot> metrics = new List<MetricSnapshot>();
 		internal List<FrameTimingSnapshot> frameTimings = new List<FrameTimingSnapshot>();
 		internal List<ProfilerHotFrame> hotFrames = new List<ProfilerHotFrame>();
@@ -169,6 +174,10 @@ namespace UnityCursorToolkit
 			ProfilerSnapshotJson.Prop(sb, "activeScene", activeScene).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "bottleneck", bottleneck).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "sessionPath", sessionPath).Append(",");
+			ProfilerSnapshotJson.Prop(sb, "consoleTranscriptPath", consoleTranscriptPath).Append(",");
+			sb.Append("\"consoleEntryCount\":").Append(consoleEntryCount.ToString(CultureInfo.InvariantCulture)).Append(",");
+			sb.Append("\"consoleErrorGroupCount\":").Append(consoleErrorGroupCount.ToString(CultureInfo.InvariantCulture)).Append(",");
+			sb.Append("\"consoleTrimmed\":").Append(ProfilerSnapshotJson.Bool(consoleTrimmed)).Append(",");
 			sb.Append("\"isPlaying\":").Append(ProfilerSnapshotJson.Bool(isPlaying)).Append(",");
 			sb.Append("\"isPaused\":").Append(ProfilerSnapshotJson.Bool(isPaused)).Append(",");
 			sb.Append("\"isCompiling\":").Append(ProfilerSnapshotJson.Bool(isCompiling)).Append(",");
@@ -354,28 +363,25 @@ namespace UnityCursorToolkit
 
 	internal static class ProfilerSnapshotFormatter
 	{
-		internal static string FormatClipboard(string consoleEntries, ProfilerSnapshotSession session, bool includeRaw)
+		private const int MaxClipboardErrorGroups = 25;
+
+		internal static string FormatClipboard(ProfilerSnapshotSession session)
 		{
 			var sb = new StringBuilder(8192);
-			AppendConsoleSection(sb, consoleEntries);
 			AppendSessionSummary(sb, session);
+			AppendConsoleSummary(sb, session);
 			AppendMetricTrends(sb, session);
 			AppendHotFrames(sb, session);
 			AppendHotPaths(sb, session);
 			AppendWarnings(sb, session);
-			if (includeRaw)
-			{
-				AppendRawJson(sb, session);
-			}
 			return sb.ToString();
 		}
 
-		private static void AppendConsoleSection(StringBuilder sb, string consoleEntries)
+		internal static string FormatConsoleSummary(ProfilerSnapshotSession session)
 		{
-			sb.AppendLine("## Unity Console Snapshot");
-			sb.AppendLine();
-			sb.AppendLine(string.IsNullOrEmpty(consoleEntries) ? "(Console log is empty.)" : consoleEntries.TrimEnd());
-			sb.AppendLine();
+			var sb = new StringBuilder(2048);
+			AppendConsoleSummary(sb, session);
+			return sb.ToString().TrimEnd();
 		}
 
 		private static void AppendSessionSummary(StringBuilder sb, ProfilerSnapshotSession session)
@@ -389,8 +395,78 @@ namespace UnityCursorToolkit
 			sb.AppendLine("unityVersion: " + session.unityVersion);
 			sb.AppendLine("activeScene: " + session.activeScene);
 			sb.AppendLine("storedPath: " + session.sessionPath);
+			sb.AppendLine("consoleTranscriptPath: " + EmptyFallback(session.consoleTranscriptPath));
+			sb.AppendLine("consoleEntries: " + session.consoleEntryCount.ToString(CultureInfo.InvariantCulture));
+			sb.AppendLine("consoleErrorGroups: " + session.consoleErrorGroupCount.ToString(CultureInfo.InvariantCulture));
+			sb.AppendLine("consoleTrimmed: " + ProfilerSnapshotJson.Bool(session.consoleTrimmed));
 			sb.AppendLine("```");
 			sb.AppendLine();
+		}
+
+		private static void AppendConsoleSummary(StringBuilder sb, ProfilerSnapshotSession session)
+		{
+			sb.AppendLine("### Console Error Groups");
+
+			ConsoleTranscript transcript = session.consoleTranscript;
+			if (transcript == null || transcript.ErrorGroupCount == 0)
+			{
+				sb.AppendLine("- none");
+				sb.AppendLine();
+				return;
+			}
+
+			int written = 0;
+			for (int i = 0; i < transcript.groups.Count && written < MaxClipboardErrorGroups; i++)
+			{
+				ConsoleLogGroup group = transcript.groups[i];
+				if (group.IsErrorLike == false)
+				{
+					continue;
+				}
+
+				sb.Append("- ");
+				sb.Append(group.key).Append(" ");
+				sb.Append(group.type.ToUpperInvariant()).Append(" x");
+				sb.Append(group.count.ToString(CultureInfo.InvariantCulture));
+				sb.Append(" first=#").Append(group.firstIndex.ToString(CultureInfo.InvariantCulture));
+				sb.Append("@+").Append(group.timeline.Count > 0 ? group.timeline[0].elapsedMs.ToString("F0", CultureInfo.InvariantCulture) : "0").Append("ms");
+				sb.Append(" last=#").Append(group.lastIndex.ToString(CultureInfo.InvariantCulture));
+				if (string.IsNullOrEmpty(group.firstFrame) == false)
+				{
+					sb.Append(" frame=").Append(group.firstFrame);
+				}
+				sb.AppendLine();
+				sb.AppendLine("  message: " + group.message);
+				sb.Append("  timeline: ");
+				AppendTimelineSummary(sb, group);
+				sb.AppendLine();
+				written++;
+			}
+
+			if (transcript.ErrorGroupCount > written)
+			{
+				sb.AppendLine("- " + (transcript.ErrorGroupCount - written).ToString(CultureInfo.InvariantCulture) + " more groups in transcript JSON");
+			}
+
+			sb.AppendLine();
+		}
+
+		private static void AppendTimelineSummary(StringBuilder sb, ConsoleLogGroup group)
+		{
+			const int maxInlineOccurrences = 20;
+			int count = Math.Min(maxInlineOccurrences, group.timeline.Count);
+			for (int i = 0; i < count; i++)
+			{
+				if (i > 0) sb.Append(", ");
+				ConsoleLogOccurrence occurrence = group.timeline[i];
+				sb.Append("#").Append(occurrence.index.ToString(CultureInfo.InvariantCulture));
+				sb.Append("@+").Append(occurrence.elapsedMs.ToString("F0", CultureInfo.InvariantCulture)).Append("ms");
+			}
+
+			if (group.timeline.Count > count)
+			{
+				sb.Append(", +").Append((group.timeline.Count - count).ToString(CultureInfo.InvariantCulture)).Append(" more");
+			}
 		}
 
 		private static void AppendMetricTrends(StringBuilder sb, ProfilerSnapshotSession session)
@@ -460,12 +536,9 @@ namespace UnityCursorToolkit
 			sb.AppendLine();
 		}
 
-		private static void AppendRawJson(StringBuilder sb, ProfilerSnapshotSession session)
+		private static string EmptyFallback(string value)
 		{
-			sb.AppendLine("## Raw Profiler Session JSON");
-			sb.AppendLine("```json");
-			sb.AppendLine(session.ToJson(true));
-			sb.AppendLine("```");
+			return string.IsNullOrEmpty(value) ? "(not captured)" : value;
 		}
 
 		private static string FormatMetricValue(MetricSnapshot metric, double value)

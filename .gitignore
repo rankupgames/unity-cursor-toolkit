@@ -9,6 +9,10 @@ unity-cursor-toolkit/native-shell/**/.build/
 experiments/**/obj/
 experiments/**/bin/
 experiments/**/results/
+# Keep the frozen CoreCLR inventory. Other experiment results stay local.
+!experiments/coreclr-package-audit/results/
+experiments/coreclr-package-audit/results/*
+!experiments/coreclr-package-audit/results/inventory.md
 experiments/**/screenshots/
 
 # System files

@@ -72,6 +72,7 @@ public static class ConsoleToCursor
 
 	static ConsoleToCursor()
 	{
+		ProfilerSessionRecorder.EnsureInitialized();
 		Application.logMessageReceived += OnLogReceived;
 	}
 
@@ -98,6 +99,8 @@ public static class ConsoleToCursor
 				entryBuffer.RemoveAt(0);
 			}
 		}
+
+		ConsoleTranscriptRecorder.Record(message, stackTrace, type);
 
 		if (autoStreamEnabled && HotReloadHandler.IsServerRunning() && HotReloadHandler.GetConnectedClientCount() > 0)
 		{

@@ -9,7 +9,8 @@ const { spawnSync } = require('child_process');
 const suites = [
 	'run-tests.js',
 	'simplified-context-tests.js',
-	'remote-shell-tests.js'
+	'remote-shell-tests.js',
+	'package-sync-tests.js'
 ];
 const SUITE_TIMEOUT_MS = 30_000;
 
