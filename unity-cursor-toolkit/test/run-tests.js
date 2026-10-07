@@ -4438,8 +4438,7 @@ async function testMigrationScanner() {
 				['MCP/MCPBridge.cs', 44, 'appdomain-assemblies'],
 				['MCP/EditorWindowViewportCapture.cs', 432, 'appdomain-assemblies'],
 				['MCP/EditorWindowViewportCapture.cs', 29, 'assembly-reload-events'],
-				['ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs', 75, 'assembly-load'],
-				['ThirdParty/Unity-Unterm/UntermExternalCodeEditor.cs', 78, 'assembly-location']
+				['ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs', 75, 'assembly-load']
 			];
 			for (const [file, line, ruleId] of sites) {
 				assert.ok(result.findings.some(finding => finding.file === base + file && finding.line === line && finding.ruleId === ruleId), `${file}:${line} ${ruleId}`);

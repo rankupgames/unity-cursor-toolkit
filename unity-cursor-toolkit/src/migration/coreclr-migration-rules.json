@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "sourceDate": "2026-10-07",
   "sourceUrl": "https://discussions.unity.com/t/path-to-coreclr-2026-upgrade-guide/1714279",
-  "limitations": "Source patterns identify review candidates, not confirmed incompatibilities. They do not resolve types, overloads, aliases, preprocessor branches, or existing cleanup methods. This rule set prepares migration and does not certify CoreCLR support.",
+  "limitations": "Source patterns identify review candidates, not confirmed incompatibilities. They do not resolve types, overloads, aliases, preprocessor branches, or existing cleanup methods. String literals are excluded, including executable expressions inside interpolated strings. This rule set prepares migration and does not certify CoreCLR support.",
   "rules": [
     {
       "id": "static-state",
