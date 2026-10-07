@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0",
+  "sourceDate": "2026-10-07",
+  "sourceUrl": "https://discussions.unity.com/t/path-to-coreclr-2026-upgrade-guide/1714279",
+  "limitations": "Source patterns identify review candidates, not confirmed incompatibilities. They do not resolve types, overloads, aliases, preprocessor branches, or existing cleanup methods. This rule set prepares migration and does not certify CoreCLR support.",
+  "rules": [
+    {
+      "id": "static-state",
+      "pattern": "\\bstatic\\s+(?:(?:readonly|volatile|new|unsafe)\\s+)*[\\w.<>?,\\[\\] \\t]+\\s+@?\\w+\\s*(?==|;)",
+      "severity": "behavior-change",
+      "explanation": "Review static fields for state that survives code reload and Play mode transitions. Existing cleanup requires manual review.",
+      "replacement": "Use [AutoStaticsCleanup] where appropriate or explicit cleanup with [BeforeCodeUnloading].",
+      "docsUrl": "https://docs.unity.com/en-us/engine/6000.7/manual/programming-environment/code-reload-serialization/code-reload/code-reloading-editor/domain-reloading"
+    },
+    {
+      "id": "domain-unload",
+      "pattern": "\\b(?:AppDomain\\s*\\.\\s*CurrentDomain\\s*\\.\\s*)?DomainUnload\\b",
+      "severity": "behavior-change",
+      "explanation": "DomainUnload no longer signals code reload under CoreCLR.",
+      "replacement": "Move cleanup to [AfterCodeReloadSerialization] or [BeforeCodeUnloading], according to the required lifecycle stage.",
+      "docsUrl": "https://discussions.unity.com/t/path-to-coreclr-2026-upgrade-guide/1714279"
+    },
+    {
+      "id": "appdomain-assemblies",
+      "pattern": "\\bAppDomain\\s*\\.\\s*CurrentDomain\\s*\\.\\s*GetAssemblies\\s*\\(",
+      "severity": "deprecated",
+      "explanation": "AppDomain enumeration can include assemblies being unloaded.",
+      "replacement": "Use UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies().",
+      "docsUrl": "https://docs.unity3d.com/6000.5/Documentation/ScriptReference/Assemblies.CurrentAssemblies.GetLoadedAssemblies.html"
+    },
+    {
+      "id": "assembly-load",
+      "pattern": "\\bAssembly\\s*\\.\\s*(?:Load|LoadFrom|LoadFile|ReflectionOnlyLoad|ReflectionOnlyLoadFrom)\\s*\\(",
+      "severity": "breaks",
+      "explanation": "Review the overload. Byte-array and path loading can conflict with code reload. Loading by AssemblyName remains allowed.",
+      "replacement": "Use CurrentAssemblies.LoadFromPath() for paths or CurrentAssemblies.LoadFromBytes() for byte arrays. Preserve permitted AssemblyName loads.",
+      "docsUrl": "https://discussions.unity.com/t/path-to-coreclr-2026-upgrade-guide/1714279"
+    },
+    {
+      "id": "assembly-location",
+      "pattern": "\\.\\s*Location\\b",
+      "severity": "behavior-change",
+      "explanation": "If the receiver is an Assembly, Location can return an empty string. Other Location properties require no assembly migration.",
+      "replacement": "Use Assembly.GetLoadedAssemblyPath() with using UnityEngine. Handle a null result when the path is unknown.",
+      "docsUrl": "https://docs.unity.com/en-us/engine/6000.7/script-reference/unityengine/assemblyextension/getloadedassemblypath"
+    },
+    {
+      "id": "managed-debugger",
+      "pattern": "\\bManagedDebugger\\b",
+      "severity": "breaks",
+      "explanation": "UnityEditor.Scripting.ManagedDebugger is unsupported on CoreCLR.",
+      "replacement": "Use System.Diagnostics.Debugger.",
+      "docsUrl": "https://discussions.unity.com/t/path-to-coreclr-2026-upgrade-guide/1714279"
+    },
+    {
+      "id": "assembly-reload-events",
+      "pattern": "\\bAssemblyReloadEvents\\s*\\.\\s*(?:beforeAssemblyReload|afterAssemblyReload)\\b",
+      "severity": "behavior-change",
+      "explanation": "Review reload subscriptions against the partial code reload lifecycle. A match does not prove that the callback is incompatible.",
+      "replacement": "Choose [BeforeCodeUnloading] or [AfterCodeReloadSerialization] for the required cleanup stage and verify callback order on the target Editor.",
+      "docsUrl": "https://discussions.unity.com/t/path-to-coreclr-2026-upgrade-guide/1714279"
+    }
+  ]
+}
