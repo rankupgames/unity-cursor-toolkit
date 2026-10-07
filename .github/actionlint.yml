@@ -1,0 +1,5 @@
+self-hosted-runner:
+  labels:
+    - unity-macos-runtime
+    - unity-windows-runtime
+    - dev-3
