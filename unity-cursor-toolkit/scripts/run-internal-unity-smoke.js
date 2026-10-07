@@ -6,6 +6,7 @@
  */
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { spawn } = require('child_process');
 
@@ -13,9 +14,9 @@ const extensionRoot = path.resolve(__dirname, '..');
 const repoRoot = path.resolve(extensionRoot, '..');
 const projectRoot = path.join(repoRoot, 'CursorUnityTool');
 const contextDir = path.join(projectRoot, '.umetacontext');
-const unityResultPath = '/tmp/uct-internal-smoke-result.json';
-const unityLogPath = '/tmp/uct-internal-smoke.log';
-const viewportFramePath = '/tmp/uct-internal-smoke-viewport.jpg';
+const unityResultPath = path.join(os.tmpdir(), 'uct-internal-smoke-result.json');
+const unityLogPath = path.join(os.tmpdir(), 'uct-internal-smoke.log');
+const viewportFramePath = path.join(os.tmpdir(), 'uct-internal-smoke-viewport.jpg');
 const keepContext = process.argv.includes('--keep-context');
 
 async function main() {
