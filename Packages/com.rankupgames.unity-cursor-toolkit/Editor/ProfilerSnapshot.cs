@@ -144,10 +144,14 @@ namespace UnityCursorToolkit
 
 		static ProfilerSessionRecorder()
 		{
-			sessionStartedAtUtc = DateTime.UtcNow;
-			sessionStartedUtc = FormatUtc(sessionStartedAtUtc);
-			sessionId = CreateSessionId();
-			ConsoleTranscriptRecorder.Reset(sessionStartedAtUtc);
+			Initialize();
+			AssemblyReloadEvents.afterAssemblyReload += Initialize;
+		}
+
+		private static void Initialize()
+		{
+			recordingSuspended = false;
+			ResetSession();
 			EditorApplication.update -= Tick;
 			EditorApplication.update += Tick;
 			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
@@ -407,6 +411,8 @@ namespace UnityCursorToolkit
 				recordingSuspended = true;
 				StopRecorders();
 				RestoreProfilerDriverState();
+				activeCapacity = 0;
+				ResetSession();
 			}
 		}
 
@@ -418,6 +424,7 @@ namespace UnityCursorToolkit
 				sessionStartedUtc = FormatUtc(sessionStartedAtUtc);
 				sessionId = CreateSessionId();
 				frameTimings.Clear();
+				Array.Clear(latestTiming, 0, latestTiming.Length);
 				ConsoleTranscriptRecorder.Reset(sessionStartedAtUtc);
 				foreach (RecorderSlot recorder in recorders)
 				{

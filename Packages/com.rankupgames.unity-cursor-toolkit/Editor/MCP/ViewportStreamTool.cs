@@ -24,6 +24,20 @@ namespace UnityCursorToolkit.MCP
 		private static bool running;
 		private static readonly Dictionary<string, StreamSession> sessions = new Dictionary<string, StreamSession>();
 
+		static ViewportStreamTool()
+		{
+			AssemblyReloadEvents.beforeAssemblyReload += Reset;
+			EditorApplication.quitting += Reset;
+		}
+
+		private static void Reset()
+		{
+			EditorApplication.update -= Tick;
+			sessions.Clear();
+			running = false;
+		}
+
+
 		public string ToolName => "viewport_stream";
 		public string Description => "Start, stop, inspect, or send input to a Unity viewport stream.";
 

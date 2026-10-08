@@ -4608,12 +4608,8 @@ async function testMigrationScanner() {
 			const result = await scan(path.join(__dirname, '../../CursorUnityTool'));
 			const base = 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/';
 			const sites = [
-				['HotReload/ILPatcher.cs', 266, 'appdomain-assemblies'],
-				['HotReload/ILPatcher.cs', 428, 'appdomain-assemblies'],
-				['HotReload/ILPatcher.cs', 523, 'appdomain-assemblies'],
-				['HotReload/ILPatcher.cs', 381, 'assembly-load'],
-				['MCP/MCPBridge.cs', 44, 'appdomain-assemblies'],
-				['MCP/EditorWindowViewportCapture.cs', 432, 'appdomain-assemblies'],
+				['Core/AssemblyEnumerator.cs', 16, 'appdomain-assemblies'],
+				['HotReload/ILPatcher.cs', 399, 'assembly-load'],
 				['MCP/EditorWindowViewportCapture.cs', 29, 'assembly-reload-events'],
 				['ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs', 75, 'assembly-load']
 			];

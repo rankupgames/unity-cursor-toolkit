@@ -24,10 +24,33 @@ namespace UnityCursorToolkit.MCP
 	/// Registry and dispatcher for MCP tool handlers. Discovers [MCPTool] types via reflection
 	/// and routes HandleToolCall invocations to the correct handler.
 	/// </summary>
+	[InitializeOnLoad]
 	public static class MCPBridge
 	{
 		private static Dictionary<string, IToolHandler> _handlers;
 		private static bool _initialized;
+
+		static MCPBridge()
+		{
+			AssemblyReloadEvents.beforeAssemblyReload += Reset;
+			AssemblyReloadEvents.afterAssemblyReload += Initialize;
+			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+		}
+
+		private static void Reset()
+		{
+			_handlers = null;
+			_initialized = false;
+		}
+
+		private static void OnPlayModeStateChanged(PlayModeStateChange state)
+		{
+			if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
+			{
+				Reset();
+				Initialize();
+			}
+		}
 
 		/// <summary>
 		/// Discovers and registers all [MCPTool] handlers from loaded assemblies.
@@ -41,7 +64,7 @@ namespace UnityCursorToolkit.MCP
 
 			_handlers = new Dictionary<string, IToolHandler>();
 
-			foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+			foreach (Assembly asm in AssemblyEnumerator.GetLoaded())
 			{
 				try
 				{
