@@ -380,7 +380,7 @@
     "watch": "tsc -watch -p ./",
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
-    "test": "node test/run-all-tests.js && node test/viewport-measurement-tests.js",
+    "test": "node test/run-all-tests.js && node test/viewport-measurement-tests.js && node test/player-viewport-proof-tests.js",
     "test:unity-internal": "node scripts/run-internal-unity-smoke.js",
     "dev:unity-viewport": "node scripts/run-internal-viewport-stream.js",
     "spike:editor-windows": "node scripts/run-editor-window-capture-spike.js",

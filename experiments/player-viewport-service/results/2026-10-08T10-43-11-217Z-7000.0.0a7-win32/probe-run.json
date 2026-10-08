@@ -1,0 +1,61 @@
+{
+  "observedAt": "2026-10-08T10:47:53.716Z",
+  "passed": true,
+  "port": 50159,
+  "errors": [],
+  "launchStartedAt": "2026-10-08T10:47:53.717Z",
+  "sourceHashes": {
+    "run": "51084cca893d7c145e60b62907b1e8216674ed761abd315e47f8c43b54c5d199",
+    "probe": "f15d0d3b27e5ecb6b13e1ae00c9553b5e30a8fe1dc4ca389a53f65487cab3829",
+    "build": {
+      "builder": "494b68e08dbd9219ba35a6533b329bd8cf9a64c79012dec77b4d77212cfa9ccb",
+      "server": "0f985825738782a4efa655de2b31004487150de148aad431278be4f8fa50df7f",
+      "fixtureHelper": "acc59bf8ec5cfead4701aac23533005eae5a5367c96a68463bf12bb4b9517023"
+    }
+  },
+  "pid": 1056,
+  "portReadyAt": "2026-10-08T10:48:07.545Z",
+  "identity": {
+    "editorVersion": "7000.0.0a7",
+    "coreLibrary": "System.Private.CoreLib",
+    "pid": 1056,
+    "platform": "WindowsPlayer",
+    "is64BitProcess": true,
+    "renderPipeline": "UnityEngine.Rendering.Universal.UniversalRenderPipelineAsset",
+    "instrumentation": "fixture-only"
+  },
+  "identityVerifiedAt": "2026-10-08T10:48:08.370Z",
+  "probe": {
+    "observedAt": "2026-10-08T10:48:08.429Z",
+    "success": true,
+    "frames": {
+      "scene": {
+        "width": 640,
+        "height": 360,
+        "host": "player",
+        "captureMode": "camera",
+        "sequence": 1,
+        "dataBytes": 15174
+      },
+      "game": {
+        "width": 640,
+        "height": 360,
+        "host": "player",
+        "captureMode": "camera",
+        "sequence": 1,
+        "dataBytes": 15174
+      }
+    },
+    "errors": [],
+    "port": 50159,
+    "runtimeInput": true,
+    "sessionsStopped": true
+  },
+  "outcome": {
+    "code": 0,
+    "signal": null
+  },
+  "quittingObserved": true,
+  "listenerPidAfterExit": null,
+  "ownedPidRemaining": false
+}

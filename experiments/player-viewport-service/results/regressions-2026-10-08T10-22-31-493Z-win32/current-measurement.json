@@ -1,0 +1,14 @@
+{
+  "observedAt": "2026-10-08T10:34:31.718Z",
+  "passed": 6,
+  "total": 8,
+  "samplerSha256": "9ee6e09759fa36487b0ce47115c23f78ec0bd24a0324cc70e78d4f48d7bb4b2a",
+  "testSha256": "22ff5fe5e267ef9d4282ba267a1cbe1c2f0b457298dc54896ffa702254e4a4f4",
+  "newCases": [
+    "Full measure main writes actual first JPEG",
+    "Pending metric drain and late stop frames excluded from actualwindow"
+  ],
+  "failBefore": "measurement-before.json",
+  "boundary": "VM mocks only spawn/OSprocess metrics; real TCP messages/files/framewrite; no hooks/exports",
+  "testFixtureFailure": "VM fixture omitted __filename needed by new sourceHash evidence; no native build/launch"
+}

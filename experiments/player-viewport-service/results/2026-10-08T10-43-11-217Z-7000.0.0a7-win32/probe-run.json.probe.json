@@ -1,0 +1,26 @@
+{
+  "observedAt": "2026-10-08T10:48:08.429Z",
+  "success": true,
+  "frames": {
+    "scene": {
+      "width": 640,
+      "height": 360,
+      "host": "player",
+      "captureMode": "camera",
+      "sequence": 1,
+      "dataBytes": 15174
+    },
+    "game": {
+      "width": 640,
+      "height": 360,
+      "host": "player",
+      "captureMode": "camera",
+      "sequence": 1,
+      "dataBytes": 15174
+    }
+  },
+  "errors": [],
+  "port": 50159,
+  "runtimeInput": true,
+  "sessionsStopped": true
+}

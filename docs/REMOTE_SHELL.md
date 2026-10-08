@@ -332,7 +332,32 @@ Perf at `--view game --width 1280 --height 720 --fps 30 --quality 72 --idle-seco
 - Stream RSS average `199.5 MB`, max `287.5 MB`; stream CPU average `40.3%`, max `49.7%`.
 - Errors: none. No `55501` listener or Viewport Service process remained.
 
-Verdict: the macOS player lane sustains near-target `1280x720@30` in-band streaming with low memory compared with the hidden editor lane. Cold port-ready startup missed the aspirational under-5s target, but the first frame lands quickly once the stream starts. It is not real editor UI and claims no SceneView or Inspector parity. Windows build, run, probe, and perf remain pending.
+Verdict: the macOS player lane sustains near-target `1280x720@30` in-band streaming with low memory compared with the hidden editor lane. Cold port-ready startup missed the aspirational under-5s target, but the first frame lands quickly once the stream starts. It is not real editor UI and claims no SceneView or Inspector parity. The later Windows proof is recorded below.
+
+### E3a -- CoreCLR Windows player proof (2026-10-08)
+
+The [player proof](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/comparison.json) passed on exact Unity `7000.0.0a7 (581996e1a8f7)`, Windows x64, `System.Private.CoreLib`, and URP `17.7.0`. The disposable fixture used the unchanged production builder/server and a fixture-only identity and normal-stop helper. The build explicitly selected CoreCLR and `BuildOptions.None`.
+
+The replay used the documented `game 1280x720@30`, quality `72`, idle `5s`, and stream `30s`. The [raw measurement](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/2026-10-08-7000.0.0a7-win32-game-1280x720-30fps.json) records:
+
+| Field | Documented macOS baseline | Windows CoreCLR observation |
+| --- | ---: | ---: |
+| Port-ready startup | 6572ms | 3088ms |
+| First frame from launch | 11692ms | 10011ms |
+| First frame after stream start | 87ms | 321ms |
+| Frames | 866 | 889 |
+| First-to-last effective FPS | 28.89 | 29.92 |
+| Frame data bytes | 84328 | 85400 |
+| Idle RSS average / maximum | 272.5 / 284.5 MB | 398.9 / 399.0 MiB |
+| Stream RSS average / maximum | 199.5 / 287.5 MB | 488.8 / 503.3 MiB |
+| Idle CPU average / maximum | 25.5% / 64.0% | 1.2% / 3.09% |
+| Stream CPU average / maximum | 40.3% / 49.7% | 52.1% / 115.57% |
+
+The full stream window was `30.020783s`, or `29.61fps`; frames during sample drain and stop acknowledgment were excluded. PID/runtime checks added `836ms` after port readiness. This fresh process followed a functional launch of the same build, whose startup was `13828ms`; OS/GPU caches were uncontrolled. Historical raw JSON is absent, so the comparison uses document aggregates and retains their RSS unit label. Windows interval CPU-seconds/wall-time in one-core units differs from the historical macOS `ps` decaying average. Platform, GPU, graphics API, URP and cache differences prevent a cold-start or CLR performance claim. The requested best-effort hide did not verify sustained hidden visibility.
+
+The [Scene](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/probe-frames/scene.jpg), [Game](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/probe-frames/game.jpg), and [measured frame](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/game-first-frame.jpg) show a shaded cube, grid and horizon. Runtime `sceneDrag` was acknowledged; the byte-identical first frames predate input and do not prove a visual response. The build Editor and both players exited normally with code `0`; owned process/descendant and listener checks were empty, and both disposable projects were removed.
+
+The [failed first build](../experiments/player-viewport-service/results/2026-10-08T10-40-11-016Z-7000.0.0a7-win32/build.json) records a fixture-only assembly reference error; the corrected helper calls the existing Editor build method by reflection. [Nine regressions](../experiments/player-viewport-service/results/regressions-2026-10-08T10-22-31-493Z-win32/final-after.json) passed with fail-before evidence retained. Observation hashes remain unchanged; `comparison.json` records the subsequent redaction-only `ContinuationId` addition and its original/final hashes. This proof does not establish general Unity 7 readiness.
 
 ### E4 -- UaaL desktop embed desk check
 
