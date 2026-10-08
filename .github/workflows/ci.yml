@@ -2,9 +2,9 @@ name: Extension Build
 
 on:
   push:
-    branches: [main, 'Version-*']
+    branches: [main, 'Version-*', 'release/0.7-unity-runtime-rework']
   pull_request:
-    branches: [main, 'Version-*']
+    branches: [main, 'Version-*', 'release/0.7-unity-runtime-rework']
   schedule:
     - cron: '0 11 * * 5'  # Friday 6am EST -- weekly build
   workflow_dispatch:
@@ -145,7 +145,7 @@ jobs:
     environment:
       name: release-approval
     needs: [check-changes, build]
-    if: needs.check-changes.outputs.has_changes == 'true' && github.event_name != 'pull_request'
+    if: needs.check-changes.outputs.has_changes == 'true' && github.event_name != 'pull_request' && github.ref != 'refs/heads/release/0.7-unity-runtime-rework'
     runs-on: ubuntu-latest
     permissions:
       contents: read
