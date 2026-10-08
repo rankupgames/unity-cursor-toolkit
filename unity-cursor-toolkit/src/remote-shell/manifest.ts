@@ -160,3 +160,39 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function clamp(value: number, min: number, max: number): number {
 	return Math.min(max, Math.max(min, value));
 }
+
+function isFullyQualifiedWindowsPath(value: string): boolean {
+	return path.win32.isAbsolute(value) && /^(?:[a-zA-Z]:[\\/]|\\\\[^\\/]+[\\/][^\\/]+)/.test(value);
+}
+
+/** Doctor validation is stricter than the shipped launch parser. */
+export function parseRemoteShellDoctorManifest(input: unknown): RemoteShellManifest {
+	if (!isRecord(input)) { throw new Error('Invalid doctor manifest.'); }
+	for (const key of ['sshTarget', 'remoteWorkspacePath', 'remoteRepoPath', 'unityEditorPath', 'unityPlayerPath', 'windowTitle', 'ffmpegPath', 'remoteSidecarPath']) {
+		const value = input[key];
+		if (value !== undefined && (typeof value !== 'string' || /[\x00-\x1f]/.test(value)
+			|| (!['remoteRepoPath', 'unityEditorPath'].includes(key) && value.trim().length === 0))) { throw new Error('Invalid doctor manifest string.'); }
+	}
+	for (const [key, fields] of [['display', ['width', 'height', 'fps', 'quality']], ['ports', ['stream', 'control']]] as const) {
+		const value = input[key];
+		if (value !== undefined && !isRecord(value)) { throw new Error('Invalid doctor manifest object.'); }
+		if (isRecord(value)) {
+			for (const field of fields) {
+				const number = value[field];
+				if (number !== undefined && (typeof number !== 'number' || !Number.isSafeInteger(number) || number <= 0
+					|| (key === 'ports' && number > 65535) || (field === 'quality' && number > 100))) { throw new Error('Invalid doctor manifest number.'); }
+			}
+		}
+	}
+	if (input.vddMonitor !== undefined && (typeof input.vddMonitor !== 'number' || !Number.isSafeInteger(input.vddMonitor) || input.vddMonitor <= 0)) { throw new Error('Invalid doctor monitor.'); }
+	const manifest = parseRemoteShellManifest(input);
+	if (manifest.sshTarget.startsWith('-') || !/^(?:[a-zA-Z0-9_.-]+@)?(?:[a-zA-Z0-9][a-zA-Z0-9_.-]*|\[[a-fA-F0-9:]+\])$/.test(manifest.sshTarget)) { throw new Error('Invalid doctor SSH target.'); }
+	for (const value of [manifest.remoteWorkspacePath, manifest.unityPlayerPath, manifest.remoteSidecarPath, manifest.remoteRepoPath, manifest.unityEditorPath]) {
+		if (value && (!isFullyQualifiedWindowsPath(value) || value.includes('$' + '{'))) { throw new Error('Unresolved doctor remote path.'); }
+	}
+	if (!/\.ps1$/i.test(manifest.remoteSidecarPath)) { throw new Error('Invalid doctor sidecar script path.'); }
+	if (/[\*?\[\]]/.test(manifest.ffmpegPath)
+		|| (/[\\/:]/.test(manifest.ffmpegPath) && !isFullyQualifiedWindowsPath(manifest.ffmpegPath))) { throw new Error('Unresolved doctor FFmpeg path.'); }
+	if ([manifest.sshTarget, manifest.ffmpegPath].some(value => value.includes('$' + '{'))) { throw new Error('Unresolved doctor value.'); }
+	return manifest;
+}
