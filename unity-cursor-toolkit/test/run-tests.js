@@ -4799,6 +4799,25 @@ function testCliEvidencePrivacy() {
 	});
 }
 
+function testCoreClrEvidencePrivacy() {
+	test('CoreCLR evidence removes identity and licensing continuations', () => {
+		const root = path.resolve(__dirname, '../../experiments/coreclr-package-audit');
+		const source = fs.readFileSync(path.join(root, 'run-lifecycle-probe.js'), 'utf8');
+		const start = source.indexOf('const sanitize = value => {');
+		const end = source.indexOf('\n\t\t};', start) + 5;
+		assert.ok(start >= 0 && end > start + 5, 'Lifecycle sanitizer boundary missing');
+		const input = '-hubSessionId\nfixtureSensitive\nSession Id: fixtureSensitive\nCorrelation-Id: fixtureSensitive\nMachine Id: fixtureSensitive\nId: fixtureSensitive\nProduct: fixtureSensitive\nType: fixtureSensitive\nExpiration: fixtureSensitive\npublic diagnostic\n';
+		const output = require('vm').runInNewContext(source.slice(start, end) + '\nsanitize(input)', {
+			input, fixture: '/fixture', unityPath: '/editor/Unity', path, os: { homedir: () => '/home/fixture', hostname: () => 'fixtureHost', networkInterfaces: () => ({}) }
+		});
+		assert.ok(!output.includes('fixtureSensitive'), 'Lifecycle sanitizer leaked an identity or licensing value');
+		assert.ok(output.includes('public diagnostic'), 'Lifecycle sanitizer removed public diagnostics');
+		const capture = fs.readFileSync(path.join(root, 'results/unity7-lifecycle-2026-10-08T04-57-52-040Z/Editor.log'), 'utf8');
+		const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)).join('\n');
+		assert.ok(!/Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|^\s*(?:Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im.test(log), 'Lifecycle capture contains an identity or licensing value');
+	});
+}
+
 async function main() {
 	console.log('Unity Cursor Toolkit -- Runtime Tests\n');
 	console.log(`Using compiled output: ${outDir}`);
@@ -4809,6 +4828,7 @@ async function main() {
 	}
 
 	testCliEvidencePrivacy();
+	testCoreClrEvidencePrivacy();
 	testTypes();
 	testRuntimeCapabilities();
 	await testRuntimeConsumers();
