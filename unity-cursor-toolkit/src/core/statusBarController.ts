@@ -11,6 +11,7 @@ import * as vscode from 'vscode';
 import type { IStatusBarContributor } from './interfaces';
 import { ConnectionState } from './types';
 import { type UnityCliResult, UNITY_CLI_EXPECTED_VERSION } from './unityCliAdapter';
+import { getHotReloadMode, type RuntimeCapabilities } from './runtimeCapabilities';
 
 export class StatusBarController implements vscode.Disposable {
 
@@ -21,7 +22,7 @@ export class StatusBarController implements vscode.Disposable {
 	private readonly disposables: vscode.Disposable[] = [];
 	private projectName = '';
 
-	constructor(context: vscode.ExtensionContext) {
+	constructor(context: vscode.ExtensionContext, private readonly getRuntimeCapabilities?: () => RuntimeCapabilities) {
 		this.connectItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 102);
 		this.connectItem.command = 'unity-cursor-toolkit.startConnection';
 
@@ -66,11 +67,15 @@ export class StatusBarController implements vscode.Disposable {
 
 	public update(state: ConnectionState, port: number | null): void {
 		const name = this.projectName;
+		const mode = this.getReloadLabel();
 
 		switch (state) {
 			case ConnectionState.Connected:
-				this.connectItem.text = `$(circle-filled) Unity${name ? ` (${name})` : ''}`;
-				this.connectItem.tooltip = `Connected on port ${port}. Click to disconnect.`;
+				this.connectItem.text = `$(circle-filled) Unity${name ? ` (${name})` : ''}${mode ? ' | ' + mode : ''}`;
+				this.connectItem.tooltip = `Connected on port ${port}. Click to disconnect.`
+					+ (mode ? '\nReload mode: ' + mode + '.' : '')
+					+ (mode === 'Mono reload' ? ' The Editor selects asset refresh or IL patching from Play Mode and its preferences.'
+						: mode === 'Unity reload' ? ' CoreCLR uses Unity compilation; IL patching is unavailable.' : '');
 				this.connectItem.color = new vscode.ThemeColor('charts.green');
 				this.connectItem.backgroundColor = undefined;
 				this.connectItem.command = 'unity-cursor-toolkit.stopConnection';
@@ -108,14 +113,22 @@ export class StatusBarController implements vscode.Disposable {
 	}
 
 	public showCompilationResult(success: boolean, errors: number, warnings: number): void {
+		const mode = this.getReloadLabel();
 		if (success) {
 			const suffix = warnings > 0 ? ` (${warnings} warning${warnings > 1 ? 's' : ''})` : '';
-			this.connectItem.text = `$(check) Unity${suffix}`;
+			this.connectItem.text = `$(check) Unity${suffix}${mode ? ' | ' + mode : ''}`;
 			this.connectItem.color = new vscode.ThemeColor('charts.green');
 		} else {
-			this.connectItem.text = `$(error) Unity (${errors} error${errors > 1 ? 's' : ''})`;
+			this.connectItem.text = `$(error) Unity (${errors} error${errors > 1 ? 's' : ''})${mode ? ' | ' + mode : ''}`;
 			this.connectItem.color = new vscode.ThemeColor('errorForeground');
 		}
+	}
+
+	private getReloadLabel(): string {
+		if (!this.getRuntimeCapabilities) return '';
+		try {
+			return getHotReloadMode(this.getRuntimeCapabilities()) === 'il-patch' ? 'Mono reload' : 'Unity reload';
+		} catch { return 'Reload unavailable'; }
 	}
 
 	public dispose(): void {
