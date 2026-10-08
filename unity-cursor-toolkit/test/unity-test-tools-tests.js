@@ -16,7 +16,7 @@ function snapshot(args, status = 'completed', states = ['passed']) {
 	const summary = { total: tests.length, passed: 0, failed: 0, skipped: 0, inconclusive: 0, notRun: 0, durationMs: 2 };
 	for (const leaf of tests) summary[leaf.status === 'not_run' ? 'notRun' : leaf.status]++;
 	return { success: ['completed', 'listed'].includes(status), backend: 'bridge', runId: args.runId, status, editorPid: pid, editorVersion: version, mode: args.mode,
-		selection: tests.map(leaf => leaf.fullName), tests, summary,
+		selection: tests.map(leaf => leaf.fullName), tests, summary, workStopped: ['completed', 'listed', 'failed', 'cancelled', 'timed_out', 'error'].includes(status),
 		...(['failed', 'cancelled', 'timed_out', 'error'].includes(status) ? { error: { code: status === 'failed' ? 'test_runner_failed' : status, message: 'Owned test outcome.', recovery: 'Inspect the same Editor.' } } : {}) };
 }
 function fixture(options = {}) {
@@ -75,7 +75,7 @@ async function main() {
 	});
 	await test('invalid modes, filters, timeout and extra arguments refuse before transport', async () => {
 		const f = fixture();
-		for (const change of [{ mode: 'Player' }, { backend: 'guess' }, { filter: null }, { filter: { typo: 'x' } }, { filter: { test: '' } }, { filter: { test: 'a\nb' } }, { timeoutMs: 0 }, { timeoutMs: 600001 }, { dryRun: 'true' }, { command: 'quit' }]) error(await f.provider.execute('run_tests', { ...request, ...change }), 'invalid_test_request');
+		for (const change of [{ mode: 'Player' }, { backend: 'guess' }, { backend: null }, { backend: ['cli'] }, { backend: ['auto'] }, { backend: { toString: () => 'bridge' } }, { filter: null }, { filter: { typo: 'x' } }, { filter: { test: '' } }, { filter: { test: 'a\nb' } }, { timeoutMs: 0 }, { timeoutMs: 600001 }, { dryRun: 'true' }, { command: 'quit' }]) error(await f.provider.execute('run_tests', { ...request, ...change }), 'invalid_test_request');
 		assert.strictEqual(f.calls.length, 0); assert.strictEqual(f.cliCalls.length, 0);
 	});
 	for (const [name, capabilities, expected] of [
@@ -91,6 +91,8 @@ async function main() {
 	const invalidSnapshots = [
 		['wrong run ID', value => { value.runId = 'another-run'; }],
 		['terminal work still pending', value => { value.workStopped = false; }],
+		['missing stopped-work proof', value => { delete value.workStopped; }],
+		['nonboolean stopped-work proof', value => { value.workStopped = 'true'; }],
 		['wrong PID', value => { value.editorPid = pid + 1; }],
 		['wrong exact version', value => { value.editorVersion = '6000.3.9f1'; }],
 		['duplicate IDs', value => { value.tests[1].id = value.tests[0].id; }],
@@ -193,7 +195,7 @@ async function main() {
 		const result = await f.provider.execute('run_tests', { ...request, backend: 'cli', timeoutMs: 5 }); error(result, 'timed_out'); assert.strictEqual(result.status, 'timed_out'); assert.strictEqual(f.calls.length, 0);
 	});
 	await test('foreign or still-pending cancellation acknowledgement waits for correlated stopped status', async () => {
-		for (const mutate of [value => { value.editorPid = pid + 1; }, value => { value.workStopped = false; }]) {
+		for (const mutate of [value => { value.editorPid = pid + 1; }, value => { value.workStopped = false; }, value => { delete value.workStopped; }, value => { value.workStopped = 'true'; }]) {
 			const controller = new AbortController(), f = fixture({ handle: args => {
 				if (args.action === 'run') { controller.abort(); return { result: snapshot(args, 'running', ['not_run']) }; }
 				const value = snapshot(args, 'cancelled', ['not_run']); if (args.action === 'cancel') mutate(value); return { result: value };
