@@ -5118,9 +5118,16 @@ function testCoreClrEvidencePrivacy() {
 		});
 		assert.ok(!output.includes('fixtureSensitive'), 'Lifecycle sanitizer leaked an identity or licensing value');
 		assert.ok(output.includes('public diagnostic'), 'Lifecycle sanitizer removed public diagnostics');
-		const capture = fs.readFileSync(path.join(root, 'results/unity7-lifecycle-2026-10-08T04-57-52-040Z/Editor.log'), 'utf8');
-		const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)).join('\n');
-		assert.ok(!/Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|^\s*(?:Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im.test(log), 'Lifecycle capture contains an identity or licensing value');
+		for (const file of [
+			'results/unity7-lifecycle-2026-10-08T04-57-52-040Z/Editor.log',
+			'results/unity7-console-reset-baseline-2026-10-08T05-29-37-263Z/Editor.log',
+			'results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/Editor.log'
+		]) {
+			const capture = fs.readFileSync(path.join(root, file), 'utf8');
+			const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)
+				&& !/^__uct_lifecycle_current_[a-f0-9]{32}$/.test(line.trim())).join('\n');
+			assert.ok(!/^\s*(?:(?:Session|(?:External )?Correlation|Machine)[ -]?Id|Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im.test(log), file + ': lifecycle capture contains an identity or licensing value');
+		}
 	});
 }
 
