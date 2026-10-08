@@ -1,0 +1,23 @@
+{
+  "foundOwnedRegistry": true,
+  "marker": "bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json",
+  "pipe": "\\\\.\\pipe\\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49",
+  "error": {
+    "code": "relay_timeout",
+    "message": "tools/list exceeded 3000ms."
+  },
+  "exit": {
+    "exited": true,
+    "code": 0,
+    "signal": null
+  },
+  "childPid": 33080,
+  "archiveSha256": "e19d67ccc57145fbeecd3f3958babe9c1578cd0023e8830b391178ee49456a3e",
+  "relaySha256": "0cd32f102a64fc8585671ec3ce82a78046011452a2b6d5f655d90e26369e014b",
+  "packageVersion": "2.20.0-pre.1",
+  "childUserProfileOnly": true,
+  "editorLaunched": false,
+  "unityTraffic": false,
+  "expectedRegistry": "<fixture>/home/.unity/mcp/connections",
+  "primaryApiEvidence": "https://bun.com/reference/node/os/homedir"
+}
