@@ -23,6 +23,28 @@ silently replace the project's declared Editor.
 
 Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy ready-to-edit snippets for Cursor, Claude Code, VS Code, and Zed.
 
+## Tool Names and Origins
+
+The advertised catalog uses canonical names such as `toolkit.project_info`,
+`toolkit.read_console`, and `toolkit.run_tests`. Existing bare names remain
+aliases with the same arguments and content. Tool definitions include
+`_meta.origin`, `_meta.canonicalName`, and `_meta.aliases`; results include
+`_meta.origin` and `_meta.canonicalName`. The `unity://tools/catalog` resource
+lists the same metadata.
+
+Use a canonical name to select an origin explicitly. A bare-name collision
+selects the toolkit tool when present; other collisions return
+`ambiguous_tool` with canonical candidates. Unknown names return
+`unknown_tool` with the canonical catalog. Only toolkit providers ship in
+this registration path; these names do not enable Pipeline or Assistant.
+
+Read-only checks use the resolved canonical identity. Unclassified origins
+are refused before backend calls, including requests with `dryRun: true`.
+Toolkit dry-run plans, direct-only test tools, progress tokens, and cancellation
+request IDs retain their existing behavior. `batch_execute` accepts toolkit
+operation names and their bare aliases, and refuses test tools or foreign-origin
+operations at every nesting level before planning or forwarding.
+
 ## CoreCLR Migration Tool
 
 `coreclr_migration` is always read-only, including `action: "scan"`.
