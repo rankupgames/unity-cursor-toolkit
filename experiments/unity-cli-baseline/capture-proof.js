@@ -77,7 +77,7 @@ function scrub(text) {
     for (const { root: editorRoot, label } of editorRoots) text = text.replaceAll(editorRoot, label).replaceAll(editorRoot.replaceAll('\\', '\\\\'), label).replaceAll(editorRoot.replaceAll('\\', '/'), label);
     for (const [input, label] of [[process.env.USERNAME, '<os-user>'], [process.env.COMPUTERNAME, '<host>']]) if (input) text = text.replaceAll(input, label);
     return text.replace(/^-hubSessionId\r?\n[^\r\n]*/gim, "<redacted credential or identity log line>")
-        .replace(/^.*(?:licensing|SessionId|CorrelationId|MachineId|access[ -]?token|bearer|license[ -]?(?:serial|key|id)|hardware[ -]?id|user[ -]?id|account[ -]?id).*$/gim, "<redacted credential or identity log line>")
+        .replace(/^.*(?:licensing|Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|access[ -]?token|bearer|license[ -]?(?:serial|key|id)|hardware[ -]?id|user[ -]?id|account[ -]?id).*$/gim, "<redacted credential or identity log line>")
         .replace(/^\s*(?:Id|Product|Type|Expiration):[^\r\n]*$/gim, "<redacted licensing metadata>")
         .replace(/^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/gm, "<redacted credential or identity log line>");
 }

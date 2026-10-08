@@ -236,8 +236,10 @@ user, path, key, and credential values.
 
 Doctor checks local paths before network access, then uses bounded,
 non-interactive SSH probes. It neither trusts new host keys nor updates known
-keys, opens forwards, reuses control masters, or runs configured local commands.
+keys, opens forwards, reuses control masters, or runs `LocalCommand`.
 Existing alias, authentication, and proxy configuration still select the host.
+Use trusted SSH configuration: hooks such as `Match exec` and `ProxyCommand`
+can still run local commands, as described in the [OpenSSH manual](https://man.openbsd.org/ssh_config).
 The configured remote sidecar must be a trusted toolkit PowerShell script;
 `-VersionOnly` returns its contract version before launch setup. Doctor does
 not bypass the remote PowerShell execution policy. A replacement script is
