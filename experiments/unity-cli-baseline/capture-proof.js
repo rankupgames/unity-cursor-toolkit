@@ -78,6 +78,7 @@ function scrub(text) {
     for (const [input, label] of [[process.env.USERNAME, '<os-user>'], [process.env.COMPUTERNAME, '<host>']]) if (input) text = text.replaceAll(input, label);
     return text.replace(/^-hubSessionId\r?\n[^\r\n]*/gim, "<redacted credential or identity log line>")
         .replace(/^.*(?:licensing|SessionId|CorrelationId|MachineId|access[ -]?token|bearer|license[ -]?(?:serial|key|id)|hardware[ -]?id|user[ -]?id|account[ -]?id).*$/gim, "<redacted credential or identity log line>")
+        .replace(/^\s*(?:Id|Product|Type|Expiration):[^\r\n]*$/gim, "<redacted licensing metadata>")
         .replace(/^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/gm, "<redacted credential or identity log line>");
 }
 if (name === 'build-dirty-versioned' || name === 'build-versioned') { args.push('--versioning-strategy', 'semantic'); }
