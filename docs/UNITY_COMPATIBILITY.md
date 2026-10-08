@@ -12,7 +12,7 @@ Select one configured candidate and supply its existing Editor executable:
 
 UNITY_CURSOR_TOOLKIT_UNITY_PATH can supply the executable. The --package-cache option supplies an existing project Library/PackageCache containing Newtonsoft 3.2.2; the default is the repository sample cache. The --output option sets the JSON destination. Nothing installs or upgrades an Editor, authenticates an account, or changes a user project. Existing Unity licensing must permit the selected batch-mode Editor. A missing entitlement, compilation failure, missing dependency or timeout cannot pass.
 
-The runner currently supports Windows process and listener ownership checks. macOS candidates remain configured but this runner refuses their execution until equivalent process ownership checks are implemented. No legacy LTS exact version is configured. Unity 2019.4 execution remains blocked by the user's instruction. Unconfigured or unrun versions/platforms remain untested; a configured candidate is not a successful run.
+The runner currently supports Windows process and listener ownership checks. macOS candidates remain configured but this runner refuses their execution until equivalent process ownership checks are implemented. Unity 2019.4.40f1 remains a configured, unrun candidate. Unity 2019.4 execution remains blocked by the user's instruction. Unconfigured or unrun versions/platforms remain untested; a configured candidate is not a successful run.
 
 ## Isolation and checks
 

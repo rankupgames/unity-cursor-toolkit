@@ -60,7 +60,8 @@ async function runCase(editor, presence) {
 		return text.split(/\r?\n/).map(line => {
 			const followingHubValue = hideNext; hideNext = /-hubSessionId\s*$/i.test(line);
 			return followingHubValue || /licensing|license|access.token|auth.token|serial.number|session[\s_-]*id|correlation[\s_-]*id|machine[\s_-]*id/i.test(line)
-				|| (rawLog && /^[A-Za-z0-9_-]{32,}$/.test(line.trim()))
+				|| /^\s*(?:Id|Product|Type|Expiration):/i.test(line)
+				|| (rawLog && /^[A-Za-z0-9+\/_-]{32,}={0,2}$/.test(line.trim()))
 				? '<licensing, session or credential line omitted>' : line.trimEnd();
 		}).join('\n').trimEnd();
 	}

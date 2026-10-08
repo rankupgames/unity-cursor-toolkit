@@ -57,7 +57,9 @@ async function main() {
 		for (const [location, replacement] of [[fixture, '<disposable-project>'], [path.dirname(unity), '<unity-install>'], [os.homedir(), '<user-home>'], [os.hostname(), '<host>']]) {
 			value = value.split(location).join(replacement).split(location.split(path.sep).join('/')).join(replacement);
 		}
-		return value.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.id/i.test(line)
+		return value.replace(/^\s*-hubSessionId\r?\n[^\r\n]*/gmi, '<session argument omitted>')
+			.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.?id|session.?id|correlation.?id|bearer|hardware.?id|user.?id|account.?id/i.test(line)
+				|| /^\s*(?:Id|Product|Type|Expiration):/i.test(line) || /^[A-Za-z0-9+\/=_-]{32,}$/.test(line.trim())
 			? '<licensing or credential line omitted>' : line.replace(/\[IP\] [^ ]+/g, '[IP] <host-address>').trimEnd()).join('\n');
 	};
 	const smoke = fs.existsSync(result) ? JSON.parse(fs.readFileSync(result, 'utf8')) : null;
