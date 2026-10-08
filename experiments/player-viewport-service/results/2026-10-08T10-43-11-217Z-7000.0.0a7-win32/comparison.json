@@ -1,0 +1,200 @@
+{
+  "observedAt": "2026-10-08T10:52:56.733Z",
+  "passed": true,
+  "editorVersion": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "platform": "win32",
+  "runtimeCoreLibrary": "System.Private.CoreLib",
+  "buildTarget": "StandaloneWindows64",
+  "buildOptions": "None",
+  "scriptingBackend": "CoreCLR",
+  "apiCompatibility": "NET_Standard_2_0",
+  "renderPipelinePackage": "com.unity.render-pipelines.universal@17.7.0",
+  "graphics": {
+    "api": "Direct3D12",
+    "renderer": "NVIDIA GeForce RTX3080",
+    "driver": "32.0.16.1047"
+  },
+  "measurement": "2026-10-08-7000.0.0a7-win32-game-1280x720-30fps.json",
+  "baseline": {
+    "source": "docs/REMOTE_SHELL.md E3, lines327-332",
+    "version": "6000.3.9f1",
+    "platform": "macOS",
+    "observedDate": "2026-06-10",
+    "rawArtifactAvailable": false,
+    "documentedInvocation": "game1280x720@30 quality72 idle5s duration30s --hide"
+  },
+  "fieldDeltas": [
+    {
+      "field": "startupMs",
+      "historicalDocumented": 6572,
+      "currentObserved": 3088,
+      "arithmeticDelta": -3484,
+      "units": "ms"
+    },
+    {
+      "field": "timeToFirstFrameMs",
+      "historicalDocumented": 11692,
+      "currentObserved": 10011,
+      "arithmeticDelta": -1681,
+      "units": "ms"
+    },
+    {
+      "field": "streamStartToFirstFrameMs",
+      "historicalDocumented": 87,
+      "currentObserved": 321,
+      "arithmeticDelta": 234,
+      "units": "ms"
+    },
+    {
+      "field": "frameCount",
+      "historicalDocumented": 866,
+      "currentObserved": 889,
+      "arithmeticDelta": 23,
+      "units": "frames"
+    },
+    {
+      "field": "effectiveFps",
+      "historicalDocumented": 28.89,
+      "currentObserved": 29.92,
+      "arithmeticDelta": 1.03,
+      "units": "frames/s"
+    },
+    {
+      "field": "frameDataBytes",
+      "historicalDocumented": 84328,
+      "currentObserved": 85400,
+      "arithmeticDelta": 1072,
+      "units": "bytes"
+    },
+    {
+      "field": "idleRssAvg",
+      "historicalDocumented": 272.5,
+      "currentObserved": 398.9,
+      "arithmeticDelta": 126.4,
+      "units": "documented MB; current MiB"
+    },
+    {
+      "field": "idleRssMax",
+      "historicalDocumented": 284.5,
+      "currentObserved": 399,
+      "arithmeticDelta": 114.5,
+      "units": "documented MB; current MiB"
+    },
+    {
+      "field": "streamRssAvg",
+      "historicalDocumented": 199.5,
+      "currentObserved": 488.8,
+      "arithmeticDelta": 289.3,
+      "units": "documented MB; current MiB"
+    },
+    {
+      "field": "streamRssMax",
+      "historicalDocumented": 287.5,
+      "currentObserved": 503.3,
+      "arithmeticDelta": 215.8,
+      "units": "documented MB; current MiB"
+    }
+  ],
+  "cpu": {
+    "historicalEstimator": "macOS ps percent: decaying average; not lifetime/interval comparable",
+    "currentEstimator": "interval CPUseconds / elapsedSeconds *100; one-core units",
+    "idle": {
+      "historicalAvg": 25.5,
+      "historicalMax": 64,
+      "currentAvg": 1.2,
+      "currentMax": 3.094059405940594,
+      "delta": null
+    },
+    "stream": {
+      "historicalAvg": 40.3,
+      "historicalMax": 49.7,
+      "currentAvg": 52.1,
+      "currentMax": 115.56952662721893,
+      "delta": null
+    },
+    "reason": "N/A: different OS CPU estimators and platforms; one-core Windows units may exceed100%"
+  },
+  "newFieldsWithoutHistoricalRaw": {
+    "actualElapsedWindowSeconds": 30.020783099999996,
+    "streamWindowFps": 29.61,
+    "identityVerificationOverheadMs": 836,
+    "historicalValues": null
+  },
+  "semanticFrames": {
+    "scene": "probe-frames/scene.jpg",
+    "game": "probe-frames/game.jpg",
+    "measured": "game-first-frame.jpg",
+    "inspection": "All show lit cube, grid, horizon; no black/pink-only frame",
+    "sceneDrag": "Acknowledged by runtime; first frames byte-identical and captured before input. Visual response not proved."
+  },
+  "ownedCleanup": {
+    "buildEditorExit": {
+      "code": 0,
+      "signal": null,
+      "forcedCleanup": false
+    },
+    "buildQuitting": true,
+    "probePlayerExit": {
+      "code": 0,
+      "signal": null
+    },
+    "probeQuitting": true,
+    "measuredPlayerExit": {
+      "code": 0,
+      "signal": null
+    },
+    "measuredQuitting": true,
+    "ownedNativeProcesses": 0,
+    "ownedListenerCount": 0,
+    "disposableFixturesRemoved": 2,
+    "forcedSuccessfulRunCleanup": false
+  },
+  "limits": [
+    "Single measured fresh process after one functional player launch; cache/warm-state differs or is unknown in historical baseline.",
+    "Different Windows/RTX3080/D3D12 versus macOS hardware/graphics plus URP17.7 versus historical scene/render pipeline; arithmetic deltas do not isolate CoreCLR.",
+    "Historical raw JSON absent; only aggregate document values can be compared. Historical effectiveFps reported field retained; no raw timing reconciliation.",
+    "Historical document labels RSS MB; sampler conversion uses MiB. Raw historical values unavailable to independently verify unit provenance.",
+    "--hide requested using existing owned-PID best-effort hide; sustained hidden visibility not verified. No hidden-player readiness claim.",
+    "Fixture-only runtime identity and stop control; no production wire/schema additions.",
+    "First failed build remains captured separately:10:40:11 helper assembly-reference compile error; corrected fixture calls existing editor builder by reflection."
+  ],
+  "sourceHashes": {
+    "builder": "494b68e08dbd9219ba35a6533b329bd8cf9a64c79012dec77b4d77212cfa9ccb",
+    "server": "0f985825738782a4efa655de2b31004487150de148aad431278be4f8fa50df7f",
+    "fixtureHelper": "acc59bf8ec5cfead4701aac23533005eae5a5367c96a68463bf12bb4b9517023"
+  },
+  "postProofSourceDelta": {
+    "redactionOnly": true,
+    "nativeRerunNeeded": false,
+    "changes": [
+      {
+        "file": "unity-cursor-toolkit/scripts/build-viewport-service.js",
+        "observedSourceSha256": "02008067f10a071ae0199b3684f47867b918e4d20fb17cb9ae9ba577207f46ac",
+        "finalSourceSha256": "09c0da014ee3c11f5213d7ab9f4c6620cc92c52567cec2d0109d25b529bb2749",
+        "onlyChange": "Add ContinuationId to private log continuation field allowlist"
+      },
+      {
+        "file": "unity-cursor-toolkit/scripts/run-viewport-service.js",
+        "observedSourceSha256": "51084cca893d7c145e60b62907b1e8216674ed761abd315e47f8c43b54c5d199",
+        "finalSourceSha256": "656c39a7c732ed69960370522b8aedc0ace044d66e824094ef7af0f6258ed773",
+        "onlyChange": "Add ContinuationId to private log continuation field allowlist"
+      },
+      {
+        "file": "unity-cursor-toolkit/scripts/measure-viewport-service.js",
+        "observedSourceSha256": "7b0dfc7e2fbc560757582659edd616ae7a41b946e1084ca2c7a5e6948fa64022",
+        "finalSourceSha256": "8a6e3261028cd533325035c9c942bbe3acd6433ee62fa6b122bc06e13344fc59",
+        "onlyChange": "Add ContinuationId to private log continuation field allowlist"
+      }
+    ],
+    "observationsRetainOriginalSourceHashes": true
+  },
+  "launchContext": {
+    "firstFunctionalProcessStartupMs": 13828,
+    "timedFreshProcessStartupMs": 3088,
+    "firstFunctionalThenTimed": true,
+    "osGpuCacheState": "uncontrolled; same built executable already exercised",
+    "coldStartClaim": false,
+    "coreClrSpeedupClaim": false
+  }
+}

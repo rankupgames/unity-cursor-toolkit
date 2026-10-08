@@ -5266,7 +5266,10 @@ function testCoreClrEvidencePrivacy() {
 			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', '\n\t}', 'function sanitize(text) {'],
 			['../test-runner-bridge/run-bridge-proof.js', 'sanitize', '\n\t}', 'function sanitize(text, raw = false) {'],
 			['../test-runner-bridge/run-optional-compile-proof.js', 'sanitize', '\n\t}', 'function sanitize(text, rawLog = false) {'],
-			['../../unity-cursor-toolkit/scripts/run-editor-window-capture-spike.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function cleanString(value) {']
+			['../../unity-cursor-toolkit/scripts/run-editor-window-capture-spike.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function cleanString(value) {'],
+			['../../unity-cursor-toolkit/scripts/build-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
+			['../../unity-cursor-toolkit/scripts/run-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
+			['../../unity-cursor-toolkit/scripts/measure-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {']
 		]) {
 			const source = fs.readFileSync(path.join(root, file), 'utf8');
 			const start = source.indexOf(startMarker || 'const ' + symbol + ' = value => {');
@@ -5274,15 +5277,16 @@ function testCoreClrEvidencePrivacy() {
 			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');
 			const sanitize = require('vm').runInNewContext(source.slice(start, end) + '\n' + symbol, {
 				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', debugRoot: '/debugger', sanitizers: [], replacements: [], path,
-				project: '/fixture', ownedRoot: '/output', repo: '/repo', options: { unity: '/editor/Unity' },
+				project: '/fixture', projectRoot: '/fixture', proofRoot: '/proof', ownedRoot: '/output', repo: '/repo', repoRoot: '/repo', options: { unity: '/editor/Unity', proofRoot: '/proof' },
 				os: { homedir: () => '/home/fixture', hostname: () => 'fixtureHost', networkInterfaces: () => ({}) }
 			});
 			const output = sanitize(input);
 			assert.ok(!output.includes('fixtureSensitive'), file + ': sanitizer leaked an identity or licensing value');
 			assert.ok(output.includes('public diagnostic'), file + ': sanitizer removed public diagnostics');
-			if (file.endsWith('/run-editor-window-capture-spike.js')) {
+			if (symbol === 'sanitizeLog') {
 				const label = 'DOTNET_SYSTEM_GLOBALIZATION_USENLS', secret = 'private'.repeat(6);
 				assert.strictEqual(sanitize(label + '=1'), label + '=1');
+				if (file.endsWith('-viewport-service.js')) assert.ok(!sanitize('ContinuationId: fixtureSensitive').includes('fixtureSensitive'));
 				assert.ok(sanitize(label + '=' + secret).startsWith(label + '='));
 				for (const value of [label + '=' + secret, 'inline ' + secret + ' end', 'inline ' + secret + '== end', secret + '+/=']) {
 					assert.ok(!sanitize(value).includes(secret), 'viewport capture retained an opaque value');
