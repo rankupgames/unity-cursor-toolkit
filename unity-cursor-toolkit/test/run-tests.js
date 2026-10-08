@@ -5130,20 +5130,22 @@ function testCliEvidencePrivacy() {
 }
 
 function testCoreClrEvidencePrivacy() {
-	test('CoreCLR evidence removes identity and licensing continuations', () => {
+	test('Unity proof captures remove identity and licensing continuations', () => {
 		const root = path.resolve(__dirname, '../../experiments/coreclr-package-audit');
 		const input = '-hubSessionId\nfixtureSensitive\nSession Id: fixtureSensitive\nCorrelation-Id: fixtureSensitive\nMachine Id: fixtureSensitive\nId: fixtureSensitive\nProduct: fixtureSensitive\nType: fixtureSensitive\nExpiration: fixtureSensitive\npublic diagnostic\n';
-		for (const [file, symbol, endMarker] of [
+		for (const [file, symbol, endMarker, startMarker] of [
 			['run-lifecycle-probe.js', 'sanitize', '\n\t\t};'],
 			['run-render-smoke.js', 'clean', '\n\t};'],
-			['../coreclr-debug-probe/run-debug-probe.js', 'sanitize', '\n\t\t};']
+			['../coreclr-debug-probe/run-debug-probe.js', 'sanitize', '\n\t\t};'],
+			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', ' };'],
+			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', '\n\t}', 'function sanitize(text) {']
 		]) {
 			const source = fs.readFileSync(path.join(root, file), 'utf8');
-			const start = source.indexOf('const ' + symbol + ' = value => {');
+			const start = source.indexOf(startMarker || 'const ' + symbol + ' = value => {');
 			const end = source.indexOf(endMarker, start) + endMarker.length;
 			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');
 			const output = require('vm').runInNewContext(source.slice(start, end) + '\n' + symbol + '(input)', {
-				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', debugRoot: '/debugger', path,
+				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', debugRoot: '/debugger', sanitizers: [], path,
 				os: { homedir: () => '/home/fixture', hostname: () => 'fixtureHost', networkInterfaces: () => ({}) }
 			});
 			assert.ok(!output.includes('fixtureSensitive'), file + ': sanitizer leaked an identity or licensing value');
@@ -5155,16 +5157,82 @@ function testCoreClrEvidencePrivacy() {
 			'results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/Editor.log',
 			'results/unity7-urp-smoke-2026-10-08T05-58-37-071Z/Editor.log',
 			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/build.log',
-			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/editor.log'
+			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-22-05-773Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-25-10-927Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-36-43-227Z/editor.log'
 		]) {
 			const capture = fs.readFileSync(path.join(root, file), 'utf8');
 			const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)
 				&& !/^-+$/.test(line.trim()) && !/^__uct_lifecycle_current_[a-f0-9]{32}$/.test(line.trim())).join('\n');
-			assert.ok(!/^\s*(?:(?:Session|(?:External )?Correlation|Machine)[ -]?Id|Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im.test(log), file + ': CoreCLR capture contains an identity or licensing value');
+			assert.ok(!/^\s*(?:(?:Session|(?:External )?Correlation|Machine)[ -]?Id|Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im.test(log), file + ': Unity capture contains an identity or licensing value');
 		}
 	});
 }
 
+
+async function testAssistantRelayProof() {
+	const root = path.resolve(__dirname, '../../experiments/assistant-relay-probe');
+	const runner = fs.readFileSync(path.join(root, 'run-assistant-probe.js'), 'utf8');
+	const providerSource = fs.readFileSync(path.join(root, 'relay-provider.js'), 'utf8');
+	const localRequire = require('module').createRequire(path.join(root, 'run-assistant-probe.js'));
+	const providerHash = require('crypto').createHash('sha256').update(providerSource).digest('hex');
+	const valid = { passed: true, providerSha256: providerHash, allowed: { isError: false }, faults: [{}] };
+	await testAsync('Assistant proof refuses failed or unbound policy evidence before Editor work', async () => {
+		const evaluate = evidence => {
+			const context = { __dirname: root, process: { argv: ['node', 'probe', '--policy-evidence', 'policy-fixture'] },
+				require: name => name === 'fs' ? { ...fs, readFileSync: (file, ...args) => file === 'policy-fixture' ? JSON.stringify(evidence) : fs.readFileSync(file, ...args) } : localRequire(name) };
+			const end = runner.lastIndexOf('\nmain().catch(');
+			assert.ok(end > 0, 'Assistant runner entry boundary missing');
+			require('vm').runInNewContext(runner.slice(0, end), context);
+			return context.main();
+		};
+		for (const evidence of [
+			{ ...valid, passed: false }, { ...valid, providerSha256: undefined },
+			{ ...valid, providerSha256: '0'.repeat(64) }, { ...valid, allowed: { isError: true } },
+			{ ...valid, policyTests: { ...valid, passed: false } }
+		]) await assert.rejects(evaluate(evidence), /successful policy checks|current provider|does not match current provider/);
+		for (const evidence of [valid, { ...valid, policyTests: valid }])
+			await assert.rejects(evaluate(evidence), /--editor and --archive are required/);
+	});
+	test('Assistant proof requires normal relay exit before successful cleanup', () => {
+		const expression = runner.match(/record\.normalEditorExit = ([^\n]+);/);
+		assert.ok(expression, 'Assistant cleanup decision missing');
+		for (const [childExit, expected] of [
+			[{ exited: true, code: 0, signal: null }, true],
+			[{ exited: true, code: 9, signal: null }, false],
+			[{ exited: true, code: 0, signal: 'SIGTERM' }, false],
+			[{ exited: false, code: 0, signal: null }, false]
+		]) {
+			const result = require('vm').runInNewContext(expression[1], {
+				record: { editorExit: { code: 0 }, remainingOwnedProcesses: [], childExit }, relay: {},
+				fs: { existsSync: () => true }, path, proof: '/owned-proof'
+			});
+			assert.strictEqual(result, expected, 'Relay failure must block normal cleanup');
+		}
+	});
+	test('Assistant relay rejects malformed JSON-RPC without escaping pending-request cleanup', () => {
+		const relayModule = { exports: {} };
+		require('vm').runInNewContext(providerSource, { module: relayModule, require: localRequire, clearTimeout, setTimeout });
+		const { RelayClient } = relayModule.exports;
+		for (const value of [null, [], 'unexpected', 7]) {
+			let rejected;
+			const client = Object.assign(Object.create(RelayClient.prototype), {
+				buffer: '', messages: [], pending: new Map([[1, { reject: error => { rejected = error; } }]])
+			});
+			assert.doesNotThrow(() => client.receive(JSON.stringify(value) + '\n'));
+			assert.strictEqual(rejected?.code, 'relay_protocol_error');
+			assert.strictEqual(client.pending.size, 0);
+		}
+		let received;
+		const client = Object.assign(Object.create(RelayClient.prototype), {
+			buffer: '', messages: [], pending: new Map([[1, { resolve: value => { received = value; } }]])
+		});
+		client.receive(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { tools: [] } }) + '\n');
+		assert.strictEqual(JSON.stringify(received), '{"tools":[]}');
+		assert.strictEqual(client.failure, undefined);
+	});
+}
 
 async function testPipelineEligibility() {
 	const { checkPipelineEligibility, evaluatePipelineEligibility, PIPELINE_REGISTRY_URL } = require(path.join(outDir, 'core', 'pipelineEligibility'));
@@ -5262,6 +5330,7 @@ async function main() {
 
 	testCliEvidencePrivacy();
 	testCoreClrEvidencePrivacy();
+	await testAssistantRelayProof();
 	testTypes();
 	testRuntimeCapabilities();
 	await testRuntimeConsumers();
