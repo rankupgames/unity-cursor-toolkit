@@ -5160,7 +5160,10 @@ function testCoreClrEvidencePrivacy() {
 			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/editor.log',
 			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-22-05-773Z/editor.log',
 			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-25-10-927Z/editor.log',
-			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-36-43-227Z/editor.log'
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-36-43-227Z/editor.log',
+			'results/unity6-package-lifecycle-2026-10-08T06-48-05-022Z/Editor.log',
+			'results/unity6-package-lifecycle-2026-10-08T06-51-17-382Z/Editor.log',
+			'results/unity7-package-lifecycle-2026-10-08T06-53-39-341Z/Editor.log'
 		]) {
 			const capture = fs.readFileSync(path.join(root, file), 'utf8');
 			const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)

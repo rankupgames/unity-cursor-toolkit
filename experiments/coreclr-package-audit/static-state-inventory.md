@@ -15,7 +15,7 @@ A lock object is retained while the process runs. Replacing it can break synchro
 | HotReloadHandler | instanceMutex | Yes | Stop and OnBeforeAssemblyReload release and close the existing process mutex. |
 | HotReloadHandler | currentPort, lastSuccessfulPort, wasRunningBeforeReload, showDebugLogs | No | Preserve port and logging configuration. Process-scoped SessionState stores initial startup and active/stopped intent across code reload. Manual Stop remains stopped through reload and play; a fresh Editor starts automatically. |
 | HotReloadHandler | clientListLock, mainThreadActionsLock, ALTERNATIVE_PORTS | No | Stable locks and fixed port selection list. |
-| HotReloadHandler | isQuitting, reloadPrepared, lifecycleInitialized | Lifecycle guards | Native setup occurs once after code initialization on Unity 7. Reload preparation is idempotent and is cleared on initialization. Quitting is set before native cleanup and prevents later lifecycle callbacks from accessing Unity APIs. |
+| HotReloadHandler | isQuitting, reloadPrepared, lifecycleInitialized | Lifecycle guards | Asset-import workers skip bridge lifecycle initialization on Unity 2020.2+; they must not create a second listener. Native setup occurs once after code initialization on Unity 7. Reload preparation is idempotent and is cleared on initialization. Quitting is set before native cleanup and prevents later lifecycle callbacks from accessing Unity APIs. |
 | MCPBridge | _handlers, _initialized, isQuitting | Yes | Managed Reset clears before reload. Initialize rebuilds after reload unless quitting. EnteredPlayMode and EnteredEditMode reset then rebuild. |
 | ConsoleToCursor | entryBuffer, captureInitialized, isQuitting | Yes | InitializeCapture is idempotent. Shutdown detaches the callback before clearing under bufferLock and marks capture inactive, so late unload cannot repeat native teardown. Entered modes clear and rebind the callback: Unity 7 clears its log subscription on play exit. Resets do not log entries. |
 | ConsoleToCursor | bufferLock, autoStreamEnabled | No | Stable lock and process streaming configuration. Keep the existing main-thread logMessageReceived contract. |
@@ -79,6 +79,8 @@ the initial Unity 7 fixture used the removed Built-in Render Pipeline. The
 [URP smoke](results/unity7-urp-smoke-2026-10-08T05-58-37-071Z/observation.json)
 now passes with visible contrast using the installed Editor template and URP
 17.7.0, without capture-code changes. The final Unity 6.3 sample
-smoke passed the legacy reset/restart and game/viewport checks; it simulates the
-reload callbacks. Consumer-owned ILPatcher/AgentCommandRegistry lifetimes and
-actual Mono recompilation still need separate validation.
+smoke passed the legacy reset/restart and game/viewport checks; that earlier smoke simulated reload callbacks.
+
+The [actual Mono recompilation proof](results/unity6-package-lifecycle-2026-10-08T06-51-17-382Z/observation.json) now passes on 6000.3.9f1/mscorlib. It observes two real asset-import workers, three source recompiles, stable package MVID/port, handler and session resets, play transitions, persistent manual Stop, closed-port checks, failed-join refusal, and normal exit with stopped workers.
+The [old-code failure](results/unity6-package-lifecycle-2026-10-08T06-48-05-022Z/observation.json) records a different child Unity process listening on the bridge port after the owning Editor stopped. Skipping bridge initialization in asset-import workers removes this failure. The guard uses the API present in [Unity's 2020.2 source](https://github.com/Unity-Technologies/UnityCsReference/blob/2020.2/Modules/AssetDatabase/Editor/ScriptBindings/AssetDatabase.bindings.cs), behind the matching version define.
+The [Unity 7 regression proof](results/unity7-package-lifecycle-2026-10-08T06-53-39-341Z/observation.json) also passes with the guard. These proofs still use a selected free port because the host excludes the default range. Consumer-owned ILPatcher/AgentCommandRegistry lifetimes and selective-assembly retention remain unverified.

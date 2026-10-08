@@ -1,0 +1,1433 @@
+<licensing or credential line omitted>
+Built from '6000.3/staging' branch; Version is '6000.3.9f1 (7a9955a4f2fa) revision 8034645'; Using compiler version '194234433'; Build Type 'Release'
+OS: 'Windows 10  (10.0.19045) 64bit Enterprise' Language: 'en' Physical Memory: 32702 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+<licensing or credential line omitted>
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-08T06:47:38Z
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+  Version:                 1.18.3+d7ffd15
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+
+COMMAND LINE ARGUMENTS:
+<unity-executable>
+-batchmode
+-projectPath
+<disposable-project>
+-executeMethod
+ProductionLifecycleProbe.Run
+-logFile
+<disposable-project>\Editor.log
+Successfully changed project path to: <disposable-project>
+<disposable-project>
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Failed to start primary listening socket at (0.0.0.0:55504-55512).
+Player connection [11168]  Target information:
+
+Player connection [11168]  * "[IP] <host-address> [Port] 55511 [Flags] 2 [Guid] 3674016977 [EditorId] 3674016977 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [11168]  * "[IP] <host-address> [Port] 55511 [Flags] 2 [Guid] 3674016977 [EditorId] 3674016977 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [11168]  * "[IP] <host-address> [Port] 55511 [Flags] 2 [Guid] 3674016977 [EditorId] 3674016977 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [11168]  * "[IP] <host-address> [Port] 55511 [Flags] 2 [Guid] 3674016977 [EditorId] 3674016977 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [11168]  * "[IP] <host-address> [Port] 55511 [Flags] 2 [Guid] 3674016977 [EditorId] 3674016977 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Unable to join player connection multicast group (err: 10013).
+Player connection [11168] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-28160" after 0.4 seconds.
+<licensing or credential line omitted>
+Library Redirect Path: Library/
+Rebuilding Library because the asset database could not be found!
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.9f1 (7a9955a4f2fa)
+[Subsystems] Discovering subsystems at path <unity-install>/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path <disposable-project>/Assets
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 3080 (ID=0x2206)
+    Vendor:   NVIDIA
+    VRAM:     10053 MB
+    Driver:   32.0.16.1047
+Initialize mono
+Mono path[0] = '<unity-install>/Data/Managed'
+Mono path[1] = '<unity-install>/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = '<unity-install>/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56160
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: <unity-install>/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+<licensing or credential line omitted>
+Register platform support module: <unity-install>/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll
+<licensing or credential line omitted>
+Register platform support module: <unity-install>/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.dll
+Registered in 0.005163 seconds.
+- Loaded All Assemblies, in  0.473 seconds
+[usbmuxd] Start listen thread
+[usbmuxd] Listen thread started
+Native extension for iOS target not found
+Native extension for Android target not found
+Android Extension - Scanning For ADB Devices 2266 ms
+Native extension for WindowsStandalone target not found
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:False
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  2.802 seconds
+Domain Reload Profiling: 3274ms
+	BeginReloadAssembly (171ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (10ms)
+	RebuildCommonClasses (40ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (50ms)
+	LoadAllAssembliesAndSetupDomain (197ms)
+		LoadAssemblies (162ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (193ms)
+			TypeCache.Refresh (190ms)
+				TypeCache.ScanAssembly (176ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (1ms)
+	FinalizeReload (2802ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (2753ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (2370ms)
+			SetLoadedEditorAssemblies (5ms)
+			BeforeProcessingInitializeOnLoad (104ms)
+			ProcessInitializeOnLoadAttributes (187ms)
+			ProcessInitializeOnLoadMethodAttributes (86ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+<licensing or credential line omitted>
+Application.AssetDatabase Initial Refresh Start
+Package Manager log level set to [2]
+[Package Manager] Done resolving packages in 1.07 seconds
+<licensing or credential line omitted>
+[Package Manager] Lock file was created
+[Package Manager] Registered 3 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.nuget.newtonsoft-json@3.2.2 (location: <disposable-project>\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64)
+  Built-in packages:
+    com.unity.modules.jsonserialize@1.0.0 (location: <disposable-project>\Library\PackageCache\com.unity.modules.jsonserialize)
+  Embedded packages:
+    com.rankupgames.unity-cursor-toolkit@file:<disposable-project>\Packages\com.rankupgames.unity-cursor-toolkit (location: <disposable-project>\Packages\com.rankupgames.unity-cursor-toolkit)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.00 seconds
+[API Updater] Processing imported assemblies took 69 ms (0/0 assembly(ies)).
+Assembly Updater Post Process Assets time: 0.071398s
+[ScriptCompilation] Requested script compilation because: Assembly Definition File(s) changed
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://localhost:80
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Production
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: <disposable-project>\
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 36.1078ms
+Starting: <unity-install>\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aEDbg.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: <disposable-project>
+ExitCode: 4 Duration: 0s38ms
+[             ] Require frontend run.  Library/Bee/1900b0aEDbg.dag couldn't be loaded
+Starting: <unity-install>\Data\netcorerun\netcorerun.exe "<unity-install>\Data\Tools\BuildPipeline\ScriptCompilationBuildProgram.exe" "Library/Bee/1900b0aEDbg.dag.json" "Library/Bee/1900b0aEDbg-inputdata.json" "Library\Bee\buildprogram0.traceevents"
+WorkingDir: <disposable-project>
+DisplayProgressbar: Compiling Scripts
+ExitCode: 0 Duration: 0s232ms
+Starting: <unity-install>\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aEDbg.dag" --continue-on-failure --dagfilejson="Library\Bee\1900b0aEDbg.dag.json" --profile="Library/Bee/backend2.traceevents" ScriptAssemblies
+WorkingDir: <disposable-project>
+ExitCode: 0 Duration: 4s834ms
+Finished compiling graph: 192 nodes, 1113 flattened edges (1085 ToBuild, 10 ToUse), maximum node priority 37
+[  1/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ClusterInputModule.dll_690EABBB703CAEC6.mvfrm
+[  2/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ContentLoadModule.dll_488DE26B99EECB5D.mvfrm
+[  3/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ClusterRendererModule.dll_B1C39A8A45B90B1B.mvfrm
+[  4/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.CoreModule.dll_9546E0B327AB7375.mvfrm
+[  5/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.WindowsStandalone.Extensions.dll_AE498631FE54E7F6.mvfrm
+[  6/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.XRModule.dll_8F61B83ED72D5615.mvfrm
+[  7/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ARModule.dll_063E871A188C1027.mvfrm
+[  8/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.VideoModule.dll_A5C5E5F6B5459374.mvfrm
+[  9/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.CrashReportingModule.dll_DD382E7FD46C422D.mvfrm
+[ 10/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.dll_1A84228CB89DFC10.mvfrm
+[ 11/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.DSPGraphModule.dll_DE7345E62B7347F3.mvfrm
+[ 12/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.GIModule.dll_E5080B24571D9978.mvfrm
+[ 13/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.GameCenterModule.dll_9E0A68F581B9170D.mvfrm
+[ 14/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.GraphicsStateCollectionSerializerModule.dll_85B4042F120E8584.mvfrm
+[ 15/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.GridModule.dll_72B7FCA14000096C.mvfrm
+[ 16/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.HotReloadModule.dll_8EB8F88251AB3384.mvfrm
+[ 17/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.AdaptivePerformanceModule.dll_4F498613DB4576A3.mvfrm
+[ 18/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.AssetComplianceModule.dll_E4F1E80750B9E1C4.mvfrm
+[ 19/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.AccessibilityModule.dll_1CD01FD9E3582D37.mvfrm
+[ 20/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.Graphs.dll_47819BECBA83C87C.mvfrm
+[ 21/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.iOS.Extensions.Xcode.dll_422D42AD2CDC0FAD.mvfrm
+[ 22/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.LevelPlayModule.dll_DE404643C28D4AA1.mvfrm
+[ 23/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.iOS.Extensions.dll_9DCE7459761764A6.mvfrm
+[ 24/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.iOS.Extensions.Common.dll_C202A27AB48B210F.mvfrm
+[ 25/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.Apple.Extensions.Common.dll_87A907F195B77ECC.mvfrm
+[ 26/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.Android.Extensions.dll_EEAFA8CF276796B2.mvfrm
+[ 27/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/Unity.Android.Types.dll_DA3261A6BB41872A.mvfrm
+[ 28/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.SpriteShapeModule.dll_C8D8B685810E5B7A.mvfrm
+[ 29/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/Unity.Android.Gradle.dll_7ECF747DC7A07732.mvfrm
+[ 30/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.SpriteMaskModule.dll_8736DB85A328AC87.mvfrm
+[ 31/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.SharedInternalsModule.dll_A1C6D7103F0BBE5F.mvfrm
+[ 32/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.VirtualTexturingModule.dll_EF088785D7144DD3.mvfrm
+[ 33/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ShaderVariantAnalyticsModule.dll_84F5D3EFD7878A9C.mvfrm
+[ 34/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.VFXModule.dll_72D8D08707FCEAC6.mvfrm
+[ 35/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ShaderRuntimeModule.dll_38E8BB2FAC541AD1.mvfrm
+[ 36/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.JSONSerializeModule.dll_09289B3D5B8C10E6.mvfrm
+[ 37/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.RuntimeInitializeOnLoadManagerInitializerModule.dll_6E47CC2B26D02E60.mvfrm
+[ 38/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.RenderAs2DModule.dll_0C7D6AB9D3FEC580.mvfrm
+[ 39/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.InsightsModule.dll_72E8AD0D438FC651.mvfrm
+[ 40/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.PropertiesModule.dll_CB45A833F4A47B49.mvfrm
+[ 41/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.IdentifiersModule.dll_880111208DE4F188.mvfrm
+[ 42/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityCurlModule.dll_408CDBADE68C09EF.mvfrm
+[ 43/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityConsentModule.dll_A87751E0C64772FB.mvfrm
+[ 44/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityConnectModule.dll_D6D1BAB4B93CDCAB.mvfrm
+[ 45/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.PhysicsBackendPhysXModule.dll_E9ED0256F9470C67.mvfrm
+[ 46/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityAnalyticsCommonModule.dll_337496F60BE25B92.mvfrm
+[ 47/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.InputModule.dll_AD5EE5A09A68CD18.mvfrm
+[ 48/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.PerformanceReportingModule.dll_9835D9B1F1F9BD34.mvfrm
+[ 49/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.InputLegacyModule.dll_40BCA449635DD961.mvfrm
+[ 50/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.TLSModule.dll_F1FA3818318F8159.mvfrm
+[ 51/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.InputForUIModule.dll_A0BCC30EE1D9B3C9.mvfrm
+[ 52/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.TextRenderingModule.dll_4C4FBACD272FBD3D.mvfrm
+[ 53/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.TextCoreFontEngineModule.dll_3C180BDEF31E7D53.mvfrm
+[ 54/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.TextCoreTextEngineModule.dll_8400425082A23671.mvfrm
+[ 55/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.MarshallingModule.dll_57E027BFAF9450C2.mvfrm
+[ 56/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.MultiplayerModule.dll_2F1FA5B78433B0E8.mvfrm
+[ 57/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.LocalizationModule.dll_A75B760E07B8A1BF.mvfrm
+[ 58/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.SubstanceModule.dll_9EB03C161152CD4E.mvfrm
+[ 59/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.StreamingModule.dll_C20527CCC5FFCF40.mvfrm
+[ 60/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.VFXModule.dll_66B72E33984CDCC1.mvfrm
+[ 61/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.UmbraModule.dll_FB910DA47FDA2342.mvfrm
+[ 62/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.UnityConnectModule.dll_E97236A5BEB4DC00.mvfrm
+[ 63/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.VectorGraphicsModule.dll_0C6D4C65B897AFF9.mvfrm
+[ 64/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.UIElementsSamplesModule.dll_2D1B0F01C962C087.mvfrm
+[ 65/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.UIToolkitAuthoringModule.dll_F10F2518FEA74248.mvfrm
+[ 66/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.UIElementsModule.dll_F57436077258B746.mvfrm
+[ 67/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.UIBuilderModule.dll_93736B700ED3BC90.mvfrm
+[ 68/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.UIAutomationModule.dll_9ED918203644BFA6.mvfrm
+[ 69/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.TreeModule.dll_CFD2026F076B9D89.mvfrm
+[ 70/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.TilemapModule.dll_D921A1310854EC77.mvfrm
+[ 71/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.TextRenderingModule.dll_C00EC8A5AE373A18.mvfrm
+[ 72/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.TextCoreTextEngineModule.dll_05A0C6FD6FA477A6.mvfrm
+[ 73/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.TextCoreFontEngineModule.dll_BDB8908BE020BE88.mvfrm
+[ 74/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.TerrainModule.dll_3A2539AFF0980B6E.mvfrm
+[ 75/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.SubstanceModule.dll_E8CA4B2D2BD31B69.mvfrm
+[ 76/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.SpriteShapeModule.dll_C312E6F66ED44AF5.mvfrm
+[ 77/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.SpriteMaskModule.dll_86886E3DA0E4933C.mvfrm
+[ 78/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.SketchUpModule.dll_C620074C80793B62.mvfrm
+[ 79/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.ShaderCompilationModule.dll_38E97179AC66B557.mvfrm
+[ 80/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.ShaderFoundryModule.dll_B54B76AD7E8A054D.mvfrm
+[ 81/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.ShaderBuildSettingsModule.dll_576FCCBCAE44A7E5.mvfrm
+[ 82/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.SceneViewModule.dll_7D9AA15B913E106A.mvfrm
+[ 83/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.SceneTemplateModule.dll_766BA66A5BDA88BF.mvfrm
+[ 84/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.SafeModeModule.dll_DE0B21FC35479F4B.mvfrm
+[ 85/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.QuickSearchModule.dll_6B8E563969056E7E.mvfrm
+[ 86/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.PlayModeModule.dll_23FF13B5D410AEB2.mvfrm
+[ 87/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.PropertiesModule.dll_CA973AEBF26061FE.mvfrm
+[ 88/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.PresetsUIModule.dll_FA50F7359E739B61.mvfrm
+[ 89/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.Physics2DModule.dll_A430398431F55DB2.mvfrm
+[ 90/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.PhysicsModule.dll_1FDEBE411AD9C280.mvfrm
+[ 91/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.MediaModule.dll_4C7C7B1D7100005D.mvfrm
+[ 92/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.MultiplayerModule.dll_2959D62871F9A063.mvfrm
+[ 93/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.InAppPurchasingModule.dll_E24BE32E7E2662C3.mvfrm
+[ 94/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.HierarchyModule.dll_2C5EC52F59FA821E.mvfrm
+[ 95/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GridModule.dll_4F97294E97FA9E41.mvfrm
+[ 96/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GridAndSnapModule.dll_EA37BBAD93932F14.mvfrm
+[ 97/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GraphicsStateCollectionSerializerModule.dll_7CC0373F450F3C1F.mvfrm
+[ 98/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GraphViewModule.dll_3EEABE539C1B435C.mvfrm
+[ 99/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.EmbreeModule.dll_870C07D8209EBDD3.mvfrm
+[100/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.GIModule.dll_A6997994EBA065AD.mvfrm
+[101/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.dll_E7DFDBB45A2A6F2B.mvfrm
+[102/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Runtime.rsp2
+[103/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Runtime.UnityAdditionalFile.txt
+[104/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Runtime.dll.mvfrm.rsp
+[105/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Runtime.rsp
+[106/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.EditorToolbarModule.dll_52CC35AC5CEDDE87.mvfrm
+[107/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.DiagnosticsModule.dll_E07ED52C102E7225.mvfrm
+[108/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.DeviceSimulatorModule.dll_AC16D818D5FDFD97.mvfrm
+[109/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.CoreBusinessMetricsModule.dll_CF347F8E018CA59D.mvfrm
+[110/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.ClothModule.dll_E7A4BE86CCD056B3.mvfrm
+[111/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.CoreModule.dll_72260D607FA6084A.mvfrm
+[112/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.SubsystemsModule.dll_F1E441E77170949A.mvfrm
+[113/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEditor.BuildProfileModule.dll_EE38292F99D0F6E6.mvfrm
+[114/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.TerrainModule.dll_2C9FF25A55A6F2B3.mvfrm
+[115/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ScreenCaptureModule.dll_231048C26FF83D48.mvfrm
+[116/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.PhysicsModule.dll_125976EB7FE8A9C5.mvfrm
+[117/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.Physics2DModule.dll_5A162A6D17750F97.mvfrm
+[118/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.NVIDIAModule.dll_DF1D1FBF7E3BD881.mvfrm
+[119/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ParticleSystemModule.dll_304A77CC427DCDBB.mvfrm
+[120/189    0s] MovedFromExtractor-Combine Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Runtime.dll.mvfrm
+[121/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ImageConversionModule.dll_1DB5983AC7DDC30F.mvfrm
+[122/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityWebRequestAssetBundleModule.dll_B386D22C0CA3B3C8.mvfrm
+[123/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.HierarchyModule.dll_E244B6183F7A3403.mvfrm
+[123/189    0s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Runtime.dll (+2 others) [CacheHit 0c1e8134f004419792d9f1190c47f05b00000000000000000000000000000005]
+[124/189   1791442068s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Runtime.dll (+2 others)
+[126/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.HierarchyCoreModule.dll_202BAEDBCAFE0952.mvfrm
+[127/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.DirectorModule.dll_D921E47CB91276D2.mvfrm
+[128/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.ClothModule.dll_ADD17AEAFE4D8758.mvfrm
+[129/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.AudioModule.dll_46E91DF02430A874.mvfrm
+[130/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.AssetBundleModule.dll_AF77892ACB6C2370.mvfrm
+[131/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.AnimationModule.dll_0D703A7C76781802.mvfrm
+[132/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UmbraModule.dll_C1BDCA08B15753E7.mvfrm
+[133/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.AndroidJNIModule.dll_73BD1EDABB78261C.mvfrm
+[134/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UIModule.dll_483F604417B5B70A.mvfrm
+[135/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UIElementsModule.dll_F622A34F749CD091.mvfrm
+[136/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.IMGUIModule.dll_7F48BD56EA623C55.mvfrm
+[137/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.AMDModule.dll_F36A74B30A5F0606.mvfrm
+[138/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.AdaptivePerformanceModule.dll_0FD91ACA168AC9A8.mvfrm
+[139/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.AIModule.dll_4CCBC216BB6EB15E.mvfrm
+[140/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.XRModule.dll_CDD049CE42AA89E0.mvfrm
+[141/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.AccessibilityModule.dll_A91112015C50B05C.mvfrm
+[142/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.VRModule.dll_9B1186C9B9703C82.mvfrm
+[143/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.WindModule.dll_0B95BBDBB8E1F1DE.mvfrm
+[144/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.VideoModule.dll_6BF2A25AE6C2C419.mvfrm
+[145/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.VehiclesModule.dll_50E4DDFC333C466D.mvfrm
+[146/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.VectorGraphicsModule.dll_C791AE00D4844404.mvfrm
+[147/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Editor.rsp2
+[148/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Editor.UnityAdditionalFile.txt
+[149/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityWebRequestTextureModule.dll_C43BB63F2BBB4F21.mvfrm
+[150/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Editor.dll.mvfrm.rsp
+[151/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Editor.rsp
+[152/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UCT.ReloadableProof.UnityAdditionalFile.txt
+[153/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UCT.CoordinatorProof.UnityAdditionalFile.txt
+[154/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UCT.CoordinatorProof.rsp2
+[155/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UCT.ReloadableProof.dll.mvfrm.rsp
+[156/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UCT.CoordinatorProof.dll.mvfrm.rsp
+[157/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UCT.ReloadableProof.rsp2
+[158/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Vendor.Unterm.Editor.UnityAdditionalFile.txt
+[159/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Vendor.Unterm.Editor.rsp2
+[160/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Vendor.Unterm.Editor.dll.mvfrm.rsp
+[161/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UCT.CoordinatorProof.rsp
+[162/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UCT.ReloadableProof.rsp
+[163/189    0s] WriteText Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Vendor.Unterm.Editor.rsp
+[164/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityWebRequestWWWModule.dll_4EC287AC7261F2DD.mvfrm
+[165/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityWebRequestModule.dll_2F549FE4D2D25D8E.mvfrm
+[166/189    0s] CopyFiles Library/ScriptAssemblies/UnityCursorToolkit.Runtime.dll
+[167/189    0s] CopyFiles Library/ScriptAssemblies/UnityCursorToolkit.Runtime.pdb
+[168/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityAnalyticsModule.dll_4FE9E895EEA51FB7.mvfrm
+[169/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.UnityWebRequestAudioModule.dll_10322D90786487CC.mvfrm
+[170/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.TerrainPhysicsModule.dll_30C5209F5BC0C848.mvfrm
+[171/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityEngine.TilemapModule.dll_CB9C59DB6D63D3BC.mvfrm
+[172/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityCursorToolkit.Runtime.ref.dll_734F2AAE8977A08B.mvfrm
+[173/189    0s] MovedFromExtractor-Combine Library/Bee/artifacts/1900b0aEDbg.dag/UCT.CoordinatorProof.dll.mvfrm
+[174/189    0s] MovedFromExtractor-Combine Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Vendor.Unterm.Editor.dll.mvfrm
+[175/189    0s] MovedFromExtractor-Combine Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Editor.dll.mvfrm
+[174/189    0s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Vendor.Unterm.Editor.dll (+2 others) [CacheHit 547c039776561268943ae5929e6ef50e00000000000000000000000000000005]
+[176/189   1791442069s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Vendor.Unterm.Editor.dll (+2 others)
+[178/189    0s] CopyFiles Library/ScriptAssemblies/UnityCursorToolkit.Vendor.Unterm.Editor.pdb
+[176/189    0s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Editor.dll (+2 others) [CacheHit c1feb4ae8757f89fd0253b72fb1eee4c00000000000000000000000000000005]
+[179/189   1791442069s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UnityCursorToolkit.Editor.dll (+2 others)
+[181/189    0s] CopyFiles Library/ScriptAssemblies/UnityCursorToolkit.Vendor.Unterm.Editor.dll
+[182/189    0s] CopyFiles Library/ScriptAssemblies/UnityCursorToolkit.Editor.pdb
+[183/189    0s] MovedFromExtractor Library/Bee/artifacts/mvdfrm/UnityCursorToolkit.Editor.ref.dll_3A11B78A15CF6FA0.mvfrm
+[184/189    0s] MovedFromExtractor-Combine Library/Bee/artifacts/1900b0aEDbg.dag/UCT.ReloadableProof.dll.mvfrm
+[185/189    0s] CopyFiles Library/ScriptAssemblies/UnityCursorToolkit.Editor.dll
+[186/189    1s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UCT.ReloadableProof.dll (+2 others)
+[187/189    0s] CopyFiles Library/ScriptAssemblies/UCT.ReloadableProof.pdb
+[188/189    0s] CopyFiles Library/ScriptAssemblies/UCT.ReloadableProof.dll
+[189/189    1s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UCT.CoordinatorProof.dll (+2 others)
+[190/189    0s] CopyFiles Library/ScriptAssemblies/UCT.CoordinatorProof.pdb
+[191/189    0s] CopyFiles Library/ScriptAssemblies/UCT.CoordinatorProof.dll
+*** Tundra build success (4.80 seconds), 185 items updated, 189 evaluated
+AssetDatabase: script compilation time: 5.573732s
+Begin MonoManager ReloadAssembly
+Symbol file LoadedFromMemory is not a mono symbol file
+- Loaded All Assemblies, in  1.147 seconds
+Start importing Assets using Guid(00000000000000001000000000000000) (DefaultImporter) -> (artifact id: '4b55c7cb15071bfc086d0e52a7664a41') in 0.016135 seconds
+Start importing ProjectSettings/InputManager.asset using Guid(00000000000000002000000000000000) (LibraryAssetImporter) -> (artifact id: '3d278bdfa729973ecf92c670ca181c88') in 0.0018875 seconds
+Start importing ProjectSettings/TagManager.asset using Guid(00000000000000003000000000000000) (LibraryAssetImporter) -> (artifact id: '4aa03ef27a83f311e598313a3ec2fbc3') in 0.0018886 seconds
+Start importing ProjectSettings/ProjectSettings.asset using Guid(00000000000000004000000000000000) (LibraryAssetImporter) -> (artifact id: 'a0fd01e3ad781929693a4a9ec2bc1178') in 0.0026571 seconds
+Start importing ProjectSettings/AudioManager.asset using Guid(00000000000000006000000000000000) (LibraryAssetImporter) -> (artifact id: '7bb8de31f311db17f0fefe3abfd595f1') in 0.001351 seconds
+Start importing ProjectSettings/TimeManager.asset using Guid(00000000000000007000000000000000) (LibraryAssetImporter) -> (artifact id: '52c307e924e96ceef905bcc2cea85a00') in 0.0013162 seconds
+Start importing ProjectSettings/DynamicsManager.asset using Guid(00000000000000008000000000000000) (LibraryAssetImporter) -> (artifact id: '1589700bfc0c355f73a0335651f82f22') in 0.0014031 seconds
+Start importing ProjectSettings/QualitySettings.asset using Guid(00000000000000009000000000000000) (LibraryAssetImporter) -> (artifact id: '3d22d777d340243128ed3ffa349fb55a') in 0.0019018 seconds
+Start importing ProjectSettings/EditorBuildSettings.asset using Guid(0000000000000000b000000000000000) (LibraryAssetImporter) -> (artifact id: '1923232d45cb936aef47cec131f33975') in 0.0014391 seconds
+Start importing ProjectSettings/EditorSettings.asset using Guid(0000000000000000c000000000000000) (LibraryAssetImporter) -> (artifact id: 'fdcca38f5f1944c9bec0b9f00395ab39') in 0.0012915 seconds
+Start importing ProjectSettings/NavMeshAreas.asset using Guid(00000000000000004100000000000000) (LibraryAssetImporter) -> (artifact id: '4ba0a6bb5cc18b1619eb3b3f4ce570d1') in 0.0012733 seconds
+Start importing ProjectSettings/Physics2DSettings.asset using Guid(00000000000000005100000000000000) (LibraryAssetImporter) -> (artifact id: 'bb8ce7f5b2d944741959db20200075a7') in 0.001302 seconds
+Start importing ProjectSettings/GraphicsSettings.asset using Guid(00000000000000006100000000000000) (LibraryAssetImporter) -> (artifact id: 'b7a369a9c0780e3bb2635b3b3f88ffe1') in 0.0014724 seconds
+Start importing ProjectSettings/ClusterInputManager.asset using Guid(00000000000000007100000000000000) (LibraryAssetImporter) -> (artifact id: '5a028a71a6163b7bc9a46219c48662ec') in 0.0013867 seconds
+Start importing ProjectSettings/UnityConnectSettings.asset using Guid(0000000000000000a100000000000000) (LibraryAssetImporter) -> (artifact id: '5a6e69f8200d884ded3f19f546ea756a') in 0.0013067 seconds
+Start importing ProjectSettings/PresetManager.asset using Guid(0000000000000000b100000000000000) (LibraryAssetImporter) -> (artifact id: '669bd2cb5cdf99ef516d1350fa42393e') in 0.0012273 seconds
+Start importing ProjectSettings/VFXManager.asset using Guid(0000000000000000c100000000000000) (LibraryAssetImporter) -> (artifact id: 'dd6732d958402095937fd19a0cecb735') in 0.0013349 seconds
+Start importing ProjectSettings/VersionControlSettings.asset using Guid(0000000000000000d100000000000000) (LibraryAssetImporter) -> (artifact id: 'b89f810c452b248c014f182ae5caa680') in 0.0013498 seconds
+Start importing ProjectSettings/MemorySettings.asset using Guid(0000000000000000f100000000000000) (LibraryAssetImporter) -> (artifact id: '19f032dc933bd79e61da5c81f7ddd1ac') in 0.0017868 seconds
+Start importing ProjectSettings/MultiplayerManager.asset using Guid(00000000000000000200000000000000) (LibraryAssetImporter) -> (artifact id: 'f060d13f2990d90fc35c577bb4111c66') in 0.0014018 seconds
+Start importing Library/BuildInstructions using Guid(00000000000000002300000000000000) (DefaultImporter) -> (artifact id: 'ade3aeda13ad9960ede0e143cb33502a') in 0.0005613 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json using Guid(a5a20a36fab5ed4fc023d92d2ac579fb) (DefaultImporter) -> (artifact id: '8924f0c4d456c83d7fc9da5dfd1ea2cd') in 0.0004392 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit using Guid(f65fff426f63f3b78a4aba748e232953) (DefaultImporter) -> (artifact id: '60f7e9cacf3cebca2f2e64041d6276ef') in 0.0004093 seconds
+Start importing Assets/Reloadable using Guid(195be8f7a3cbc6a4799d371e67eec93f) (DefaultImporter) -> (artifact id: '7be1fb8527ad40a54fa45692a7a32a39') in 0.0073372 seconds
+Start importing Assets/Editor using Guid(cc4db9121eae4ac42aa3573c154ed42e) (DefaultImporter) -> (artifact id: '69bf09fd2e3d2e79b598d8ecd056a6dd') in 0.0068505 seconds
+Start importing Packages/com.unity.modules.jsonserialize using Guid(fc3a810351931f5e6183e16b9beb5563) (DefaultImporter) -> (artifact id: 'ae149b8f46567b37c6b77b16bb572fe8') in 0.0006142 seconds
+Start importing Assets/Reloadable/Editor using Guid(6442618e4de683e43916922758f0a17e) (DefaultImporter) -> (artifact id: '95e4720c911db50351fd22f372dcf0e0') in 0.0068295 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Runtime using Guid(2884aff135c04797b98ac6a7baae96a0) (DefaultImporter) -> (artifact id: 'cfda36c1c54766e6b110f2f86d9de1e1') in 0.0006654 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor using Guid(d94783244c6e4660b6eaf5d758689095) (DefaultImporter) -> (artifact id: '2c8d90b43d23f510ed6a72c950175c7d') in 0.0004799 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/Runtime using Guid(de1c7164adaf49d47b5de31c140713c9) (DefaultImporter) -> (artifact id: '62b439fe2e630c59570dd4a18cb78d8e') in 0.0005026 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/Runtime/AOT using Guid(14f21d7a1e53a8c4e87b25526a7eb63c) (DefaultImporter) -> (artifact id: '11b65be1037953c6858c3c8ca391f751') in 0.0004789 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReload using Guid(4532e4647c294bdfafd0e54669a436db) (DefaultImporter) -> (artifact id: '6f4dc9e93fc48fb36b274d0e792a8567') in 0.0004548 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty using Guid(694e3d94058548e2955ce8cfae730f7d) (DefaultImporter) -> (artifact id: 'a19617da58efaa7990f45b3e4781f3a9') in 0.0004593 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/Core using Guid(7b6ba7a195b84c30b1b91bca0fef2af6) (DefaultImporter) -> (artifact id: '149ff20c890e74bade2b686b76ec67b1') in 0.0004545 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP using Guid(bd5db42e4e9c409a80277cd5f146b259) (DefaultImporter) -> (artifact id: '2cf35e8617a202a935907db2e25068fe') in 0.000451 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Runtime/AgentCommands using Guid(de3e809db2604792ac05e9c7fd921bc4) (DefaultImporter) -> (artifact id: 'dcaeb570f403324687975e55a5e23f69') in 0.0004573 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/Debug using Guid(ff9bda7e3a17431ca27204d25821bc27) (DefaultImporter) -> (artifact id: '03b2ac3785a1d66de03497a545dd7d57') in 0.0004735 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm using Guid(4490c29dcbe74e27a826a3c83c3fc20f) (DefaultImporter) -> (artifact id: '65a6ed3e8565f804cd2df46cfe048a67') in 0.0004682 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins using Guid(dd68f9679e6024f099f2b820e5b7d378) (DefaultImporter) -> (artifact id: 'aa295f13221217b1334610a13708eaf4') in 0.0005485 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/Windows using Guid(f5d48bd5c22a4fd0bd7b45fa406f62b6) (DefaultImporter) -> (artifact id: 'bd6cc1c181ac6169539541759aa04a19') in 0.0004804 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/macOS using Guid(f8efbb0ae4b8541f09f9bed5127879dc) (DefaultImporter) -> (artifact id: '13a3575b0f7483cd351ae4a201f034bd') in 0.0004586 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/Roslyn using Guid(1f3e5d7c9b1a43f5e7d9c1b3a5f7e9d2) (DefaultImporter) -> (artifact id: '9411d04d6e9930f31c1a132d5d8b75f5') in 0.0004534 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/Windows/x86_64 using Guid(e4002e2d63764f1bb99940c8ac6461f7) (DefaultImporter) -> (artifact id: 'cf055a48d609857647783dddf49f877b') in 0.0004602 seconds
+Start importing Assets/Editor/UCT.CoordinatorProof.asmdef using Guid(3021f9eadcc701647b3eae62c2162024) (AssemblyDefinitionImporter) -> (artifact id: 'd4d8f19a7cfaf928c13e7010db2d5696') in 0.0073424 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/UnityCursorToolkit.Editor.asmdef using Guid(b9d5388c918f4d479631810f16ab7b58) (AssemblyDefinitionImporter) -> (artifact id: 'f76bf506dece2589b71e4cac8a5b0499') in 0.001467 seconds
+Start importing Assets/Reloadable/Editor/UCT.ReloadableProof.asmdef using Guid(1ba9ef7cd9748bf48a1264d72fd88981) (AssemblyDefinitionImporter) -> (artifact id: 'cf0ad4fbe9ef522174e8ef722f8825a5') in 0.0074514 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Unterm.Editor.asmdef using Guid(6b5fe621993064bc2b38e272147eb65f) (AssemblyDefinitionImporter) -> (artifact id: '339085bc63257e063255202a4c44bc26') in 0.0016657 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Runtime/UnityCursorToolkit.Runtime.asmdef using Guid(ce130a53350d49668d238b0fd3a855e3) (AssemblyDefinitionImporter) -> (artifact id: '883e3190de3e9960e1a2cc9bdcf9ccbd') in 0.001417 seconds
+Start importing Packages/com.unity.modules.jsonserialize/package.ModuleCompilationTrigger using Guid(e6a135e3ea9cb46795d1b0e05ac3e1e5) (DefaultImporter) -> (artifact id: '8d26f1c211bce77f7cf17eccccd57b0d') in 0.0272322 seconds
+Refreshing native plugins compatible for Editor in 0.66 ms, found 1 plugins.
+Native extension for iOS target not found
+Native extension for Android target not found
+Native extension for WindowsStandalone target not found
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+Restarting Unity Hot Reload server after domain reload...
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:StartWithoutMutex () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:250)
+UnityCursorToolkit.HotReloadHandler:OnAfterAssemblyReload () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:549)
+UnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 250)
+
+[MCPBridge] Registered 17 tool(s): uct_lifecycle_fixture, manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, build_trigger, editor_validation, game_command, project_info, manage_scene, manage_gameobject, manage_component, coreclr_migration, viewport_stream, profiler_snapshot
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.MCP.MCPBridge:Initialize () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs:128)
+UnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs Line: 128)
+
+- Finished resetting the current domain, in  0.927 seconds
+Domain Reload Profiling: 2073ms
+	BeginReloadAssembly (344ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (20ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (146ms)
+	RebuildCommonClasses (39ms)
+	RebuildNativeTypeToScriptingClass (14ms)
+	initialDomainReloadingComplete (25ms)
+	LoadAllAssembliesAndSetupDomain (724ms)
+		LoadAssemblies (742ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (116ms)
+			TypeCache.Refresh (111ms)
+				TypeCache.ScanAssembly (100ms)
+			BuildScriptInfoCaches (3ms)
+			ResolveRequiredComponents (0ms)
+	FinalizeReload (927ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (390ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (42ms)
+			SetLoadedEditorAssemblies (3ms)
+			BeforeProcessingInitializeOnLoad (145ms)
+			ProcessInitializeOnLoadAttributes (159ms)
+			ProcessInitializeOnLoadMethodAttributes (37ms)
+			AfterProcessingInitializeOnLoad (2ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (10ms)
+Start importing Library/BuildPlayer.prefs using Guid(00000000000000005000000000000000) (DefaultImporter) -> (artifact id: '083d37eb6b0e82b8f5c1ec86344d848d') in 0.0044883 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/Runtime/Newtonsoft.Json.pdb using Guid(7d34f3cc1c0185b4990cf748e55a8688) (DefaultImporter) -> (artifact id: '1cbc4390bbaf31a69fa104bed1286f91') in 0.0034999 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/Runtime/AOT/Newtonsoft.Json.pdb using Guid(1396f5bdc432cd247ac75b97a31e4d1a) (DefaultImporter) -> (artifact id: '54274fc98b839c9a8653151473d087b3') in 0.0005523 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/macOS/unterm-debugger using Guid(863b76ae04ad815c6731490daa3f7fed) (DefaultImporter) -> (artifact id: '836b5b793c4af39fb15227e16e5208f9') in 0.0004886 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/Windows/x86_64/unterm-debugger.exe using Guid(cb9a07383c2428e7f826a00406c94bae) (DefaultImporter) -> (artifact id: '477cf9b0d1746652dab835ac2c9d8294') in 0.0032329 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Third Party Notices.md using Guid(20f6b63f56634b23b38fdb8ac991b109) (TextScriptImporter) -> (artifact id: '548a66d4d7214406cb99359302b25f8d') in 0.0018255 seconds
+Start importing Packages/com.unity.modules.jsonserialize/package.json using Guid(40bf3cec17fa0b49fe04443c8332d638) (PackageManifestImporter) -> (artifact id: '4c54406cdf6f27a0dfd74653ac191550') in 0.0016411 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/README.md using Guid(51bd45ca4f0f28342a12f4b0c80e9f4f) (TextScriptImporter) -> (artifact id: '48368251d4d96bf775df1340ab32befd') in 0.0018768 seconds
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+Start importing Packages/com.unity.nuget.newtonsoft-json/Third Party Notices.md using Guid(9422d9b1fde3cf644b4a0dddd10a7348) (TextScriptImporter) -> (artifact id: '5554922647665a391624980353b0a837') in 0.0014597 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/CHANGELOG.md using Guid(16f24f695cc06684991baf4b1bc6ad22) (TextScriptImporter) -> (artifact id: '096cf39e518db792a986b5a82794ade3') in 0.0013205 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/link.xml using Guid(a8a90c35b04530c4f971aaef6fdf3612) (TextScriptImporter) -> (artifact id: '5807b3eaf8f2b7f4cc31155895c29cd0') in 0.0013305 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/package.json using Guid(f8d4e5c2f2df25449ae8c391afbe5114) (PackageManifestImporter) -> (artifact id: '1ebf05e4d0c977e753304024401e5845') in 0.0016132 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/CHANGELOG.md using Guid(19d2dbb0dbc844de83b0fadd57d533ea) (TextScriptImporter) -> (artifact id: '22e9fe8df4ef1a485a88796ff4708b3d') in 0.0014219 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/package.json using Guid(39a2d10e390842ffba3db528643e3a04) (PackageManifestImporter) -> (artifact id: '6c0054b4d2da01959f521f90be7c9576') in 0.0013406 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Third Party Notices.md using Guid(0adfe9bcc0fa4628b4f8a7c7a6656e07) (TextScriptImporter) -> (artifact id: 'eafdab2a78dd6cd590474ea377508c6f') in 0.0015429 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/Roslyn/THIRD-PARTY-NOTICE.md using Guid(2a4c6e8f0b2d44f6a8c0e2b4d6f8a0c3) (TextScriptImporter) -> (artifact id: '0bba1879c04b777577eac1fdcd1aa3b6') in 0.0015814 seconds
+Start importing Packages/com.unity.nuget.newtonsoft-json/Runtime/AOT/Newtonsoft.Json.xml using Guid(4c5640e415edbe342bbe339175268dfc) (TextScriptImporter) -> (artifact id: 'c7e6a9d03a5641b71f38638e5a36f35f') in 0.0023822 seconds
+Start importing Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/VENDOR.json using Guid(6d1fbace684c418f98c51b4606d65542) (TextScriptImporter) -> (artifact id: '3ef996a3cd7610a8ff597a828a7d8c7d') in 0.0016612 seconds
+<licensing or credential line omitted>
+Start importing Packages/com.unity.nuget.newtonsoft-json/Runtime/Newtonsoft.Json.xml using Guid(fed01095b990a354289891ead909238f) (TextScriptImporter) -> (artifact id: '78863cb08051e72aa4c11ab2da890b46') in 0.0021723 seconds
+Loading style catalogs (6)
+	StyleSheets/Extensions/base/common.uss
+	UIPackageResources/StyleSheets/Default/Variables/Public/common.uss
+	StyleSheets/Northstar/common.uss
+	StyleSheets/Extensions/fonts/inter.uss
+	StyleSheets/Extensions/base/dark.uss
+	UIPackageResources/StyleSheets/Default/Northstar/Palette/dark.uss
+Refreshing native plugins compatible for Editor in 0.43 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=c03705ba04f17504c9359a2e268325b3): Total: 10.204 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	Summary:
+		Imports: total=71 (actual=71, local cache=0, cache server=0)
+		Asset DB Process Time: managed=6 ms, native=2128 ms
+		Asset DB Callback time: managed=188 ms, native=1080 ms
+		Scripting: domain reloads=1, domain reload time=1147 ms, compile time=5647 ms, other=6 ms
+		Project Asset Count: scripts=49, non-scripts=22
+		Asset File Changes: new=145, changed=145, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.001ms
+	InvokePackagesCallback: 1076.551ms
+	ApplyChangesToAssetFolders: 0.616ms
+	Scan: 953.721ms
+	OnSourceAssetsModified: 1.121ms
+	CategorizeAssetsWithTransientArtifact: 0.744ms
+	ProcessAssetsWithTransientArtifactChanges: 2.717ms
+	CategorizeAssets: 0.291ms
+	ImportOutOfDateAssets: 1108.827ms (-4715.418ms without children)
+		ImportManagerImport: 176.831ms (6.942ms without children)
+			ImportInProcess: 169.735ms
+			UpdateCategorizedAssets: 0.154ms
+		CompileScripts: 5646.809ms
+		ReloadNativeAssets: 0.000ms
+		UnloadImportedAssets: 0.262ms
+		ReloadImportedAssets: 0.006ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.008ms
+		InitializingProgressBar: 0.004ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.322ms
+	PostProcessAllAssets: 191.882ms
+	Hotreload: 1.343ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.003ms
+	UnloadStreamsBegin: 1.287ms
+	PersistCurrentRevisions: 0.090ms
+	UnloadStreamsEnd: 0.001ms
+	GenerateScriptTypeHashes: 0.000ms
+	Untracked: 6864.565ms
+
+Application.AssetDatabase Initial Refresh End
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.01 seconds
+Scanning for USB devices : 3.905ms
+Start importing ProjectSettings/ProjectSettings.asset using Guid(00000000000000004000000000000000) (LibraryAssetImporter) -> (artifact id: '219f7124aa0ca56046f0c5c477dd4fb5') in 0.0026005 seconds
+Refreshing native plugins compatible for Editor in 0.38 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=bffb2c56b2e465f46b7f4482ac2250c6): Total: 0.014 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Initializing Unity extensions:
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for mode-current-id-uct-unity7-lifecycle-Mp4ai1
+Unloading 2 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 89 unused Assets / (1.0 MB). Loaded Objects now: 700.
+Memory consumption went from 93.2 MB to 92.2 MB.
+Total: 6.411700 ms (FindLiveObjects: 0.050700 ms CreateObjectMapping: 0.007600 ms MarkObjects: 5.845200 ms  DeleteObjects: 0.507200 ms)
+
+Stopping Unity Hot Reload server...
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:Stop () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:311)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+ProductionLifecycleProbe:Call (string,string,object[]) (at Assets/Editor/ProductionLifecycleProbe.cs:73)
+ProductionLifecycleProbe:Run () (at Assets/Editor/ProductionLifecycleProbe.cs:62)
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 311)
+
+Restarting Unity Hot Reload server after domain reload...
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:StartWithoutMutex () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:250)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+ProductionLifecycleProbe:Call (string,string,object[]) (at Assets/Editor/ProductionLifecycleProbe.cs:73)
+ProductionLifecycleProbe:Run () (at Assets/Editor/ProductionLifecycleProbe.cs:65)
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 250)
+
+[Project] Loading completed in 15.205 seconds
+	Project init time: 				14.861 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.362 seconds
+		Asset Database init time: 		0.159 seconds
+		Global illumination init time: 	0.003 seconds
+		Assemblies load time: 			3.294 seconds
+		Unity extensions init time: 	0.000 seconds
+		Asset Database refresh time: 	10.204 seconds
+	Scene opening time: 			0.157 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1791442073702,"processId":28160,"projectLoad":15.205328799999999,"projectInit":14.8607325,"templateInit":0.0,"packageManagerInit":0.361634,"assetDatabaseInit":0.1592559,"globalIlluminationInit":0.0026685,"assembliesLoad":3.2939138,"unityExtensionsInit":0.0003298,"assetDatabaseRefresh":10.2038505,"sceneOpening":0.1572778}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1791442073702,"processId":28160,"editorVersion":"6000.3.9f1 (7a9955a4f2fa)","branch":"6000.3/staging","buildType":"Release","platform":"Windows"}
+[MODES] ModeService[default].LoadModes
+Asset Pipeline Refresh (id=d6c0d1fb04c022340913819680e9796b): Total: 0.021 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+Unity Hot Reload server listening on port 63921
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler/<>c:<ListenerThreadFunction>b__60_2 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:709)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 709)
+
+Start Indexing on Editor startup
+[Indexing] Starting Initial Indexing for Assets
+[UnityConnectServicesConfig] config is NOT valid, switching to default
+Created GICache directory at G:/Unity Launcher/GiCache. Took: 0.003s, timestamps: [15.209 - 15.212]
+Starting new worker id: 0 with log in <disposable-project>/Logs/AssetImportWorker0.log
+Starting new worker id: 1 with log in <disposable-project>/Logs/AssetImportWorker1.log
+Received message: {"command":"mcpToolCall","toolName":"uct_lifecycle_fixture","args":{},"_requestId":"fixture"}
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:992)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 992)
+
+(HotReloadHandler - RouteMcpToolCall) Routing tool: uct_lifecycle_fixture
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:RouteMcpToolCall (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1058)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1019)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1058)
+
+Received message: {"command":"mcpToolCall","toolName":"project_info","args":{},"_requestId":"project"}
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:992)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 992)
+
+(HotReloadHandler - RouteMcpToolCall) Routing tool: project_info
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:RouteMcpToolCall (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1058)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1019)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1058)
+
+VS Code connected to Unity Hot Reload server on port 63921
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler/<>c:<RunServerLoop>b__61_1 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:780)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 780)
+
+__uct_lifecycle_old_1
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+ProductionLifecycleProbe:RequestRevision (int) (at Assets/Editor/ProductionLifecycleProbe.cs:159)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:220)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Editor/ProductionLifecycleProbe.cs Line: 159)
+
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+AssetDatabase: script compilation time: 0.000678s
+Refreshing native plugins compatible for Editor in 0.34 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=abe3190e7bdc45346b29c2bb90387880): Total: 0.042 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 1.3029ms
+Starting: <unity-install>\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aEDbg.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: <disposable-project>
+(HotReloadHandler - BroadcastToClients) Failed to send to client: Unable to write data to the transport connection: An existing connection was forcibly closed by the remote host.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:LogWarning (object)
+UnityCursorToolkit.HotReloadHandler/<>c__DisplayClass76_0:<BroadcastToClients>b__0 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1368)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1368)
+
+Client disconnected from Unity Hot Reload server
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler/<>c:<HandleClient>b__62_0 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:956)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 956)
+
+ExitCode: 0 Duration: 0s208ms
+[186/189    0s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UCT.ReloadableProof.dll (+2 others)
+[187/189    0s] CopyFiles Library/ScriptAssemblies/UCT.ReloadableProof.pdb
+[188/189    0s] CopyFiles Library/ScriptAssemblies/UCT.ReloadableProof.dll
+*** Tundra build success (0.17 seconds), 3 items updated, 189 evaluated
+Reloading assemblies after finishing script compilation.
+Reloading assemblies after forced synchronous recompile.
+Begin MonoManager ReloadAssembly
+Symbol file LoadedFromMemory is not a mono symbol file
+- Loaded All Assemblies, in  0.678 seconds
+Refreshing native plugins compatible for Editor in 0.33 ms, found 1 plugins.
+Native extension for iOS target not found
+Native extension for Android target not found
+Native extension for WindowsStandalone target not found
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+Restarting Unity Hot Reload server after domain reload...
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:StartWithoutMutex () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:250)
+UnityCursorToolkit.HotReloadHandler:OnAfterAssemblyReload () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:549)
+UnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 250)
+
+Worker ready: AssetImportWorker0 0
+Worker ready: AssetImportWorker1 1
+[MCPBridge] Registered 17 tool(s): uct_lifecycle_fixture, manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, build_trigger, editor_validation, game_command, project_info, manage_scene, manage_gameobject, manage_component, coreclr_migration, viewport_stream, profiler_snapshot
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.MCP.MCPBridge:Initialize () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs:128)
+UnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs Line: 128)
+
+- Finished resetting the current domain, in  1.153 seconds
+Domain Reload Profiling: 1831ms
+	BeginReloadAssembly (453ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (27ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (178ms)
+	RebuildCommonClasses (41ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (27ms)
+	LoadAllAssembliesAndSetupDomain (142ms)
+		LoadAssemblies (182ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (101ms)
+			TypeCache.Refresh (7ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (91ms)
+			ResolveRequiredComponents (1ms)
+	FinalizeReload (1154ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (509ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (46ms)
+			SetLoadedEditorAssemblies (8ms)
+			BeforeProcessingInitializeOnLoad (239ms)
+			ProcessInitializeOnLoadAttributes (167ms)
+			ProcessInitializeOnLoadMethodAttributes (47ms)
+			AfterProcessingInitializeOnLoad (2ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (37ms)
+Asset Pipeline Refresh (id=b9d8c3aaaedf2714b883a6e54d7cbf39): Total: 1.873 seconds - Initiated by StopAssetImportingV2(ForceSynchronousImport | ForceDomainReload)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=1174 ms
+		Asset DB Callback time: managed=12 ms, native=0 ms
+		Scripting: domain reloads=1, domain reload time=684 ms, compile time=2 ms, other=0 ms
+		Project Asset Count: scripts=49, non-scripts=22
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.001ms
+	InvokePackagesCallback: 2.886ms
+	ApplyChangesToAssetFolders: 0.045ms
+	Scan: 0.000ms
+	OnSourceAssetsModified: 0.001ms
+	CategorizeAssetsWithTransientArtifact: 0.001ms
+	ProcessAssetsWithTransientArtifactChanges: 0.067ms
+	CategorizeAssets: 0.313ms
+	ImportOutOfDateAssets: 1154.758ms (1152.804ms without children)
+		CompileScripts: 1.747ms
+		CollectScriptTypesHashes: 0.000ms
+		ReloadNativeAssets: 0.000ms
+		UnloadImportedAssets: 0.001ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.011ms
+		InitializingProgressBar: 0.000ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.194ms
+	PostProcessAllAssets: 12.089ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.007ms
+	UnloadStreamsBegin: 0.002ms
+	PersistCurrentRevisions: 0.002ms
+	UnloadStreamsEnd: 0.001ms
+	GenerateScriptTypeHashes: 0.000ms
+	Untracked: 702.664ms
+
+Unity Hot Reload server listening on port 63921
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler/<>c:<ListenerThreadFunction>b__60_2 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:709)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 709)
+
+VS Code connected to Unity Hot Reload server on port 63921
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler/<>c:<RunServerLoop>b__61_1 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:780)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 780)
+
+Received message: {"command":"mcpToolCall","toolName":"uct_lifecycle_fixture","args":{},"_requestId":"fixture"}
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:992)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 992)
+
+(HotReloadHandler - RouteMcpToolCall) Routing tool: uct_lifecycle_fixture
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:RouteMcpToolCall (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1058)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1019)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1058)
+
+Received message: {"command":"mcpToolCall","toolName":"project_info","args":{},"_requestId":"project"}
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:992)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 992)
+
+(HotReloadHandler - RouteMcpToolCall) Routing tool: project_info
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:RouteMcpToolCall (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1058)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1019)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1058)
+
+__uct_lifecycle_current_356e01c03d204f329678a46ab77c019d
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+ProductionLifecycleProbe:CheckReset () (at Assets/Editor/ProductionLifecycleProbe.cs:135)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:223)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Editor/ProductionLifecycleProbe.cs Line: 135)
+
+__uct_lifecycle_old_2
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+ProductionLifecycleProbe:RequestRevision (int) (at Assets/Editor/ProductionLifecycleProbe.cs:159)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:224)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Editor/ProductionLifecycleProbe.cs Line: 159)
+
+[ScriptCompilation] Requested script compilation because: Assetdatabase observed changes in script compilation related files
+AssetDatabase: script compilation time: 0.000452s
+Refreshing native plugins compatible for Editor in 0.44 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=1aae0464e2e953d4cbd8bbc1fcc54ece): Total: 0.068 seconds - Initiated by RefreshV2(NoUpdateAssetOptions)
+info: Microsoft.AspNetCore.Hosting.Diagnostics[1]
+      Request starting HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc -
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[0]
+      Executing endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+info: Microsoft.AspNetCore.Routing.EndpointMiddleware[1]
+      Executed endpoint 'gRPC - /UnityILPP.PostProcessing/Ping'
+info: Microsoft.AspNetCore.Hosting.Diagnostics[2]
+      Request finished HTTP/2 POST http://ilpp/UnityILPP.PostProcessing/Ping application/grpc - - 200 - application/grpc 0.4137ms
+Starting: <unity-install>\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aEDbg.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: <disposable-project>
+Client disconnected from Unity Hot Reload server
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler/<>c:<HandleClient>b__62_0 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:956)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 956)
+
+(HotReloadHandler - BroadcastToClients) Failed to send to client: Unable to write data to the transport connection: An existing connection was forcibly closed by the remote host.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:LogWarning (object)
+UnityCursorToolkit.HotReloadHandler/<>c__DisplayClass76_0:<BroadcastToClients>b__0 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1368)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1368)
+
+ExitCode: 0 Duration: 0s224ms
+[186/189    0s] Csc Library/Bee/artifacts/1900b0aEDbg.dag/UCT.ReloadableProof.dll (+2 others)
+[187/189    0s] CopyFiles Library/ScriptAssemblies/UCT.ReloadableProof.pdb
+[188/189    0s] CopyFiles Library/ScriptAssemblies/UCT.ReloadableProof.dll
+*** Tundra build success (0.19 seconds), 3 items updated, 189 evaluated
+Reloading assemblies after finishing script compilation.
+Reloading assemblies after forced synchronous recompile.
+Begin MonoManager ReloadAssembly
+Symbol file LoadedFromMemory is not a mono symbol file
+- Loaded All Assemblies, in  0.687 seconds
+Refreshing native plugins compatible for Editor in 0.34 ms, found 1 plugins.
+Native extension for iOS target not found
+Native extension for Android target not found
+Native extension for WindowsStandalone target not found
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Mono: successfully reloaded assembly
+Restarting Unity Hot Reload server after domain reload...
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:StartWithoutMutex () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:250)
+UnityCursorToolkit.HotReloadHandler:OnAfterAssemblyReload () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:549)
+UnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 250)
+
+[MCPBridge] Registered 17 tool(s): uct_lifecycle_fixture, manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, build_trigger, editor_validation, game_command, project_info, manage_scene, manage_gameobject, manage_component, coreclr_migration, viewport_stream, profiler_snapshot
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.MCP.MCPBridge:Initialize () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs:128)
+UnityEditor.AssemblyReloadEvents:OnAfterAssemblyReload ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs Line: 128)
+
+- Finished resetting the current domain, in  1.139 seconds
+Domain Reload Profiling: 1826ms
+	BeginReloadAssembly (463ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (26ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (167ms)
+	RebuildCommonClasses (42ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (23ms)
+	LoadAllAssembliesAndSetupDomain (144ms)
+		LoadAssemblies (184ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (98ms)
+			TypeCache.Refresh (7ms)
+				TypeCache.ScanAssembly (0ms)
+			BuildScriptInfoCaches (87ms)
+			ResolveRequiredComponents (1ms)
+	FinalizeReload (1140ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (485ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (43ms)
+			SetLoadedEditorAssemblies (7ms)
+			BeforeProcessingInitializeOnLoad (229ms)
+			ProcessInitializeOnLoadAttributes (156ms)
+			ProcessInitializeOnLoadMethodAttributes (47ms)
+			AfterProcessingInitializeOnLoad (2ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (43ms)
+Asset Pipeline Refresh (id=60875e14c52b72b44b6d7b2d6e8edb4c): Total: 1.867 seconds - Initiated by StopAssetImportingV2(ForceSynchronousImport | ForceDomainReload)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=1160 ms
+		Asset DB Callback time: managed=11 ms, native=0 ms
+		Scripting: domain reloads=1, domain reload time=692 ms, compile time=2 ms, other=0 ms
+		Project Asset Count: scripts=49, non-scripts=22
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokeCustomDependenciesCallbacks: 0.002ms
+	InvokePackagesCallback: 2.878ms
+	ApplyChangesToAssetFolders: 0.042ms
+	Scan: 0.000ms
+	OnSourceAssetsModified: 0.001ms
+	CategorizeAssetsWithTransientArtifact: 0.002ms
+	ProcessAssetsWithTransientArtifactChanges: 0.065ms
+	CategorizeAssets: 0.308ms
+	ImportOutOfDateAssets: 1140.611ms (1138.869ms without children)
+		CompileScripts: 1.562ms
+		CollectScriptTypesHashes: 0.000ms
+		ReloadNativeAssets: 0.000ms
+		UnloadImportedAssets: 0.001ms
+		EnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.011ms
+		InitializingProgressBar: 0.000ms
+		PostProcessAllAssetNotificationsAddChangedAssets: 0.000ms
+		OnDemandSchedulerStart: 0.168ms
+	PostProcessAllAssets: 11.450ms
+	GatherAllCurrentPrimaryArtifactRevisions: 0.006ms
+	UnloadStreamsBegin: 0.002ms
+	PersistCurrentRevisions: 0.002ms
+	UnloadStreamsEnd: 0.001ms
+	GenerateScriptTypeHashes: 0.000ms
+	Untracked: 711.188ms
+
+Unity Hot Reload server listening on port 63921
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler/<>c:<ListenerThreadFunction>b__60_2 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:709)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 709)
+
+VS Code connected to Unity Hot Reload server on port 63921
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler/<>c:<RunServerLoop>b__61_1 () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:780)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:602)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 780)
+
+Received message: {"command":"mcpToolCall","toolName":"uct_lifecycle_fixture","args":{},"_requestId":"fixture"}
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:992)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 992)
+
+(HotReloadHandler - RouteMcpToolCall) Routing tool: uct_lifecycle_fixture
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:RouteMcpToolCall (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1058)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1019)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1058)
+
+Received message: {"command":"mcpToolCall","toolName":"project_info","args":{},"_requestId":"project"}
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:992)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 992)
+
+(HotReloadHandler - RouteMcpToolCall) Routing tool: project_info
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:RouteMcpToolCall (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1058)
+UnityCursorToolkit.HotReloadHandler:ProcessMessage (string) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:1019)
+UnityCursorToolkit.HotReloadHandler:OnEditorUpdate () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:586)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1058)
+
+__uct_lifecycle_current_52d982b4885e4450b1acb5e6d34a89e6
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+ProductionLifecycleProbe:CheckReset () (at Assets/Editor/ProductionLifecycleProbe.cs:135)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:223)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Editor/ProductionLifecycleProbe.cs Line: 135)
+
+__uct_lifecycle_before_play
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:231)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Editor/ProductionLifecycleProbe.cs Line: 231)
+
+Entering Playmode with Reload Domain disabled.
+If you experience any issues, please disable "Enter Play Mode Options" in Editor Settings
+Loaded scene 'Temp/__Backupscenes/0.backup'
+	Deserialize:            0.385 ms
+	Integration:            19.749 ms
+	Integration of assets:  0.005 ms
+	Thread Wait Time:       0.010 ms
+	Total Operation Time:   20.148 ms
+[MCPBridge] Registered 17 tool(s): uct_lifecycle_fixture, manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, build_trigger, editor_validation, game_command, project_info, manage_scene, manage_gameobject, manage_component, coreclr_migration, viewport_stream, profiler_snapshot
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.MCP.MCPBridge:Initialize () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs:128)
+UnityCursorToolkit.MCP.MCPBridge:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs:64)
+UnityEditor.EditorApplication:Internal_PlayModeStateChanged (UnityEditor.PlayModeStateChange)
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs Line: 128)
+
+__uct_lifecycle_current_6d20db9fb31045a6a665f6fc75562524
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+ProductionLifecycleProbe:CheckReset () (at Assets/Editor/ProductionLifecycleProbe.cs:135)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:238)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Editor/ProductionLifecycleProbe.cs Line: 135)
+
+__uct_lifecycle_before_edit
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:240)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Editor/ProductionLifecycleProbe.cs Line: 240)
+
+Unloading 0 Unused Serialized files (Serialized files now loaded: 0)
+Loaded scene 'Temp/__Backupscenes/0.backup'
+	Deserialize:            0.365 ms
+	Integration:            7.783 ms
+	Integration of assets:  0.001 ms
+	Thread Wait Time:       0.042 ms
+	Total Operation Time:   8.191 ms
+Unloading 4 unused Assets / (0.8 KB). Loaded Objects now: 743.
+Memory consumption went from 225.3 MB to 225.3 MB.
+Total: 6.487200 ms (FindLiveObjects: 0.051100 ms CreateObjectMapping: 0.005500 ms MarkObjects: 6.407900 ms  DeleteObjects: 0.021600 ms)
+
+[MCPBridge] Registered 17 tool(s): uct_lifecycle_fixture, manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, build_trigger, editor_validation, game_command, project_info, manage_scene, manage_gameobject, manage_component, coreclr_migration, viewport_stream, profiler_snapshot
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.MCP.MCPBridge:Initialize () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs:128)
+UnityCursorToolkit.MCP.MCPBridge:OnPlayModeStateChanged (UnityEditor.PlayModeStateChange) (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs:64)
+UnityEditor.EditorApplication:Internal_PlayModeStateChanged (UnityEditor.PlayModeStateChange)
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs Line: 128)
+
+__uct_lifecycle_current_b63f452eb19e482d9196ab0c0d8c6c17
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+ProductionLifecycleProbe:CheckReset () (at Assets/Editor/ProductionLifecycleProbe.cs:135)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:244)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: Assets/Editor/ProductionLifecycleProbe.cs Line: 135)
+
+Stopping Unity Hot Reload server...
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:Stop () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:311)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+ProductionLifecycleProbe:Call (string,string,object[]) (at Assets/Editor/ProductionLifecycleProbe.cs:73)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:245)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 311)
+
+Hot Reload server is not running.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:Stop () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:307)
+System.Reflection.RuntimeMethodInfo:Invoke (object,System.Reflection.BindingFlags,System.Reflection.Binder,object[],System.Globalization.CultureInfo)
+System.Reflection.MethodBase:Invoke (object,object[])
+ProductionLifecycleProbe:Call (string,string,object[]) (at Assets/Editor/ProductionLifecycleProbe.cs:73)
+ProductionLifecycleProbe:Exit (int) (at Assets/Editor/ProductionLifecycleProbe.cs:278)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:264)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 307)
+
+Hot Reload server is not running.
+UnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)
+UnityEngine.StackTraceUtility:ExtractStackTrace ()
+UnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)
+UnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])
+UnityEngine.Logger:Log (UnityEngine.LogType,object)
+UnityEngine.Debug:Log (object)
+UnityCursorToolkit.HotReloadHandler:Stop () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:307)
+UnityCursorToolkit.HotReloadHandler:OnEditorQuitting () (at ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs:561)
+UnityEditor.EditorApplication:Internal_EditorApplicationQuit ()
+ProductionLifecycleProbe:Exit (int) (at Assets/Editor/ProductionLifecycleProbe.cs:286)
+ProductionLifecycleProbe:Pump () (at Assets/Editor/ProductionLifecycleProbe.cs:264)
+UnityEditor.EditorApplication:Internal_CallUpdateFunctions ()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 307)
+
+Killing ADB server in 0.0476857 seconds.
+Start importing ProjectSettings/EditorSettings.asset using Guid(0000000000000000c000000000000000) (LibraryAssetImporter) -> (artifact id: 'fdcca38f5f1944c9bec0b9f00395ab39') in 0.0065892 seconds
+Refreshing native plugins compatible for Editor in 0.47 ms, found 1 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Asset Pipeline Refresh (id=6d3acae6396e16d45961ac3d45158685): Total: 0.055 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input System polling thread exited.
+Input System module state changed to: Shutdown.
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+AcceleratorClientConnectionCallback - disconnected - :0
+Cleanup mono
+abort_threads: Failed aborting id: 0000000000005E5C, mono_thread_manage will ignore it
+
+abort_threads: Failed aborting id: 0000000000006444, mono_thread_manage will ignore it
+
+abort_threads: Failed aborting id: 0000000000005E5C, mono_thread_manage will ignore it
+
+abort_threads: Failed aborting id: 0000000000006444, mono_thread_manage will ignore it
+
+[usbmuxd] Stop listen thread
+[usbmuxd] Listen thread exiting
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+<licensing or credential line omitted>

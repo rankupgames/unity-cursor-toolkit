@@ -11,7 +11,9 @@ using System.Reflection;
 using System.Text;
 using System.Threading;
 using UnityEditor;
+#if UNITY_7000_0_OR_NEWER
 using Unity.Scripting.LifecycleManagement;
+#endif
 using UnityEngine;
 
 [InitializeOnLoad]
@@ -40,9 +42,17 @@ public static partial class ProductionLifecycleProbe
 
 	static ProductionLifecycleProbe()
 	{
+#if !UNITY_7000_0_OR_NEWER && UNITY_2020_2_OR_NEWER
+		if (!Owner && !string.IsNullOrEmpty(Evidence) && AssetDatabase.IsAssetImportWorkerProcess())
+			File.AppendAllText(Evidence, "{\"callback\":\"assetImportWorkerObserved\",\"pid\":" + Pid + "}\n");
+#endif
 		if (!Owner) return;
 		EditorApplication.update += Pump;
 		EditorApplication.quitting += () => { Quitting = true; Record("editorQuitting"); };
+#if !UNITY_7000_0_OR_NEWER
+		AssemblyReloadEvents.beforeAssemblyReload += Unloading;
+		EditorApplication.delayCall += Initializing;
+#endif
 	}
 	public static void Run()
 	{
@@ -73,7 +83,11 @@ public static partial class ProductionLifecycleProbe
 	}
 	private static int Revision()
 	{
+		#if UNITY_6000_5_OR_NEWER
 		foreach (Assembly assembly in UnityEngine.Assemblies.CurrentAssemblies.GetLoadedAssemblies())
+#else
+		foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+#endif
 			if (assembly.GetName().Name == "UCT.ReloadableProof") return (int)assembly.GetType("ReloadableHandler", true).GetField("Revision").GetRawConstantValue();
 		return -1;
 	}
@@ -112,7 +126,8 @@ public static partial class ProductionLifecycleProbe
 	{
 		Require(FixtureResult.Contains("\"revision\":" + Awaiting), "TCP returned the previous fixture code.");
 		Require(FixtureResult.Contains(Handler()), "TCP returned a stale fixture handler.");
-		Require(ProjectResult.Contains("\"isCoreCLR\":true") && ProjectResult.Contains("\"hasDomainReload\":false"), "Actual runtime project_info flags did not match CoreCLR.");
+		bool coreCLR = typeof(object).Assembly.GetName().Name == "System.Private.CoreLib";
+		Require(ProjectResult.Contains("\"isCoreCLR\":" + (coreCLR ? "true" : "false")) && ProjectResult.Contains("\"hasDomainReload\":" + (coreCLR ? "false" : "true")), "Actual runtime project_info flags did not match the observed runtime.");
 		Require(PackageMvid == PackageAssembly.ManifestModule.ModuleVersionId, "Package binary MVID changed.");
 		Record("networkVerified", "\"revision\":" + Awaiting + ",\"port\":" + Port + ",\"handler\":" + Quote(Handler()) + ",\"packageMvid\":" + Quote(PackageMvid.ToString()));
 	}
@@ -181,7 +196,12 @@ public static partial class ProductionLifecycleProbe
 		Require(((ICollection)Field("HotReloadHandler", "messageQueue")).Count == 0 && ((ICollection)Field("HotReloadHandler", "mainThreadActions")).Count == 0, "Stopped transport retained queued work.");
 		using (var probe = new TcpClient())
 		{
-			try { probe.Connect("127.0.0.1", Port); throw new InvalidOperationException("Stopped bridge port accepted a connection."); }
+			try
+			{
+				probe.Connect("127.0.0.1", Port);
+				Record("stoppedPortProbe", "\"connected\":" + (probe.Connected ? "true" : "false") + ",\"localEndpoint\":" + Quote(probe.Client.LocalEndPoint == null ? null : probe.Client.LocalEndPoint.ToString()) + ",\"listenersOnPort\":" + System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Count(endpoint => endpoint.Port == Port));
+				throw new InvalidOperationException("Stopped bridge port accepted a connection.");
+			}
 			catch (SocketException) {}
 		}
 		Record("manualStopVerified", "\"port\":" + Port);
@@ -252,12 +272,22 @@ public static partial class ProductionLifecycleProbe
 		var camera = GameObject.Find("__uct_lifecycle_camera"); if (camera != null) UnityEngine.Object.DestroyImmediate(camera);
 		try
 		{
-			if (Types.Count > 0) Call("HotReloadHandler", "Stop");
+			if (Types.Count > 0)
+			{
+				Call("HotReloadHandler", "Stop");
+				bool stopped = (bool)Field("HotReloadHandler", "stopRequested") && !(bool)Field("HotReloadHandler", "isServerRunning")
+					&& ((Thread)Field("HotReloadHandler", "listenerThread") == null)
+					&& ((IList)Field("HotReloadHandler", "clientThreads")).Cast<Thread>().All(thread => !thread.IsAlive);
+				Record("shutdownWorkers", "\"stopped\":" + (stopped ? "true" : "false"));
+			}
 			if (PortPrefKey != null) EditorPrefs.SetInt(PortPrefKey, OriginalPortPref);
 		}
 		finally { EditorApplication.Exit(code); }
 	}
-	[OnCodeUnloading] private static void Unloading()
+	#if UNITY_7000_0_OR_NEWER
+	[OnCodeUnloading]
+	#endif
+	private static void Unloading()
 	{
 		if (Client != null) { Client.Close(); Client = null; }
 		if (Quitting && Types.Count > 0)
@@ -267,7 +297,11 @@ public static partial class ProductionLifecycleProbe
 				&& ((IList)Field("HotReloadHandler", "clientThreads")).Cast<Thread>().All(thread => !thread.IsAlive);
 			Record("shutdownWorkers", "\"stopped\":" + (stopped ? "true" : "false"));
 		}
+		#if UNITY_7000_0_OR_NEWER
 		Record("OnCodeUnloading");
+#else
+		Record("beforeAssemblyReload");
+#endif
 	}
 	private static void InitializeTypes()
 	{
@@ -280,7 +314,10 @@ public static partial class ProductionLifecycleProbe
 	{
 		File.WriteAllLines(Evidence + ".state", new[] { Started.ToString("O"), Stage.ToString(), Port.ToString(), Awaiting.ToString(), Frames.ToString(), PreviousFrames.ToString(), HandlerId ?? "", ProfilerId ?? "", OldMarker ?? "", OriginalPortPref.ToString(), PackageMvid.ToString() });
 	}
-	[OnCodeInitializing] private static void Initializing()
+	#if UNITY_7000_0_OR_NEWER
+	[OnCodeInitializing]
+	#endif
+	private static void Initializing()
 	{
 		if (!Owner) return;
 		EditorApplication.update -= Pump; EditorApplication.update += Pump;
@@ -292,7 +329,11 @@ public static partial class ProductionLifecycleProbe
 			HandlerId = state[6]; ProfilerId = state[7]; OldMarker = state[8]; OriginalPortPref = int.Parse(state[9]); PackageMvid = Guid.Parse(state[10]);
 			InitializeTypes(); PortPrefKey = (string)Types["HotReloadHandler"].GetField("lastPortPrefKey", Flags).GetRawConstantValue();
 		}
+		#if UNITY_7000_0_OR_NEWER
 		Record("OnCodeInitializing");
+#else
+		Record("InitializeOnLoad.delayCall");
+#endif
 	}
 	private static string Quote(string text) { return "\"" + (text ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"").Replace("\r", "\\r").Replace("\n", "\\n") + "\""; }
 	private static void Record(string name, string extra = null)
