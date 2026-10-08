@@ -1,0 +1,31 @@
+{
+  "case": "present",
+  "editorVersion": "6000.3.9f1",
+  "testFramework": "1.6.0",
+  "sourceHashes": [
+    {
+      "file": "Editor/MCP/Tests/TestRunnerTool.cs",
+      "sha256": "48a79c46ad8bb2df7fac324f604dec4ea799461479de402f892253b9cf0309f0"
+    },
+    {
+      "file": "Editor/TestRunnerIntegration/TestRunnerAdapter.cs",
+      "sha256": "4ec071a3a978d5fb9b5c44dd7fb117f3bda0e80340a9d402723fe5cf6d10bbd8"
+    },
+    {
+      "file": "Editor/TestRunnerIntegration/UnityCursorToolkit.TestRunnerIntegration.Editor.asmdef",
+      "sha256": "2101ab9b22e43bb7fa3e44472f84e3379eb5a83c6342bba16395851b6ccd1dff"
+    }
+  ],
+  "passed": false,
+  "cases": [],
+  "error": {
+    "message": "Fixture readiness: Editor exited {\"code\":1,\"signal\":null}",
+    "stack": "Error: Fixture readiness: Editor exited {\"code\":1,\"signal\":null}\n    at wait (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:54:26)\n    at async run (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:113:17)\n    at async main (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:206:89)"
+  },
+  "exit": {
+    "code": 1,
+    "signal": null
+  },
+  "remainingOwnedProcesses": [],
+  "normalEditorExit": false
+}

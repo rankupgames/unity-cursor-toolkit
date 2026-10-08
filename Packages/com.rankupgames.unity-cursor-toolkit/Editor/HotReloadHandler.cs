@@ -990,11 +990,6 @@ public partial class HotReloadHandler : EditorWindow
     /// </summary>
     private static void ProcessMessage(string message)
     {
-        if (showDebugLogs)
-        {
-            Debug.Log($"Received message: {message}");
-        }
-
         try
         {
             if (message.Contains("{") && message.Contains("}"))

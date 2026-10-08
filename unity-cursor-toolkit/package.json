@@ -42,7 +42,9 @@
     "onCommand:unity-cursor-toolkit.remoteShell.stop",
     "onCommand:unity-cursor-toolkit.remoteShell.status",
     "onCommand:unity-cursor-toolkit.migration.scan",
-    "onCommand:unity-cursor-toolkit.doctor"
+    "onCommand:unity-cursor-toolkit.doctor",
+    "onCommand:unity-cursor-toolkit.tests.list",
+    "onCommand:unity-cursor-toolkit.tests.run"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -122,6 +124,8 @@
       }
     ],
     "commands": [
+      { "command": "unity-cursor-toolkit.tests.list", "title": "Unity Toolkit: List Tests" },
+      { "command": "unity-cursor-toolkit.tests.run", "title": "Unity Toolkit: Run Tests" },
       {
         "command": "unity-cursor-toolkit.doctor",
         "title": "Unity Toolkit: Unity CLI Doctor"
@@ -372,7 +376,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && node scripts/esbuild-bundle.js --test-adapter",
     "watch": "tsc -watch -p ./",
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",

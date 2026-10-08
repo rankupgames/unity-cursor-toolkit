@@ -1,0 +1,255 @@
+{
+  "passed": true,
+  "observedAt": "2026-10-08T08:24:40.512Z",
+  "editorVersion": "6000.3.9f1",
+  "bridgeCapture": "bridge-present-2026-10-08T08-19-44-038Z",
+  "cases": [
+    {
+      "name": "literal-metacharacter-name",
+      "elapsedMs": 13846,
+      "matched": true,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Literal[1].*"
+        ],
+        "testStatus": "passed"
+      },
+      "cli": {
+        "success": true,
+        "backend": "cli",
+        "runId": "cli-4153d0f2dd3cf4018662284a395e3d92",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Literal[1].*"
+        ],
+        "tests": [
+          {
+            "id": "1009",
+            "fullName": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+            "status": "passed",
+            "durationMs": 17.061,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 56.2598
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "failure-stack",
+      "elapsedMs": 14866,
+      "matched": true,
+      "bridge": {
+        "status": "failed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Failing"
+        ],
+        "testStatus": "failed"
+      },
+      "cli": {
+        "success": false,
+        "backend": "cli",
+        "runId": "cli-e05cb9595033e1b6eb6dd7e29899fc00",
+        "status": "failed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Failing"
+        ],
+        "tests": [
+          {
+            "id": "1005",
+            "fullName": "BridgeProof.Scope.Arithmetic.Failing",
+            "status": "failed",
+            "durationMs": 9.029,
+            "message": "UCT_EXPECTED_FAILURE_STACK",
+            "stackTrace": "at BridgeProof.Scope.Arithmetic.Failing () [0x00001] in <project>\\Assets\\EditCases\\EditModeCases.cs:9\r\n"
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 41.4565
+        },
+        "error": {
+          "code": "tests_failed",
+          "message": "Unity CLI test operation failed (tests_failed).",
+          "recovery": "Inspect the normalized test failures.",
+          "exitCode": 8,
+          "nativeCode": "TESTS_FAILED"
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "skipped-mapping",
+      "elapsedMs": 14487,
+      "matched": true,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Skipped"
+        ],
+        "testStatus": "skipped"
+      },
+      "cli": {
+        "success": true,
+        "backend": "cli",
+        "runId": "cli-4128e6d7c8bd9d1ffe4c680a41d2079e",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Skipped"
+        ],
+        "tests": [
+          {
+            "id": "1006",
+            "fullName": "BridgeProof.Scope.Arithmetic.Skipped",
+            "status": "skipped",
+            "durationMs": 1.239,
+            "message": "UCT_EXPECTED_SKIP",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 1,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 34.6143
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "inconclusive-mapping",
+      "elapsedMs": 14142,
+      "matched": true,
+      "nativeDifference": "CLI reports TESTS_FAILED for an inconclusive leaf; the bridge reports completed with an inconclusive leaf.",
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Inconclusive"
+        ],
+        "testStatus": "inconclusive"
+      },
+      "cli": {
+        "success": false,
+        "backend": "cli",
+        "runId": "cli-ed75ecc53c23a075a593a28d01ae445b",
+        "status": "failed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Inconclusive"
+        ],
+        "tests": [
+          {
+            "id": "1007",
+            "fullName": "BridgeProof.Scope.Arithmetic.Inconclusive",
+            "status": "inconclusive",
+            "durationMs": 9.138,
+            "message": "UCT_EXPECTED_INCONCLUSIVE",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 1,
+          "notRun": 0,
+          "durationMs": 39.8069
+        },
+        "error": {
+          "code": "tests_failed",
+          "message": "Unity CLI test operation failed (tests_failed).",
+          "recovery": "Inspect the normalized test failures.",
+          "exitCode": 8,
+          "nativeCode": "TESTS_FAILED"
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "play-reload-and-heartbeat",
+      "elapsedMs": 19707,
+      "matched": true,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Play.Waiting.Heartbeats"
+        ],
+        "testStatus": "passed"
+      },
+      "cli": {
+        "success": true,
+        "backend": "cli",
+        "runId": "cli-716b680e658d7f6b422cfe2cfc403611",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "PlayMode",
+        "selection": [
+          "BridgeProof.Play.Waiting.Heartbeats"
+        ],
+        "tests": [
+          {
+            "id": "1002",
+            "fullName": "BridgeProof.Play.Waiting.Heartbeats",
+            "status": "passed",
+            "durationMs": 4016.145,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 4046.0136999999995
+        }
+      },
+      "editorsRemaining": []
+    }
+  ],
+  "fixtureRemoved": true,
+  "sources": [
+    {
+      "file": "unityCliTestAdapter.ts",
+      "sha256": "7d536b961bde755360f9becff68b5d8382c86dc23427f969722d1d10a2a7dc67"
+    },
+    {
+      "file": "unityTestTypes.ts",
+      "sha256": "2070c9e8e9b1b8879fcd4056c551fb2e4acb2698a26fd1915f88e82a757ffbbc"
+    },
+    {
+      "file": "unityTestPrivacy.ts",
+      "sha256": "4918e4cc4265c47b5600e60aebdacc0559eb7706089834797e665226f8e229b9"
+    }
+  ],
+  "editorsRemaining": [],
+  "fixtureRetained": false
+}

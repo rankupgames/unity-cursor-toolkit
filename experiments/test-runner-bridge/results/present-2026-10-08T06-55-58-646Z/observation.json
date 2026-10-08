@@ -1,0 +1,101 @@
+{
+  "case": "present",
+  "editorVersion": "6000.3.9f1",
+  "productVersion": "6000.3.9f1_7a9955a4f2fa",
+  "childAsmdef": {
+    "name": "UCT.OptionalFrameworkCompile.Editor",
+    "references": [
+      "UnityEditor.TestRunner",
+      "UnityEngine.TestRunner"
+    ],
+    "includePlatforms": [
+      "Editor"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+      "UCT_TEST_FRAMEWORK"
+    ],
+    "versionDefines": [
+      {
+        "name": "com.unity.test-framework",
+        "expression": "1.1",
+        "define": "UCT_TEST_FRAMEWORK"
+      }
+    ]
+  },
+  "sourceHashes": [
+    {
+      "file": "OptionalFrameworkProbe.cs",
+      "sha256": "65123c79d7b7973f965b3fefe27a5309ab790f5fe8657f23d490d9e73d92b63f"
+    },
+    {
+      "file": "OptionalFrameworkChild.cs",
+      "sha256": "f786a7f1b646eaea6268265b4eb0588c0fbbafa6c93dfad7cc46ed7e9fc0c3c0"
+    },
+    {
+      "file": "run-optional-compile-proof.js",
+      "sha256": "ce2ee03e957c468bffed41b5e57ea8a208d17bb5f0bf3b02548098bdd2fa79f1"
+    }
+  ],
+  "shippingDependencyAdded": false,
+  "testsExecuted": false,
+  "testsCancelled": false,
+  "passed": true,
+  "pid": 73392,
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "observation": {
+    "pid": 73392,
+    "editorVersion": "6000.3.9f1",
+    "coreLibrary": "mscorlib",
+    "isMono": true,
+    "frameworkPresent": true,
+    "childPresent": true,
+    "childObservation": "{\"apiAssembly\":\"UnityEditor.TestRunner\",\"cancelSignature\":\"Boolean CancelTestRun(System.String)\",\"callbacksCompiled\":true,\"typeMetadataProperty\":true,\"editMode\":\"EditMode\",\"playMode\":\"PlayMode\"}",
+    "error": ""
+  },
+  "childApi": {
+    "apiAssembly": "UnityEditor.TestRunner",
+    "cancelSignature": "Boolean CancelTestRun(System.String)",
+    "callbacksCompiled": true,
+    "typeMetadataProperty": true,
+    "editMode": "EditMode",
+    "playMode": "PlayMode"
+  },
+  "packagesLock": {
+    "dependencies": {
+      "com.unity.ext.nunit": {
+        "version": "2.0.5",
+        "depth": 1,
+        "source": "builtin",
+        "dependencies": {}
+      },
+      "com.unity.test-framework": {
+        "version": "1.6.0",
+        "depth": 0,
+        "source": "builtin",
+        "dependencies": {
+          "com.unity.ext.nunit": "2.0.3",
+          "com.unity.modules.imgui": "1.0.0",
+          "com.unity.modules.jsonserialize": "1.0.0"
+        }
+      },
+      "com.unity.modules.imgui": {
+        "version": "1.0.0",
+        "depth": 1,
+        "source": "builtin",
+        "dependencies": {}
+      },
+      "com.unity.modules.jsonserialize": {
+        "version": "1.0.0",
+        "depth": 0,
+        "source": "builtin",
+        "dependencies": {}
+      }
+    }
+  },
+  "remainingOwnedProcesses": [],
+  "normalEditorExit": true
+}

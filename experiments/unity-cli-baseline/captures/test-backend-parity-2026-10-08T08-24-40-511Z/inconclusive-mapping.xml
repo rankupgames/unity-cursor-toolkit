@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="0" failed="0" inconclusive="1" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-08 08:25:33Z" end-time="2026-10-08 08:25:34Z" duration="0.0398069">
+  <test-suite type="TestSuite" id="1000" name="uct-test-bridge-fcvDFe" fullname="uct-test-bridge-fcvDFe" runstate="Runnable" testcasecount="10" result="Passed" start-time="2026-10-08 08:25:33Z" end-time="2026-10-08 08:25:34Z" duration="0.039807" total="1" passed="0" failed="0" inconclusive="1" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <test-suite type="Assembly" id="1013" name="UCT.Proof.EditMode.dll" fullname="fixture/Library/ScriptAssemblies/UCT.Proof.EditMode.dll" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-08 08:25:34Z" end-time="2026-10-08 08:25:34Z" duration="0.028345" total="1" passed="0" failed="0" inconclusive="1" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="74368" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <test-suite type="TestSuite" id="1014" name="BridgeProof" fullname="BridgeProof" runstate="Runnable" testcasecount="8" result="Passed" start-time="2026-10-08 08:25:34Z" end-time="2026-10-08 08:25:34Z" duration="0.027159" total="1" passed="0" failed="0" inconclusive="1" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1016" name="Scope" fullname="BridgeProof.Scope" runstate="Runnable" testcasecount="7" result="Passed" start-time="2026-10-08 08:25:34Z" end-time="2026-10-08 08:25:34Z" duration="0.026210" total="1" passed="0" failed="0" inconclusive="1" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1003" name="Arithmetic" fullname="BridgeProof.Scope.Arithmetic" classname="BridgeProof.Scope.Arithmetic" runstate="Runnable" testcasecount="6" result="Passed" start-time="2026-10-08 08:25:34Z" end-time="2026-10-08 08:25:34Z" duration="0.024464" total="1" passed="0" failed="0" inconclusive="1" skipped="0" asserts="0">
+            <properties>
+              <property name="Category" value="scope" />
+            </properties>
+            <test-case id="1007" name="Inconclusive" fullname="BridgeProof.Scope.Arithmetic.Inconclusive" methodname="Inconclusive" classname="BridgeProof.Scope.Arithmetic" runstate="Runnable" seed="897433105" result="Inconclusive" start-time="2026-10-08 08:25:34Z" end-time="2026-10-08 08:25:34Z" duration="0.009138" asserts="0">
+              <properties>
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <reason>
+                <message><![CDATA[UCT_EXPECTED_INCONCLUSIVE]]></message>
+              </reason>
+              <output><![CDATA[Saving results to: temp-redacted\uct-cli-tests-yXGnYY\results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

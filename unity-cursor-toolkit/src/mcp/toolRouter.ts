@@ -6,7 +6,7 @@
  * Company: Rank Up Games LLC
  */
 
-import type { IToolProvider, ToolDefinition, ToolResult } from '../core/interfaces';
+import type { IToolProvider, ToolCallContext, ToolDefinition, ToolResult } from '../core/interfaces';
 
 export class ToolRouter {
 
@@ -20,11 +20,11 @@ export class ToolRouter {
 		return this.providers.flatMap((p) => p.getTools());
 	}
 
-	public async routeToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {
+	public async routeToolCall(name: string, args: Record<string, unknown>, context?: ToolCallContext): Promise<ToolResult> {
 		for (const provider of this.providers) {
 			const tools = provider.getTools();
 			if (tools.some((t) => t.name === name)) {
-				return provider.handleToolCall(name, args);
+				return provider.handleToolCall(name, args, context);
 			}
 		}
 

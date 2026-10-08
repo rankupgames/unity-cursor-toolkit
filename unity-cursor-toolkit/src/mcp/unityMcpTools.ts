@@ -289,6 +289,12 @@ export class UnityMcpTools implements IToolProvider {
 	}
 
 	public async handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {
+		if (['test_runner', 'list_tests', 'run_tests'].includes(name)) {
+			return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
+				code: 'capability_unavailable', message: 'Test tools require a direct call through the shared test provider.',
+				recovery: 'Call list_tests or run_tests directly; they cannot be nested in batch_execute.'
+			} }) }], isError: true };
+		}
 		if (name === 'coreclr_migration') {
 			try {
 				const { handleMigrationTool } = await import('../migration/tools');
