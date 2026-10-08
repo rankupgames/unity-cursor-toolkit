@@ -2858,6 +2858,8 @@ async function testUnityMcpTools() {
 		const result = await tools.handleToolCall('manage_gameobject', {
 			action: 'setTransform',
 			name: 'Probe',
+			entityId: '18446744073709551615',
+			parentEntityId: '18446744073709551614',
 			scale: { x: 2, y: 3, z: 4 },
 			dryRun: true
 		});
@@ -2866,7 +2868,7 @@ async function testUnityMcpTools() {
 		assert.strictEqual(requestCount, 0);
 		assert.strictEqual(payload.dryRun, true);
 		assert.strictEqual(payload.toolName, 'manage_gameobject');
-		assert.deepStrictEqual(payload.args, { action: 'setTransform', name: 'Probe', localScale: [2, 3, 4] });
+		assert.deepStrictEqual(payload.args, { action: 'setTransform', name: 'Probe', entityId: '18446744073709551615', parentEntityId: '18446744073709551614', localScale: [2, 3, 4] });
 	});
 
 	await testAsync('editor_validation dryRun blocks compile actions but forwards status', async () => {

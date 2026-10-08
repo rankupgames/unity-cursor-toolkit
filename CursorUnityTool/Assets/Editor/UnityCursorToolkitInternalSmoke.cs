@@ -43,6 +43,7 @@ namespace UnityCursorToolkit.InternalSmoke
 		{
 			ValidateRuntimeAndStateReset();
 			ValidateStaticInventory();
+			ValidateSceneObjectIds();
 			ValidateBridgeReload();
 			ValidateUntermIntegration();
 			SessionState.SetBool(RunningKey, true);
@@ -54,6 +55,72 @@ namespace UnityCursorToolkit.InternalSmoke
 			SessionState.SetString(FailureRunIdKey, string.Empty);
 			SessionState.SetInt(AttemptsKey, 0);
 			HookUpdate();
+		}
+
+		[Serializable]
+		private sealed class SceneIdResult
+		{
+			public bool success;
+			public int instanceId;
+			public string entityId;
+			public int componentInstanceId;
+			public string componentEntityId;
+		}
+
+		private static void ValidateSceneObjectIds()
+		{
+			string Call(string tool, string json)
+			{
+				Type type = Type.GetType("UnityCursorToolkit.MCP." + tool + ", UnityCursorToolkit.Editor", true);
+				return (string)type.GetMethod("HandleCommand").Invoke(Activator.CreateInstance(type), new object[] { json });
+			}
+			string Id(SceneIdResult result, bool parent = false)
+			{
+#if UNITY_7000_0_OR_NEWER
+				if (string.IsNullOrEmpty(result.entityId)) throw new InvalidOperationException("Unity 7 did not return an entity ID.");
+				return "\"" + (parent ? "parentEntityId" : "entityId") + "\":\"" + result.entityId + "\"";
+#else
+				if (result.instanceId == 0) throw new InvalidOperationException("Mono did not return an instance ID.");
+				return "\"" + (parent ? "parentInstanceId" : "instanceId") + "\":" + result.instanceId;
+#endif
+			}
+			GameObject child = null, parentObject = null;
+			string prefix = "UCT_IdProbe_" + Guid.NewGuid().ToString("N");
+			try
+			{
+				var childId = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"create\",\"name\":\"" + prefix + "\"}"));
+				child = GameObject.Find(prefix);
+				var parentId = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"create\",\"name\":\"" + prefix + "_parent\"}"));
+				parentObject = GameObject.Find(prefix + "_parent");
+				var found = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"find\"," + Id(childId) + "}"));
+				if (!childId.success || !parentId.success || !found.success || Id(found) != Id(childId)) throw new InvalidOperationException("Object ID did not round-trip.");
+				Call("ManageGameObjectTool", "{\"action\":\"setParent\"," + Id(childId) + "," + Id(parentId, true) + "}");
+				if (child.transform.parent != parentObject.transform) throw new InvalidOperationException("Parent ID did not resolve.");
+				try
+				{
+					var invalid = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"setParent\"," + Id(childId) + ",\"parentEntityId\":\"invalid\"}"));
+					if (invalid.success) throw new InvalidOperationException("Invalid parent ID was accepted.");
+				}
+				catch (TargetInvocationException error) when (error.InnerException is ArgumentException) { }
+				if (child.transform.parent != parentObject.transform) throw new InvalidOperationException("Invalid parent ID changed the hierarchy.");
+				Call("ManageGameObjectTool", "{\"action\":\"setTransform\"," + Id(childId) + ",\"position\":[1,2,3]}");
+				if (child.transform.position != new Vector3(1, 2, 3)) throw new InvalidOperationException("Object ID transform failed.");
+				var component = JsonUtility.FromJson<SceneIdResult>(Call("ManageComponentTool", "{\"action\":\"add\"," + Id(childId) + ",\"componentType\":\"UnityEngine.Camera\"}"));
+#if UNITY_7000_0_OR_NEWER
+				if (!component.success || string.IsNullOrEmpty(component.componentEntityId)) throw new InvalidOperationException("Component entity ID missing.");
+#else
+				if (!component.success || component.componentInstanceId == 0) throw new InvalidOperationException("Component instance ID missing.");
+#endif
+				if (!Call("ManageSceneTool", "{\"action\":\"getHierarchy\"}").Contains(Id(childId))) throw new InvalidOperationException("Hierarchy ID missing.");
+				Call("ManageGameObjectTool", "{\"action\":\"destroy\"," + Id(childId) + "}");
+				if (child != null) throw new InvalidOperationException("Object ID destroy failed.");
+				Debug.Log("[UCT Internal Smoke] Scene object IDs: create/find/parent/transform/component/hierarchy/destroy passed; invalid parent preserved hierarchy.");
+			}
+			finally
+			{
+				if (child != null) UnityEngine.Object.DestroyImmediate(child);
+				if (parentObject != null) UnityEngine.Object.DestroyImmediate(parentObject);
+			}
 		}
 
 		private static void ValidateStaticInventory()
