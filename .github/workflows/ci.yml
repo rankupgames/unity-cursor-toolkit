@@ -142,6 +142,8 @@ jobs:
           echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
 
   publish:
+    environment:
+      name: release-approval
     needs: [check-changes, build]
     if: needs.check-changes.outputs.has_changes == 'true' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest

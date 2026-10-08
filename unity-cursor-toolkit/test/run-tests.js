@@ -5010,6 +5010,66 @@ async function testUnityCliAdapter() {
 	});
 }
 
+function testCliEvidencePrivacy() {
+	test('CLI captures redact identities and keep the binary checksum', () => {
+		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
+		const read = file => {
+			try { return JSON.parse(fs.readFileSync(path.join(root, file), 'utf8')); }
+			catch { throw new Error(file + ': invalid capture JSON'); }
+		};
+		const baseline = read('2026-10-08-cli-1.0.0-beta.12-windows-x64.json');
+		assert.ok(/^[a-f0-9]{64}$/.test(baseline.binarySha256), 'CLI checksum must remain a SHA-256 digest');
+		const sensitive = /licensing|Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|access[ -]?token|bearer|license[ -]?(?:serial|key|id)|hardware[ -]?id|user[ -]?id|account[ -]?id|^\s*(?:Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im;
+		const inspect = (value, file) => {
+			if (!value || typeof value !== 'object') return;
+			for (const [key, item] of Object.entries(value)) {
+				if (['stdout', 'stderr', 'editorLog'].includes(key) && typeof item === 'string') {
+					const log = item.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)).join('\n');
+					assert.ok(!sensitive.test(log), file + ': unredacted identity or licensing log field');
+				} else inspect(item, file);
+			}
+		};
+
+		const marker = 'fixtureSensitive';
+		const rawLog = '-hubSessionId\n' + marker + '\nSession Id: ' + marker + '\nId: ' + marker + '\nProduct: ' + marker + '\nType: ' + marker + '\nExpiration: ' + marker + '\npublic diagnostic\n';
+		const sourceRoot = path.resolve(root, '..');
+		for (const file of ['capture-baseline.js', 'capture-proof.js']) {
+			const source = fs.readFileSync(path.join(sourceRoot, file), 'utf8');
+			const baselineScript = file === 'capture-baseline.js';
+			const start = source.indexOf(baselineScript ? 'function scrubRoots(' : 'function scrub(');
+			const end = source.indexOf(baselineScript ? 'const commands =' : "if (name === 'build-dirty-versioned'", start);
+			assert.ok(start >= 0 && end > start, file + ': scrubber boundary missing');
+			const context = { root: '/fixture', repo: '/fixture', editorRoots: [], process: { env: {} } };
+			require('vm').createContext(context);
+			require('vm').runInContext(source.slice(start, end), context);
+			for (const text of [context.scrub(rawLog), ...(baselineScript ? [JSON.parse(context.output(JSON.stringify({ success: true, data: { log: rawLog } }))).data.log] : [])]) {
+				assert.ok(!text.includes(marker), file + ': credential continuation leaked');
+				assert.ok(text.includes('public diagnostic'), file + ': public diagnostic removed');
+			}
+		}
+		for (const file of fs.readdirSync(root).filter(file => file.endsWith('.json'))) inspect(read(file), file);
+	});
+}
+
+function testCoreClrEvidencePrivacy() {
+	test('CoreCLR evidence removes identity and licensing continuations', () => {
+		const root = path.resolve(__dirname, '../../experiments/coreclr-package-audit');
+		const source = fs.readFileSync(path.join(root, 'run-lifecycle-probe.js'), 'utf8');
+		const start = source.indexOf('const sanitize = value => {');
+		const end = source.indexOf('\n\t\t};', start) + 5;
+		assert.ok(start >= 0 && end > start + 5, 'Lifecycle sanitizer boundary missing');
+		const input = '-hubSessionId\nfixtureSensitive\nSession Id: fixtureSensitive\nCorrelation-Id: fixtureSensitive\nMachine Id: fixtureSensitive\nId: fixtureSensitive\nProduct: fixtureSensitive\nType: fixtureSensitive\nExpiration: fixtureSensitive\npublic diagnostic\n';
+		const output = require('vm').runInNewContext(source.slice(start, end) + '\nsanitize(input)', {
+			input, fixture: '/fixture', unityPath: '/editor/Unity', path, os: { homedir: () => '/home/fixture', hostname: () => 'fixtureHost', networkInterfaces: () => ({}) }
+		});
+		assert.ok(!output.includes('fixtureSensitive'), 'Lifecycle sanitizer leaked an identity or licensing value');
+		assert.ok(output.includes('public diagnostic'), 'Lifecycle sanitizer removed public diagnostics');
+		const capture = fs.readFileSync(path.join(root, 'results/unity7-lifecycle-2026-10-08T04-57-52-040Z/Editor.log'), 'utf8');
+		const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)).join('\n');
+		assert.ok(!/Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|^\s*(?:Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im.test(log), 'Lifecycle capture contains an identity or licensing value');
+	});
+}
+
 async function main() {
 	console.log('Unity Cursor Toolkit -- Runtime Tests\n');
 	console.log(`Using compiled output: ${outDir}`);
@@ -5019,6 +5079,8 @@ async function main() {
 		process.exit(1);
 	}
 
+	testCliEvidencePrivacy();
+	testCoreClrEvidencePrivacy();
 	testTypes();
 	testRuntimeCapabilities();
 	await testRuntimeConsumers();
