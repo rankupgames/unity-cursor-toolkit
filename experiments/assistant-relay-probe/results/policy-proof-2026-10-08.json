@@ -1,0 +1,156 @@
+{
+  "passed": true,
+  "providerSha256": "24f6881cd093489132ba63e3b790aafc1efd3993a473c13534b449d4dde8982b",
+  "refused": [
+    {
+      "name": "Unity_RunCommand",
+      "args": {
+        "Code": "System.IO.File.WriteAllText(\"sentinel\",\"changed\")"
+      },
+      "result": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"code\":\"relay_policy_escape\",\"message\":\"Arbitrary C# execution is refused, including dryRun.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unity_RunCommand",
+      "args": {
+        "Code": "arbitrary C#",
+        "dryRun": true
+      },
+      "result": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"code\":\"relay_policy_escape\",\"message\":\"Arbitrary C# execution is refused, including dryRun.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unity_ReadConsole",
+      "args": {
+        "Action": "Clear",
+        "dryRun": true
+      },
+      "result": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"code\":\"relay_argument_unclassified\",\"message\":\"Only exact captured schema keys are accepted.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unity_ReadConsole",
+      "args": {
+        "Action": "get"
+      },
+      "result": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"code\":\"relay_unclassified_action\",\"message\":\"An exact classified Action is required.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unity_ReadConsole",
+      "args": {
+        "Action": "Get",
+        "action": "Clear"
+      },
+      "result": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"code\":\"relay_argument_unclassified\",\"message\":\"Only exact captured schema keys are accepted.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unity_ReadConsole",
+      "args": {},
+      "result": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"error\":{\"code\":\"relay_unclassified_action\",\"message\":\"An exact classified Action is required.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Unknown",
+      "args": {
+        "Action": "Get"
+      },
+      "result": {
+        "content": [
+          {
+            "type": "text",
+            "text": "Unknown tool: assistantRelay/Unknown. Available tools: coreclr_migration, manage_scene, manage_gameobject, manage_component, manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, project_info, editor_validation, game_command, profiler_snapshot, build_trigger, batch_execute, unity_context, viewport_stream, read_console, clear_console, resolve_meta, assistantRelay/Unity_ReadConsole, assistantRelay/Unity_RunCommand"
+          }
+        ],
+        "isError": true
+      }
+    }
+  ],
+  "allowed": {
+    "isError": false,
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"read\"}]}}"
+      }
+    ]
+  },
+  "faults": [
+    {
+      "kind": "spawn",
+      "code": "relay_start_failed"
+    },
+    {
+      "kind": "timeout",
+      "code": "relay_timeout"
+    },
+    {
+      "kind": "exit",
+      "code": "relay_unexpected_exit"
+    },
+    {
+      "kind": "empty-catalog",
+      "code": "relay_empty_catalog"
+    },
+    {
+      "kind": "exit-after-ready",
+      "code": "relay_unexpected_exit"
+    }
+  ],
+  "legacyGate": "2019.4 denied before child construction; shipped code unchanged",
+  "negativeControl": {
+    "input": {
+      "Action": "Get",
+      "action": "Clear"
+    },
+    "beforeOutput": {
+      "negativeControl": "pre-fix duplicate-case key reaches upstream",
+      "forwarded": 1
+    },
+    "afterRefused": true,
+    "afterForwarded": 0
+  }
+}
