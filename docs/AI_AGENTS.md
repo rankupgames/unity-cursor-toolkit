@@ -173,3 +173,9 @@ These prompts are intentionally conservative: inspect first, summarize state, th
 - Package Manager tools: list packages, inspect versions, and propose dependency changes with dry-run output.
 - CoreCLR and Unity 7 work is tracked in `docs/ROADMAP.md` and GitHub issues; do not
   present open issues as available tools.
+
+### Scene object IDs
+
+Unity 7 and newer return opaque `entityId` strings from scene hierarchy and GameObject create/find calls, and `componentEntityId` from component creation. Pass `entityId` to GameObject/component actions and `parentEntityId` to setParent. Keep these strings unchanged; do not convert them to JavaScript numbers.
+
+Editors before Unity 7 retain integer `instanceId`, `parentInstanceId`, and `componentInstanceId`. Version guards select the supported Unity API at compile time. A supplied string ID takes precedence; unsupported or malformed IDs fail before mutation. Names remain available when no ID is supplied. An unresolved parent is an error; omit all parent identifiers to detach.

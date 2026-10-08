@@ -62,12 +62,14 @@ export class UnityMcpTools implements IToolProvider {
 					properties: withDryRunProperty({
 						action: { type: 'string', enum: ['create', 'find', 'destroy', 'setTransform', 'setParent'] },
 						name: { type: 'string' },
-						instanceId: { type: 'number' },
+						instanceId: { type: 'number', description: 'Object ID for Editors before Unity 7.' },
+						entityId: { type: 'string', description: 'Opaque object ID returned by Unity 7 or newer. Takes precedence over instanceId.' },
 						position: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } } },
 						rotation: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' }, w: { type: 'number' } } },
 						scale: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } } },
 						parentName: { type: 'string' },
-						parentInstanceId: { type: 'number' }
+						parentInstanceId: { type: 'number', description: 'Parent ID for Editors before Unity 7.' },
+						parentEntityId: { type: 'string', description: 'Opaque parent object ID returned by Unity 7 or newer.' }
 					}),
 					required: ['action']
 				},
@@ -82,12 +84,13 @@ export class UnityMcpTools implements IToolProvider {
 					properties: withDryRunProperty({
 						action: { type: 'string', enum: ['add', 'remove', 'getProperties', 'setProperty'] },
 						gameObjectName: { type: 'string' },
-						instanceId: { type: 'number' },
+						instanceId: { type: 'number', description: 'Object ID for Editors before Unity 7.' },
+						entityId: { type: 'string', description: 'Opaque object ID returned by Unity 7 or newer. Takes precedence over instanceId.' },
 						componentType: { type: 'string' },
 						propertyName: { type: 'string' },
 						propertyValue: { type: 'string' }
 					}),
-					required: ['action', 'gameObjectName']
+					required: ['action']
 				},
 				annotations: getToolAnnotations('manage_component')
 			},
