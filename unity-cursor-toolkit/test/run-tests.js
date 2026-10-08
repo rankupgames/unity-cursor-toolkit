@@ -4993,6 +4993,10 @@ async function testUnityCliAdapter() {
 		try {
 			const adapter = new UnityCliAdapter(path.join(os.tmpdir(), 'uct-no-such-cli'), { ...process.env, UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH: process.execPath });
 			assert.strictEqual((await adapter.invoke('build', [], { timeoutMs: 1000 })).error.code, 'policy_refused');
+			assert.strictEqual((await adapter.invoke('list', ['--project-path', 'owned project'], { timeoutMs: 1000 })).error.code, 'cli_not_found');
+			for (const args of [[], ['--project-path', ''], ['--project-path', 'owned', '--all'], ['--project', 'owned']]) {
+				assert.strictEqual((await adapter.invoke('list', args, { timeoutMs: 1000 })).error.code, 'policy_refused');
+			}
 			assert.strictEqual((await adapter.invoke('version', [], { timeoutMs: 0 })).error.code, 'invalid_arguments');
 			assert.strictEqual((await adapter.invoke('version', ['--format', 'human'], { timeoutMs: 1000 })).error.code, 'invalid_arguments');
 			assert.strictEqual((await adapter.probe({ timeoutMs: 1000 })).error.code, 'cli_not_found');

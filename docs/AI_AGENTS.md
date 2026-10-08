@@ -26,7 +26,8 @@ The current source includes the toolkit bridge, explicit batchmode execution,
 a Unity CLI diagnostic adapter and selected test backend, and a CoreCLR
 migration assistant. Unity owns CLI build/test execution. Pipeline eligibility
 and disposable composition proofs exist; production Pipeline execution is
-pending. Source-stack status does not imply availability in an older published
+blocked by unverified handler provenance. `pipeline.commands` provides audited
+discovery and local plans only; see [setup and limits](MCP_CLIENTS.md#pipeline-discovery-and-local-plans). Source-stack status does not imply availability in an older published
 extension.
 
 | Runtime | Debugger status |
@@ -48,8 +49,8 @@ environment-selected, or PATH binary and compares its version with the recorded
 A version mismatch is a warning with expected and found values; no install,
 upgrade, Editor substitution, or automatic backend fallback occurs.
 
-Current source callers include version, doctor and explicitly selected test execution. The status bar shows CLI version availability.
-The local read-only guard permits version, doctor, and project-scoped status plans. Other invocations
+Current source callers include version, doctor, Pipeline discovery, and explicitly selected test execution. The status bar shows CLI version availability.
+The local read-only guard permits version, doctor, project-scoped status, and exact project-scoped list calls. Other invocations
 require an explicit mutating caller; the guard refuses before spawning. Existing
 game_command batchmode execution retains its existing path. Test execution applies the shared test policy described below.
 

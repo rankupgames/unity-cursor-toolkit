@@ -10,6 +10,7 @@ import * as vscode from 'vscode';
 import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { ToolRouter } from './toolRouter';
 import { UnityMcpTools } from './unityMcpTools';
+import { PipelineMcpTools } from './pipelineMcpTools';
 import { UnityTestMcpTools } from './unityTestTools';
 import { UnityTestCommands } from './unityTestCommands';
 import { isMcpReadOnlyMode } from './toolMetadata';
@@ -36,6 +37,9 @@ export class McpModule implements IModule {
 		const tests = new UnityTestMcpTools(ctx.commandSender, getLinkedProjectPath, new UnityCliTestAdapter(new UnityCliAdapter(cliPath)), isMcpReadOnlyMode());
 		this.toolRouter.register(tests, 'toolkit');
 		ctx.registerToolProvider(tests);
+		const pipeline = new PipelineMcpTools(new UnityCliAdapter(cliPath));
+		this.toolRouter.register(pipeline, 'pipeline');
+		ctx.registerToolProvider(pipeline);
 		this.testCommands = new UnityTestCommands(ctx, tests);
 		this.disposables.push(this.testCommands);
 
