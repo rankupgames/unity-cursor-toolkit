@@ -275,7 +275,7 @@ namespace UnityCursorToolkit.AgentCommands
 			/// <summary>
 			/// Coroutine delegate that executes the game command.
 			/// </summary>
-			public AgentCommandHandler Handler { get; }
+			public AgentCommandHandler Handler { get; private set; }
 
 			/// <summary>
 			/// Command context shared with the game-authored handler.
@@ -334,6 +334,7 @@ namespace UnityCursorToolkit.AgentCommands
 				Status = status;
 				Result = result;
 				Coroutine = null;
+				Handler = null;
 			}
 
 			/// <summary>
