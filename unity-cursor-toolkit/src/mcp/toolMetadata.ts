@@ -26,6 +26,8 @@ const MUTATING_TOOLS = {
 } as const;
 
 const READ_ONLY_TOOLS = {
+	// This milestone only discovers, plans and refuses; command dispatch is disabled.
+	'pipeline.commands': true,
 	list_tests: true,
 	project_info: true,
 	coreclr_migration: true,

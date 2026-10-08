@@ -2,7 +2,7 @@
   "cliVersion": "1.0.0-beta.12",
   "pipelineVersion": "0.8.0-exp.1",
   "editorVersion": "6000.3.9f1",
-  "scope": "Observed live Editor catalog; classify maximum supported effect. Operational logs/cache are excluded from authoring mutations.",
+  "scope": "Indicative maximum effects of reviewed SDK implementations only. Runtime names, groups and schemas do not attest handler provenance; all execution remains disabled.",
   "commands": [
     {
       "name": "add_animator_layer",
@@ -1763,19 +1763,6 @@
       },
       "rationale": "Caller contents and extension permit arbitrary .cs/Editor source imported into the project; ordinary text is narrower. Source-based inference.",
       "evidence": "installed-package-source"
-    }
-  ],
-  "fixtureCommands": [
-    {
-      "name": "proof_delay",
-      "risk": "read-only",
-      "source": {
-        "file": "fixture/Assets/Editor/PipelineSafetyProof.cs",
-        "symbol": "Delay",
-        "line": 76
-      },
-      "rationale": "Disposable-only 0-8000 ms background delay with progress and diagnostic markers, no caller code evaluation or authoring writes.",
-      "evidence": "authored-fixture-source"
     }
   ]
 }

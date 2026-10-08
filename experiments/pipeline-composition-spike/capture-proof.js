@@ -11,7 +11,7 @@ const ps=command=>new Promise((resolve,reject)=>execFile('powershell.exe',['-NoP
 const alive=pid=>{try{process.kill(pid,0);return true;}catch(e){return e.code!=='ESRCH';}};
 const evidence={capturedAt:new Date().toISOString(),cliVersion:CLI,pipelineVersion:PIN,editorVersion:EDITOR,outcome:'incomplete',commands:[],transport:[],composition:[],safety:{}};
 const owned=[],clients=new Set(); let binary,editorRoot,sentinel;
-const matrix=JSON.parse(fs.readFileSync(path.join(__dirname,'command-risk-matrix.json'),'utf8'));
+const matrix=JSON.parse(fs.readFileSync(path.join(__dirname,'../../unity-cursor-toolkit/src/core/pipelinePolicy.json'),'utf8'));
 const interfaceAddresses=Object.values(os.networkInterfaces()).flat().filter(i=>i&&!i.internal).map(i=>i.address);
 const secretKey=/auth|credential|token|secret|password|bearer|email|foreignkey|username|userid|session/i;
 function safe(value){

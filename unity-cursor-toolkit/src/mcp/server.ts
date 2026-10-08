@@ -12,6 +12,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ToolRouter } from './toolRouter';
 import { UnityMcpTools } from './unityMcpTools';
+import { PipelineMcpTools } from './pipelineMcpTools';
 import { UnityTestMcpTools } from './unityTestTools';
 import { StandaloneUnityConnection } from './standaloneConnection';
 import { StandaloneConsoleMcpTools, StandaloneConsoleStore } from './standaloneConsole';
@@ -157,6 +158,7 @@ export function createStandaloneMcpRuntime(readOnly = isMcpReadOnlyMode(), notif
 	router.register(viewportTools, 'toolkit');
 	router.register(new StandaloneConsoleMcpTools(consoleStore), 'toolkit');
 	router.register(new StandaloneProjectMcpTools(), 'toolkit');
+	router.register(new PipelineMcpTools(), 'pipeline');
 
 	return {
 		router,

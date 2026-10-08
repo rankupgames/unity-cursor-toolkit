@@ -35,8 +35,8 @@ lists the same metadata.
 Use a canonical name to select an origin explicitly. A bare-name collision
 selects the toolkit tool when present; other collisions return
 `ambiguous_tool` with canonical candidates. Unknown names return
-`unknown_tool` with the canonical catalog. Only toolkit providers ship in
-this registration path; these names do not enable Pipeline or Assistant.
+`unknown_tool` with the canonical catalog. The approved Pipeline discovery
+provider also registers `pipeline.commands`; Assistant remains unavailable.
 
 Read-only checks use the resolved canonical identity. Unclassified origins
 are refused before backend calls, including requests with `dryRun: true`.
@@ -44,6 +44,41 @@ Toolkit dry-run plans, direct-only test tools, progress tokens, and cancellation
 request IDs retain their existing behavior. `batch_execute` accepts toolkit
 operation names and their bare aliases, and refuses test tools or foreign-origin
 operations at every nesting level before planning or forwarding.
+
+## Pipeline Discovery and Local Plans
+
+Use `pipeline.commands` with `action: "list"`, an absolute `projectPath`, and
+the exact `editorPid`. Discovery requires CLI `1.0.0-beta.12`, official
+Pipeline `0.8.0-exp.1` in the manifest, lock, and resolved package, and one
+ready matching Editor. It checks project path, version, PID, and port before
+and after listing. Other versions, ambiguous targets, malformed catalogs,
+and backend failures return typed errors without fallback.
+
+The catalog returns schemas and reviewed classifications. These classifications
+describe SDK source; they do not prove which runtime handler a name selects.
+All entries have `executionEligible: false`. `action: "run"` accepts `command`,
+`args`, `dryRun`, and `timeoutMs` but cannot dispatch commands in this
+milestone. Read-only commands return `provenance_unverified`; mutating,
+destructive, and escape commands return `policy_refused`; unknown commands
+return `unknown_command`. Dry runs inspect local metadata and policy without
+CLI traffic. Global read-only mode permits this discovery and refusal flow.
+
+Set `UNITY_CURSOR_TOOLKIT_PIPELINE_AUDIT_PATH` explicitly before any call.
+The writer records a durable start and outcome with a shared invocation ID,
+time, origin, action, reviewed command, classification, verified PID when
+available, verified Editor version, and bounded result codes. It excludes
+arguments, results, paths, host names, and credentials. The local file must
+be regular, not linked, and contain only valid toolkit audit records. Use a
+local disk; UNC and device paths are refused, but mapped network drives
+cannot be identified from path syntax alone.
+
+A cooperative exclusive `.lock` protects the 5 MiB cap across processes.
+An unavailable, invalid, busy, or full journal refuses the call before backend
+traffic; terminal-write failure also refuses the result. Records are never
+rotated or deleted. A crash can leave a start record and a lock; the toolkit
+does not take over that lock. File records are flushed; first creation is
+not a guarantee against power loss. Preserve the journal and resolve its ownership
+before recovery, or configure a new explicit audit path.
 
 ## CoreCLR Migration Tool
 
@@ -72,6 +107,7 @@ MCP's report action returns the same report format in memory.
 |---|---|
 | `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` | Unity project root used for `.meta` resolution and migration source scans |
 | `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY` | Set to `1` to block mutating tools |
+| `UNITY_CURSOR_TOOLKIT_PIPELINE_AUDIT_PATH` | Explicit absolute local `.jsonl` audit file; its parent must already exist |
 | `UNITY_CURSOR_TOOLKIT_MCP_PORTS` | Comma-separated Unity TCP ports, default `55500,55501,55502,55503,55504` |
 | `UNITY_CURSOR_TOOLKIT_UNITY_PATH` | Optional Unity executable path for `game_command` with `host: "editorBatchmode"` |
 

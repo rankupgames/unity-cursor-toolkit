@@ -147,7 +147,8 @@ export class UnityCliAdapter {
 			return failure('invalid_arguments', 'CLI transport flags are managed by the adapter.', 'Remove format and interaction overrides.');
 		}
 		const pipelineVersions = command === 'pipeline' && args.length === 1 && args[0] === 'list-versions';
-		const diagnostic = pipelineVersions || (['version', 'doctor'].includes(command) && args.length === 0)
+		const pipelineList = command === 'list' && args.length === 2 && args[0] === '--project-path' && args[1].length > 0;
+		const diagnostic = pipelineList || pipelineVersions || (['version', 'doctor'].includes(command) && args.length === 0)
 			|| (command === 'status' && (args.length === 0 || (args.length === 2 && ['--project-path', '--project', '-p'].includes(args[0]) && args[1].length > 0)));
 		if (options.readOnly !== false && !diagnostic) {
 			return failure('policy_refused', 'Read-only CLI policy refused this invocation.', 'Use an approved diagnostic command and arguments.');
