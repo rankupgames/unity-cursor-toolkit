@@ -2,7 +2,7 @@ name: Unity-Unterm Vendor
 
 on:
   pull_request:
-    branches: [main, 'release/0.7-unity-runtime-rework']
+    branches: [main, 'release-0.7-unity-runtime-rework']
   workflow_dispatch:
 
 permissions:
