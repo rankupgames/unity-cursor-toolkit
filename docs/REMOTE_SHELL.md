@@ -225,6 +225,34 @@ From VS Code or Cursor, use the tasks `Unity Shell: Init Manifest`, `Unity Shell
 
 The local sidecar reads the manifest, opens SSH tunnels, starts the remote PowerShell sidecar, and launches the bundled SwiftUI shell. The Windows sidecar launches a Unity Player build on the configured virtual-display monitor, captures the Unity window with FFmpeg `gdigrab`, serves `/viewport.mjpg`, and accepts `/input`, `/status.json`, and `/stop` on the control port. The real manifest is gitignored because it holds machine-specific hostnames and Windows paths; `remote_workspace/unity-shell.example.json` is the shareable template.
 
+### Remote-shell doctor
+
+Run `npm --prefix unity-cursor-toolkit run remote-shell -- doctor --manifest <path> --format human`
+before launch. Use `--format json` for `success`, `checks`, `sidecarVersion`,
+and `licenseState`. Check identifiers are `manifest`, `localpaths`, `ssh`,
+`remotepaths`, `sidecarversion`, and `license`; each has `state` (`pass` or
+`fail`), `code`, `message`, and `remediation`. Output omits configured host,
+user, path, key, and credential values.
+
+Doctor checks local paths before network access, then uses bounded,
+non-interactive SSH probes. It neither trusts new host keys nor updates known
+keys, opens forwards, reuses control masters, or runs configured local commands.
+Existing alias, authentication, and proxy configuration still select the host.
+The configured remote sidecar must be a trusted toolkit PowerShell script;
+`-VersionOnly` returns its contract version before launch setup. Doctor does
+not bypass the remote PowerShell execution policy. A replacement script is
+outside this read-only guarantee. The remote sidecar need not exist locally
+when an installed shell app is selected.
+
+License health remains unproved: `licenseState` is `unknown`, the license
+check fails with `license_probe_unavailable`, and doctor exits with code 1.
+The official CLI status path can install or replace its licensing client;
+doctor does not invoke it, activate or return a seat, or sign out. Verify the
+license separately with official tools. This limitation prevents an overall
+healthy result even when the other five checks pass. Detected launch manifest
+and process-spawn failures reference the corresponding doctor check identifiers;
+launch still uses its existing asynchronous process behavior.
+
 ### Windows proof runner
 
 ```bash

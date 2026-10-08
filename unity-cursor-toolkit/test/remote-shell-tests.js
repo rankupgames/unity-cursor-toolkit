@@ -186,6 +186,206 @@ function main() {
 		}
 	});
 
+
+	console.log('\n-- read-only remote-shell doctor --');
+	function invokeDoctor(tmpDir, replies = [], extraArgs = [], action = 'doctor') {
+		const runner = [
+			"const cp=require('child_process'),assert=require('assert');",
+			"const replies=" + JSON.stringify(replies) + ";let stdout='',stderr='',calls=[];",
+			"cp.spawn=()=>{throw new Error('Unexpected launch from doctor');};",
+			"cp.execFile=(command,args,options,callback)=>{assert.strictEqual(command,'ssh');",
+			"assert.strictEqual(options.windowsHide,true);assert.strictEqual(options.timeout,10000);assert.strictEqual(options.maxBuffer,65536);",
+			"assert(args.includes('BatchMode=yes'));assert(args.includes('StrictHostKeyChecking=yes'));assert(args.includes('ConnectTimeout=5'));",
+			"for(const option of ['UpdateHostKeys=no','PermitLocalCommand=no','ClearAllForwardings=yes','ForwardAgent=no','ForwardX11=no','Tunnel=no','ControlMaster=no','ControlPath=none','ControlPersist=no','ForkAfterAuthentication=no']){assert(args.includes(option),'Doctor must disable '+option);}",
+			"const encoded=args[args.length-1].split(' ').pop();const script=Buffer.from(encoded,'base64').toString('utf16le');",
+			"calls.push(script.includes('-VersionOnly')?'sidecarversion':script.includes('Test-Path')?'remotepaths':'ssh');",
+			"assert(!/Start-Process|New-Item|license status|license activate|license return|auth logout/.test(script));",
+			"const reply=replies.shift();assert(reply,'Unexpected transport call');",
+			"process.nextTick(()=>callback(reply.error?Object.assign(new Error('private transport details'),reply.error):null,",
+			"reply.stdout===undefined?JSON.stringify(reply.data):reply.stdout,reply.stderr||''));};",
+			"const {runCli}=require(" + JSON.stringify(path.join(outDir, 'remote-shell', 'sidecarCli.js')) + ");",
+			"runCli(process.argv.slice(1),{stdout:{write:x=>{stdout+=x;}},stderr:{write:x=>{stderr+=x;}}})",
+			".then(code=>process.stdout.write(JSON.stringify({code,stdout,stderr,calls}))).catch(e=>{console.error(e);process.exitCode=1;});"
+		].join('');
+		const args = [action, '--manifest', path.join(tmpDir, 'unity-shell.json'), '--workspace-root', tmpDir];
+		for (const [flag, value] of [['--extension-root', path.join(repoRoot, 'unity-cursor-toolkit')], ['--shell-app', process.execPath], ['--format', 'json']]) {
+			if (!extraArgs.includes(flag)) { args.push(flag, value); }
+		}
+		const result = spawnSync(process.execPath, ['-e', runner, ...args, ...extraArgs], { encoding: 'utf8', timeout: 10_000 });
+		assert.strictEqual(result.status, 0, result.stderr);
+		return JSON.parse(result.stdout);
+	}
+	const reachableReply = { data: { reachable: true, host: 'private-host', key: 'PRIVATE_KEY' } };
+	const pathsReply = { data: { workspace: true, player: true, sidecar: true, ffmpeg: true } };
+	const versionReply = { data: { sidecarVersion: '1.0.0', user: 'private-user' } };
+	function assertDoctorReport(response) {
+		assert.strictEqual(response.code, 1, 'license health is unproved, so the doctor must not report overall success');
+		assert.strictEqual(response.stderr, '');
+		const report = JSON.parse(response.stdout);
+		assert.deepStrictEqual(report.checks.map(check => check.id), ['manifest', 'localpaths', 'ssh', 'remotepaths', 'sidecarversion', 'license']);
+		assert.strictEqual(report.success, false);
+		for (const check of report.checks) {
+			assert(['pass', 'fail'].includes(check.state));
+			assert.match(check.code, /^[a-z_]+$/);
+			assert.strictEqual(typeof check.message, 'string');
+			assert.ok(check.remediation.length > 0);
+		}
+		assert.strictEqual(report.licenseState, 'unknown');
+		assert.strictEqual(report.checks[5].code, 'license_probe_unavailable');
+		return report;
+	}
+	test('doctor reports five passed checks while refusing an unproved license, without leaking private transport fields', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-doctor-'));
+		try {
+			const extensionRoot = path.join(tmpDir, 'installed-extension');
+			fs.mkdirSync(extensionRoot);
+			writeManifest(tmpDir, createManifest({ sshTarget: 'private-user@private-host', windowTitle: 'PRIVATE_KEY', remoteSidecarPath: 'C:\\tools\\sidecar.PS1' }));
+			const response = invokeDoctor(tmpDir, [reachableReply, pathsReply, versionReply], ['--extension-root', extensionRoot]);
+			const report = assertDoctorReport(response);
+			assert.deepStrictEqual(report.checks.slice(0, 5).map(check => check.state), ['pass', 'pass', 'pass', 'pass', 'pass']);
+			assert.strictEqual(report.sidecarVersion, '1.0.0');
+			assert.deepStrictEqual(response.calls, ['ssh', 'remotepaths', 'sidecarversion']);
+			for (const privateValue of ['private-host', 'private-user', 'PRIVATE_KEY', tmpDir]) { assert(!response.stdout.includes(privateValue)); }
+			assert(!fs.existsSync(path.join(tmpDir, '.unity-vdd-shell')), 'doctor must not persist launch state');
+		} finally { fs.rmSync(tmpDir, { recursive: true, force: true }); }
+	});
+	test('doctor human output retains stable identifiers and explicit unknown license remediation', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-doctor-'));
+		try {
+			writeManifest(tmpDir);
+			const response = invokeDoctor(tmpDir, [reachableReply, pathsReply, versionReply], ['--format', 'human', '--shell-app', '  ' + process.execPath + '  ']);
+			assert.strictEqual(response.code, 1);
+			assert.strictEqual(response.stderr, '');
+			for (const id of ['manifest', 'localpaths', 'ssh', 'remotepaths', 'sidecarversion']) { assert(response.stdout.includes(id + ': PASS [ok]')); }
+			assert(response.stdout.includes('license: FAIL [license_probe_unavailable]'));
+			assert(response.stdout.includes('licenseState: unknown'));
+			assert(response.stdout.includes('outside doctor'));
+			assert(!response.stdout.includes('win-vdd'));
+		} finally { fs.rmSync(tmpDir, { recursive: true, force: true }); }
+	});
+	test('doctor rejects missing, malformed, and unsafe manifests before any transport', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-doctor-'));
+		try {
+			const invalid = [
+				undefined, '{malformed PRIVATE_KEY',
+				{}, createManifest({ sshTarget: '-oProxyCommand=PRIVATE_KEY' }),
+				createManifest({ remoteWorkspacePath: 'relative-path' }),
+				createManifest({ unityPlayerPath: 'C:\\private\nuser.exe' }),
+				createManifest({ display: 'bad' }), createManifest({ ports: { stream: 70000, control: 70001 } }),
+				createManifest({ ports: { stream: '5000junk', control: 5001 } }),
+				createManifest({ vddMonitor: 1.5 }), createManifest({ remoteSidecarPath: false }),
+				createManifest({ remoteSidecarPath: '' }), createManifest({ remoteWorkspacePath: '\\root-relative' }),
+				createManifest({ remoteSidecarPath: 'C:\\Program Files\\Unity\\Editor\\Unity.exe' }),
+				createManifest({ ffmpegPath: '*' }), createManifest({ ffmpegPath: 'relative/ffmpeg.exe' }),
+				createManifest({ ffmpegPath: 'C:ffmpeg.exe' }), createManifest({ ffmpegPath: '\\ffmpeg.exe' })
+			];
+			for (const input of invalid) {
+				const manifestPath = path.join(tmpDir, 'unity-shell.json');
+				if (input === undefined) { fs.rmSync(manifestPath, { force: true }); }
+				else { fs.writeFileSync(manifestPath, typeof input === 'string' ? input : JSON.stringify(input)); }
+				const response = invokeDoctor(tmpDir);
+				assert.strictEqual(assertDoctorReport(response).checks[0].code, 'invalid_manifest');
+				assert.deepStrictEqual(response.calls, []);
+				assert(!response.stdout.includes('PRIVATE_KEY'));
+			}
+		} finally { fs.rmSync(tmpDir, { recursive: true, force: true }); }
+	});
+	test('doctor refuses unresolved local dependencies and invalid output formats without SSH', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-doctor-'));
+		try {
+			writeManifest(tmpDir);
+			for (const args of [['--shell-app', path.join(tmpDir, 'absent-secret.exe')], ['--extension-root', path.join(tmpDir, 'absent')]]) {
+				const response = invokeDoctor(tmpDir, [], args);
+				assert.strictEqual(assertDoctorReport(response).checks[1].code, 'local_paths_unavailable');
+				assert.deepStrictEqual(response.calls, []);
+			}
+			const invalid = invokeDoctor(tmpDir, [], ['--format', 'unknown']);
+			assert.strictEqual(invalid.code, 1);
+			assert(invalid.stdout.includes('invalid_format'));
+			assert.deepStrictEqual(invalid.calls, []);
+		} finally { fs.rmSync(tmpDir, { recursive: true, force: true }); }
+	});
+	test('doctor classifies SSH failures without exposing raw host, user, or credential details', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-doctor-'));
+		try {
+			writeManifest(tmpDir);
+			for (const [reply, code] of [
+				[{ error: { code: 'ENOENT' } }, 'ssh_unavailable'],
+				[{ error: { killed: true }, stderr: 'private-host' }, 'ssh_timed_out'],
+				[{ error: { code: 255 }, stderr: 'private-user@private-host: Permission denied PRIVATE_KEY' }, 'ssh_auth_failed'],
+				[{ error: { code: 255 }, stderr: 'Host key verification failed private-host' }, 'ssh_host_key_failed'],
+				[{ error: { code: 255 }, stderr: 'Could not resolve hostname private-host' }, 'ssh_name_unresolved'],
+				[{ error: { code: 255 }, stderr: 'Connection refused private-host' }, 'ssh_refused'],
+				[{ data: { reachable: 'true' }, stderr: 'PRIVATE_KEY' }, 'ssh_failed']
+			]) {
+				const response = invokeDoctor(tmpDir, [reply]);
+				const report = assertDoctorReport(response);
+				assert.strictEqual(report.checks[2].code, code);
+				assert.deepStrictEqual(response.calls, ['ssh']);
+				for (const value of ['private-user', 'private-host', 'PRIVATE_KEY']) { assert(!response.stdout.includes(value)); }
+			}
+		} finally { fs.rmSync(tmpDir, { recursive: true, force: true }); }
+	});
+	test('doctor fails remote missing, malformed, truthy, and failed path probes before version execution', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-doctor-'));
+		try {
+			writeManifest(tmpDir);
+			for (const reply of [
+				{ data: { ...pathsReply.data, player: false } },
+				{ data: { ...pathsReply.data, player: 'true' } },
+				{ data: { workspace: true } }, { stdout: 'PRIVATE_KEY not json' },
+				{ error: { code: 1 }, data: pathsReply.data }
+			]) {
+				const response = invokeDoctor(tmpDir, [reachableReply, reply]);
+				assert.strictEqual(assertDoctorReport(response).checks[3].code, 'remote_paths_unavailable');
+				assert.deepStrictEqual(response.calls, ['ssh', 'remotepaths']);
+				assert(!response.stdout.includes('PRIVATE_KEY'));
+			}
+		} finally { fs.rmSync(tmpDir, { recursive: true, force: true }); }
+	});
+	test('doctor rejects sidecar mismatches and malformed version output instead of publishing remote text', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-doctor-'));
+		try {
+			writeManifest(tmpDir);
+			for (const [reply, expectedCode, expectedVersion] of [
+				[{ data: { sidecarVersion: '2.0.0' } }, 'sidecar_version_mismatch', '2.0.0'],
+				[{ data: { sidecarVersion: 'private-user@private-host PRIVATE_KEY' } }, 'sidecar_version_unavailable', null],
+				[{ data: { sidecarVersion: 1 } }, 'sidecar_version_unavailable', null],
+				[{ stdout: 'PRIVATE_KEY' }, 'sidecar_version_unavailable', null],
+				[{ error: { code: 1 }, data: versionReply.data }, 'sidecar_version_unavailable', null]
+			]) {
+				const response = invokeDoctor(tmpDir, [reachableReply, pathsReply, reply]);
+				const report = assertDoctorReport(response);
+				assert.strictEqual(report.checks[4].code, expectedCode);
+				assert.strictEqual(report.sidecarVersion, expectedVersion);
+				assert(!response.stdout.includes('PRIVATE_KEY'));
+			}
+		} finally { fs.rmSync(tmpDir, { recursive: true, force: true }); }
+	});
+	test('launch manifest failures point to the doctor manifest check before any process launch', () => {
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-doctor-'));
+		try {
+			const response = invokeDoctor(tmpDir, [], [], 'launch');
+			assert.strictEqual(response.code, 1);
+			assert(response.stderr.includes('[doctor:manifest]'));
+			assert.deepStrictEqual(response.calls, []);
+		} finally { fs.rmSync(tmpDir, { recursive: true, force: true }); }
+	});
+	test('sidecar VersionOnly exits before path creation, native UI APIs, and process startup', () => {
+		if (process.platform !== 'win32') {
+			process.stdout.write('    Windows PowerShell execution unavailable on this platform\n');
+			return;
+		}
+		const { REMOTE_SHELL_SIDECAR_VERSION } = require(path.join(outDir, 'remote-shell', 'sidecarPlan'));
+		const sidecar = path.join(repoRoot, 'unity-cursor-toolkit', 'remote-shell', 'windows', 'unity-vdd-sidecar.ps1');
+		const script = "function Start-Process { throw 'Unexpected process startup' }; function Add-Type { throw 'Unexpected UI startup' }; "
+			+ "function New-Item { throw 'Unexpected path creation' }; & '" + sidecar.replace(/'/g, "''") + "' -VersionOnly";
+		const result = spawnSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', script],
+			{ encoding: 'utf8', timeout: 5_000, windowsHide: true });
+		assert.strictEqual(result.status, 0, result.stderr);
+		assert.deepStrictEqual(JSON.parse(result.stdout), { sidecarVersion: REMOTE_SHELL_SIDECAR_VERSION });
+	});
+
 	console.log('\n-- remote-shell/extensionCommands.ts --');
 	test('extension invocation resolves workspace manifest and sidecar command', () => {
 		const invocation = buildRemoteShellInvocation('launch', fakeExtensionRoot, fakeWorkspaceRoot, {

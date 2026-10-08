@@ -171,3 +171,30 @@ export function buildShellLaunchPlan(manifest: RemoteShellManifest, options: Rem
 function quotePowerShell(value: string): string {
 	return `'${value.replace(/'/g, "''")}'`;
 }
+
+/** Sidecar identity contract version, independent of extension releases. */
+export const REMOTE_SHELL_SIDECAR_VERSION = '1.0.0';
+
+export function createRemoteShellDoctorPlans(manifest: RemoteShellManifest): { ssh: CommandPlan; remotepaths: CommandPlan; sidecarversion: CommandPlan } {
+	const encoded = (script: string): CommandPlan => ({
+		command: 'ssh',
+		args: ['-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=5',
+			'-o', 'ConnectionAttempts=1', '-o', 'UpdateHostKeys=no', '-o', 'PermitLocalCommand=no',
+			'-o', 'ClearAllForwardings=yes', '-o', 'ForwardAgent=no', '-o', 'ForwardX11=no', '-o', 'Tunnel=no',
+			'-o', 'ControlMaster=no', '-o', 'ControlPath=none', '-o', 'ControlPersist=no', '-o', 'ForkAfterAuthentication=no', manifest.sshTarget,
+			'powershell.exe -NoProfile -NonInteractive -EncodedCommand ' + Buffer.from("$ErrorActionPreference='Stop'; " + script, 'utf16le').toString('base64')]
+	});
+	const checks = [
+		"workspace=(Test-Path -LiteralPath " + quotePowerShell(manifest.remoteWorkspacePath) + " -PathType Container)",
+		"player=(Test-Path -LiteralPath " + quotePowerShell(manifest.unityPlayerPath) + " -PathType Leaf)",
+		"sidecar=(Test-Path -LiteralPath " + quotePowerShell(manifest.remoteSidecarPath) + " -PathType Leaf)",
+		"ffmpeg=([bool](Get-Command -Name " + quotePowerShell(manifest.ffmpegPath) + " -CommandType Application -ErrorAction SilentlyContinue))"
+	];
+	if (manifest.unityEditorPath) { checks.push("editor=(Test-Path -LiteralPath " + quotePowerShell(manifest.unityEditorPath) + " -PathType Leaf)"); }
+	if (manifest.remoteRepoPath) { checks.push("repo=(Test-Path -LiteralPath " + quotePowerShell(manifest.remoteRepoPath) + " -PathType Container)"); }
+	return {
+		ssh: encoded('[Console]::Write(\'{"reachable":true}\')'),
+		remotepaths: encoded('@{' + checks.join(';') + '} | ConvertTo-Json -Compress'),
+		sidecarversion: encoded('& ' + quotePowerShell(manifest.remoteSidecarPath) + ' -VersionOnly')
+	};
+}
