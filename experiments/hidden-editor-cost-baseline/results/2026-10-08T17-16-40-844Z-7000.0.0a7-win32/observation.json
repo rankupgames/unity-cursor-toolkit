@@ -1,0 +1,508 @@
+{
+  "observedAt": "2026-10-08T17:19:29.694Z",
+  "editorVersion": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "platform": "win32",
+  "architecture": "x64",
+  "fixture": true,
+  "template": {
+    "name": "com.unity.template.urp-blank-17.3.0.tgz",
+    "sha256": "0fc1fe28d6077b020a550021aa74feeef922d89d9c0ad8954cd245bd5ed0f909",
+    "templateUrp": "17.7.0",
+    "installedUrp": "17.7.0",
+    "preferenceIsolation": {
+      "changes": [
+        {
+          "original": "UnityHotReloadHandler_ShowDebugLogs",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_ShowDebugLogs"
+        },
+        {
+          "original": "UnityHotReloadHandler_LastPort",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_LastPort"
+        }
+      ],
+      "originalSha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6",
+      "isolatedSha256": "ee468299f8428c325c74c6c8728a34506bbf5237c2e03fbffba9fc516a7498f5",
+      "defaultInstallProof": false
+    }
+  },
+  "sourceHashes": {
+    "runner": "3be6d6e81cd04d5e5e68b7df6ce51c87d7368727370731f7e4831556dfaf5bf6",
+    "sampler": "3d69af484dbcd5b43753f6cb15564c5673a49983bb4c4cb12fbd0125d83d18d5",
+    "spike": "79583985500ebfda05e7fec5494d679f8eabe9c703f60c9a0d9a037459f80754",
+    "capture": "a2ae99f511a5e787f98894be3e021eb545c9a274e70f91b2f2a064f8afc96f6a",
+    "stream": "a9cf7168f81b14590942d735ef50f1fecdc1f699f8f2e8ff59c80631fa081752"
+  },
+  "runs": [
+    {
+      "index": 0,
+      "phase": "unmeasured-import-functional",
+      "pid": 17428,
+      "port": 62442,
+      "startedAt": "2026-10-08T17:16:40.864Z",
+      "samples": [
+        {
+          "at": "2026-10-08T17:16:41.810Z",
+          "rssMb": 123.42578125,
+          "cpuSeconds": 1
+        },
+        {
+          "at": "2026-10-08T17:16:46.122Z",
+          "rssMb": 912.9453125,
+          "cpuSeconds": 6.34375,
+          "cpuPercent": 123.9
+        },
+        {
+          "at": "2026-10-08T17:16:51.441Z",
+          "rssMb": 916.9765625,
+          "cpuSeconds": 6.640625,
+          "cpuPercent": 5.6
+        },
+        {
+          "at": "2026-10-08T17:16:56.480Z",
+          "rssMb": 916.12890625,
+          "cpuSeconds": 6.734375,
+          "cpuPercent": 1.9
+        },
+        {
+          "at": "2026-10-08T17:17:01.106Z",
+          "rssMb": 917.16015625,
+          "cpuSeconds": 6.84375,
+          "cpuPercent": 2.4
+        },
+        {
+          "at": "2026-10-08T17:17:06.113Z",
+          "rssMb": 946.60546875,
+          "cpuSeconds": 7.75,
+          "cpuPercent": 18.1
+        },
+        {
+          "at": "2026-10-08T17:17:11.108Z",
+          "rssMb": 946.703125,
+          "cpuSeconds": 8.265625,
+          "cpuPercent": 10.3
+        },
+        {
+          "at": "2026-10-08T17:17:16.154Z",
+          "rssMb": 946.87890625,
+          "cpuSeconds": 8.703125,
+          "cpuPercent": 8.7
+        },
+        {
+          "at": "2026-10-08T17:17:21.171Z",
+          "rssMb": 947.25,
+          "cpuSeconds": 8.890625,
+          "cpuPercent": 3.7
+        },
+        {
+          "at": "2026-10-08T17:17:26.157Z",
+          "rssMb": 947.00390625,
+          "cpuSeconds": 9.328125,
+          "cpuPercent": 8.8
+        },
+        {
+          "at": "2026-10-08T17:17:31.168Z",
+          "rssMb": 947.00390625,
+          "cpuSeconds": 9.8125,
+          "cpuPercent": 9.7
+        },
+        {
+          "at": "2026-10-08T17:17:36.392Z",
+          "rssMb": 994.4609375,
+          "cpuSeconds": 10.625,
+          "cpuPercent": 15.6
+        },
+        {
+          "at": "2026-10-08T17:17:41.317Z",
+          "rssMb": 994.70703125,
+          "cpuSeconds": 10.78125,
+          "cpuPercent": 3.2
+        },
+        {
+          "at": "2026-10-08T17:17:46.379Z",
+          "rssMb": 994.6953125,
+          "cpuSeconds": 10.875,
+          "cpuPercent": 1.9
+        },
+        {
+          "at": "2026-10-08T17:17:51.229Z",
+          "rssMb": 994.6953125,
+          "cpuSeconds": 11.03125,
+          "cpuPercent": 3.2
+        },
+        {
+          "at": "2026-10-08T17:17:56.190Z",
+          "rssMb": 994.6953125,
+          "cpuSeconds": 11.140625,
+          "cpuPercent": 2.2
+        },
+        {
+          "at": "2026-10-08T17:18:01.202Z",
+          "rssMb": 1003.15234375,
+          "cpuSeconds": 12.171875,
+          "cpuPercent": 20.6
+        },
+        {
+          "at": "2026-10-08T17:18:06.421Z",
+          "rssMb": 1236.4140625,
+          "cpuSeconds": 18.046875,
+          "cpuPercent": 112.6
+        },
+        {
+          "at": "2026-10-08T17:18:11.236Z",
+          "rssMb": 1335.71484375,
+          "cpuSeconds": 24.484375,
+          "cpuPercent": 133.7
+        },
+        {
+          "at": "2026-10-08T17:18:16.234Z",
+          "rssMb": 1392.30859375,
+          "cpuSeconds": 27.359375,
+          "cpuPercent": 57.5
+        },
+        {
+          "at": "2026-10-08T17:18:21.203Z",
+          "rssMb": 1474.81640625,
+          "cpuSeconds": 28.5,
+          "cpuPercent": 23
+        },
+        {
+          "at": "2026-10-08T17:18:26.200Z",
+          "rssMb": 1471.62109375,
+          "cpuSeconds": 29.71875,
+          "cpuPercent": 24.4
+        },
+        {
+          "at": "2026-10-08T17:18:31.201Z",
+          "rssMb": 1542.88671875,
+          "cpuSeconds": 31.109375,
+          "cpuPercent": 27.8
+        },
+        {
+          "at": "2026-10-08T17:18:36.955Z",
+          "rssMb": 1565.6328125,
+          "cpuSeconds": 31.90625,
+          "cpuPercent": 13.8
+        },
+        {
+          "at": "2026-10-08T17:18:41.946Z",
+          "rssMb": 1566.44921875,
+          "cpuSeconds": 32.171875,
+          "cpuPercent": 5.3
+        },
+        {
+          "at": "2026-10-08T17:18:47.100Z",
+          "rssMb": 1567,
+          "cpuSeconds": 32.359375,
+          "cpuPercent": 3.6
+        },
+        {
+          "at": "2026-10-08T17:18:51.295Z",
+          "rssMb": 1668.171875,
+          "cpuSeconds": 35.71875,
+          "cpuPercent": 80.1
+        },
+        {
+          "at": "2026-10-08T17:18:56.256Z",
+          "rssMb": 1737.7578125,
+          "cpuSeconds": 38.625,
+          "cpuPercent": 58.6
+        },
+        {
+          "at": "2026-10-08T17:19:01.449Z",
+          "rssMb": 1902.6796875,
+          "cpuSeconds": 45.640625,
+          "cpuPercent": 135.1
+        }
+      ],
+      "hidden": [],
+      "result": {
+        "success": true,
+        "editorVersion": "7000.0.0a7",
+        "platform": "Windows 10  (10.0.19045) 64bit",
+        "coreLibrary": "System.Private.CoreLib",
+        "editorPid": 17428,
+        "firstFrameAt": "2026-10-08T17:19:02.3633555Z",
+        "pixelsPerPoint": 1,
+        "visibilityEvidence": [],
+        "allCapturesSucceeded": true,
+        "captures": [
+          {
+            "window": "sceneView",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\sceneView.jpg",
+            "width": 800,
+            "height": 520,
+            "distinctColors": 303,
+            "error": ""
+          },
+          {
+            "window": "gameView",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\gameView.jpg",
+            "width": 813,
+            "height": 915,
+            "distinctColors": 28,
+            "error": ""
+          },
+          {
+            "window": "inspector",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\inspector.jpg",
+            "width": 775,
+            "height": 915,
+            "distinctColors": 71,
+            "error": ""
+          },
+          {
+            "window": "packageManager",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\packageManager.jpg",
+            "width": 1066,
+            "height": 737,
+            "distinctColors": 65,
+            "error": ""
+          },
+          {
+            "window": "customProbe",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\customProbe.jpg",
+            "width": 420,
+            "height": 280,
+            "distinctColors": 108,
+            "error": ""
+          }
+        ],
+        "inputTest": {
+          "attempted": true,
+          "rotationAngle": 13.275,
+          "changed": true,
+          "error": ""
+        }
+      },
+      "errors": [],
+      "passed": true,
+      "timeToResultSeconds": 142.852,
+      "timeToFirstFrameSeconds": 141.499,
+      "outcome": {
+        "code": 0,
+        "signal": null
+      },
+      "ownedPreferenceKeysRemaining": 0,
+      "quittingObserved": true,
+      "ownedPidsRemaining": [],
+      "editorBuild": "7000.0.0a7 (581996e1a8f7)",
+      "compileErrors": []
+    },
+    {
+      "index": 1,
+      "phase": "warm-cost",
+      "pid": 21576,
+      "port": 62742,
+      "startedAt": "2026-10-08T17:19:06.129Z",
+      "samples": [
+        {
+          "at": "2026-10-08T17:19:07.084Z",
+          "rssMb": 451.0234375,
+          "cpuSeconds": 1.015625
+        },
+        {
+          "at": "2026-10-08T17:19:11.348Z",
+          "rssMb": 1081.61328125,
+          "cpuSeconds": 8.9375,
+          "cpuPercent": 185.8
+        },
+        {
+          "at": "2026-10-08T17:19:16.826Z",
+          "rssMb": 1539.3828125,
+          "cpuSeconds": 18.46875,
+          "cpuPercent": 174
+        }
+      ],
+      "hidden": [
+        {
+          "remainingVisible": 0,
+          "pid": 21576,
+          "matched": 7,
+          "confirmed": true,
+          "at": "2026-10-08T17:19:19.052Z",
+          "phase": "before-first-frame"
+        },
+        {
+          "remainingVisible": 0,
+          "pid": 21576,
+          "matched": 7,
+          "confirmed": true,
+          "at": "2026-10-08T17:19:21.614Z",
+          "phase": "before-stream"
+        }
+      ],
+      "result": {
+        "success": true,
+        "editorVersion": "7000.0.0a7",
+        "platform": "Windows 10  (10.0.19045) 64bit",
+        "coreLibrary": "System.Private.CoreLib",
+        "editorPid": 21576,
+        "firstFrameAt": "2026-10-08T17:19:20.0849847Z",
+        "pixelsPerPoint": 1,
+        "visibilityEvidence": [
+          {
+            "phase": "before_capture:sceneView",
+            "at": "2026-10-08T17:19:20.0350684Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "after_capture:sceneView",
+            "at": "2026-10-08T17:19:20.0789929Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "before_capture:gameView",
+            "at": "2026-10-08T17:19:20.0858669Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "after_capture:gameView",
+            "at": "2026-10-08T17:19:20.1132615Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "before_capture:inspector",
+            "at": "2026-10-08T17:19:20.1395341Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "after_capture:inspector",
+            "at": "2026-10-08T17:19:20.1887995Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "before_capture:packageManager",
+            "at": "2026-10-08T17:19:20.1957908Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "after_capture:packageManager",
+            "at": "2026-10-08T17:19:20.2216093Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "before_capture:customProbe",
+            "at": "2026-10-08T17:19:20.2332119Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "after_capture:customProbe",
+            "at": "2026-10-08T17:19:20.2446092Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          },
+          {
+            "phase": "after_input",
+            "at": "2026-10-08T17:19:20.3811234Z",
+            "enumerated": true,
+            "windows": 7,
+            "visible": 0
+          }
+        ],
+        "allCapturesSucceeded": true,
+        "captures": [
+          {
+            "window": "sceneView",
+            "success": true,
+            "path": "<owned-project>\\run-1\\frames\\sceneView.jpg",
+            "width": 800,
+            "height": 520,
+            "distinctColors": 303,
+            "error": ""
+          },
+          {
+            "window": "gameView",
+            "success": true,
+            "path": "<owned-project>\\run-1\\frames\\gameView.jpg",
+            "width": 813,
+            "height": 915,
+            "distinctColors": 28,
+            "error": ""
+          },
+          {
+            "window": "inspector",
+            "success": true,
+            "path": "<owned-project>\\run-1\\frames\\inspector.jpg",
+            "width": 775,
+            "height": 915,
+            "distinctColors": 71,
+            "error": ""
+          },
+          {
+            "window": "packageManager",
+            "success": true,
+            "path": "<owned-project>\\run-1\\frames\\packageManager.jpg",
+            "width": 1066,
+            "height": 737,
+            "distinctColors": 21,
+            "error": ""
+          },
+          {
+            "window": "customProbe",
+            "success": true,
+            "path": "<owned-project>\\run-1\\frames\\customProbe.jpg",
+            "width": 420,
+            "height": 280,
+            "distinctColors": 108,
+            "error": ""
+          }
+        ],
+        "inputTest": {
+          "attempted": true,
+          "rotationAngle": 13.275,
+          "changed": true,
+          "error": ""
+        }
+      },
+      "errors": [
+        "listener_isolation_failed: expected explicit bridge listener only"
+      ],
+      "passed": false,
+      "timeToResultSeconds": 14.557,
+      "timeToFirstFrameSeconds": 13.955,
+      "listenerPorts": [
+        62751,
+        62742,
+        55504,
+        34999
+      ],
+      "outcome": {
+        "code": 0,
+        "signal": null
+      },
+      "ownedPreferenceKeysRemaining": 0,
+      "quittingObserved": true,
+      "ownedPidsRemaining": [],
+      "editorBuild": "7000.0.0a7 (581996e1a8f7)",
+      "compileErrors": []
+    }
+  ],
+  "passed": false,
+  "readinessClaim": false,
+  "limits": "Windows interval CPU vs macOS decaying ps CPU; different platform/GPU/SRP/resolution. Mac raw baseline unavailable. No causal CoreCLR-only claim."
+}

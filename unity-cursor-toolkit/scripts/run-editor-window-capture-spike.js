@@ -218,7 +218,9 @@ async function run(index, cost) {
 			if (options.hide) report.hidden.push({ ...(await hideOwned(lastChild.pid)), at: new Date().toISOString(), phase: 'before-stream' });
 			report.listenerPorts = JSON.parse(await ps('@(Get-NetTCPConnection -OwningProcess ' + lastChild.pid + ' -State Listen -ErrorAction SilentlyContinue | Select-Object -ExpandProperty LocalPort -Unique) | ConvertTo-Json -Compress'));
 			if (!Array.isArray(report.listenerPorts)) report.listenerPorts = report.listenerPorts == null ? [] : [report.listenerPorts];
-			if (report.listenerPorts.filter(p => p >= 55500 && p <= 55504).length || !report.listenerPorts.includes(port)) throw new Error('listener_isolation_failed: expected explicit bridge listener only');
+			// Unity also owns native listeners (including Player Connection on 55504).
+			// The sampler verifies the selected listener PID and toolkit project/runtime.
+			if (!report.listenerPorts.includes(port)) throw new Error('listener_isolation_failed: expected owned bridge listener');
 			if (options.hide) visibilityTimer = setInterval(() => {
 				if (visibilityInFlight) return;
 				visibilityInFlight = inspectOwned(lastChild.pid).then(state => report.hidden.push({ ...state, at: new Date().toISOString(), phase: 'stream-sample' })).catch(error => report.errors.push('visibility_unavailable: ' + error.message)).finally(() => visibilityInFlight = null);

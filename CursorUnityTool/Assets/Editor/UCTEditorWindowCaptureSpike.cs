@@ -274,6 +274,7 @@ namespace UnityCursorToolkit.InternalSmoke
 
 		private static void TryOpenPackageManager()
 		{
+			packageWindow = null;
 			try
 			{
 				UnityEditor.PackageManager.UI.Window.Open(string.Empty);
@@ -283,15 +284,6 @@ namespace UnityCursorToolkit.InternalSmoke
 				if (EditorApplication.ExecuteMenuItem("Window/Package Manager") == false)
 				{
 					EditorApplication.ExecuteMenuItem("Window/Package Management/Package Manager");
-				}
-			}
-
-			foreach (EditorWindow window in Resources.FindObjectsOfTypeAll<EditorWindow>())
-			{
-				if (window != null && window.GetType().FullName.IndexOf("PackageManagerWindow", StringComparison.OrdinalIgnoreCase) >= 0)
-				{
-					packageWindow = window;
-					return;
 				}
 			}
 		}
@@ -307,6 +299,16 @@ namespace UnityCursorToolkit.InternalSmoke
 
 		private static void CaptureAll()
 		{
+			// Window.Open can defer creation until EditorApplication.delayCall.
+			foreach (EditorWindow window in Resources.FindObjectsOfTypeAll<EditorWindow>())
+			{
+				if (window != null && window.GetType().FullName.IndexOf("PackageManagerWindow", StringComparison.OrdinalIgnoreCase) >= 0)
+				{
+					packageWindow = window;
+					break;
+				}
+			}
+
 			allCapturesSucceeded = true;
 			captureResults.Add(CaptureWindow("sceneView", sceneWindow));
 			captureResults.Add(CaptureWindow("gameView", gameWindow));
