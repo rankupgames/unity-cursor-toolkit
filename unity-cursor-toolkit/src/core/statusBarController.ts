@@ -46,11 +46,14 @@ export class StatusBarController implements vscode.Disposable {
 	}
 
 	public setUnityCliStatus(result: UnityCliResult<{ version: string; expectedVersion: string }>): void {
-		this.cliItem.text = result.ok ? 'CLI ' + result.data.version
+		const rawVersion = result.ok ? result.data.version : result.error.foundVersion;
+		const version = typeof rawVersion === 'string' && rawVersion.length <= 64
+			&& /^\d+\.\d+\.\d+(?:-(?:alpha|beta|rc|preview)\.\d+)?$/.test(rawVersion) ? rawVersion : 'unverified version';
+		this.cliItem.text = result.ok ? 'CLI ' + version
 			: result.error.code === 'cli_not_found' ? '$(warning) CLI not found'
-			: result.error.code === 'version_mismatch' ? '$(warning) CLI ' + result.error.foundVersion : '$(warning) CLI unavailable';
-		this.cliItem.tooltip = (result.ok ? 'Unity CLI ' + result.data.version + ' matches the pinned version.'
-			: result.error.code + ': ' + result.error.message + ' ' + result.error.recovery)
+			: result.error.code === 'version_mismatch' ? '$(warning) CLI ' + version : '$(warning) CLI unavailable';
+		this.cliItem.tooltip = (result.ok ? 'Unity CLI ' + version + ' matches the pinned version.'
+			: result.error.code + ': Run Unity CLI Doctor to check the installation.')
 			+ (result.binaryPath ? '\nBinary: ' + result.binaryPath : '') + '\nClick to run Unity CLI Doctor.';
 		this.cliItem.color = result.ok ? undefined : new vscode.ThemeColor('statusBarItem.warningForeground');
 		this.cliItem.show();
