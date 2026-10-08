@@ -2654,13 +2654,13 @@ async function testUnityMcpTools() {
 	const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
 	const { isDestructiveToolCall, isMutatingToolCall } = require(path.join(outDir, 'mcp', 'toolMetadata'));
 
-	test('getTools returns all 15 tool definitions with correct names', () => {
+	test('getTools returns all tool definitions with correct names', () => {
 		const tools = new UnityMcpTools({ send() {}, request: async () => null });
 		const defs = tools.getTools();
-		assert.strictEqual(defs.length, 15);
+		assert.strictEqual(defs.length, 16);
 		const names = defs.map(d => d.name).sort();
 		assert.deepStrictEqual(names, [
-			'batch_execute', 'build_trigger', 'editor_lifecycle', 'editor_validation',
+			'batch_execute', 'build_trigger', 'coreclr_migration', 'editor_lifecycle', 'editor_validation',
 			'execute_menu_item', 'game_command',
 			'manage_asset', 'manage_component', 'manage_gameobject',
 			'manage_material', 'manage_scene', 'play_mode',
@@ -4485,6 +4485,137 @@ async function testMigrationScanner() {
 	const { loadRuleSet, migrationRules, MigrationError } = require(path.join(outDir, 'migration', 'rules'));
 	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-migration-'));
 	try {
+		const { formatReport, migrationReportFileName } = require(path.join(outDir, 'migration', 'report'));
+		await testAsync('migration report groups source findings with rule guidance and describes an empty scan', async () => {
+			const root = path.join(tmpDir, 'report');
+			fs.mkdirSync(path.join(root, 'Assets'), { recursive: true });
+			fs.writeFileSync(path.join(root, 'Assets/Risk.cs'), 'public static int counter;\nAssembly.Load(bytes);\nAppDomain.CurrentDomain.GetAssemblies();');
+			const result = await scan(root);
+			const report = formatReport(result);
+			assert.ok(report.includes(result.scannedAt));
+			assert.ok(report.includes(result.ruleSetVersion));
+			assert.ok(report.includes('breaks: 1, behavior-change: 1, deprecated: 1'));
+			for (const finding of result.findings) {
+				const rule = migrationRules.rules.find(rule => rule.id === finding.ruleId);
+				for (const text of [`${finding.file}:${finding.line}`, finding.snippet, rule.explanation, rule.replacement, rule.docsUrl]) {
+					assert.ok(report.includes(text), text);
+				}
+			}
+			assert.ok(report.indexOf('## breaks') < report.indexOf('## behavior-change'));
+			assert.ok(report.indexOf('## behavior-change') < report.indexOf('## deprecated'));
+			fs.writeFileSync(path.join(root, 'Assets/Risk.cs'), 'public class Clean {}');
+			assert.ok(formatReport(await scan(root)).includes('No findings.'));
+		});
+
+		await testAsync('migration command saves and opens the report and reports missing-project and write errors', async () => {
+			const project = require(path.join(outDir, 'project', 'projectHandler'));
+			const { MigrationModule } = require(path.join(outDir, 'migration', 'module'));
+			const promises = require('fs/promises');
+			const originals = [project.getLinkedProjectPath, promises.writeFile, vscode.workspace.openTextDocument,
+				vscode.window.showTextDocument, vscode.window.showInformationMessage, vscode.window.showErrorMessage];
+			const root = path.join(tmpDir, 'command');
+			fs.mkdirSync(path.join(root, 'Assets'), { recursive: true });
+			const source = 'public static int counter;';
+			fs.writeFileSync(path.join(root, 'Assets/Risk.cs'), source);
+			let activeRoot = root, callback, opened, shown;
+			const information = [], errors = [];
+			project.getLinkedProjectPath = () => activeRoot;
+			vscode.workspace.openTextDocument = async uri => { opened = uri.fsPath; return { uri }; };
+			vscode.window.showTextDocument = async document => { shown = document.uri.fsPath; };
+			vscode.window.showInformationMessage = async text => information.push(text);
+			vscode.window.showErrorMessage = async text => errors.push(text);
+			const module = new MigrationModule();
+			try {
+				await module.activate({ registerCommand: (id, action) => {
+					assert.strictEqual(id, 'unity-cursor-toolkit.migration.scan'); callback = action;
+				} });
+				await callback();
+				const reportPath = path.join(root, migrationReportFileName);
+				assert.strictEqual(opened, reportPath);
+				assert.strictEqual(shown, reportPath);
+				assert.ok(fs.readFileSync(reportPath, 'utf8').includes('Assets/Risk.cs:1'));
+				assert.ok(information[0].includes('1 files scanned, 1 findings'));
+				assert.strictEqual(fs.readFileSync(path.join(root, 'Assets/Risk.cs'), 'utf8'), source);
+				activeRoot = undefined;
+				await callback();
+				assert.ok(errors[0].includes('project path is missing'));
+				activeRoot = root;
+				promises.writeFile = async () => { throw new Error('EACCES report write'); };
+				await callback();
+				assert.ok(errors[1].includes('EACCES report write'));
+				assert.strictEqual(information.length, 1);
+			} finally {
+				[project.getLinkedProjectPath, promises.writeFile, vscode.workspace.openTextDocument,
+					vscode.window.showTextDocument, vscode.window.showInformationMessage, vscode.window.showErrorMessage] = originals;
+				await module.deactivate();
+			}
+		});
+
+		await testAsync('migration MCP includes explicitly requested metadata or returns a typed inventory error', async () => {
+			const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
+			const root = path.join(tmpDir, 'inventory');
+			fs.mkdirSync(path.join(root, 'Assets'), { recursive: true });
+			fs.writeFileSync(path.join(root, 'Assets/Clean.cs'), 'class Clean {}');
+			const inventory = { fields: [{ assembly: 'User', type: 'Clean', field: 'counter', fieldType: 'System.Int32', hasCleanupAttribute: false }] };
+			let calls = 0, response = { result: { projectPath: root, staticsInventory: inventory } };
+			const tools = new UnityMcpTools({ send() {}, request: async (command, payload) => {
+				calls++; assert.strictEqual(command, 'mcpToolCall');
+				assert.deepStrictEqual(payload, { toolName: 'coreclr_migration', args: { action: 'scan' } });
+				if (response instanceof Error) throw response;
+				return response;
+			} }, () => root);
+			const scanResult = await tools.handleToolCall('coreclr_migration', { action: 'scan' });
+			assert.deepStrictEqual(JSON.parse(scanResult.content[0].text).findings, []);
+			assert.strictEqual(calls, 0, 'source-only scans need no Unity bridge');
+			for (const action of ['scan', 'report']) {
+				const result = await tools.handleToolCall('coreclr_migration', { action, includeStatics: true });
+				assert.ok(!result.isError);
+				if (action === 'scan') assert.deepStrictEqual(JSON.parse(result.content[0].text).staticsInventory, inventory);
+				else assert.ok(result.content[0].text.includes('Loaded user static fields'));
+			}
+			for (const value of [new Error('bridge request timed out'), null, { result: {} }, { result: { success: false } },
+				{ result: { projectPath: root, staticsInventory: null } },
+				{ result: { projectPath: root, staticsInventory: {} } },
+				{ result: { projectPath: path.join(root, 'other'), staticsInventory: inventory } }]) {
+				response = value;
+				const result = await tools.handleToolCall('coreclr_migration', { action: 'scan', includeStatics: true });
+				assert.strictEqual(result.isError, true);
+				assert.strictEqual(JSON.parse(result.content[0].text).errorCode, 'INVENTORY_UNAVAILABLE');
+			}
+		});
+
+		await testAsync('standalone migration MCP actions are registered, read-only, and never write a report', async () => {
+			const root = path.join(tmpDir, 'mcp');
+			fs.mkdirSync(path.join(root, 'Assets'), { recursive: true });
+			const source = 'public static int counter;';
+			fs.writeFileSync(path.join(root, 'Assets/Risk.cs'), source);
+			const server = startMcpServer({
+				UNITY_CURSOR_TOOLKIT_PROJECT_PATH: root, UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY: '1',
+				UNITY_CURSOR_TOOLKIT_MCP_PORTS: String(await getUnusedPort())
+			});
+			try {
+				const listed = await server.request('tools/list', {});
+				const definition = listed.result.tools.find(tool => tool.name === 'coreclr_migration');
+				assert.strictEqual(definition.annotations.readOnlyHint, true);
+				for (const action of ['scan', 'report', 'rules', 'invalid']) {
+					const response = await server.request('tools/call', { name: 'coreclr_migration', arguments: { action } });
+					assert.ok(!response.error);
+					const result = response.result;
+					if (action === 'invalid') {
+						assert.strictEqual(result.isError, true);
+						assert.strictEqual(JSON.parse(result.content[0].text).errorCode, 'INVALID_ACTION');
+					} else {
+						assert.ok(!result.isError);
+						if (action === 'scan') assert.strictEqual(JSON.parse(result.content[0].text).findings.length, 1);
+						if (action === 'report') assert.ok(result.content[0].text.includes('Assets/Risk.cs:1'));
+						if (action === 'rules') assert.deepStrictEqual(JSON.parse(result.content[0].text), migrationRules);
+					}
+				}
+				assert.deepStrictEqual(fs.readdirSync(root), ['Assets']);
+				assert.strictEqual(fs.readFileSync(path.join(root, 'Assets/Risk.cs'), 'utf8'), source);
+			} finally { server.stop(); }
+		});
+
 		test('migration rule data is emitted and covers each inventory API family', () => {
 			const source = fs.readFileSync(path.join(__dirname, '../src/migration/coreclr-migration-rules.json'), 'utf8');
 			assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(outDir, 'migration/coreclr-migration-rules.json'), 'utf8')), JSON.parse(source));

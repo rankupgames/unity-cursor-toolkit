@@ -30,6 +30,48 @@ A present invalid block or unknown runtime returns `capability_unavailable` and 
 Capability refusals never trigger a full-refresh fallback.
 See the generated [capability matrix](CAPABILITY_MATRIX.md) for recorded version evidence.
 
+## CoreCLR Migration Inspection
+
+Run **Unity Toolkit: CoreCLR Migration Scan** (`unity-cursor-toolkit.migration.scan`)
+in the extension to scan the linked Unity project. It writes
+`CoreCLR-Migration-Report.md` at the project root and opens it. The report groups
+findings by severity with file, line, source snippet, explanation, replacement,
+and a Unity documentation link. It includes counts, scan date, rule version, and
+an explicit result when no findings are found. Errors appear in the extension.
+This command writes the report only; it does not fix user scripts.
+
+The `coreclr_migration` MCP tool uses the same scanner and rules:
+
+- `action: "scan"` returns structured JSON findings.
+- `action: "report"` returns Markdown text without saving a file.
+- `action: "rules"` returns the loaded rule set and version.
+
+All three actions are read-only and are allowed with
+`UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1`. Standalone scans use
+`UNITY_CURSOR_TOOLKIT_PROJECT_PATH`; extension scans use the linked project.
+The source scanner reads C# under `Assets` and `Packages`, excludes generated
+files and build output, and reports review candidates rather than proving that
+each match is incompatible.
+
+For `scan` or `report`, pass `includeStatics: true` to add
+`staticsInventory` from the connected matching Unity project. This option
+fails with `INVENTORY_UNAVAILABLE` if the bridge is unavailable or belongs to
+another project. It inspects loaded assemblies whose compilation sources are
+all under `Assets`; Unity, UPM package, mixed-source, and precompiled assemblies
+are excluded. Each field records assembly, type, field name, field type, and
+`hasCleanupAttribute`. The flag recognizes Unity's
+`Unity.Scripting.LifecycleManagement.AutoStaticsCleanupAttribute` and
+`AutoStaticsCleanupOnCodeReloadAttribute` on fields or their declaring types,
+with `NoAutoStaticsCleanupAttribute` field exclusions. It does not prove that
+custom cleanup methods are correct. No field values, property getters, user
+static constructors, or attribute constructors are executed.
+
+Inventory work stops at 128 assemblies, 2048 types, 4096 fields, or a cooperative
+500 ms budget (individual Unity metadata calls cannot be preempted). The payload includes the limits, counts, duration, `truncated`,
+and reflection `errors`. Individual reflection calls cannot be interrupted;
+a partial inventory must not be treated as a complete audit. The collector uses
+APIs present in Unity 2019.4. Actual 2019.4 runtime proof remains pending.
+
 ## What Agents Can Do
 
 - Read recent Unity console output with `read_console`.

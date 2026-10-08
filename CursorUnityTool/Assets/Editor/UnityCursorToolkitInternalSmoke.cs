@@ -29,6 +29,7 @@ namespace UnityCursorToolkit.InternalSmoke
 		private const string FailureRunIdKey = "UCT_INTERNAL_SMOKE_FAILURE_RUN_ID";
 		private const string AttemptsKey = "UCT_INTERNAL_SMOKE_ATTEMPTS";
 		private const int TimeoutSeconds = 90;
+		private static int inventorySentinel = 73;
 
 		static UnityCursorToolkitInternalSmoke()
 		{
@@ -41,6 +42,7 @@ namespace UnityCursorToolkit.InternalSmoke
 		public static void Run()
 		{
 			ValidateRuntimeAndStateReset();
+			ValidateStaticInventory();
 			ValidateBridgeReload();
 			ValidateUntermIntegration();
 			SessionState.SetBool(RunningKey, true);
@@ -54,6 +56,32 @@ namespace UnityCursorToolkit.InternalSmoke
 			HookUpdate();
 		}
 
+		private static void ValidateStaticInventory()
+		{
+			Type tool = Type.GetType("UnityCursorToolkit.MCP.StaticInventoryTool, UnityCursorToolkit.Editor", true);
+			object inventory = tool.GetMethod("Collect", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null);
+			string output = GetArg("-uctStaticInventoryPath", string.Empty);
+			if (!string.IsNullOrEmpty(output)) File.WriteAllText(output, JsonUtility.ToJson(inventory, true));
+			IList fields = (IList)inventory.GetType().GetField("fields").GetValue(inventory);
+			bool foundSentinel = false;
+			foreach (object field in fields)
+			{
+				Type entry = field.GetType();
+				string assembly = (string)entry.GetField("assembly").GetValue(field);
+				if (assembly == "UnityCursorToolkit.Editor" || assembly == "UnityCursorToolkit.Runtime")
+					throw new InvalidOperationException("Static inventory included package-owned fields.");
+				if ((string)entry.GetField("type").GetValue(field) == typeof(UnityCursorToolkitInternalSmoke).FullName
+					&& (string)entry.GetField("field").GetValue(field) == "inventorySentinel")
+				{
+					foundSentinel = true;
+					if ((bool)entry.GetField("hasCleanupAttribute").GetValue(field))
+						throw new InvalidOperationException("Static inventory invented a cleanup attribute.");
+				}
+			}
+			if (!foundSentinel || inventorySentinel != 73 || fields.Count > (int)inventory.GetType().GetField("maxFields").GetValue(inventory))
+				throw new InvalidOperationException("Static inventory omitted user metadata, changed its value, or exceeded its bound: " + JsonUtility.ToJson(inventory));
+
+		}
 		private static void ValidateBridgeReload()
 		{
 			Type handler = typeof(UnityCursorToolkit.HotReloadHandler);

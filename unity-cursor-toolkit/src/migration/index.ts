@@ -18,6 +18,7 @@ export interface MigrationScanResult {
 	skipped: number;
 	durationMs: number;
 	ruleSetVersion: string;
+	scannedAt: string;
 }
 
 const excludedDirectories = new Set(['library', 'temp', 'obj', 'bin', 'build', 'builds', 'logs', 'node_modules', '.git', '.vs']);
@@ -29,7 +30,7 @@ export async function scan(projectRoot: string): Promise<MigrationScanResult> {
 	}
 	const root = path.resolve(projectRoot);
 	const result: MigrationScanResult = {
-		findings: [], scanned: 0, skipped: 0, durationMs: 0, ruleSetVersion: migrationRules.version
+		findings: [], scanned: 0, skipped: 0, durationMs: 0, ruleSetVersion: migrationRules.version, scannedAt: new Date(started).toISOString()
 	};
 	const patterns = migrationRules.rules.map(rule => ({ rule, regex: new RegExp(rule.pattern, 'gm') }));
 

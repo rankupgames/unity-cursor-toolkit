@@ -10,6 +10,7 @@
 import type { IToolProvider, ICommandSender, ToolDefinition, ToolResult } from '../core/interfaces';
 import { buildBatchmodeCommandPlan, runBatchmodeGameCommand, shouldUseEditorBatchmode } from './gameCommandBatchmode';
 import { getToolAnnotations, isDryRun, isMutatingToolCall, withDryRunProperty } from './toolMetadata';
+import { resolveProjectRoot } from './standaloneProjectTools';
 
 export class UnityMcpTools implements IToolProvider {
 
@@ -17,12 +18,26 @@ export class UnityMcpTools implements IToolProvider {
 
 	private readonly commandSender: ICommandSender;
 
-	constructor(commandSender: ICommandSender) {
+	constructor(commandSender: ICommandSender, private readonly projectRoot: () => string | undefined = resolveProjectRoot) {
 		this.commandSender = commandSender;
 	}
 
 	public getTools(): ToolDefinition[] {
 		return [
+			{
+				name: 'coreclr_migration',
+				title: 'CoreCLR Migration',
+				description: 'Read-only source scan, Markdown report, or migration rules. Optionally inspect loaded user static field metadata through Unity.',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						action: { type: 'string', enum: ['scan', 'report', 'rules'] },
+						includeStatics: { type: 'boolean', description: 'For scan/report, include loaded user static field metadata. Requires a matching connected Unity project. Defaults to false.' }
+					},
+					required: ['action']
+				},
+				annotations: getToolAnnotations('coreclr_migration')
+			},
 			{
 				name: 'manage_scene',
 				title: 'Manage Scene',
@@ -271,6 +286,18 @@ export class UnityMcpTools implements IToolProvider {
 	}
 
 	public async handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {
+		if (name === 'coreclr_migration') {
+			try {
+				const { handleMigrationTool } = await import('../migration/tools');
+				return await handleMigrationTool(args, this.projectRoot(), this.commandSender);
+			} catch (error) {
+				return { content: [{ type: 'text', text: JSON.stringify({
+					errorCode: (error as { code?: string })?.code ?? 'SCAN_FAILED',
+					error: error instanceof Error ? error.message : String(error)
+				}) }], isError: true };
+			}
+		}
+
 		if (name === 'batch_execute') {
 			return this.handleBatchExecute(args);
 		}

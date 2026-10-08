@@ -26,6 +26,7 @@ import {
 import { ConsoleModule } from './console/index';
 import { HotReloadModule } from './hot-reload/index';
 import { McpModule } from './mcp/index';
+import { MigrationModule } from './migration/module';
 import { createCombinedMcpConfigText, getMcpServerPath } from './mcp/clientConfig';
 import { DebugModule } from './debug/index';
 import { ProjectModule, hasLinkedUnityProject, getLinkedProjectPath, isScriptInstalledInLinkedProject, handleUnityProjectSetup } from './project/index';
@@ -96,6 +97,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	moduleLoader.register(new ConsoleModule());
 	moduleLoader.register(new HotReloadModule());
 	moduleLoader.register(new McpModule());
+	moduleLoader.register(new MigrationModule());
 	moduleLoader.register(new DebugModule());
 	moduleLoader.register(new RemoteShellModule());
 	moduleLoader.register(new ViewportPrototypeModule());

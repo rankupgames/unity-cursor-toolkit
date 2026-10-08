@@ -26,6 +26,7 @@ const MUTATING_TOOLS = {
 
 const READ_ONLY_TOOLS = {
 	project_info: true,
+	coreclr_migration: true,
 	screenshot: true,
 	read_console: true,
 	resolve_meta: true

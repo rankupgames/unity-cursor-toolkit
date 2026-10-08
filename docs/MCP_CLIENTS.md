@@ -23,11 +23,32 @@ silently replace the project's declared Editor.
 
 Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy ready-to-edit snippets for Cursor, Claude Code, VS Code, and Zed.
 
+## CoreCLR Migration Tool
+
+`coreclr_migration` is always read-only, including `action: "scan"`.
+Use `action: "scan"` for JSON source findings, `action: "report"` for
+Markdown content, or `action: "rules"` for the rule set and version.
+The standalone server scans `UNITY_CURSOR_TOOLKIT_PROJECT_PATH`, or the
+existing project-root fallback when that variable is unset. These actions never
+save a report or change project files, and work without a Unity connection.
+
+Pass `includeStatics: true` with scan/report only when loaded user static
+field metadata is needed. This requires the matching connected Unity project
+and current toolkit package. Unavailable or mismatched inventory returns a
+typed `INVENTORY_UNAVAILABLE` error. `staticsInventory` reports fields,
+cleanup attribute flags, traversal limits, counts, duration, truncation, and
+reflection errors. It reads metadata without reading or changing field values.
+See [the agent guide](AI_AGENTS.md#coreclr-migration-inspection) for scope and limits.
+
+To save a report from the extension, run **Unity Toolkit: CoreCLR Migration
+Scan**. It creates `CoreCLR-Migration-Report.md` at the linked project root.
+MCP's report action returns the same report format in memory.
+
 ## Environment Variables
 
 | Variable | Purpose |
 |---|---|
-| `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` | Unity project root used for `.meta` resolution |
+| `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` | Unity project root used for `.meta` resolution and migration source scans |
 | `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY` | Set to `1` to block mutating tools |
 | `UNITY_CURSOR_TOOLKIT_MCP_PORTS` | Comma-separated Unity TCP ports, default `55500,55501,55502,55503,55504` |
 | `UNITY_CURSOR_TOOLKIT_UNITY_PATH` | Optional Unity executable path for `game_command` with `host: "editorBatchmode"` |
