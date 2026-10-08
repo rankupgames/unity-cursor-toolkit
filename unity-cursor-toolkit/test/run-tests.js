@@ -4763,7 +4763,7 @@ async function testMigrationScanner() {
 			const sites = [
 				['Core/AssemblyEnumerator.cs', 16, 'appdomain-assemblies'],
 				['HotReload/ILPatcher.cs', 399, 'assembly-load'],
-				['MCP/EditorWindowViewportCapture.cs', 29, 'assembly-reload-events'],
+				['MCP/EditorWindowViewportCapture.cs', 42, 'assembly-reload-events'],
 				['ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs', 75, 'assembly-load']
 			];
 			for (const [file, line, ruleId] of sites) {

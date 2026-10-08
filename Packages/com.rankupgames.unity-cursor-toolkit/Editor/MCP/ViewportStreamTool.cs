@@ -19,16 +19,45 @@ using UnityCursorToolkit.Core;
 namespace UnityCursorToolkit.MCP
 {
 	[MCPTool("viewport_stream")]
-	internal sealed class ViewportStreamTool : IToolHandler
+	internal sealed partial class ViewportStreamTool : IToolHandler
 	{
 		private static bool running;
+		private static bool isQuitting;
 		private static readonly Dictionary<string, StreamSession> sessions = new Dictionary<string, StreamSession>();
 
 		static ViewportStreamTool()
 		{
-			AssemblyReloadEvents.beforeAssemblyReload += Reset;
-			EditorApplication.quitting += Reset;
+			#if !UNITY_7000_0_OR_NEWER
+			InitializeLifecycle();
+			#endif
 		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+		#endif
+		private static void InitializeLifecycle()
+		{
+			if (isQuitting) return;
+			#if !UNITY_7000_0_OR_NEWER
+			AssemblyReloadEvents.beforeAssemblyReload += Reset;
+			#endif
+			EditorApplication.quitting -= OnEditorQuitting;
+			EditorApplication.quitting += OnEditorQuitting;
+		}
+
+		private static void OnEditorQuitting()
+		{
+			isQuitting = true;
+			Reset();
+		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+		private static void OnCodeUnloading()
+		{
+			if (!isQuitting) Reset();
+		}
+		#endif
 
 		private static void Reset()
 		{

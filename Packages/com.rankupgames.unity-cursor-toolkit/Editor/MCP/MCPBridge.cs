@@ -25,22 +25,35 @@ namespace UnityCursorToolkit.MCP
 	/// and routes HandleToolCall invocations to the correct handler.
 	/// </summary>
 	[InitializeOnLoad]
-	public static class MCPBridge
+	public static partial class MCPBridge
 	{
 		private static Dictionary<string, IToolHandler> _handlers;
 		private static bool _initialized;
+		private static bool isQuitting;
 
 		static MCPBridge()
 		{
+			#if !UNITY_7000_0_OR_NEWER
 			AssemblyReloadEvents.beforeAssemblyReload += Reset;
 			AssemblyReloadEvents.afterAssemblyReload += Initialize;
+			EditorApplication.quitting += OnEditorQuitting;
 			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+			#endif
 		}
 
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+		#endif
 		private static void Reset()
 		{
 			_handlers = null;
 			_initialized = false;
+		}
+
+		private static void OnEditorQuitting()
+		{
+			isQuitting = true;
+			Reset();
 		}
 
 		private static void OnPlayModeStateChanged(PlayModeStateChange state)
@@ -55,13 +68,20 @@ namespace UnityCursorToolkit.MCP
 		/// <summary>
 		/// Discovers and registers all [MCPTool] handlers from loaded assemblies.
 		/// </summary>
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+		#endif
 		public static void Initialize()
 		{
-			if (_initialized == true)
+			if (isQuitting || _initialized)
 			{
 				return;
 			}
 
+			EditorApplication.quitting -= OnEditorQuitting;
+			EditorApplication.quitting += OnEditorQuitting;
+			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 			_handlers = new Dictionary<string, IToolHandler>();
 
 			foreach (Assembly asm in AssemblyEnumerator.GetLoaded())
