@@ -20,7 +20,7 @@
         },
         "6.0-6.5": {
           "state": "verified",
-          "evidence": "2026-10-08: Unity 6000.3.9f1 (7a9955a4f2fa), Windows x86_64. Internal Unity smoke confirmed hasDomainReload=true against the loaded Mono runtime; other versions and platforms remain untested."
+          "evidence": "2026-10-08: Unity 6000.3.9f1 (7a9955a4f2fa), Windows x86_64. Internal Unity smoke confirmed hasDomainReload=true against the loaded Mono runtime; other versions and platforms remain untested.\n2026-10-08T10:52:26.373Z: Unity 6000.3.9f1, Windows x64. Isolated local activation, handshake, console and stdio MCP checks passed; hasDomainReload=true. Two fixture-only preference keys and an OS-selected port; default-install activation and other versions/platforms remain untested."
         },
         "6.6-6.7": {
           "state": "untested"
@@ -30,7 +30,7 @@
         },
         "Unity 7": {
           "state": "verified",
-          "evidence": "2026-10-08: Unity 7000.0.0a7 (581996e1a8f7), Windows x64. Production TCP project_info confirmed hasDomainReload=false against System.Private.CoreLib during two real recompiles. Evidence: experiments/coreclr-package-audit/results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json. Other versions and platforms remain untested; this does not certify all toolkit flows."
+          "evidence": "2026-10-08: Unity 7000.0.0a7 (581996e1a8f7), Windows x64. Production TCP project_info confirmed hasDomainReload=false against System.Private.CoreLib during two real recompiles. Evidence: experiments/coreclr-package-audit/results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json. Other versions and platforms remain untested; this does not certify all toolkit flows.\n2026-10-08T10:53:27.759Z: Unity 7000.0.0a7, Windows x64. Isolated local activation, handshake, console and stdio MCP checks passed; hasDomainReload=false. Two fixture-only preference keys and an OS-selected port; default-install activation and other versions/platforms remain untested."
         }
       }
     },
@@ -45,7 +45,7 @@
         },
         "6.0-6.5": {
           "state": "verified",
-          "evidence": "2026-10-08: Unity 6000.3.9f1 (7a9955a4f2fa), Windows x86_64. Internal Unity smoke confirmed isCoreCLR=false against the loaded Mono runtime."
+          "evidence": "2026-10-08: Unity 6000.3.9f1 (7a9955a4f2fa), Windows x86_64. Internal Unity smoke confirmed isCoreCLR=false against the loaded Mono runtime.\n2026-10-08T10:52:26.373Z: Unity 6000.3.9f1, Windows x64. Isolated local activation, handshake, console and stdio MCP checks passed; isCoreCLR=false. Two fixture-only preference keys and an OS-selected port; default-install activation and other versions/platforms remain untested."
         },
         "6.6-6.7": {
           "state": "untested"
@@ -55,7 +55,7 @@
         },
         "Unity 7": {
           "state": "verified",
-          "evidence": "2026-10-08: Unity 7000.0.0a7 (581996e1a8f7), Windows x64. Production TCP project_info confirmed isCoreCLR=true against System.Private.CoreLib during two real recompiles. Evidence: experiments/coreclr-package-audit/results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json. Other versions and platforms remain untested; this does not certify all toolkit flows."
+          "evidence": "2026-10-08: Unity 7000.0.0a7 (581996e1a8f7), Windows x64. Production TCP project_info confirmed isCoreCLR=true against System.Private.CoreLib during two real recompiles. Evidence: experiments/coreclr-package-audit/results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json. Other versions and platforms remain untested; this does not certify all toolkit flows.\n2026-10-08T10:53:27.759Z: Unity 7000.0.0a7, Windows x64. Isolated local activation, handshake, console and stdio MCP checks passed; isCoreCLR=true. Two fixture-only preference keys and an OS-selected port; default-install activation and other versions/platforms remain untested."
         }
       }
     }
@@ -78,6 +78,12 @@
         "id": "unity-6000-windows-smoke",
         "band": "6.0-6.5",
         "editorVersion": "6000.3.9f1",
+        "platform": "Windows"
+      },
+      {
+        "id": "unity-7000-windows-local",
+        "band": "Unity 7",
+        "editorVersion": "7000.0.0a7",
         "platform": "Windows"
       }
     ]

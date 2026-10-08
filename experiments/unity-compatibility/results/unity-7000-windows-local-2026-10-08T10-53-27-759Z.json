@@ -1,0 +1,77 @@
+{
+  "observedAt": "2026-10-08T10:53:27.759Z",
+  "candidateId": "unity-7000-windows-local",
+  "band": "Unity 7",
+  "editorVersion": "7000.0.0a7",
+  "platform": "Windows",
+  "architecture": "x64",
+  "requestedEditorVersion": "7000.0.0a7",
+  "observedEditorVersion": "7000.0.0a7",
+  "launched": true,
+  "passed": true,
+  "outcome": "passed",
+  "normalExitConfirmed": true,
+  "remainingOwnedPids": [],
+  "checks": [
+    {
+      "name": "activation",
+      "status": "pass"
+    },
+    {
+      "name": "handshake",
+      "status": "pass"
+    },
+    {
+      "name": "console",
+      "status": "pass"
+    },
+    {
+      "name": "mcp",
+      "status": "pass"
+    }
+  ],
+  "isolation": {
+    "disposableProject": true,
+    "defaultInstallActivationProven": false,
+    "port": "OS-selected fixture port",
+    "preferenceKeys": "two unique fixture-only keys before first import",
+    "handlerSource": {
+      "originalSha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6",
+      "fixtureSha256": "decf996d34a61d415a83ce530e2beceba56033b52357fbdcafa0a03c7b8985d8",
+      "delta": "two preference key literals only"
+    }
+  },
+  "dependencies": {
+    "newtonsoft": "3.2.2 existing project cache, explicit fixture override of declared 3.2.1; no registry install",
+    "modules": "selected Editor built-in modules"
+  },
+  "pid": 30440,
+  "identityConfirmed": true,
+  "runtime": {
+    "isCoreCLR": true,
+    "hasDomainReload": false
+  },
+  "activation": {
+    "assembly": "UnityCursorToolkit.Editor",
+    "assemblyMvid": "48c4796b-6019-4f98-bc2b-c3c3d57a0387",
+    "handlerCount": 17,
+    "automaticListenerObserved": false,
+    "runtime": {
+      "isCoreCLR": true,
+      "hasDomainReload": false
+    }
+  },
+  "listenerOwnerConfirmed": true,
+  "mcpExit": {
+    "code": 0,
+    "signal": null,
+    "spawnError": false
+  },
+  "editorExit": {
+    "code": 0,
+    "signal": null,
+    "spawnError": false
+  },
+  "ownedPreferencesAbsent": true,
+  "ownedPreferenceQueryConfirmed": true
+}

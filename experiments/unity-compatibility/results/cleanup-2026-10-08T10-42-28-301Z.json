@@ -1,0 +1,17 @@
+{
+  "observedAt": "2026-10-08T10:42:28.301Z",
+  "mode": "cleanup-reassessment",
+  "sourceReport": "unity-6000-windows-smoke-2026-10-08T10-32-23-925Z.json",
+  "sourceReportSha256": "100d238a772c732dd6aed680b540e1e86d980a745df910fef6c21f8ec2369277",
+  "originalObservedAt": "2026-10-08T10:32:23.925Z",
+  "editorVersion": "6000.3.9f1",
+  "platform": "Windows",
+  "pid": 75712,
+  "passed": true,
+  "historicalOverallResultUnchanged": true,
+  "mustRerunForMatrixImport": true,
+  "preferencePrefixScope": "all compatibility fixture keys",
+  "remainingPreferenceCount": 0,
+  "remainingOwnedPids": [],
+  "pidAbsent": true
+}
