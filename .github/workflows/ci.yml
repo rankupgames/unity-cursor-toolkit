@@ -43,7 +43,7 @@ jobs:
             --jq '[.workflow_runs[] | select(.name == "Extension Build")] | length' 2>/dev/null || echo "0")
           DAILY_INCREMENT=${DAILY_RUNS:-0}
 
-          BUILD_VERSION="0.6.${DAILY_INCREMENT}${TODAY}"
+          BUILD_VERSION="0.7.${DAILY_INCREMENT}${TODAY}"
           echo "build_version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${BUILD_VERSION}"
 

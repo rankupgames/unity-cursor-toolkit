@@ -79,8 +79,10 @@ export class UnityCliModule implements IModule {
 
 	private showError(result: Extract<UnityCliResult, { ok: false }>): void {
 		const error = result.error;
+		const version = typeof error.foundVersion === 'string' && error.foundVersion.length <= 64
+			&& /^\d+\.\d+\.\d+(?:-(?:alpha|beta|rc|preview)\.\d+)?$/.test(error.foundVersion) ? error.foundVersion : 'unverified version';
 		const text = error.code + (error.code === 'version_mismatch'
-			? ': Unity CLI version does not match the pinned version.'
+			? ': Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found ' + version + '.'
 			: ': Unity CLI diagnostics failed. Check the pinned CLI installation and configuration.');
 		this.output?.appendLine(text);
 		if (error.code === 'version_mismatch') { void vscode.window.showWarningMessage(text); }

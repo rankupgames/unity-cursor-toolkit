@@ -4744,11 +4744,11 @@ async function testMigrationScanner() {
 				const listed = await server.request('tools/list', {});
 				const definition = listed.result.tools.find(tool => tool.name === 'toolkit.coreclr_migration');
 				assert.strictEqual(definition.annotations.readOnlyHint, true);
-				for (const action of ['scan', 'report', 'rules', 'invalid']) {
+				for (const action of ['scan', 'report', 'rules', 'invalid', ['scan'], ['report'], ['rules'], null, 1, {}]) {
 					const response = await server.request('tools/call', { name: 'coreclr_migration', arguments: { action } });
 					assert.ok(!response.error);
 					const result = response.result;
-					if (action === 'invalid') {
+					if (typeof action !== 'string' || action === 'invalid') {
 						assert.strictEqual(result.isError, true);
 						assert.strictEqual(JSON.parse(result.content[0].text).errorCode, 'INVALID_ACTION');
 					} else {
@@ -5143,7 +5143,7 @@ async function testUnityCliAdapter() {
 				UnityCliAdapter.prototype.invoke = async () => privateFailure(code);
 				await commands.get('unity-cursor-toolkit.doctor')();
 				assertPrivateAbsent();
-				const expected = code === 'version_mismatch' ? 'version_mismatch: Unity CLI version does not match the pinned version.' : code + ': Unity CLI diagnostics failed. Check the pinned CLI installation and configuration.';
+				const expected = code === 'version_mismatch' ? 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found unverified version.' : code + ': Unity CLI diagnostics failed. Check the pinned CLI installation and configuration.';
 				assert.ok(lines.includes(expected));
 				assert.ok(notifications.some(item => item.severity === (code === 'version_mismatch' ? 'warning' : 'error') && item.message === expected));
 				assert.ok(lines.includes('Binary: ' + process.execPath));
@@ -5154,7 +5154,7 @@ async function testUnityCliAdapter() {
 				await commands.get('unity-cursor-toolkit.doctor')();
 				assertPrivateAbsent();
 				assert.ok(items.at(-1).text.includes('unverified version'));
-				assert.strictEqual(items.at(-1).tooltip, 'version_mismatch: Run Unity CLI Doctor to check the installation.\nBinary: ' + process.execPath + '\nClick to run Unity CLI Doctor.');
+				assert.strictEqual(items.at(-1).tooltip, 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found unverified version.\nBinary: ' + process.execPath + '\nClick to run Unity CLI Doctor.');
 				UnityCliAdapter.prototype.probe = async () => ({ ...goodProbe(), data: { version, expectedVersion: marker } });
 				await commands.get('unity-cursor-toolkit.doctor')();
 				assertPrivateAbsent();
@@ -5164,6 +5164,10 @@ async function testUnityCliAdapter() {
 			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: goodData() });
 			await commands.get('unity-cursor-toolkit.doctor')();
 			assert.ok(items.at(-1).text.includes('1.0.0-beta.11'));
+			const mismatch = 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found 1.0.0-beta.11.';
+			assert.ok(lines.includes(mismatch));
+			assert.ok(notifications.some(item => item.severity === 'warning' && item.message === mismatch));
+			assert.ok(items.at(-1).tooltip.includes(mismatch));
 			assertPrivateAbsent();
 			UnityCliAdapter.prototype.probe = async () => goodProbe();
 			for (const data of [null, { platform: 'fixture', arch: 'x64', checks: [] }, { platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime' }] }]) {

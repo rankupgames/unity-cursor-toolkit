@@ -10,7 +10,7 @@
 import * as vscode from 'vscode';
 import type { IStatusBarContributor } from './interfaces';
 import { ConnectionState } from './types';
-import type { UnityCliResult } from './unityCliAdapter';
+import { type UnityCliResult, UNITY_CLI_EXPECTED_VERSION } from './unityCliAdapter';
 
 export class StatusBarController implements vscode.Disposable {
 
@@ -53,6 +53,7 @@ export class StatusBarController implements vscode.Disposable {
 			: result.error.code === 'cli_not_found' ? '$(warning) CLI not found'
 			: result.error.code === 'version_mismatch' ? '$(warning) CLI ' + version : '$(warning) CLI unavailable';
 		this.cliItem.tooltip = (result.ok ? 'Unity CLI ' + version + ' matches the pinned version.'
+			: result.error.code === 'version_mismatch' ? 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found ' + version + '.'
 			: result.error.code + ': Run Unity CLI Doctor to check the installation.')
 			+ (result.binaryPath ? '\nBinary: ' + result.binaryPath : '') + '\nClick to run Unity CLI Doctor.';
 		this.cliItem.color = result.ok ? undefined : new vscode.ThemeColor('statusBarItem.warningForeground');

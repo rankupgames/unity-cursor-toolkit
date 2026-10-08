@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Unity 2019.4+ target, remote and virtual desktop workflows, enforced MCP safety, first-party Unity CLI composition, migration and Mono debugging.",
-  "version": "0.6.1052826",
+  "version": "0.7.1052826",
   "packageManager": "npm@11.16.0",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
