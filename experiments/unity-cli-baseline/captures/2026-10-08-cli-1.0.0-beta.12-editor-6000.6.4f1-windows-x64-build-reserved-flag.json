@@ -1,0 +1,81 @@
+{
+  "packages": [
+    {
+      "name": "com.unity.test-framework",
+      "version": "1.8.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework"
+    },
+    {
+      "name": "com.unity.ext.nunit",
+      "version": "2.1.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.ext.nunit"
+    }
+  ],
+  "frames": [
+    {
+      "elapsedMs": 28,
+      "stream": "stdout",
+      "characters": 71
+    },
+    {
+      "elapsedMs": 31,
+      "stream": "stdout",
+      "characters": 77
+    },
+    {
+      "elapsedMs": 491,
+      "stream": "stdout",
+      "characters": 70
+    },
+    {
+      "elapsedMs": 499,
+      "stream": "stdout",
+      "characters": 378
+    }
+  ],
+  "leftoverEditorPids": [],
+  "startedAt": "2026-10-08T04:35:47.365Z",
+  "completedAt": "2026-10-08T04:35:48.826Z",
+  "cliVersion": "1.0.0-beta.12",
+  "editorVersion": "6000.6.4f1",
+  "platform": "windows-x64",
+  "args": [
+    "build",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1",
+    "--target",
+    "StandaloneWindows64",
+    "--execute-method",
+    "CliProof.Build",
+    "--output-path",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Build\\Proof.exe",
+    "--log-file",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Logs\\build.log",
+    "--timeout",
+    "180",
+    "--allow-dirty-build",
+    "--args",
+    "-nographics",
+    "--non-interactive",
+    "--no-log-proxy",
+    "--no-banner",
+    "--format",
+    "json"
+  ],
+  "exitCode": 6,
+  "signal": null,
+  "durationMs": 1461,
+  "stdout": "{\"type\":\"progress\",\"command\":\"build\",\"message\":\"Resolving project...\"}\n{\"type\":\"progress\",\"command\":\"build\",\"message\":\"Resolving build version...\"}\n{\"type\":\"progress\",\"command\":\"build\",\"message\":\"Resolving editor...\"}\n{\n  \"success\": false,\n  \"command\": \"build\",\n  \"data\": {\n    \"outputPath\": \"<repo>\\\\experiments\\\\unity-cli-baseline\\\\fixture-6000.6.4f1\\\\Build\\\\Proof.exe\"\n  },\n  \"errors\": [\n    {\n      \"code\": \"COMMAND_FAILED\",\n      \"message\": \"Forwarded argument '-nographics' conflicts with a reserved Unity flag managed by this command. Remove it from --args.\"\n    }\n  ],\n  \"warnings\": []\n}\n",
+  "stderr": "",
+  "editorLog": null,
+  "xmlProduced": false,
+  "buildArtifactPresentAfter": false,
+  "projectVersionFileUnchanged": true,
+  "projectVersionAfter": "m_EditorVersion: 6000.6.4f1\nm_EditorVersionWithRevision: 6000.6.4f1 (12bfff696524)\n",
+  "declaredEditorVersionUnchanged": true,
+  "redactions": [
+    "repository/user roots",
+    "Editor roots",
+    "OS-user/host identifiers",
+    "credential/identity log lines"
+  ]
+}
