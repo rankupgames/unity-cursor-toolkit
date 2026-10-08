@@ -5065,7 +5065,7 @@ async function testUnityCliAdapter() {
 }
 
 function testCliEvidencePrivacy() {
-	test('CLI captures redact identities and keep the binary checksum', () => {
+	test('CLI and Pipeline captures redact identities and keep public evidence', () => {
 		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
 		const read = file => {
 			try { return JSON.parse(fs.readFileSync(path.join(root, file), 'utf8')); }
@@ -5100,6 +5100,30 @@ function testCliEvidencePrivacy() {
 				assert.ok(!text.includes(marker), file + ': credential continuation leaked');
 				assert.ok(text.includes('public diagnostic'), file + ': public diagnostic removed');
 			}
+		}
+
+		const pipelineRoot = path.resolve(root, '../../pipeline-install-proof');
+		const pipelineSource = fs.readFileSync(path.join(pipelineRoot, 'capture-proof.js'), 'utf8');
+		const pipelineStart = pipelineSource.indexOf('function withoutSecrets(');
+		const pipelineEnd = pipelineSource.indexOf('function record(', pipelineStart);
+		const logExpression = pipelineSource.match(/evidence\.editorLog = ([^\n]+);/);
+		assert.ok(pipelineStart >= 0 && pipelineEnd > pipelineStart && logExpression, 'Pipeline log sanitizer boundary missing');
+		const pipelineContext = {
+			fixture: undefined, editorRoot: undefined, binaryPath: undefined, log: rawLog,
+			os: { tmpdir: () => '', homedir: () => '', hostname: () => '' }, process: { env: {} }
+		};
+		require('vm').createContext(pipelineContext);
+		require('vm').runInContext(pipelineSource.slice(pipelineStart, pipelineEnd), pipelineContext);
+		const pipelineLog = require('vm').runInContext(logExpression[1], pipelineContext);
+		assert.ok(!pipelineLog.includes(marker), 'Pipeline capture leaked an identity or licensing continuation');
+		assert.ok(pipelineLog.includes('public diagnostic'), 'Pipeline capture removed public diagnostics');
+		const publicData = { Id: 'public-id', Product: 'public-product', Type: 'public-type', binarySha256: baseline.binarySha256 };
+		assert.strictEqual(JSON.stringify(pipelineContext.scrub(publicData)), JSON.stringify(publicData), 'Pipeline scrubber changed public metadata');
+		for (const file of fs.readdirSync(path.join(pipelineRoot, 'results')).filter(file => file.endsWith('.json'))) {
+			let capture;
+			try { capture = JSON.parse(fs.readFileSync(path.join(pipelineRoot, 'results', file), 'utf8')); }
+			catch { throw new Error(file + ': invalid Pipeline capture JSON'); }
+			inspect(capture, file);
 		}
 		for (const file of fs.readdirSync(root).filter(file => file.endsWith('.json'))) inspect(read(file), file);
 	});
@@ -5156,6 +5180,9 @@ async function testPipelineEligibility() {
 			['6000.3.9f1', 'latest', {}, 'pipeline_pin_invalid'],
 			['6000.3.9f1', '^0.8.0-exp.1', {}, 'pipeline_pin_invalid'],
 			[null, '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9junk', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9f1 extra', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
 			['2019.4.40f1', '0.8.0-exp.1', {}, 'pipeline_editor_unsupported'],
 			['6000.3.9f1', '0.9.0-exp.1', {}, 'pipeline_version_unavailable'],
 			['6000.3.9f1', '0.8.0-exp.1', { httpDate: 'Sat, 26 Sep 2026 18:42:15 GMT' }, 'pipeline_version_too_recent'],
