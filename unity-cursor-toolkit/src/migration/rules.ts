@@ -22,7 +22,7 @@ export interface MigrationRuleSet {
 }
 
 export class MigrationError extends Error {
-	constructor(public readonly code: 'RULES_UNAVAILABLE' | 'RULES_INVALID' | 'PROJECT_UNREADABLE', message: string) {
+	constructor(public readonly code: 'RULES_UNAVAILABLE' | 'RULES_INVALID' | 'PROJECT_UNREADABLE' | 'INVALID_ACTION' | 'INVENTORY_UNAVAILABLE', message: string) {
 		super(message);
 		this.name = 'MigrationError';
 	}

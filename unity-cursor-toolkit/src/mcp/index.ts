@@ -10,6 +10,7 @@ import * as vscode from 'vscode';
 import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { ToolRouter } from './toolRouter';
 import { UnityMcpTools } from './unityMcpTools';
+import { getLinkedProjectPath } from '../project/projectHandler';
 
 export class McpModule implements IModule {
 
@@ -21,7 +22,7 @@ export class McpModule implements IModule {
 	public async activate(ctx: ModuleContext): Promise<void> {
 		this.toolRouter = new ToolRouter();
 
-		const unityTools = new UnityMcpTools(ctx.commandSender);
+		const unityTools = new UnityMcpTools(ctx.commandSender, getLinkedProjectPath);
 		this.toolRouter.register(unityTools);
 
 		ctx.registerToolProvider(unityTools);

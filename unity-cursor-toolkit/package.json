@@ -40,7 +40,8 @@
     "onCommand:unity-cursor-toolkit.hierarchy.focus",
     "onCommand:unity-cursor-toolkit.remoteShell.launch",
     "onCommand:unity-cursor-toolkit.remoteShell.stop",
-    "onCommand:unity-cursor-toolkit.remoteShell.status"
+    "onCommand:unity-cursor-toolkit.remoteShell.status",
+    "onCommand:unity-cursor-toolkit.migration.scan"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -115,6 +116,10 @@
       }
     ],
     "commands": [
+      {
+        "command": "unity-cursor-toolkit.migration.scan",
+        "title": "Unity Toolkit: CoreCLR Migration Scan"
+      },
       {
         "command": "unity-cursor-toolkit.startConnection",
         "title": "Unity Toolkit: Start/Attach to Project"
