@@ -119,6 +119,16 @@ async function main() {
 		assert.ok(!/[A-Za-z]:[\\/]/.test(result.tests[0].stackTrace)); assert.ok(result.tests[0].stackTrace.includes('CliEditTests.DeliberateFailure'));
 		assert.ok(!('stdout' in result)); assert.ok(!('outputExcerpt' in result.error));
 	}, { report: failXml, native: capture('edit-fail') }));
+	await test('only reviewed native codes reach public test errors', async () => {
+		const recorded = capture('edit-fail'), envelope = JSON.parse(recorded.stdout);
+		for (const [nativeCode, expected] of [['INVALID_COMMAND_ARGS', 'invalid_arguments'], ['TESTS_FAILED', 'tests_failed'], ['TEST_TIMED_OUT', 'timed_out'], ['COMMAND_FAILED', 'operation_failed'], ['PRIVATE_NATIVE_CODE_12345', 'operation_failed']]) {
+			await withFixture(async ({ adapter, request }) => {
+				const result = await adapter.runTests(request); code(result, expected);
+				assert.strictEqual(result.error.nativeCode, nativeCode === 'PRIVATE_NATIVE_CODE_12345' ? undefined : nativeCode);
+				assert.ok(!JSON.stringify(result).includes('PRIVATE_NATIVE_CODE_12345'));
+			}, { report: failXml, native: { ...recorded, stdout: JSON.stringify({ ...envelope, errors: envelope.errors.map(error => ({ ...error, code: nativeCode })) }) } });
+		}
+	});
 	await test('discovery and dry-run refuse before any CLI spawn', () => withFixture(async ({ adapter, request, calls }) => {
 		code(await adapter.listTests(request), 'capability_unavailable'); code(await adapter.runTests({ ...request, dryRun: true }), 'capability_unavailable'); assert.strictEqual(calls.length, 0);
 	}));

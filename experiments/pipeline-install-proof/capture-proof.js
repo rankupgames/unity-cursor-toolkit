@@ -37,6 +37,11 @@ function scrub(value) {
     return text.replace(/Bearer\s+[^\s"']+/gi, 'Bearer <redacted>')
         .replace(/eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, '<redacted-token>');
 }
+function scrubLog(value) {
+    return scrub(value.replace(/^\s*-hubSessionId\r?\n[^\r\n]*/gim, '<credential line omitted>')
+        .split(/\r?\n/).map(line => /licens|token|bearer|auth|user.?id|email|foreign.?key|serial.?number|machine.?id|session.?id|correlation.?id|hardware.?id|account.?id|^\s*(?:Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/i.test(line)
+            ? '<licensing or credential line omitted>' : line).join('\n'));
+}
 function record(command, args, result) {
     const safe = { command, args, ok: result.ok, exitCode: result.exitCode, signal: result.signal, warnings: result.ok ? result.warnings : undefined,
         error: result.ok ? undefined : result.error };
@@ -158,7 +163,7 @@ function scopeInstances(data) {
         && envelope.data?.result?.projectPath === fixture && envelope.data.result.unityVersion === EDITOR
         && envelope.data.result.compiling === false && envelope.data.result.domainReloadInProgress === false;
     evidence.commands.push(scrub({ command: 'command', args: statusArgs.slice(6), observedCommand: envelope.command,
-        ok: valid, exitCode: raw.error ? raw.error.code : 0, stdout: JSON.stringify(scrub(envelope)), stderr: raw.stderr.split(/\r?\n/).filter(line => !/auth|token|bearer|licens|email|user.?id/i.test(line)).join('\n'), data: envelope.data }));
+        ok: valid, exitCode: raw.error ? raw.error.code : 0, stdout: JSON.stringify(scrub(envelope)), stderr: scrubLog(raw.stderr), data: envelope.data }));
     if (!valid) { throw new Error('Owned editor_status full envelope or target did not validate.'); }
     evidence.outcome = 'passed';
 })().catch(error => {
@@ -178,7 +183,7 @@ function scopeInstances(data) {
         const logPath = path.join(fixture, 'Editor.log');
         const log = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8') : '';
         // Drop credential-bearing licensing/auth/user lines; preserve compilation and timing evidence.
-        evidence.editorLog = scrub(log.split(/\r?\n/).filter(line => !/licens|token|bearer|auth|user.?id|email|foreign.?key/i.test(line)).join('\n'));
+        evidence.editorLog = scrubLog(log);
         evidence.compilationErrors = evidence.editorLog.split('\n').filter(line => /error CS\d+|Scripts have compiler errors|Compilation failed/i.test(line));
     }
     evidence.editorExitCode = null; // Start-Process does not retain the child's exit code in this recorder.

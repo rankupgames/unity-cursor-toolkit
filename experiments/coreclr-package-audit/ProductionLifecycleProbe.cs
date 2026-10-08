@@ -200,11 +200,6 @@ public static partial class ProductionLifecycleProbe
 			{
 				probe.Connect("127.0.0.1", Port);
 				Record("stoppedPortProbe", "\"connected\":" + (probe.Connected ? "true" : "false") + ",\"localEndpoint\":" + Quote(probe.Client.LocalEndPoint == null ? null : probe.Client.LocalEndPoint.ToString()) + ",\"listenersOnPort\":" + System.Net.NetworkInformation.IPGlobalProperties.GetIPGlobalProperties().GetActiveTcpListeners().Count(endpoint => endpoint.Port == Port));
-				using (var diagnostic = System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo { FileName = "powershell.exe", Arguments = "-NoProfile -Command \"Get-NetTCPConnection -State Listen -LocalPort " + Port + " -ErrorAction SilentlyContinue | ForEach-Object { $owner = Get-CimInstance Win32_Process -Filter ('ProcessId=' + $_.OwningProcess); [pscustomobject]@{port=$_.LocalPort;pid=$_.OwningProcess;parent=$owner.ParentProcessId;process=$owner.Name;assetImportWorker=($owner.CommandLine -match '-assetImportWorker')} } | ConvertTo-Json -Compress\"", UseShellExecute = false, CreateNoWindow = true, RedirectStandardOutput = true }))
-				{
-					string diagnosticOutput = diagnostic.StandardOutput.ReadToEnd(); diagnostic.WaitForExit(5000);
-					Record("stoppedPortOwner", "\"rows\":" + Quote(diagnosticOutput));
-				}
 				throw new InvalidOperationException("Stopped bridge port accepted a connection.");
 			}
 			catch (SocketException) {}
