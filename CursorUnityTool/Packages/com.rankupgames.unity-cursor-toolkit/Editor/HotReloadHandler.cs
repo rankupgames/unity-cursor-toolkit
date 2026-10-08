@@ -113,6 +113,9 @@ public partial class HotReloadHandler : EditorWindow
 
     private static void InitializeLifecycle()
     {
+        #if UNITY_2020_2_OR_NEWER
+        if (AssetDatabase.IsAssetImportWorkerProcess()) return;
+        #endif
         if (isQuitting || lifecycleInitialized) return;
         lifecycleInitialized = true;
         // Load debug setting from EditorPrefs

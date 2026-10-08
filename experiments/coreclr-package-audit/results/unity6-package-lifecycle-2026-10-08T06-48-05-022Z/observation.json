@@ -1,0 +1,250 @@
+{
+  "observedAt": "2026-10-08T06:48:05.022Z",
+  "consoleResetBaseline": false,
+  "fixture": "canonical package snapshot, only separate Assets handler recompiled",
+  "pid": 28160,
+  "outcome": {
+    "code": 1,
+    "signal": null,
+    "normalExit": true,
+    "timeout": false,
+    "phase": "execution"
+  },
+  "completed": false,
+  "readinessClaim": false,
+  "events": [
+    {
+      "utc": "2026-10-08T06:47:53.6541565Z",
+      "callback": "proofPortSelected",
+      "pid": 28160,
+      "generation": "fdff45c3ed3c4bc1b1f9d091e3943d4b",
+      "stage": 0,
+      "port": 63921
+    },
+    {
+      "utc": "2026-10-08T06:47:53.6571284Z",
+      "callback": "run",
+      "pid": 28160,
+      "generation": "fdff45c3ed3c4bc1b1f9d091e3943d4b",
+      "stage": 0,
+      "unityVersion": "6000.3.9f1",
+      "coreLibrary": "mscorlib"
+    },
+    {
+      "utc": "2026-10-08T06:47:53.9534527Z",
+      "callback": "InitializeOnLoad.delayCall",
+      "pid": 28160,
+      "generation": "fdff45c3ed3c4bc1b1f9d091e3943d4b",
+      "stage": 0
+    },
+    {
+      "utc": "2026-10-08T06:47:54.0299539Z",
+      "callback": "networkVerified",
+      "pid": 28160,
+      "generation": "fdff45c3ed3c4bc1b1f9d091e3943d4b",
+      "stage": 0,
+      "revision": 0,
+      "port": 63921,
+      "handler": "aafba26eab774ef38afb588e6009deb3",
+      "packageMvid": "994b1e44-3d85-4d83-ac2c-c7c57e4f029a"
+    },
+    {
+      "utc": "2026-10-08T06:47:54.0384540Z",
+      "callback": "requestRevision",
+      "pid": 28160,
+      "generation": "fdff45c3ed3c4bc1b1f9d091e3943d4b",
+      "stage": 1,
+      "revision": 1
+    },
+    {
+      "utc": "2026-10-08T06:47:54.6774538Z",
+      "callback": "beforeAssemblyReload",
+      "pid": 28160,
+      "generation": "fdff45c3ed3c4bc1b1f9d091e3943d4b",
+      "stage": 1
+    },
+    {
+      "utc": "2026-10-08T06:47:56.6744536Z",
+      "callback": "InitializeOnLoad.delayCall",
+      "pid": 28160,
+      "generation": "fd67c86b947f47cdbf0592d42b45daaa",
+      "stage": 1
+    },
+    {
+      "utc": "2026-10-08T06:47:56.7024537Z",
+      "callback": "networkVerified",
+      "pid": 28160,
+      "generation": "fd67c86b947f47cdbf0592d42b45daaa",
+      "stage": 1,
+      "revision": 1,
+      "port": 63921,
+      "handler": "8769e9822d0b40dfacb462d9c87755d0",
+      "packageMvid": "994b1e44-3d85-4d83-ac2c-c7c57e4f029a"
+    },
+    {
+      "utc": "2026-10-08T06:47:56.7044550Z",
+      "callback": "sessionResetVerified",
+      "pid": 28160,
+      "generation": "fd67c86b947f47cdbf0592d42b45daaa",
+      "stage": 1,
+      "profilerSession": "editor_20261008_064755_983",
+      "consoleMarkerCount": 1
+    },
+    {
+      "utc": "2026-10-08T06:47:56.7054539Z",
+      "callback": "captureReleased",
+      "pid": 28160,
+      "generation": "fd67c86b947f47cdbf0592d42b45daaa",
+      "stage": 1
+    },
+    {
+      "utc": "2026-10-08T06:47:56.7144545Z",
+      "callback": "requestRevision",
+      "pid": 28160,
+      "generation": "fd67c86b947f47cdbf0592d42b45daaa",
+      "stage": 2,
+      "revision": 2
+    },
+    {
+      "utc": "2026-10-08T06:47:57.3534543Z",
+      "callback": "beforeAssemblyReload",
+      "pid": 28160,
+      "generation": "fd67c86b947f47cdbf0592d42b45daaa",
+      "stage": 2
+    },
+    {
+      "utc": "2026-10-08T06:47:59.3354523Z",
+      "callback": "InitializeOnLoad.delayCall",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 2
+    },
+    {
+      "utc": "2026-10-08T06:47:59.4589543Z",
+      "callback": "networkVerified",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 2,
+      "revision": 2,
+      "port": 63921,
+      "handler": "c03ce167a3854b5996b380b72291b2f9",
+      "packageMvid": "994b1e44-3d85-4d83-ac2c-c7c57e4f029a"
+    },
+    {
+      "utc": "2026-10-08T06:47:59.4609563Z",
+      "callback": "sessionResetVerified",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 2,
+      "profilerSession": "editor_20261008_064758_638",
+      "consoleMarkerCount": 1
+    },
+    {
+      "utc": "2026-10-08T06:47:59.4619543Z",
+      "callback": "captureReleased",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 2
+    },
+    {
+      "utc": "2026-10-08T06:47:59.4969536Z",
+      "callback": "viewportContinued",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 3,
+      "frames": 1,
+      "pixelValidityChecked": false
+    },
+    {
+      "utc": "2026-10-08T06:47:59.8854861Z",
+      "callback": "sessionResetVerified",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 4,
+      "profilerSession": "play_20261008_064759_544",
+      "consoleMarkerCount": 1
+    },
+    {
+      "utc": "2026-10-08T06:47:59.8859550Z",
+      "callback": "captureReleased",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 4
+    },
+    {
+      "utc": "2026-10-08T06:47:59.8874548Z",
+      "callback": "viewportContinued",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 4,
+      "frames": 2,
+      "pixelValidityChecked": false
+    },
+    {
+      "utc": "2026-10-08T06:48:00.2969537Z",
+      "callback": "sessionResetVerified",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 5,
+      "profilerSession": "editor_20261008_064759_917",
+      "consoleMarkerCount": 1
+    },
+    {
+      "utc": "2026-10-08T06:48:00.2984546Z",
+      "callback": "viewportContinued",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 5,
+      "frames": 3,
+      "pixelValidityChecked": false
+    },
+    {
+      "utc": "2026-10-08T06:48:00.9104531Z",
+      "callback": "stoppedPortProbe",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 5,
+      "connected": true,
+      "localEndpoint": "127.0.0.1:63951",
+      "listenersOnPort": 1
+    },
+    {
+      "utc": "2026-10-08T06:48:01.9877158Z",
+      "callback": "stoppedPortOwner",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 5,
+      "rows": "{\"port\":63921,\"pid\":59872,\"parent\":28160,\"process\":\"Unity.exe\",\"assetImportWorker\":false}\n"
+    },
+    {
+      "utc": "2026-10-08T06:48:01.9902162Z",
+      "callback": "failure",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 5,
+      "error": "System.InvalidOperationException: Stopped bridge port accepted a connection.\n  at ProductionLifecycleProbe.CheckStopped () [0x00254] in <disposable-project>\\Assets\\Editor\\ProductionLifecycleProbe.cs:204\n  at ProductionLifecycleProbe.Pump () [0x002f9] in <disposable-project>\\Assets\\Editor\\ProductionLifecycleProbe.cs:245"
+    },
+    {
+      "utc": "2026-10-08T06:48:01.9917169Z",
+      "callback": "shutdownWorkers",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 5,
+      "stopped": true
+    },
+    {
+      "utc": "2026-10-08T06:48:02.0672167Z",
+      "callback": "editorQuitting",
+      "pid": 28160,
+      "generation": "808350f4b90f49f287bf31f014f9a207",
+      "stage": 5
+    }
+  ],
+  "passed": false,
+  "deadlines": {
+    "startupSeconds": 180,
+    "executionSeconds": 90,
+    "normalExitGraceSeconds": 15
+  },
+  "scope": "Single installed Editor observation. Callback order is evidence, not a general lifecycle guarantee. Production frame delivery does not prove viewport pixel validity."
+}

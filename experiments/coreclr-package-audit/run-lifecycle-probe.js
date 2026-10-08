@@ -1,4 +1,4 @@
-// node run-lifecycle-probe.js --unity <Unity 7 executable> --version <Editor version> [--production-package]
+// node run-lifecycle-probe.js --unity <Unity 6 or 7 executable> --version <Editor version> [--production-package]
 // Creates a disposable project; never loads or closes a user project.
 const fs = require('fs');
 const os = require('os');
@@ -8,11 +8,12 @@ const { spawn } = require('child_process');
 async function main() {
 	const unityArgument = process.argv.indexOf('--unity');
 	const unityPath = unityArgument < 0 ? process.env.UNITY_CURSOR_TOOLKIT_UNITY_PATH : process.argv[unityArgument + 1];
-	if (!unityPath || !fs.existsSync(unityPath)) throw new Error('Pass an installed Unity 7 executable with --unity or UNITY_CURSOR_TOOLKIT_UNITY_PATH.');
+	if (!unityPath || !fs.existsSync(unityPath)) throw new Error('Pass an installed Unity 6 or 7 executable with --unity or UNITY_CURSOR_TOOLKIT_UNITY_PATH.');
 	const versionArgument = process.argv.indexOf('--version');
 	const version = versionArgument < 0 ? undefined : process.argv[versionArgument + 1];
-	if (!version || !/^7000\.[0-9]+\.[0-9]+[abfp][0-9]+$/.test(version)) throw new Error('Pass the installed Unity 7 Editor version with --version.');
+	if (!version || !/^(?:6000|7000)\.[0-9]+\.[0-9]+[abfp][0-9]+$/.test(version)) throw new Error('Pass an exact installed Unity 6 or Unity 7 Editor version with --version.');
 	const production = process.argv.includes('--production-package');
+	if (!production && !version.startsWith('7000.')) throw new Error('The standalone lifecycle attribute probe requires Unity 7. Use --production-package for Unity 6.');
 	const consoleBaseline = process.argv.includes('--console-reset-baseline');
 	if (consoleBaseline && !production) throw new Error('--console-reset-baseline requires --production-package.');
 	const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-unity7-lifecycle-'));
@@ -79,11 +80,13 @@ async function main() {
 		const log = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8') : '';
 		const sanitize = value => {
 			for (const [location, label] of [[fixture, '<disposable-project>'], [unityPath, '<unity-executable>'],
-				[path.dirname(unityPath), '<unity-install>'], [os.homedir(), '<user-home>']]) {
+				[path.dirname(unityPath), '<unity-install>'], [os.homedir(), '<user-home>'], [os.hostname(), '<host>'],
+				...Object.values(os.networkInterfaces()).flat().filter(item => item && !item.internal).map(item => [item.address, '<host-address>'])]) {
 				value = value.split(location).join(label).split(location.split(path.sep).join('/')).join(label);
 			}
-			return value.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.id/i.test(line)
-				? '<licensing or credential line omitted>' : line.trimEnd()).join('\n');
+			return value.replace(/^\s*-hubSessionId\r?\n[^\r\n]*/gmi, '<session argument omitted>')
+				.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.?id|session.?id|correlation.?id/i.test(line) || /^[A-Za-z0-9+\/=]{32,}$/.test(line.trim())
+					? '<licensing or credential line omitted>' : line.trimEnd()).join('\n');
 		};
 		const cleanEvent = value => typeof value === 'string' ? sanitize(value) : Array.isArray(value)
 			? value.map(cleanEvent) : value && typeof value === 'object'
@@ -105,7 +108,8 @@ async function main() {
 			scope: 'Single installed Editor observation. Callback order is evidence, not a general lifecycle guarantee. Production frame delivery does not prove viewport pixel validity.'
 		};
 		const stamp = report.observedAt.replace(/[:.]/g, '-');
-		const output = path.join(__dirname, 'results', (consoleBaseline ? 'unity7-console-reset-baseline-' : production ? 'unity7-package-lifecycle-' : 'unity7-lifecycle-') + stamp);
+		const prefix = version.startsWith('7000.') ? 'unity7' : 'unity6';
+		const output = path.join(__dirname, 'results', (consoleBaseline ? prefix + '-console-reset-baseline-' : production ? prefix + '-package-lifecycle-' : prefix + '-lifecycle-') + stamp);
 		fs.mkdirSync(output, { recursive: true });
 		fs.writeFileSync(path.join(output, 'observation.json'), JSON.stringify(report, null, 2) + '\n');
 		fs.writeFileSync(path.join(output, 'events.jsonl'), events.map(event => JSON.stringify(event)).join('\n') + '\n');
