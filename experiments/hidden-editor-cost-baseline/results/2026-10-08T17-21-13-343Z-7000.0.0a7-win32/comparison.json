@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "observedAt": "2026-10-08T17:28:26.678Z",
+  "editorVersion": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "platform": "win32",
+  "architecture": "x64",
+  "coreLibrary": "System.Private.CoreLib",
+  "sourceObservation": "observation.json",
+  "sourceObservationSha256": "8e8c4151728499b198cc17f47ac22bc6473daa8d6b0f72b2233f1d4bf6a29a54",
+  "baseline": {
+    "source": "docs/REMOTE_SHELL.md historical 2026-06-10 aggregates; raw macOS artifacts unavailable",
+    "platform": "macOS 26.5",
+    "editorVersion": "6000.3.9f1",
+    "warmResultSeconds": [
+      28.478,
+      20.061,
+      22.173
+    ],
+    "warmResultMedianSeconds": 22.173,
+    "warmPeakRssMiB": [
+      918.2,
+      1168.6,
+      667.3
+    ],
+    "warmPeakCpuPercent": [
+      117.7,
+      266.2,
+      215.1
+    ],
+    "idleRssAverageMiB": 1077.5,
+    "idleRssMaximumMiB": 1199.7,
+    "streamRssAverageMiB": 1294,
+    "streamRssMaximumMiB": 1882,
+    "idleCpuAveragePercent": 191,
+    "streamCpuAveragePercent": 242.2,
+    "frames": 717,
+    "effectiveFps": 11.95,
+    "firstFrameSeconds": null,
+    "cpuEstimator": "macOS ps decaying average; not comparable with Windows interval CPU",
+    "rssUnitNote": "Historical text labels MB; comparison follows the existing runner convention of RSS KiB divided by1024 (MiB). Raw historical samples are unavailable."
+  },
+  "runs": [
+    {
+      "run": 1,
+      "pid": 16068,
+      "firstFrameSeconds": 17.081,
+      "resultSeconds": 17.552,
+      "startupSampledPeakRssMiB": 1702.47,
+      "startupSampledPeakCpuPercent": 194.7,
+      "idleRssAverageMiB": 1701.23,
+      "idleRssMaximumMiB": 1706.6,
+      "streamRssAverageMiB": 1765.46,
+      "streamRssMaximumMiB": 1790.1,
+      "idleCpuAveragePercent": 133.25,
+      "streamCpuAveragePercent": 150.15,
+      "frames": 709,
+      "elapsedWindowSeconds": 60.073181,
+      "effectiveFps": 11.8,
+      "frameSizes": [
+        "554x360"
+      ],
+      "hiddenSamples": 17,
+      "hiddenConfirmed": true,
+      "normalExit": true,
+      "ownedPidsRemaining": [],
+      "ownedPreferenceKeysRemaining": 0,
+      "deltasFromHistorical": {
+        "resultVsMedianSeconds": -4.62,
+        "idleRssAverageMiB": 623.73,
+        "streamRssAverageMiB": 471.46,
+        "effectiveFps": -0.15,
+        "cpuPercent": null
+      }
+    },
+    {
+      "run": 2,
+      "pid": 18488,
+      "firstFrameSeconds": 15.44,
+      "resultSeconds": 15.796,
+      "startupSampledPeakRssMiB": 1715.56,
+      "startupSampledPeakCpuPercent": 176.4,
+      "idleRssAverageMiB": 1733.93,
+      "idleRssMaximumMiB": 1740.2,
+      "streamRssAverageMiB": 1715.78,
+      "streamRssMaximumMiB": 1724.9,
+      "idleCpuAveragePercent": 136.1,
+      "streamCpuAveragePercent": 128.5,
+      "frames": 716,
+      "elapsedWindowSeconds": 60.075572,
+      "effectiveFps": 11.92,
+      "frameSizes": [
+        "554x360"
+      ],
+      "hiddenSamples": 17,
+      "hiddenConfirmed": true,
+      "normalExit": true,
+      "ownedPidsRemaining": [],
+      "ownedPreferenceKeysRemaining": 0,
+      "deltasFromHistorical": {
+        "resultVsMedianSeconds": -6.38,
+        "idleRssAverageMiB": 656.43,
+        "streamRssAverageMiB": 421.78,
+        "effectiveFps": -0.03,
+        "cpuPercent": null
+      }
+    },
+    {
+      "run": 3,
+      "pid": 700,
+      "firstFrameSeconds": 18.012,
+      "resultSeconds": 18.524,
+      "startupSampledPeakRssMiB": 1663.25,
+      "startupSampledPeakCpuPercent": 187.2,
+      "idleRssAverageMiB": 1699.8,
+      "idleRssMaximumMiB": 1699.9,
+      "streamRssAverageMiB": 1703.28,
+      "streamRssMaximumMiB": 1705.8,
+      "idleCpuAveragePercent": 133.25,
+      "streamCpuAveragePercent": 139.06,
+      "frames": 719,
+      "elapsedWindowSeconds": 60.079377,
+      "effectiveFps": 11.97,
+      "frameSizes": [
+        "554x360"
+      ],
+      "hiddenSamples": 17,
+      "hiddenConfirmed": true,
+      "normalExit": true,
+      "ownedPidsRemaining": [],
+      "ownedPreferenceKeysRemaining": 0,
+      "deltasFromHistorical": {
+        "resultVsMedianSeconds": -3.65,
+        "idleRssAverageMiB": 622.3,
+        "streamRssAverageMiB": 409.28,
+        "effectiveFps": 0.02,
+        "cpuPercent": null
+      }
+    }
+  ],
+  "medianResultSeconds": 17.552,
+  "passed": true,
+  "readinessClaim": false,
+  "limits": [
+    "Different host/platform/GPU/SRP/DPI/frame sizes and uncontrolled caches; no causal CoreCLR-only claim.",
+    "Historical macOS raw files unavailable; no first-frame delta or CPU delta can be calculated.",
+    "Higher sampled startup and average idle/stream RSS is retained as a cross-host observed regression; the runs are not pooled or smoothed.",
+    "Package Manager pixels show its real chrome and refreshing-list state, not a completed package inventory.",
+    "First launch is an unmeasured import warm-up; three later process launches use15s idle and60s stream at12fps quality55."
+  ]
+}

@@ -1,8 +1,8 @@
 # Remote Unity Shell: Streaming, Editor Windows, And No-Editor Rendering
 
-Status: **experimental**. Every measured result below is historical evidence tied to its recorded date, Editor version, and platform. Nothing here proves Unity 7 or Windows support.
+Status: **experimental**. Every measured result below is historical evidence tied to its recorded date, Editor version, and platform. Exact Windows fixture results below do not establish general Unity 7 or Windows support.
 
-Last reviewed: 2026-08-26.
+Last reviewed: 2026-10-09.
 
 Remaining work and open gates are tracked as GitHub issues: https://github.com/rankupgames/unity-cursor-toolkit/issues
 
@@ -319,7 +319,7 @@ Installed-Cursor evidence in `../experiments/installed-cursor-smoke/results/`:
 - `2026-06-10-cursor372-smoke.json` and `2026-06-10-cursor372-proof.json` with screenshot `../experiments/installed-cursor-smoke/screenshots/2026-06-10-cursor372-clean-scene-game.png`: Cursor CLI `3.7.27`, commit `e48ee6102a199492b0c9964699bf011886708ba0`, `arm64`. Scene `Live frame 3`, `1108x720`, `41755` bytes, SHA-256 `ac56fbf826315ffb3681e1ca327f84c9814a238c522fbbfd68f705ff4df08b03`. Game `Live frame 3`, `1279x704`, `32166` bytes, SHA-256 `e93413f552633f96726fb27f0bc15bceace0f0ab2141825b98172c19ba96f80c`. This is the strongest macOS proof for the product goal.
 - Failed attempts kept as evidence: `2026-06-10-live-rerun-smoke.json` (`cursor --version` returned no stdout, so the runner failed before install), and `2026-06-10-live-rerun2-smoke.json` with `2026-06-10-live-rerun2-proof.json` (Cursor `3.7.21` opened the workspace, then the proof timed out after `180000ms` with both panels in `connection.state:"connecting"` and no port). The fix pinned `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` for isolated proof workspaces and retried auto-start when the webview signaled `ready`.
 
-Open E2 work: an opt-in cold run needs operator approval to wipe `CursorUnityTool/Library`; sustained multi-window soak is unmeasured; the Windows hidden `GrabPixels` spike must record whether PowerShell/user32 hiding changes repaint or input behavior.
+Open E2 work: an opt-in cold run needs operator approval to wipe `CursorUnityTool/Library`; sustained multi-window soak is unmeasured; the exact Windows hidden capture/input replay is recorded below.
 
 ### E2a -- Windows version matrix (2026-10-08)
 
@@ -328,25 +328,33 @@ The standalone spike calls the production capture and input helpers by reflectio
 | Exact Editor | Runtime / platform | Five surfaces | Scene drag | Exit |
 | --- | --- | --- | ---: | --- |
 | `6000.3.9f1 (7a9955a4f2fa)` | `mscorlib`, Windows x64 | Passed; red/green Game content checked | `13.275` degrees | Normal `0`; no owned processes or preference keys remained |
-| `7000.0.0a7 (581996e1a8f7)` | Windows x64; runtime not reached in GUI attempt | N/A: software-terms dialog before probe entry | N/A | Failed timeout; exact owned process required forced cleanup |
+| `7000.0.0a7 (581996e1a8f7)` | CoreCLR / Windows x64 | Passed visible and in all three hidden runs | `13.275` degrees | All four accepted processes exited normally with code `0` |
 
 The accepted Unity 6.3 result is [the dated Windows observation](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-16-28-266Z-6000.3.9f1-win32/observation.json). Scene, Game, Inspector, Package Manager, and custom frames measured `800x520`, `813x915`, `775x915`, `1066x737`, and `420x280`, with `pixelsPerPoint=1`. Earlier cyan shader-placeholder frames were rejected as semantic evidence. The final probe waits for shader compilation and requires red and green Game pixels. Failed attempts remain in the result directory.
 
-The [first Unity 7 GUI attempt](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-20-29-542Z-7000.0.0a7-win32/observation.json) timed out after 300s, followed by a bounded normal-stop attempt. The owned Editor was then terminated under the disposable-proof exception; no user Editor or shared licensing process was changed. Protocol `505` preceded client startup and license assignment, so it does not establish the cause. Earlier Unity 7 URP batch-mode smoke passed; it does not prove GUI or hidden startup. A [bounded 60s read-only diagnostic](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-45-50-963Z-7000.0.0a7-win32/startup-diagnosis.json) then observed a visible `EditorSoftwareTermsWindowClass` dialog with terms/Unity text categories in every sample. No button matched the safe standard-label allowlist. No consent was submitted; the failed owned run required forced cleanup after the normal-stop wait. GUI functional proof and three warm hidden-cost runs remain blocked by the terms prompt.
+The [first Unity 7 GUI attempt](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-20-29-542Z-7000.0.0a7-win32/observation.json) timed out after 300s, followed by a bounded normal-stop attempt. The owned Editor was then terminated under the disposable-proof exception; no user Editor or shared licensing process was changed. Protocol `505` preceded client startup and license assignment, so it does not establish the cause. Earlier Unity 7 URP batch-mode smoke passed; it does not prove GUI or hidden startup. A [bounded 60s read-only diagnostic](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-45-50-963Z-7000.0.0a7-win32/startup-diagnosis.json) then observed a visible `EditorSoftwareTermsWindowClass` dialog with terms/Unity text categories in every sample. No button matched the safe standard-label allowlist. No consent was submitted; the failed owned run required forced cleanup after the normal-stop wait. The operator later accepted the terms directly. Those earlier failures remain historical evidence.
 
-| Cost field | Historical macOS 26.5 / Unity 6.3 | Windows Unity 7 | Delta |
-| --- | ---: | --- | --- |
-| Three warm launch-to-result runs | `28.478 / 20.061 / 22.173s`; median `22.173s` | N/A: GUI startup blocked | N/A |
-| Launch-to-first-frame | N/A: raw timestamp unavailable | N/A | N/A |
-| Warm peak RSS | `918.2 / 1168.6 / 667.3 MiB` | N/A | N/A |
-| Idle RSS average / maximum | `1077.5 / 1199.7 MiB` | N/A | N/A |
-| Streaming RSS average / maximum | `1294.0 / 1882.0 MiB` | N/A | N/A |
-| Idle / streaming CPU average | `191.0 / 242.2%`, macOS `ps` estimator | N/A | Not comparable |
-| Stream frames / effective rate | `717 / 11.95fps` over nominal 60s | N/A | N/A |
+The [accepted CoreCLR observation](../experiments/hidden-editor-cost-baseline/results/2026-10-08T17-21-13-343Z-7000.0.0a7-win32/observation.json) now passes the visible functional run and three warm hidden runs. The [field-by-field comparison](../experiments/hidden-editor-cost-baseline/results/2026-10-08T17-21-13-343Z-7000.0.0a7-win32/comparison.json) retains every run. An initial post-consent run failed because the fixture cached Package Manager before Unity's delayed window creation; a second cost attempt refused Unity's native Player Connection listener on 55504. Both failed observations are retained. The fixture now resolves the window after its existing wait, and the sampler still verifies the selected toolkit listener PID, project, version, and runtime. No production capture change was needed.
 
-Windows CPU uses the change in `TotalProcessorTime` divided by elapsed wall time; values can exceed 100% across cores. macOS `ps` reports a decaying average covering up to a minute, according to [Apple primary source](https://raw.githubusercontent.com/apple-oss-distributions/adv_cmds/main/ps/ps.1). These estimators cannot establish a CPU delta. RSS is reported in MiB on both paths, but graphics, DPI, SRP, output dimensions, shader waits, project, and host platform differ. The historical raw macOS artifacts are unavailable in this checkout; documented aggregates cannot supply missing timestamps or matching samples. The fresh Unity 6.3 import took `136.913s` to first frame and `137.424s` to result. This visible cold-import functional run is not a warm hidden cost measurement.
+| Cost field | Historical macOS 26.5 / Unity 6.3 | Windows Unity 7 run 1 | Run 2 | Run 3 |
+| --- | ---: | ---: | ---: | ---: |
+| Launch to result (s) | 28.478 / 20.061 / 22.173; median 22.173 | 17.552 | 15.796 | 18.524 |
+| Launch to first frame (s) | Unavailable | 17.081 | 15.440 | 18.012 |
+| Sampled startup peak RSS (MiB) | 918.2 / 1168.6 / 667.3 | 1702.47 | 1715.56 | 1663.25 |
+| Startup peak CPU (%) | 117.7 / 266.2 / 215.1 | 194.7 | 176.4 | 187.2 |
+| Idle RSS average / maximum (MiB) | 1077.5 / 1199.7 | 1701.23 / 1706.6 | 1733.93 / 1740.2 | 1699.80 / 1699.9 |
+| Streaming RSS average / maximum (MiB) | 1294.0 / 1882.0 | 1765.46 / 1790.1 | 1715.78 / 1724.9 | 1703.28 / 1705.8 |
+| Idle / streaming CPU average (%) | 191.0 / 242.2 | 133.25 / 150.15 | 136.10 / 128.50 | 133.25 / 139.06 |
+| Frames / full-window FPS | 717 / 11.95 | 709 / 11.80 | 716 / 11.92 | 719 / 11.97 |
+| Measured stream window (s) | Nominal 60 | 60.073181 | 60.075572 | 60.079377 |
 
-Repeat the isolated Windows path with `--fixture --unity <Editor.exe> --version <exact-version> --revision <exact-revision> --template <bundled-URP-template.tgz> --hide --warm-runs 3`. The unmeasured first launch warms the fixture; subsequent launches measure 15s idle and 60s Scene streaming at 12fps, quality 55. The runner verifies owned window visibility through first capture, input, and streaming. The sampler binds project, version, runtime, and listener PID; checks valid status immediately before start and refuses an occupied view; drains metric samples; freezes the actual frame window before stop; and requires stop acknowledgement plus validated session absence. Cleanup uses only its session ID, leaving foreign sessions running. Status and start are separate requests: use the Editor exclusively during measurement, since the production start API can replace a same-view stream created between those requests. Unsupported `--hide` combinations refuse before launch. No hidden Unity 7 cost or causal CoreCLR regression claim is supported yet.
+The Windows launch-to-result median is 17.552s, 4.621s below the historical median. Average idle RSS is 622.30 to 656.43MiB higher; average streaming RSS is 409.28 to 471.46MiB higher. Sampled startup peak RSS is also higher, while streaming maxima are lower than the historical 1882MiB maximum. These observed memory regressions are retained without pooling runs. FPS deltas are -0.15, -0.03, and +0.02. No historical first-frame timestamp is available.
+
+Windows CPU uses interval process CPU-seconds divided by wall time in one-core units; values can exceed 100%. macOS `ps` reports a decaying average covering up to a minute, according to [Apple primary source](https://raw.githubusercontent.com/apple-oss-distributions/adv_cmds/main/ps/ps.1). A CPU delta would be misleading. Historical text labels RSS as MB; this comparison follows the runner's KiB/1024 convention (MiB). Raw macOS artifacts are unavailable. Host, GPU, graphics API, SRP, DPI, resolution, and cache state differ: the new stream is 554x360 versus the historical 1600x1040. These are cross-host observations, with no causal CoreCLR performance claim.
+
+All five JPEG surfaces and Scene View input passed in each accepted run; the Package Manager image shows its real chrome and a refreshing-list state, not a completed inventory. Eleven in-Editor visibility checks per warm run and 17 external visibility samples per run confirmed zero visible owned windows. Stream stop acknowledgement, session absence, normal Editor exit, quitting marker, empty owned-process checks, and zero owned preference keys all passed. The disposable fixture was removed. The first import took 128.276s to first frame and 129.221s to result and is excluded from warm timing.
+
+Repeat with `--fixture --unity <Editor.exe> --version <exact-version> --revision <exact-revision> --template <bundled-URP-template.tgz> --hide --warm-runs 3`. The unmeasured first launch warms the fixture; subsequent launches use 15s idle and 60s Scene streaming at 12fps, quality 55. Status and start remain separate requests: use the owned Editor exclusively during measurement. Cleanup targets only the measured session ID. This exact fixture proof does not establish default-install, multi-window soak, or general Unity 7 support.
 
 ### E3 -- Player Viewport Service
 
