@@ -75,7 +75,10 @@ failed on play exit with zero marker callbacks after only the rebind was reverte
 The alpha recreated coordinator static state even though its source and the
 package binary were unchanged. This proves the selected observed reload flow,
 not selective-assembly retention. Frame delivery does not prove correct pixels;
-the separate Unity 7 contrast smoke is still failing. The final Unity 6.3 sample
+the initial Unity 7 fixture used the removed Built-in Render Pipeline. The
+[URP smoke](results/unity7-urp-smoke-2026-10-08T05-58-37-071Z/observation.json)
+now passes with visible contrast using the installed Editor template and URP
+17.7.0, without capture-code changes. The final Unity 6.3 sample
 smoke passed the legacy reset/restart and game/viewport checks; it simulates the
 reload callbacks. Consumer-owned ILPatcher/AgentCommandRegistry lifetimes and
 actual Mono recompilation still need separate validation.

@@ -8,8 +8,8 @@ A band cell describes its recorded evidence only. It does not certify every Edit
 
 | Capability | 2019.4 | 2020-2022 LTS | 6.0-6.5 | 6.6-6.7 | 6.8+ | Unity 7 |
 | --- | --- | --- | --- | --- | --- | --- |
-| hasDomainReload | untested | untested | verified | untested | untested | untested |
-| isCoreCLR | untested | untested | verified | untested | untested | untested |
+| hasDomainReload | untested | untested | verified | untested | untested | verified |
+| isCoreCLR | untested | untested | verified | untested | untested | verified |
 
 States: `verified` requires recorded proof. `expected` records an evidence-backed expectation.
 `unsupported` records a known refusal. `untested` means no recorded capability evidence.
@@ -30,4 +30,6 @@ The initial alpha targets C# 9 and .NET Standard 2.1. It uses AssemblyLoadContex
 ## Recorded evidence
 
 - hasDomainReload / 6.0-6.5: 2026-10-08: Unity 6000.3.9f1 (7a9955a4f2fa), Windows x86_64. Internal Unity smoke confirmed hasDomainReload=true against the loaded Mono runtime; other versions and platforms remain untested.
+- hasDomainReload / Unity 7: 2026-10-08: Unity 7000.0.0a7 (581996e1a8f7), Windows x64. Production TCP project_info confirmed hasDomainReload=false against System.Private.CoreLib during two real recompiles. Evidence: experiments/coreclr-package-audit/results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json. Other versions and platforms remain untested; this does not certify all toolkit flows.
 - isCoreCLR / 6.0-6.5: 2026-10-08: Unity 6000.3.9f1 (7a9955a4f2fa), Windows x86_64. Internal Unity smoke confirmed isCoreCLR=false against the loaded Mono runtime.
+- isCoreCLR / Unity 7: 2026-10-08: Unity 7000.0.0a7 (581996e1a8f7), Windows x64. Production TCP project_info confirmed isCoreCLR=true against System.Private.CoreLib during two real recompiles. Evidence: experiments/coreclr-package-audit/results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json. Other versions and platforms remain untested; this does not certify all toolkit flows.
