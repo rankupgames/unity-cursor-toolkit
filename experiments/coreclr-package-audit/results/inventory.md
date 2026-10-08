@@ -3,7 +3,7 @@
 Frozen: 2026-10-07, package source at [`f1a4c2ab5d972ac6288a572ac1c907671e1c3bb7`](https://github.com/rankupgames/unity-cursor-toolkit/commit/f1a4c2ab5d972ac6288a572ac1c907671e1c3bb7) after PR #84 integration. Source task: [GitHub #26](https://github.com/rankupgames/unity-cursor-toolkit/issues/26).
 
 Reference Editor: **6000.3.9f1**, revision **7a9955a4f2fa**, from `CursorUnityTool/ProjectSettings/ProjectVersion.txt`.
-This is a source audit. No CoreCLR Editor was run. This inventory does not establish Unity 7 or CoreCLR toolkit support.
+The frozen baseline is a source audit; no CoreCLR Editor was run at that freeze. Follow-up runtime observations are recorded below and do not establish general Unity 7 toolkit support.
 
 ## Scope and counts
 
@@ -148,3 +148,29 @@ No runtime gate is selected by this inventory. Confirm availability and lifecycl
 [load-path]: https://docs.unity3d.com/6000.5/Documentation/ScriptReference/Assemblies.CurrentAssemblies.LoadFromPath.html
 [path]: https://docs.unity.com/en-us/engine/6000.5/script-reference/unityengine/assemblyextension/getloadedassemblypath
 [coreclr]: https://docs.unity.com/en-us/engine/6000.7/manual/programming-environment/scripting-backends/coreclr
+
+## Follow-up lifecycle sites, 2026-10-08
+
+The table above preserves the original frozen source inventory. Current canonical
+sites after RUG-517/518 are below; sample synchronization is validated separately.
+Unity 7 uses the exact observed Unity.Scripting.LifecycleManagement attributes.
+The guide\'s earlier BeforeCodeUnloading name is absent in the installed 7000.0.0a7
+metadata. Older Editors keep AssemblyReloadEvents behind the opposite guard.
+
+| Owner file | Older-Editor before/after lines | Unity 7 unload/initialize attribute lines |
+| --- | --- | --- |
+| Editor/HotReloadHandler.cs | 136 / 137 | 505 / 535 |
+| Editor/ConsoleToCursor.cs | 80 / 81 | 102 / 86 |
+| Editor/ProfilerSnapshot.cs | 175?176, 429 / 151 | 418 / 156 |
+| Editor/MCP/MCPBridge.cs | 37 / 38 | 45 / 72 |
+| Editor/MCP/EditorWindowViewportCapture.cs | 42 / none | 420 / 36 |
+| Editor/MCP/ViewportStreamTool.cs | 42 / none | 55 / 36 |
+
+The standalone [ordered observation](unity7-lifecycle-2026-10-08T04-57-52-040Z/observation.json)
+and [production package observation](unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json)
+record the actual callback sequence and guarded cleanup on Windows x64.
+The production probe changes only a separate Assets handler; its package MVID
+remains unchanged over two recompiles. Recreated coordinator static state is
+recorded, not treated as proof of selective assembly retention. Normal shutdown,
+manual Stop, console/profiler reset and capture disposal passed. Viewport frame
+delivery passed; correct pixel content remains outside this proof.

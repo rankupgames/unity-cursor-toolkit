@@ -109,7 +109,7 @@ namespace UnityCursorToolkit
 	}
 
 	[InitializeOnLoad]
-	internal static class ProfilerSessionRecorder
+	internal static partial class ProfilerSessionRecorder
 	{
 		private const string SessionRootFolder = "Library/UnityCursorToolkit/ProfilerSessions";
 		private const string TempFolderName = "temp";
@@ -129,6 +129,8 @@ namespace UnityCursorToolkit
 		private static int activeCapacity;
 		private static bool activeEnabled;
 		private static bool recordingSuspended;
+		private static bool initialized;
+		private static bool isQuitting;
 		private static bool profilerDriverManaged;
 		private static bool profilerDriverOriginalEnabled;
 		private static bool profilerDriverOriginalProfileEditor;
@@ -144,12 +146,21 @@ namespace UnityCursorToolkit
 
 		static ProfilerSessionRecorder()
 		{
+			#if !UNITY_7000_0_OR_NEWER
 			Initialize();
 			AssemblyReloadEvents.afterAssemblyReload += Initialize;
+			#endif
 		}
 
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+		#endif
 		private static void Initialize()
 		{
+			if (isQuitting || initialized) return;
+			initialized = true;
+			EditorApplication.quitting -= OnEditorQuitting;
+			EditorApplication.quitting += OnEditorQuitting;
 			recordingSuspended = false;
 			ResetSession();
 			EditorApplication.update -= Tick;
@@ -160,10 +171,10 @@ namespace UnityCursorToolkit
 			CompilationPipeline.compilationStarted += OnCompilationStarted;
 			CompilationPipeline.compilationFinished -= OnCompilationFinished;
 			CompilationPipeline.compilationFinished += OnCompilationFinished;
+			#if !UNITY_7000_0_OR_NEWER
 			AssemblyReloadEvents.beforeAssemblyReload -= Shutdown;
 			AssemblyReloadEvents.beforeAssemblyReload += Shutdown;
-			EditorApplication.quitting -= Shutdown;
-			EditorApplication.quitting += Shutdown;
+			#endif
 			ApplySettings();
 		}
 
@@ -397,14 +408,26 @@ namespace UnityCursorToolkit
 			ApplySettings();
 		}
 
+		private static void OnEditorQuitting()
+		{
+			isQuitting = true;
+			Shutdown();
+		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+		#endif
 		private static void Shutdown()
 		{
+			if (!initialized) return;
+			initialized = false;
 			EditorApplication.update -= Tick;
 			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
 			CompilationPipeline.compilationStarted -= OnCompilationStarted;
 			CompilationPipeline.compilationFinished -= OnCompilationFinished;
+			#if !UNITY_7000_0_OR_NEWER
 			AssemblyReloadEvents.beforeAssemblyReload -= Shutdown;
-			EditorApplication.quitting -= Shutdown;
+			#endif
 
 			lock (syncRoot)
 			{

@@ -167,11 +167,10 @@ namespace UnityCursorToolkit.InternalSmoke
 			bool originalRestartIntent = (bool)restartIntent.GetValue(null);
 			bool originalRunning = UnityCursorToolkit.HotReloadHandler.IsServerRunning();
 			string lastPortKey = (string)handler.GetField("lastPortPrefKey", flags).GetRawConstantValue();
-			string runningKey = (string)handler.GetField("wasRunningPrefKey", flags).GetRawConstantValue();
+			string runningKey = (string)handler.GetField("sessionRunningKey", flags).GetRawConstantValue();
 			bool hadLastPort = EditorPrefs.HasKey(lastPortKey);
-			bool hadRunning = EditorPrefs.HasKey(runningKey);
 			int previousLastPort = EditorPrefs.GetInt(lastPortKey);
-			bool previousRunning = EditorPrefs.GetBool(runningKey);
+			bool previousRunning = SessionState.GetBool(runningKey, false);
 			try
 			{
 				// The owned proof must not depend on fixed ports excluded by the host OS.
@@ -214,8 +213,7 @@ namespace UnityCursorToolkit.InternalSmoke
 				else initialized.SetValue(null, originalInitialized);
 				if (hadLastPort) EditorPrefs.SetInt(lastPortKey, previousLastPort);
 				else EditorPrefs.DeleteKey(lastPortKey);
-				if (hadRunning) EditorPrefs.SetBool(runningKey, previousRunning);
-				else EditorPrefs.DeleteKey(runningKey);
+				SessionState.SetBool(runningKey, previousRunning);
 			}
 		}
 

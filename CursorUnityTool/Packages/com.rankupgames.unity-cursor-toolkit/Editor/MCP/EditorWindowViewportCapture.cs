@@ -18,16 +18,32 @@ using UnityCursorToolkit.AgentCommands;
 
 namespace UnityCursorToolkit.MCP
 {
-	internal static class EditorWindowViewportCapture
+	internal static partial class EditorWindowViewportCapture
 	{
 		private const int MaxMainEditorCaptureWidth = 4096;
+		private static bool isQuitting;
 		private const int MaxMainEditorCaptureHeight = 4096;
 		private static readonly Dictionary<string, CaptureResources> resourcesByKey = new Dictionary<string, CaptureResources>();
 
 		static EditorWindowViewportCapture()
 		{
+			#if !UNITY_7000_0_OR_NEWER
+			InitializeLifecycle();
+			#endif
+		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+		#endif
+		private static void InitializeLifecycle()
+		{
+			if (isQuitting) return;
+			#if !UNITY_7000_0_OR_NEWER
 			AssemblyReloadEvents.beforeAssemblyReload += DisposeCachedResources;
-			EditorApplication.quitting += DisposeCachedResources;
+			#endif
+			EditorApplication.quitting -= OnEditorQuitting;
+			EditorApplication.quitting += OnEditorQuitting;
+			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
 			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 		}
 
@@ -393,6 +409,20 @@ namespace UnityCursorToolkit.MCP
 			// GameView and Windows editor readbacks use a bottom-origin buffer here.
 			return Application.platform == RuntimePlatform.WindowsEditor || view == "game";
 		}
+
+		private static void OnEditorQuitting()
+		{
+			isQuitting = true;
+			DisposeCachedResources();
+		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+		private static void OnCodeUnloading()
+		{
+			if (!isQuitting) DisposeCachedResources();
+		}
+		#endif
 
 		private static void DisposeCachedResources()
 		{
