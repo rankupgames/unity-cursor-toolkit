@@ -5065,7 +5065,7 @@ async function testUnityCliAdapter() {
 }
 
 function testCliEvidencePrivacy() {
-	test('CLI captures redact identities and keep the binary checksum', () => {
+	test('CLI and Pipeline captures redact identities and keep public evidence', () => {
 		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
 		const read = file => {
 			try { return JSON.parse(fs.readFileSync(path.join(root, file), 'utf8')); }
@@ -5100,6 +5100,30 @@ function testCliEvidencePrivacy() {
 				assert.ok(!text.includes(marker), file + ': credential continuation leaked');
 				assert.ok(text.includes('public diagnostic'), file + ': public diagnostic removed');
 			}
+		}
+
+		const pipelineRoot = path.resolve(root, '../../pipeline-install-proof');
+		const pipelineSource = fs.readFileSync(path.join(pipelineRoot, 'capture-proof.js'), 'utf8');
+		const pipelineStart = pipelineSource.indexOf('function withoutSecrets(');
+		const pipelineEnd = pipelineSource.indexOf('function record(', pipelineStart);
+		const logExpression = pipelineSource.match(/evidence\.editorLog = ([^\n]+);/);
+		assert.ok(pipelineStart >= 0 && pipelineEnd > pipelineStart && logExpression, 'Pipeline log sanitizer boundary missing');
+		const pipelineContext = {
+			fixture: undefined, editorRoot: undefined, binaryPath: undefined, log: rawLog,
+			os: { tmpdir: () => '', homedir: () => '', hostname: () => '' }, process: { env: {} }
+		};
+		require('vm').createContext(pipelineContext);
+		require('vm').runInContext(pipelineSource.slice(pipelineStart, pipelineEnd), pipelineContext);
+		const pipelineLog = require('vm').runInContext(logExpression[1], pipelineContext);
+		assert.ok(!pipelineLog.includes(marker), 'Pipeline capture leaked an identity or licensing continuation');
+		assert.ok(pipelineLog.includes('public diagnostic'), 'Pipeline capture removed public diagnostics');
+		const publicData = { Id: 'public-id', Product: 'public-product', Type: 'public-type', binarySha256: baseline.binarySha256 };
+		assert.strictEqual(JSON.stringify(pipelineContext.scrub(publicData)), JSON.stringify(publicData), 'Pipeline scrubber changed public metadata');
+		for (const file of fs.readdirSync(path.join(pipelineRoot, 'results')).filter(file => file.endsWith('.json'))) {
+			let capture;
+			try { capture = JSON.parse(fs.readFileSync(path.join(pipelineRoot, 'results', file), 'utf8')); }
+			catch { throw new Error(file + ': invalid Pipeline capture JSON'); }
+			inspect(capture, file);
 		}
 		for (const file of fs.readdirSync(root).filter(file => file.endsWith('.json'))) inspect(read(file), file);
 	});
@@ -5138,6 +5162,92 @@ function testCoreClrEvidencePrivacy() {
 	});
 }
 
+
+async function testPipelineEligibility() {
+	const { checkPipelineEligibility, evaluatePipelineEligibility, PIPELINE_REGISTRY_URL } = require(path.join(outDir, 'core', 'pipelineEligibility'));
+	const publishedAt = '2026-09-25T18:42:14.022Z';
+	const snapshot = {
+		url: PIPELINE_REGISTRY_URL, checkedAt: '2026-10-08T05:23:00.000Z', httpDate: 'Thu, 08 Oct 2026 05:23:00 GMT',
+		metadata: { name: 'com.unity.pipeline', versions: { '0.8.0-exp.1': { unity: '6000.0' } }, time: { '0.8.0-exp.1': publishedAt } }
+	};
+	await testAsync('Pipeline gate uses explicit pin, package minimum and both clocks before installation', async () => {
+		const eligible = evaluatePipelineEligibility('6000.3.9f1', '0.8.0-exp.1', snapshot);
+		assert.strictEqual(eligible.ok, true);
+		assert.strictEqual(eligible.publishedAt, publishedAt);
+		assert.strictEqual(eligible.minimumEditorVersion, '6000.0');
+		assert.strictEqual(eligible.registryUrl, PIPELINE_REGISTRY_URL);
+		for (const [declared, pin, change, code] of [
+			['6000.3.9f1', 'latest', {}, 'pipeline_pin_invalid'],
+			['6000.3.9f1', '^0.8.0-exp.1', {}, 'pipeline_pin_invalid'],
+			[null, '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9junk', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9f1 extra', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['2019.4.40f1', '0.8.0-exp.1', {}, 'pipeline_editor_unsupported'],
+			['6000.3.9f1', '0.9.0-exp.1', {}, 'pipeline_version_unavailable'],
+			['6000.3.9f1', '0.8.0-exp.1', { httpDate: 'Sat, 26 Sep 2026 18:42:15 GMT' }, 'pipeline_version_too_recent'],
+			['6000.3.9f1', '0.8.0-exp.1', { checkedAt: '2026-09-26T18:42:15.000Z' }, 'pipeline_version_too_recent'],
+			['6000.3.9f1', '0.8.0-exp.1', { httpDate: null }, 'pipeline_metadata_invalid'],
+			['6000.3.9f1', '0.8.0-exp.1', { checkedAt: 'invalid' }, 'pipeline_metadata_invalid'],
+			['6000.3.9f1', '0.8.0-exp.1', { metadata: { ...snapshot.metadata, time: {} } }, 'pipeline_metadata_invalid'],
+			['6000.3.9f1', '0.8.0-exp.1', { metadata: { ...snapshot.metadata, versions: { '0.8.0-exp.1': { unity: '6000.0', unityRelease: '1f1' } } } }, 'pipeline_metadata_invalid']
+		]) {
+			const result = evaluatePipelineEligibility(declared, pin, { ...snapshot, ...change });
+			assert.strictEqual(result.ok, false);
+			assert.strictEqual(result.error.code, code);
+			if (code === 'pipeline_editor_unsupported') {
+				assert.strictEqual(result.error.declaredEditorVersion, declared);
+				assert.strictEqual(result.error.minimumEditorVersion, '6000.0');
+			}
+		}
+	});
+	await testAsync('Pipeline request refusal precedes registry access and leaves manifest/lock bytes unchanged', async () => {
+		const https = require('https'), originalGet = https.get;
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-pipeline-gate-'));
+		let calls = 0;
+		https.get = () => { calls++; throw new Error('fixture offline'); };
+		try {
+			fs.mkdirSync(path.join(tmp, 'Packages'));
+			fs.mkdirSync(path.join(tmp, 'ProjectSettings'));
+			const manifest = path.join(tmp, 'Packages', 'manifest.json'), lock = path.join(tmp, 'Packages', 'packages-lock.json');
+			fs.writeFileSync(manifest, '{"dependencies":{}}\n'); fs.writeFileSync(lock, '{"dependencies":{}}\n');
+			const before = [fs.readFileSync(manifest), fs.readFileSync(lock)];
+			assert.strictEqual((await checkPipelineEligibility(tmp, '0.8.0-exp.1')).error.code, 'pipeline_project_version_invalid');
+			fs.writeFileSync(path.join(tmp, 'ProjectSettings', 'ProjectVersion.txt'), 'm_EditorVersion: 6000.3.9f1\n');
+			assert.strictEqual((await checkPipelineEligibility(tmp, 'latest')).error.code, 'pipeline_pin_invalid');
+			assert.strictEqual(calls, 0);
+			assert.strictEqual((await checkPipelineEligibility(tmp, '0.8.0-exp.1')).error.code, 'pipeline_registry_unavailable');
+			assert.strictEqual(calls, 1);
+			assert.deepStrictEqual(fs.readFileSync(manifest), before[0]); assert.deepStrictEqual(fs.readFileSync(lock), before[1]);
+		} finally { https.get = originalGet; fs.rmSync(tmp, { recursive: true, force: true }); }
+	});
+	await testAsync('CLI read-only Pipeline version query checks the grouped JSON command from argv', async () => {
+		const cp = require('child_process'), originalSpawn = cp.spawn;
+		const { EventEmitter } = require('events');
+		const { UnityCliAdapter } = require(path.join(outDir, 'core', 'unityCliAdapter'));
+		let observedArgs;
+		cp.spawn = (_binary, args) => {
+			observedArgs = args;
+			const child = new EventEmitter();
+			child.stdout = new EventEmitter(); child.stdout.setEncoding = () => {};
+			child.stderr = new EventEmitter(); child.stderr.setEncoding = () => {};
+			process.nextTick(() => {
+				child.stdout.emit('data', JSON.stringify({ success: true, command: 'pipeline list-versions', data: { versions: ['0.8.0-exp.1'] }, errors: [], warnings: [] }));
+				child.emit('close', 0, null);
+			});
+			return child;
+		};
+		try {
+			const adapter = new UnityCliAdapter(process.execPath);
+			const result = await adapter.invoke('pipeline', ['list-versions'], { timeoutMs: 1000 });
+			assert.strictEqual(result.ok, true);
+			assert.strictEqual(observedArgs.at(-1), 'list-versions');
+			assert.strictEqual((await adapter.invoke('pipeline', ['install'], { timeoutMs: 1000 })).error.code, 'policy_refused');
+			assert.strictEqual((await adapter.invoke('pipeline', ['list-versions', '--force'], { timeoutMs: 1000 })).error.code, 'policy_refused');
+		} finally { cp.spawn = originalSpawn; }
+	});
+}
+
 async function main() {
 	console.log('Unity Cursor Toolkit -- Runtime Tests\n');
 	console.log(`Using compiled output: ${outDir}`);
@@ -5153,6 +5263,7 @@ async function main() {
 	testRuntimeCapabilities();
 	await testRuntimeConsumers();
 	await testUnityCliAdapter();
+	await testPipelineEligibility();
 	testCapabilityMatrix();
 	testConnectionUnit();
 	await testUnityEditorLauncher();

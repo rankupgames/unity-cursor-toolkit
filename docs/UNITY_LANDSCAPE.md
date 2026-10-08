@@ -333,6 +333,55 @@ Captured 2026-08-07. `com.unity.pipeline` at `0.4.0-exp.1` in the captured docs.
 and runs an authenticated local HTTP API inside a Unity Editor or a development Player. The CLI discovers an instance
 and turns registered commands into terminal and MCP tools.
 
+
+### Current eligibility and isolated install, 2026-10-08
+
+The current explicit pin is `com.unity.pipeline@0.8.0-exp.1`. The anonymous
+[official registry](https://packages.unity.com/com.unity.pipeline) published it at
+`2026-09-25T18:42:14.022Z`. The final pre-install query completed at
+`2026-10-08T05:55:07.222Z`, with HTTP Date `Thu, 08 Oct 2026 05:55:07 GMT`.
+The smaller of the local and server ages was 12.47 days, above the seven-day gate.
+CLI `pipeline list-versions` reports available versions but does not report publication timestamps.
+The gate queries current registry versions and dates each time, requires an explicit pin, and refuses
+missing metadata, a recent publication or an unsupported declared Editor before the install writer.
+Its [implementation](../unity-cursor-toolkit/src/core/pipelineEligibility.ts) reuses the declared-project version reader.
+
+The package registry minimum is `6000.0`, consistent with the
+[Unity 6 prerequisite](https://docs.unity.com/en-us/unity-cli/unity-pipeline/unity-pipeline-package).
+Individual commands can require a later Editor: Pipeline 0.8
+[UI Toolkit capture documentation](https://docs.unity3d.com/Packages/com.unity.pipeline@0.8/manual/commands/capture.html)
+requires `6000.7+` for `capture_editor_element` and `capture_runtime_element`.
+Neither command appeared in the observed 6000.3.9f1 catalog. Package eligibility does not approve those commands.
+
+The [isolated proof](../experiments/pipeline-install-proof/results/2026-10-08T05-54-49-306Z-cli-1.0.0-beta.12-pipeline-0.8.0-exp.1-editor-6000.3.9f1-windows-x64.json)
+used CLI `1.0.0-beta.12` and Editor `6000.3.9f1_7a9955a4f2fa` in a new TEMP project.
+Its baseline manifest and lock contained no dependencies. The only manifest change was the exact Pipeline pin.
+The lock added Pipeline 0.8.0-exp.1, Mono.Cecil 1.11.6 and Newtonsoft.Json 3.2.2 from the registry;
+Test Framework 1.6.0, NUnit 2.0.5 and eight Unity modules came from the selected Editor.
+The artifact records all 13 before/after lock entries, including every dependency edge.
+The resolver selected Newtonsoft.Json 3.2.2 over the package's 3.0.2 requirement,
+Test Framework 1.6.0 over 1.1.33, and NUnit 2.0.5 over 2.0.3; these are observed resolution results.
+
+The explicit install took 0.846 seconds. The owned fixture then requested package resolution through
+[Client.Resolve](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/PackageManager.Client.Resolve.html),
+because a hidden Editor did not observe the external manifest edit on the first attempt.
+The final cached run reported package resolution in 6.91 seconds, domain reload profiling at 3357 ms,
+script compilation at 2374 ms, and readiness 17.753 seconds after the install started, with no compiler errors.
+Live `pipeline list`, `status`, `list` (160 registered commands), and `command editor_status` succeeded.
+Global discovery was filtered in memory to the exact owned project before persistence.
+The fixture's normal quit marker, Unity quitting callback and process exit were all observed.
+The Editor exit code is unknown because this recorder uses `Start-Process`.
+
+Run `npm run compile` in `unity-cursor-toolkit/`, then
+`node experiments/pipeline-install-proof/capture-proof.js` from the repository root.
+The [runner](../experiments/pipeline-install-proof/capture-proof.js) resolves the installed Editor from CLI inventory;
+`UNITY_CLI_BINARY` can select the CLI executable. It uses a fresh gate immediately before the package writer,
+retains timestamped attempts, and removes credentials, user identities and machine paths from recorded output.
+The authored [fixture](../experiments/pipeline-install-proof/fixture/Assets/Editor/PipelineInstallProof.cs)
+is the only project source copied into TEMP. No sample, toolkit package or user project was changed.
+This proves one isolated install and read path. It does not establish command safety, MCP composition,
+development-Player behavior or newer Editor compatibility.
+
 ### 4.1 Capability map
 
 **Assets and files.** Create ScriptableObject and Object assets; import external files; move, copy, rename, delete,
@@ -564,14 +613,14 @@ unity command editor_status
 ### 5.10 Classified composition inventory, 2026-10-08
 
 Each origin has its own identity and transport. These rows classify capabilities, not tool counts.
-Assistant and Pipeline registration have not been recaptured in this checkout; their historical snapshots are not current support evidence.
+Assistant registration has not been recaptured in this checkout. Pipeline 0.8 registration was observed in the isolated install above; command safety and composition remain separate proofs.
 
 | Origin | Source identity/date | Minimum Editor | Transport and execution |
 | --- | --- | --- | --- |
 | toolkit | Package 1.1.0; current source reviewed 2026-10-08 | Declared 2019.4; exact-version proof remains separate | Node stdio to toolkit TCP bridge; live Editor; explicit editorBatchmode game command path |
 | Assistant MCP | 2.17.0-pre.1 capture 2026-08-02; versioned docs checked 2026-10-08 | Captured 6000.0.60f1 | Relay stdio with local IPC to a live Editor; batchmode capture does not make commands headless |
 | CLI | Installed 1.0.0-beta.12 capture 2026-10-08 | Independent binary; launched Editor must match project | Local process; build/run/test batchmode; command/list/status/mcp target Pipeline |
-| Pipeline | 0.4.0-exp.1 documentation checked 2026-10-08; registration not recaptured | Documented Unity 6.0; individual commands can be narrower | Authenticated loopback HTTP in live Editor or development Player; CLI MCP adds stdio |
+| Pipeline | 0.8.0-exp.1 isolated install and 160-command catalog, 2026-10-08 | Package minimum 6000.0; exact 6000.3.9f1 proved; commands can be narrower | Live Editor authenticated loopback HTTP observed; Player and CLI MCP remain unproved |
 
 | Capability and origin | Risk class | Composition status |
 | --- | --- | --- |
@@ -593,7 +642,7 @@ Toolkit classifications come from [toolMetadata.ts](../unity-cursor-toolkit/src/
 Official rows use the [versioned Assistant overview](https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.17/manual/integration/unity-mcp-overview.html),
 [Pipeline 0.4 documentation](https://docs.unity3d.com/Packages/com.unity.pipeline@0.4/manual/index.html),
 and installed CLI help in the linked baseline capture. Package documentation is not an observed enabled-tool inventory.
-No proxy, adapter, debugger, or fallback backend was added. Current official inventories and execution proofs remain prerequisites for composition spikes.
+No composition proxy or backend fallback was added. Current safety metadata and MCP execution proofs remain prerequisites for composition spikes.
 
 ## 6. Sources
 
