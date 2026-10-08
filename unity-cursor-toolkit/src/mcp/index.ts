@@ -26,15 +26,15 @@ export class McpModule implements IModule {
 	private testCommands: UnityTestCommands | undefined;
 
 	public async activate(ctx: ModuleContext): Promise<void> {
-		this.toolRouter = new ToolRouter();
+		this.toolRouter = new ToolRouter(isMcpReadOnlyMode());
 
 		const unityTools = new UnityMcpTools(ctx.commandSender, getLinkedProjectPath);
-		this.toolRouter.register(unityTools);
+		this.toolRouter.register(unityTools, 'toolkit');
 
 		ctx.registerToolProvider(unityTools);
 		const cliPath = vscode.workspace.getConfiguration('unityCursorToolkit.unityCli').get<string>('path');
 		const tests = new UnityTestMcpTools(ctx.commandSender, getLinkedProjectPath, new UnityCliTestAdapter(new UnityCliAdapter(cliPath)), isMcpReadOnlyMode());
-		this.toolRouter.register(tests);
+		this.toolRouter.register(tests, 'toolkit');
 		ctx.registerToolProvider(tests);
 		this.testCommands = new UnityTestCommands(ctx, tests);
 		this.disposables.push(this.testCommands);

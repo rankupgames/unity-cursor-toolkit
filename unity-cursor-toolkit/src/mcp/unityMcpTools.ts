@@ -289,6 +289,7 @@ export class UnityMcpTools implements IToolProvider {
 	}
 
 	public async handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {
+		if (name.startsWith('toolkit.')) { name = name.slice('toolkit.'.length); }
 		if (['test_runner', 'list_tests', 'run_tests'].includes(name)) {
 			return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
 				code: 'capability_unavailable', message: 'Test tools require a direct call through the shared test provider.',
@@ -311,6 +312,11 @@ export class UnityMcpTools implements IToolProvider {
 			return this.handleBatchExecute(args);
 		}
 
+		if (!this.getTools().some(tool => tool.name === name)) {
+			return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
+				code: 'unknown_tool', message: 'Unknown toolkit batch tool: ' + name
+			} }) }], isError: true };
+		}
 		const unityArgs = UnityMcpTools.normalizeToolArgs(name, args);
 		if (name === 'game_command' && shouldUseEditorBatchmode(unityArgs)) {
 			return this.handleEditorBatchmodeGameCommand(args, unityArgs);
@@ -534,15 +540,30 @@ export class UnityMcpTools implements IToolProvider {
 
 	private async handleBatchExecute(args: Record<string, unknown>): Promise<ToolResult> {
 		const operations = args.operations as Array<{ tool: string; args: Record<string, unknown> }>;
-		if (operations == null || operations.length === 0) {
+		if (!Array.isArray(operations) || operations.length === 0) {
 			return { content: [{ type: 'text', text: 'No operations provided.' }], isError: true };
 		}
 
+		// Validate every operation before a dry-run plan or any Unity forwarding.
+		const pendingOperations = [...operations];
+		for (const op of pendingOperations) {
+			const name = typeof op?.tool === 'string' ? op.tool.replace(/^toolkit\./, '') : '';
+			if (!op || typeof op.args !== 'object' || op.args == null || Array.isArray(op.args)
+				|| !this.getTools().some(tool => tool.name === name) || ['list_tests', 'run_tests', 'test_runner'].includes(name)
+				|| (name === 'batch_execute' && (!Array.isArray(op.args.operations) || op.args.operations.length === 0))) {
+				return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
+					code: 'capability_unavailable', message: 'Batch operations require toolkit tools; test tools must be called directly.'
+				} }) }], isError: true };
+			}
+			if (name === 'batch_execute') {
+				pendingOperations.push(...op.args.operations as Array<{ tool: string; args: Record<string, unknown> }>);
+			}
+		}
 		if (isDryRun(args) && isMutatingToolCall('batch_execute', args)) {
 			return UnityMcpTools.buildDryRunResult('batch_execute', {
 				operations: operations.map((op) => ({
 					tool: op.tool,
-					args: UnityMcpTools.normalizeToolArgs(op.tool, op.args)
+					args: UnityMcpTools.normalizeToolArgs(op.tool.replace(/^toolkit\./, ''), op.args)
 				}))
 			});
 		}

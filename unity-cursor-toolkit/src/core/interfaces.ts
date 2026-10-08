@@ -84,6 +84,7 @@ export interface ToolResultContent {
 }
 
 export interface ToolResult {
+	_meta?: Record<string, unknown>;
 	content: ToolResultContent[];
 	isError?: boolean;
 }

@@ -6,6 +6,9 @@ workflows. Use the enforced MCP read-only and dry-run policy, select a backend
 explicitly, and compose Unity's first-party tools only where capabilities are
 proved. Remote streaming is experimental.
 
+Use canonical `toolkit.<tool>` names from `tools/list`; bare toolkit aliases
+preserve existing calls, and catalog/result `_meta` identifies the selected origin.
+
 ## Unity Version and Backend Status
 
 The recorded Windows baseline is exact 6000.3.9f1: isolated package activation,

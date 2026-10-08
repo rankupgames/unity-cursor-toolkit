@@ -2727,9 +2727,9 @@ async function testToolRouter() {
 		const defs = router.getToolDefinitions();
 		assert.strictEqual(defs.length, 3);
 		const names = defs.map(d => d.name);
-		assert.ok(names.includes('tool_a'));
-		assert.ok(names.includes('tool_b'));
-		assert.ok(names.includes('tool_c'));
+		assert.ok(names.includes('toolkit.tool_a'));
+		assert.ok(names.includes('toolkit.tool_b'));
+		assert.ok(names.includes('toolkit.tool_c'));
 	});
 
 	await testAsync('routeToolCall dispatches to correct provider (A)', async () => {
@@ -3182,13 +3182,13 @@ async function testStandaloneMcpServer() {
 
 			const tools = await server.request('tools/list', {});
 			const toolNames = tools.result.tools.map((tool) => tool.name);
-			assert.ok(toolNames.includes('project_info'));
-			assert.ok(toolNames.includes('read_console'));
-			assert.ok(toolNames.includes('profiler_snapshot'));
-			assert.ok(toolNames.includes('game_command'));
-			assert.ok(toolNames.includes('unity_context'));
-			assert.ok(toolNames.includes('viewport_stream'));
-			const projectInfo = tools.result.tools.find((tool) => tool.name === 'project_info');
+			assert.ok(toolNames.includes('toolkit.project_info'));
+			assert.ok(toolNames.includes('toolkit.read_console'));
+			assert.ok(toolNames.includes('toolkit.profiler_snapshot'));
+			assert.ok(toolNames.includes('toolkit.game_command'));
+			assert.ok(toolNames.includes('toolkit.unity_context'));
+			assert.ok(toolNames.includes('toolkit.viewport_stream'));
+			const projectInfo = tools.result.tools.find((tool) => tool.name === 'toolkit.project_info');
 			assert.strictEqual(projectInfo.annotations.readOnlyHint, true);
 
 			const resources = await server.request('resources/list', {});
@@ -4742,7 +4742,7 @@ async function testMigrationScanner() {
 			});
 			try {
 				const listed = await server.request('tools/list', {});
-				const definition = listed.result.tools.find(tool => tool.name === 'coreclr_migration');
+				const definition = listed.result.tools.find(tool => tool.name === 'toolkit.coreclr_migration');
 				assert.strictEqual(definition.annotations.readOnlyHint, true);
 				for (const action of ['scan', 'report', 'rules', 'invalid']) {
 					const response = await server.request('tools/call', { name: 'coreclr_migration', arguments: { action } });

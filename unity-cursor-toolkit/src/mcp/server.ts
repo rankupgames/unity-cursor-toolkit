@@ -18,7 +18,7 @@ import { StandaloneConsoleMcpTools, StandaloneConsoleStore } from './standaloneC
 import { StandaloneProjectMcpTools } from './standaloneProjectTools';
 import { UnityContextMcpTools } from './unityContextIndex';
 import { ViewportStreamMcpTools } from './viewportStreamTools';
-import { isDryRun, isMutatingToolCall, isMcpReadOnlyMode } from './toolMetadata';
+import { isMcpReadOnlyMode } from './toolMetadata';
 import type { ToolCallContext, ToolDefinition, ToolResult } from '../core/interfaces';
 
 const PROTOCOL_VERSION = '2025-06-18';
@@ -143,7 +143,7 @@ const PROMPTS: readonly PromptDefinition[] = [
 ];
 
 export function createStandaloneMcpRuntime(readOnly = isMcpReadOnlyMode(), notify: (notification: Record<string, unknown>) => void = () => undefined): StandaloneMcpRuntime {
-	const router = new ToolRouter();
+	const router = new ToolRouter(readOnly);
 	const connection = new StandaloneUnityConnection();
 	const consoleStore = new StandaloneConsoleStore();
 	const viewportTools = new ViewportStreamMcpTools(connection);
@@ -151,12 +151,12 @@ export function createStandaloneMcpRuntime(readOnly = isMcpReadOnlyMode(), notif
 
 	connection.onMessage((message) => consoleStore.addFromUnityMessage(message));
 	connection.onMessage((message) => viewportTools.handleUnityMessage(message));
-	router.register(new UnityMcpTools(connection));
-	router.register(new UnityTestMcpTools(connection, undefined, undefined, readOnly));
-	router.register(new UnityContextMcpTools());
-	router.register(viewportTools);
-	router.register(new StandaloneConsoleMcpTools(consoleStore));
-	router.register(new StandaloneProjectMcpTools());
+	router.register(new UnityMcpTools(connection), 'toolkit');
+	router.register(new UnityTestMcpTools(connection, undefined, undefined, readOnly), 'toolkit');
+	router.register(new UnityContextMcpTools(), 'toolkit');
+	router.register(viewportTools, 'toolkit');
+	router.register(new StandaloneConsoleMcpTools(consoleStore), 'toolkit');
+	router.register(new StandaloneProjectMcpTools(), 'toolkit');
 
 	return {
 		router,
@@ -259,7 +259,7 @@ async function handleRequest(
 		case 'tools/list':
 			return { tools: router.getToolDefinitions() };
 		case 'tools/call':
-			return callTool(router, readOnly, parseToolCallParams(request.params), context);
+			return callTool(router, parseToolCallParams(request.params), context);
 		case 'resources/list':
 			return { resources: RESOURCES };
 		case 'resources/read':
@@ -273,16 +273,7 @@ async function handleRequest(
 	}
 }
 
-async function callTool(router: ToolRouter, readOnly: boolean, params: ToolCallParams, context?: ToolCallContext): Promise<ToolResult> {
-	if (readOnly && params.name !== 'run_tests' && isMutatingToolCall(params.name, params.arguments) && isDryRun(params.arguments) === false) {
-		return {
-			content: [{
-				type: 'text',
-				text: `Tool '${params.name}' is blocked because ${READ_ONLY_ENV}=1. Re-run with dryRun=true or disable read-only mode.`
-			}],
-			isError: true
-		};
-	}
+async function callTool(router: ToolRouter, params: ToolCallParams, context?: ToolCallContext): Promise<ToolResult> {
 
 	return router.routeToolCall(params.name, params.arguments, context);
 }
@@ -364,7 +355,7 @@ function buildInitializeResult(tools: readonly ToolDefinition[], readOnly: boole
 			'Unity Cursor Toolkit exposes Unity Editor tools for AI agents.',
 			'Connect Unity first by installing com.rankupgames.unity-cursor-toolkit and opening the project in Unity.',
 			`Read-only mode is ${readOnly ? 'enabled' : 'disabled'} via ${READ_ONLY_ENV}.`,
-			'Use project_info, read_console, and manage_scene/getHierarchy before mutating a scene.',
+			'Use toolkit.project_info, toolkit.read_console, and toolkit.manage_scene/getHierarchy before mutating a scene. Bare toolkit names remain aliases; tool and result _meta identify the origin.',
 			'Use unity_context action=scan to refresh .umetacontext/index.json, then query/read/summary to avoid broad Unity asset fetches.',
 			'Use profiler_snapshot action=current for session artifacts, then readConsoleTranscript with the returned session id when the compact console timeline is needed.',
 			'Use viewport_stream action=start only when a graphics-capable Unity host is available; -nographics is for non-rendering batch workflows.',
@@ -430,7 +421,8 @@ function toCatalogEntry(tool: ToolDefinition): Record<string, unknown> {
 		title: tool.title ?? tool.annotations?.title,
 		description: tool.description,
 		annotations: tool.annotations,
-		inputSchema: tool.inputSchema
+		inputSchema: tool.inputSchema,
+		_meta: tool._meta
 	};
 }
 
