@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-08T09:41:57.825Z",
+  "passed": 6,
+  "total": 6,
+  "boundary": "Actual Node subprocess and TCP connection",
+  "samplerSha256": "57979e31b4f56a7e371a42573d5b9504494225fa85026b9488a00dd358a577d7",
+  "testSha256": "96071a04e6f4f1f0c5e9da899930372613359f2fef7829296eb44c6ef91de01e",
+  "failBefore": "old-code.json protects first5; missing-identity-before.json protects sixth"
+}

@@ -1,0 +1,5 @@
+{
+  "observedAt": "2026-10-08T09:04:01.858Z",
+  "passed": false,
+  "error": "Command failed: powershell.exe -NoProfile -Command (Get-ItemProperty -LiteralPath \"HKCU:\\Software\\Unity Technologies\\Unity Editor 5.x\" -ErrorAction SilentlyContinue).PSObject.Properties.Name | Where-Object { $_ -like 'UCTViewportProof_1a64b3fe07144a4c_*' }\nGet-ItemProperty : Specified cast is not valid.\r\nAt line:1 char:2\r\n+ (Get-ItemProperty -LiteralPath \"HKCU:\\Software\\Unity Technologies\\Uni ...\r\n+  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\r\n    + CategoryInfo          : NotSpecified: (:) [Get-ItemProperty], InvalidCastException\r\n    + FullyQualifiedErrorId : System.InvalidCastException,Microsoft.PowerShell.Commands.GetItemPropertyCommand\r\n \r\n"
+}
