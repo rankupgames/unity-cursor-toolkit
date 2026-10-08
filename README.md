@@ -203,6 +203,26 @@ npx vsce package --no-dependencies
 
 The VSIX package is intentionally limited to runtime extension assets: compiled `out/` files, metadata, icon, and license. Tests, backups, lockfiles, source maps, and generated bundles are excluded through `.vscodeignore`.
 
+## Unity CLI Diagnostics
+
+Run **Unity Toolkit: Unity CLI Doctor** (`unity-cursor-toolkit.doctor`) to check
+the standalone first-party CLI. Set `unityCursorToolkit.unityCli.path` to its
+native executable, or use `UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH` or `PATH`.
+An explicit invalid path fails; the adapter does not select another installation.
+
+The CLI status item reports the resolved version or **CLI not found**, separately
+from the toolkit connection. The recorded pin is **1.0.0-beta.12**. A mismatch
+shows expected and found versions; diagnostics can still run. The command reports
+selected doctor checks and CLI version availability. It omits account
+identifiers, authentication data, and recent logs.
+
+Each call uses a direct argument array and complete JSON output, with a deadline.
+Cancellation stops only the adapter-owned process tree. No Editor is installed,
+upgraded, launched, or substituted by this diagnostic command. Existing MCP and
+batchmode operations retain their current paths. This diagnostic backend does
+not certify Unity 7 or enable Pipeline execution. See the
+[recorded failure matrix](docs/UNITY_LANDSCAPE.md#adapter-failure-matrix).
+
 ## Security Hardening
 
 - Dependency audits run through `npm run validate` and GitHub Actions.
@@ -216,6 +236,7 @@ The VSIX package is intentionally limited to runtime extension assets: compiled 
 
 | Command | Description |
 |---------|-------------|
+| `unity-cursor-toolkit.doctor` | Check the pinned standalone Unity CLI and selected diagnostics |
 | `unity-cursor-toolkit.startConnection` | Start/Attach to a Unity project |
 | `unity-cursor-toolkit.reloadConnection` | Reload the current connection |
 | `unity-cursor-toolkit.stopConnection` | Stop the connection |

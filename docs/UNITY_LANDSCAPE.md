@@ -189,6 +189,46 @@ Version JSON/NDJSON worked as recorded above. Automation must not use those vers
 Partial Player output under a real interrupted build and project-specific command parity remain unproved.
 These results do not justify replacing the existing toolkit batch launcher or adding a second test launcher.
 
+### Adapter failure matrix
+
+The extension's diagnostic backend uses the recorded `1.0.0-beta.12` pin.
+It invokes version and doctor through a shell-free Node
+adapter. CLI presence and version are independent of toolkit bridge health.
+Only a complete JSON envelope is accepted; the mixed build framing above fails
+closed. Native codes and raw exit/signal values remain in the typed result.
+
+| Condition | Local code / source | Recovery and proof |
+|---|---|---|
+| Binary absent or explicit path invalid | cli_not_found; no CLI process | Set the native executable path; fixture covers config, env, PATH and missing override |
+| Windows shell wrapper | unsupported_binary; no CLI process | Select unity.exe; no shell fallback |
+| Different version | version_mismatch; found/expected retained | Select the pinned binary; diagnostic warning, no automatic upgrade |
+| Invalid arguments | invalid_arguments / INVALID_COMMAND_ARGS, exit 2 | Use the pinned help; captured test-list and baseline failures |
+| Exact Editor absent | missing_editor / COMMAND_FAILED, exit 6 | Install the declared version and required modules; captured 6000.6.999f1 message, no substitution |
+| Compiler failure | operation_failed / COMMAND_FAILED, exit 6 | Inspect the Editor log; captured framework ambiguity remains generic |
+| Failing tests | tests_failed / TESTS_FAILED, exit 8 | Inspect the NUnit results; captured deliberate failure |
+| CLI test timeout | timed_out / TEST_TIMED_OUT, exit 6 | Inspect incomplete results before retrying; captured timeout |
+| Native Ctrl+C | cancelled; exit 130 | Captured native PTY interruption; no claim that Node kill reproduces Ctrl+C |
+| Caller timeout / abort | timed_out / cancelled; raw exit retained | Owned Node process-tree test confirms parent/child exit and unrelated sentinel survival on Windows |
+| Cleanup not confirmed | cleanup_failed; terminationReason retained | Inspect the owned process before retrying; simulated helper refusal is distinct from completed cleanup |
+| Malformed, truncated, mixed or oversized stdout | invalid_output; excerpt at most 500 characters | Do not extract a nested or trailing success; recorded mixed build/module output and framing fault tests |
+| Local read-only refusal | policy_refused; no CLI process | Diagnostic allowlist rejects the operation before spawn |
+| Spawn failure | spawn_failed | Check executable permissions and environment; controlled failure test |
+| Non-specific CLI failure | operation_failed; native code and exit retained | Inspect source diagnostics; no invented native subtype |
+| Undocumented exit code | unknown_exit; native code, exit and streams retained | Inspect the pinned CLI output; recorded generic envelope with an injected unknown numeric exit protects this boundary |
+| Missing module / build failure | invalid_output for current mixed capture; no module-specific native code | Android absence is demonstrated in the Editor log/inventory, not a CLI module preflight; specific classification pending |
+| Authentication, ambiguous installed Editors, locked project | Capture and specific classification pending | Do not infer these from generic COMMAND_FAILED; RUG-549 acceptance remains partial |
+
+Streams are bounded to 1,048,576 characters each. Windows cancellation invokes
+`taskkill /PID <owned CLI PID> /T /F` directly and waits for utility success
+and child close. It does not use image filters or discover user Editors.
+Node's Windows `child.kill` is abrupt termination and differs from native
+Ctrl+C. POSIX uses a separate owned process group with TERM then KILL.
+[Node process semantics](https://nodejs.org/api/child_process.html#subprocesskillsignal),
+[process groups](https://nodejs.org/api/child_process.html#optionsdetached), and
+[Windows taskkill](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/taskkill)
+define these boundaries. Utility failure or a missed close deadline fails closed.
+Partial artifacts are not deleted by the adapter.
+
 ### 3.1 Command-line surface map
 
 | Surface | Invocation | Primary role | Version coupling and status |

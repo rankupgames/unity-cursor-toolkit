@@ -1,5 +1,5 @@
 /**
- * Status Bar Controller -- two-part status bar layout:
+ * Status Bar Controller -- bridge, quick access and CLI diagnostics:
  * left = one-click connect toggle, right = quick-access dropdown.
  * Collects IStatusBarContributor registrations from modules.
  *
@@ -10,11 +10,13 @@
 import * as vscode from 'vscode';
 import type { IStatusBarContributor } from './interfaces';
 import { ConnectionState } from './types';
+import type { UnityCliResult } from './unityCliAdapter';
 
 export class StatusBarController implements vscode.Disposable {
 
 	private readonly connectItem: vscode.StatusBarItem;
 	private readonly quickAccessItem: vscode.StatusBarItem;
+	private readonly cliItem: vscode.StatusBarItem;
 	private readonly contributors: IStatusBarContributor[] = [];
 	private readonly disposables: vscode.Disposable[] = [];
 	private projectName = '';
@@ -28,7 +30,9 @@ export class StatusBarController implements vscode.Disposable {
 		this.quickAccessItem.text = '$(triangle-down)';
 		this.quickAccessItem.tooltip = 'Unity Quick Actions';
 
-		context.subscriptions.push(this.connectItem, this.quickAccessItem);
+		this.cliItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
+		this.cliItem.command = 'unity-cursor-toolkit.doctor';
+		context.subscriptions.push(this.connectItem, this.quickAccessItem, this.cliItem);
 
 		this.disposables.push(
 			vscode.commands.registerCommand('unity-cursor-toolkit.quickAccess', () => this.showQuickAccess())
@@ -39,6 +43,20 @@ export class StatusBarController implements vscode.Disposable {
 
 	public addContributor(contributor: IStatusBarContributor): void {
 		this.contributors.push(contributor);
+	}
+
+	public setUnityCliStatus(result: UnityCliResult<{ version: string; expectedVersion: string }>): void {
+		const rawVersion = result.ok ? result.data.version : result.error.foundVersion;
+		const version = typeof rawVersion === 'string' && rawVersion.length <= 64
+			&& /^\d+\.\d+\.\d+(?:-(?:alpha|beta|rc|preview)\.\d+)?$/.test(rawVersion) ? rawVersion : 'unverified version';
+		this.cliItem.text = result.ok ? 'CLI ' + version
+			: result.error.code === 'cli_not_found' ? '$(warning) CLI not found'
+			: result.error.code === 'version_mismatch' ? '$(warning) CLI ' + version : '$(warning) CLI unavailable';
+		this.cliItem.tooltip = (result.ok ? 'Unity CLI ' + version + ' matches the pinned version.'
+			: result.error.code + ': Run Unity CLI Doctor to check the installation.')
+			+ (result.binaryPath ? '\nBinary: ' + result.binaryPath : '') + '\nClick to run Unity CLI Doctor.';
+		this.cliItem.color = result.ok ? undefined : new vscode.ThemeColor('statusBarItem.warningForeground');
+		this.cliItem.show();
 	}
 
 	public setProjectName(name: string): void {

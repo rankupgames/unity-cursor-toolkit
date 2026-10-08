@@ -3686,7 +3686,7 @@ function testStatusBarController() {
 		const ctrl = new StatusBarController(ctx);
 		const connectItem = ctx.subscriptions[0];
 		const quickAccessItem = ctx.subscriptions[1];
-		return { ctrl, connectItem, quickAccessItem };
+		return { ctrl, connectItem, quickAccessItem, cliItem: ctx.subscriptions[2] };
 	}
 
 	test('Disconnected (no project): shows "Unity Attach" with plug icon', () => {
@@ -3737,6 +3737,26 @@ function testStatusBarController() {
 		assert.ok(connectItem.tooltip.includes('Reconnecting'));
 		ctrl.dispose();
 	});
+
+
+	for (const [name, result, text] of [
+		['found', { ok: true, data: { version: '1.0.0-beta.12', expectedVersion: '1.0.0-beta.12' }, binaryPath: '/fixture/unity' }, 'CLI 1.0.0-beta.12'],
+		['missing', { ok: false, error: { code: 'cli_not_found', message: 'Not found', recovery: 'Set path' } }, 'CLI not found'],
+		['mismatch', { ok: false, binaryPath: '/fixture/unity', error: { code: 'version_mismatch', foundVersion: '1.0.0-beta.11', message: 'Expected pinned version', recovery: 'Select pinned binary' } }, 'CLI 1.0.0-beta.11']
+	]) {
+		test('CLI status ' + name + ' remains distinct from bridge and compilation state', () => {
+			const { ctrl, cliItem, connectItem } = makeController();
+			ctrl.setUnityCliStatus(result);
+			assert.ok(cliItem.text.includes(text));
+			assert.strictEqual(cliItem.command, 'unity-cursor-toolkit.doctor');
+			ctrl.update(ConnectionState.Connected, 55500);
+			ctrl.showCompilationResult(true, 0, 0);
+			assert.ok(cliItem.text.includes(text));
+			assert.ok(connectItem.text.includes('Unity'));
+			if (result.binaryPath) { assert.ok(cliItem.tooltip.includes(result.binaryPath)); }
+			ctrl.dispose();
+		});
+	}
 
 	test('showCompilationResult success: check icon, green', () => {
 		const { ctrl, connectItem } = makeController();
@@ -4758,6 +4778,292 @@ async function testMigrationScanner() {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+
+async function testUnityCliAdapter() {
+	console.log('\ncore/unityCliAdapter.ts');
+	const cp = require('child_process');
+	const { UnityCliAdapter, UNITY_CLI_EXPECTED_VERSION } = require(path.join(outDir, 'core', 'unityCliAdapter'));
+	const captures = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
+	const baseline = JSON.parse(fs.readFileSync(path.join(captures, '2026-10-08-cli-1.0.0-beta.12-windows-x64.json'), 'utf8'));
+	const version = (baseline.captures || baseline.records).find(record => {
+		try { const data = JSON.parse(record.stdout); return data.command === 'version' && data.success; } catch { return false; }
+	});
+	const proof = name => JSON.parse(fs.readFileSync(path.join(captures,
+		'2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-' + name + '.json'), 'utf8'));
+	async function replay(record, command, args = [], inspect) {
+		const original = cp.spawn;
+		cp.spawn = (binary, argv, options) => {
+			inspect?.(binary, argv, options);
+			const child = new EventEmitter();
+			child.pid = 42;
+			child.stdout = new EventEmitter(); child.stdout.setEncoding = () => {};
+			child.stderr = new EventEmitter(); child.stderr.setEncoding = () => {};
+			process.nextTick(() => {
+				child.stdout.emit('data', record.stdout || '');
+				child.stderr.emit('data', record.stderr || '');
+				child.emit('exit', record.exitCode, null);
+				child.emit('close', record.exitCode, null);
+			});
+			return child;
+		};
+		try {
+			return await new UnityCliAdapter(process.execPath).invoke(command, args, { timeoutMs: 1000, readOnly: false });
+		} finally { cp.spawn = original; }
+	}
+	await testAsync('CLI direct argv preserves spaces, quotes and shell metacharacters; streams stay separate', async () => {
+		const literal = 'project with "quotes" & $(literal) | %value%;';
+		const record = { ...version, stderr: proof('edit-fail').stderr };
+		assert.ok(record.stderr.length > 0, 'Use nonempty recorded stderr to protect stream separation');
+		const result = await replay(record, 'version', [literal, '--', '--format', 'literal'], (binary, args, options) => {
+			assert.strictEqual(binary, process.execPath);
+			assert.deepStrictEqual(args, ['version', '--format', 'json', '--non-interactive', '--no-banner', '--no-log-proxy', literal, '--', '--format', 'literal']);
+			assert.strictEqual(options.shell, false);
+			assert.strictEqual(options.windowsHide, true);
+		});
+		assert.strictEqual(result.ok, true);
+		assert.strictEqual(result.stdout, version.stdout);
+		assert.strictEqual(result.stderr, record.stderr);
+	});
+	const missingEditor = JSON.parse(fs.readFileSync(path.join(captures, '2026-10-08-cli-1.0.0-beta.12-windows-x64-missing-editor.json'), 'utf8'));
+	for (const [name, record, command, code, nativeCode] of [
+		['missing exact Editor', missingEditor, 'open', 'missing_editor', 'COMMAND_FAILED'],
+		['compiler failure stays generic', proof('run-cached-framework-incompatible'), 'run', 'operation_failed', 'COMMAND_FAILED'],
+		['failing test', proof('edit-fail'), 'test', 'tests_failed', 'TESTS_FAILED'],
+		['CLI test deadline', proof('test-timeout'), 'test', 'timed_out', 'TEST_TIMED_OUT'],
+		['invalid test argument', proof('test-list'), 'test', 'invalid_arguments', 'INVALID_COMMAND_ARGS'],
+		['native Ctrl+C', proof('test-cancel'), 'test', 'cancelled', undefined],
+		['mixed build framing', proof('build-dirty-versioned'), 'build', 'invalid_output', undefined],
+		['mixed module failure framing', proof('missing-module'), 'build', 'invalid_output', undefined]
+	]) {
+		await testAsync('CLI recorded failure: ' + name, async () => {
+			const result = await replay(record, command);
+			assert.strictEqual(result.ok, false);
+			assert.strictEqual(result.error.code, code);
+			assert.strictEqual(result.error.nativeCode, nativeCode);
+			assert.strictEqual(result.exitCode, record.exitCode);
+			assert.ok(!result.error.outputExcerpt || result.error.outputExcerpt.length <= 500);
+			assert.strictEqual('data' in result, false);
+			if (code === 'missing_editor') { assert.strictEqual(result.error.editorVersion, '6000.6.999f1'); }
+		});
+	}
+	await testAsync('CLI rejects truncated, trailing and contradictory JSON instead of partial success', async () => {
+		for (const record of [
+			{ ...version, stdout: version.stdout.trim().slice(0, -1) },
+			{ ...version, stdout: version.stdout + '\n' + version.stdout },
+			{ ...version, exitCode: 6 },
+			{ ...version, stdout: version.stdout + 'x'.repeat(1024 * 1024) }
+		]) {
+			const result = await replay(record, 'version');
+			assert.strictEqual(result.ok, false);
+			assert.strictEqual(result.error.code, 'invalid_output');
+		}
+		const unknown = await replay({ ...proof('run-cached-framework-incompatible'), exitCode: 97 }, 'run');
+		assert.strictEqual(unknown.error.code, 'unknown_exit');
+		assert.strictEqual(unknown.error.nativeCode, 'COMMAND_FAILED');
+		assert.strictEqual(unknown.exitCode, 97);
+	});
+	await testAsync('CLI policy, invalid deadline and explicit missing override refuse before spawn', async () => {
+		const original = cp.spawn;
+		cp.spawn = () => { throw new Error('Must not spawn'); };
+		try {
+			const adapter = new UnityCliAdapter(path.join(os.tmpdir(), 'uct-no-such-cli'), { ...process.env, UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH: process.execPath });
+			assert.strictEqual((await adapter.invoke('build', [], { timeoutMs: 1000 })).error.code, 'policy_refused');
+			assert.strictEqual((await adapter.invoke('version', [], { timeoutMs: 0 })).error.code, 'invalid_arguments');
+			assert.strictEqual((await adapter.invoke('version', ['--format', 'human'], { timeoutMs: 1000 })).error.code, 'invalid_arguments');
+			assert.strictEqual((await adapter.probe({ timeoutMs: 1000 })).error.code, 'cli_not_found');
+			assert.strictEqual((await new UnityCliAdapter(undefined, { PATH: '' }).probe({ timeoutMs: 1000 })).error.code, 'cli_not_found');
+			const abort = new AbortController(); abort.abort();
+			assert.strictEqual((await adapter.probe({ timeoutMs: 1000, signal: abort.signal })).error.code, 'cancelled');
+		} finally { cp.spawn = original; }
+	});
+	await testAsync('CLI environment/PATH resolution and version mismatch retain found version and path', async () => {
+		const original = cp.spawn;
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-cli-path-'));
+		const binary = path.join(tmp, process.platform === 'win32' ? 'unity.exe' : 'unity');
+		fs.writeFileSync(binary, ''); if (process.platform !== 'win32') { fs.chmodSync(binary, 0o755); }
+		cp.spawn = () => {
+			const child = new EventEmitter();
+			child.stdout = new EventEmitter(); child.stdout.setEncoding = () => {};
+			child.stderr = new EventEmitter(); child.stderr.setEncoding = () => {};
+			process.nextTick(() => {
+				const data = JSON.parse(version.stdout); data.data.version = 'fixture-version-mismatch';
+				child.stdout.emit('data', JSON.stringify(data)); child.emit('close', 0, null);
+			});
+			return child;
+		};
+		try {
+			for (const env of [{ UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH: binary }, { PATH: tmp }]) {
+				const result = await new UnityCliAdapter(undefined, env).probe({ timeoutMs: 1000 });
+				assert.strictEqual(result.ok, false);
+				assert.strictEqual(result.error.code, 'version_mismatch');
+				assert.strictEqual(result.error.expectedVersion, UNITY_CLI_EXPECTED_VERSION);
+				assert.strictEqual(result.error.foundVersion, 'fixture-version-mismatch');
+				assert.strictEqual(result.binaryPath, binary);
+				assert.strictEqual('data' in result, false);
+			}
+			if (process.platform === 'win32') {
+				const wrapper = path.join(tmp, 'unity.cmd'); fs.writeFileSync(wrapper, '');
+				assert.strictEqual((await new UnityCliAdapter(wrapper).probe({ timeoutMs: 1000 })).error.code, 'unsupported_binary');
+			}
+		} finally { cp.spawn = original; fs.rmSync(tmp, { recursive: true, force: true }); }
+	});
+	await testAsync('CLI spawn exceptions and error events return typed failure', async () => {
+		const original = cp.spawn;
+		try {
+			cp.spawn = () => { throw new Error('fixture spawn refusal'); };
+			assert.strictEqual((await new UnityCliAdapter(process.execPath).probe({ timeoutMs: 1000 })).error.code, 'spawn_failed');
+			cp.spawn = () => {
+				const child = new EventEmitter();
+				process.nextTick(() => child.emit('error', new Error('fixture event refusal')));
+				return child;
+			};
+			assert.strictEqual((await new UnityCliAdapter(process.execPath).probe({ timeoutMs: 1000 })).error.code, 'spawn_failed');
+		} finally { cp.spawn = original; }
+	});
+	if (process.platform === 'win32') {
+		await testAsync('CLI teardown failure is not reported as confirmed cancellation', async () => {
+			const originalSpawn = cp.spawn, originalExecFile = cp.execFile;
+						cp.spawn = () => { const child = new EventEmitter(); child.pid = 42; return child; };
+			cp.execFile = (_binary, _args, _options, done) => { process.nextTick(() => done(new Error('fixture cleanup refused'))); };
+			try {
+				const result = await new UnityCliAdapter(process.execPath).invoke('version', [], { timeoutMs: 10 });
+				assert.strictEqual(result.error.code, 'cleanup_failed');
+				assert.strictEqual(result.error.terminationReason, 'timed_out');
+			} finally { cp.spawn = originalSpawn; cp.execFile = originalExecFile; }
+		});
+	}
+	await testAsync('CLI caller timeout/cancel terminate only owned parent and descendant; sentinel survives', async () => {
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-cli-owned-'));
+		const sentinel = cp.spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { windowsHide: true, stdio: 'ignore' });
+		const alive = pid => { try { process.kill(pid, 0); return true; } catch (error) { return error.code !== 'ESRCH'; } };
+		const wait = ms => new Promise(done => setTimeout(done, ms));
+		const owned = [];
+		try {
+			fs.writeFileSync(path.join(tmp, 'version'), "const cp=require('child_process'),fs=require('fs');const child=cp.spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore',windowsHide:true});fs.writeFileSync(process.env.UCT_CLI_PIDS,JSON.stringify({parent:process.pid,descendant:child.pid}));setInterval(()=>{},1000);");
+			for (const reason of ['timed_out', 'cancelled']) {
+				const pidsFile = path.join(tmp, reason + '.json');
+				const controller = new AbortController();
+				const started = Date.now();
+				const pending = new UnityCliAdapter(process.execPath, { ...process.env, UCT_CLI_PIDS: pidsFile }).invoke('version', [], { cwd: tmp, timeoutMs: 2000, signal: controller.signal });
+				while (!fs.existsSync(pidsFile) && Date.now() - started < 1500) { await wait(10); }
+				assert.ok(fs.existsSync(pidsFile), 'Owned fixture reported its process tree');
+				const pids = JSON.parse(fs.readFileSync(pidsFile, 'utf8'));
+				owned.push(pids.parent, pids.descendant);
+				if (reason === 'cancelled') { controller.abort(); }
+				const result = await pending;
+				assert.strictEqual(result.ok, false);
+				assert.strictEqual(result.error.code, reason, result.error.message);
+				assert.strictEqual(result.error.terminationReason, reason);
+				const deadline = Date.now() + 1000;
+				while (owned.some(alive) && Date.now() < deadline) { await wait(10); }
+				assert.ok(!alive(pids.parent) && !alive(pids.descendant), 'Owned process tree exited');
+				assert.ok(alive(sentinel.pid), 'Unrelated sentinel remains alive');
+				assert.ok(Date.now() - started < 7000, 'Cleanup has a bounded deadline');
+			}
+		} finally {
+			for (const pid of owned) { if (alive(pid)) { try { process.kill(pid, 'SIGKILL'); } catch {} } }
+			sentinel.kill(); fs.rmSync(tmp, { recursive: true, force: true });
+		}
+	});
+	await testAsync('CLI module registers doctor and exposes only selected diagnostics', async () => {
+		const { UnityCliModule } = require(path.join(outDir, 'unity-cli', 'index'));
+		const { StatusBarController } = require(path.join(outDir, 'core', 'statusBarController'));
+		const originalProbe = UnityCliAdapter.prototype.probe, originalInvoke = UnityCliAdapter.prototype.invoke;
+		const originalOutput = vscode.window.createOutputChannel, originalStatusBar = vscode.window.createStatusBarItem;
+		const originalWarning = vscode.window.showWarningMessage, originalError = vscode.window.showErrorMessage;
+		const commands = new Map(), statuses = [], actions = [], lines = [], notifications = [], items = [];
+		const marker = 'synthetic-private-marker';
+		const goodProbe = () => ({ ok: true, binaryPath: process.execPath, exitCode: 0, signal: null, stdout: '', stderr: '', warnings: [], data: { version: UNITY_CLI_EXPECTED_VERSION, expectedVersion: UNITY_CLI_EXPECTED_VERSION } });
+		const goodData = () => ({ platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime', status: 'ok', messageKey: marker }], auth: { email: marker }, recentLog: [marker] });
+		const privateFailure = code => ({ ok: false, binaryPath: process.execPath, exitCode: 6, signal: null, stdout: marker, stderr: marker, error: { code, nativeCode: marker, message: marker, recovery: marker, expectedVersion: marker, foundVersion: marker } });
+		const assertPrivateAbsent = () => assert.ok(![...lines, ...notifications.map(item => item.message), ...items.flatMap(item => [String(item.text), String(item.tooltip)])].join('\n').includes(marker), 'CLI UI exposed private native diagnostic data');
+		let disposed = false;
+		UnityCliAdapter.prototype.probe = async () => goodProbe();
+		UnityCliAdapter.prototype.invoke = async command => {
+			assert.strictEqual(command, 'doctor');
+			return { ok: true, warnings: [], data: goodData() };
+		};
+		vscode.window.createOutputChannel = () => ({ clear() {}, show() {}, appendLine: line => lines.push(line), dispose() { disposed = true; } });
+		vscode.window.createStatusBarItem = () => {
+			const item = { show() {}, hide() {}, dispose() {} }; items.push(item); return item;
+		};
+		vscode.window.showWarningMessage = async message => { notifications.push({ severity: 'warning', message }); };
+		vscode.window.showErrorMessage = async message => { notifications.push({ severity: 'error', message }); };
+		const statusBar = new StatusBarController({ subscriptions: [] });
+		const module = new UnityCliModule(result => { statuses.push(result); statusBar.setUnityCliStatus(result); });
+		try {
+			await module.activate({ registerCommand: (id, run) => commands.set(id, run), registerStatusBarContributor: contributor => actions.push(...contributor.getActions()) });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assert.strictEqual(actions[0].command, 'unity-cursor-toolkit.doctor');
+			assert.strictEqual(statuses.at(-1).data.version, UNITY_CLI_EXPECTED_VERSION);
+			assert.ok(lines.some(line => line.includes(UNITY_CLI_EXPECTED_VERSION)));
+			assert.ok(lines.includes('Binary: ' + process.execPath));
+			assert.ok(items.at(-1).text.includes(UNITY_CLI_EXPECTED_VERSION));
+			assert.ok(items.at(-1).tooltip.includes('Binary: ' + process.execPath));
+			assertPrivateAbsent();
+
+			lines.length = 0;
+			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: { platform: marker, arch: marker, checks: [{ id: marker, status: marker }, { id: marker, status: 'ok' }] } });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assertPrivateAbsent();
+			assert.ok(lines.includes('Doctor checks: 2; ok: 1; other: 1.'));
+
+			for (const stage of ['probe', 'doctor']) for (const code of ['operation_failed', 'version_mismatch']) {
+				lines.length = 0; notifications.length = 0;
+				UnityCliAdapter.prototype.probe = async () => stage === 'probe' ? privateFailure(code) : goodProbe();
+				UnityCliAdapter.prototype.invoke = async () => privateFailure(code);
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				const expected = code === 'version_mismatch' ? 'version_mismatch: Unity CLI version does not match the pinned version.' : code + ': Unity CLI diagnostics failed. Check the pinned CLI installation and configuration.';
+				assert.ok(lines.includes(expected));
+				assert.ok(notifications.some(item => item.severity === (code === 'version_mismatch' ? 'warning' : 'error') && item.message === expected));
+				assert.ok(lines.includes('Binary: ' + process.execPath));
+			}
+			for (const version of [marker, '1.0.0-beta.12\n' + marker, '1.2.3-' + 'x'.repeat(65), null]) {
+				lines.length = 0; notifications.length = 0;
+				UnityCliAdapter.prototype.probe = async () => ({ ...privateFailure('version_mismatch'), error: { ...privateFailure('version_mismatch').error, foundVersion: version } });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				assert.ok(items.at(-1).text.includes('unverified version'));
+				assert.strictEqual(items.at(-1).tooltip, 'version_mismatch: Run Unity CLI Doctor to check the installation.\nBinary: ' + process.execPath + '\nClick to run Unity CLI Doctor.');
+				UnityCliAdapter.prototype.probe = async () => ({ ...goodProbe(), data: { version, expectedVersion: marker } });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				assert.ok(lines.includes('Unity CLI: unverified version (expected ' + UNITY_CLI_EXPECTED_VERSION + ')'));
+			}
+			UnityCliAdapter.prototype.probe = async () => ({ ...privateFailure('version_mismatch'), error: { ...privateFailure('version_mismatch').error, foundVersion: '1.0.0-beta.11' } });
+			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: goodData() });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assert.ok(items.at(-1).text.includes('1.0.0-beta.11'));
+			assertPrivateAbsent();
+			UnityCliAdapter.prototype.probe = async () => goodProbe();
+			for (const data of [null, { platform: 'fixture', arch: 'x64', checks: [] }, { platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime' }] }]) {
+				lines.length = 0;
+				UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assert.ok(lines.some(line => line.includes('invalid_output')));
+				assert.ok(!lines.some(line => line.includes('Doctor checks')));
+			}
+			await module.deactivate(); assert.ok(disposed);
+			const logged = [], originalConsoleError = console.error;
+			console.error = message => logged.push(message);
+			const failingModule = new UnityCliModule(() => { throw new Error(marker); });
+			try {
+				await failingModule.activate({ registerCommand() {}, registerStatusBarContributor() {} });
+				await new Promise(done => setImmediate(done));
+				await failingModule.deactivate();
+				assert.ok(logged.includes('[UnityCliModule] Diagnostic activation failed.'));
+				assert.ok(!logged.join('\n').includes(marker), 'Activation logging exposed private exception data');
+			} finally { console.error = originalConsoleError; }
+		} finally {
+			await module.deactivate(); statusBar.dispose();
+			UnityCliAdapter.prototype.probe = originalProbe; UnityCliAdapter.prototype.invoke = originalInvoke;
+			vscode.window.createOutputChannel = originalOutput; vscode.window.createStatusBarItem = originalStatusBar;
+			vscode.window.showWarningMessage = originalWarning; vscode.window.showErrorMessage = originalError;
+		}
+	});
+}
+
 function testCliEvidencePrivacy() {
 	test('CLI captures redact identities and keep the binary checksum', () => {
 		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
@@ -4832,6 +5138,7 @@ async function main() {
 	testTypes();
 	testRuntimeCapabilities();
 	await testRuntimeConsumers();
+	await testUnityCliAdapter();
 	testCapabilityMatrix();
 	testConnectionUnit();
 	await testUnityEditorLauncher();
