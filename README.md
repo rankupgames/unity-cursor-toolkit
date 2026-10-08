@@ -91,6 +91,8 @@ See the [documentation index](docs/README.md), [AI Agent Guide](docs/AI_AGENTS.m
 
 ## Unity Version Support and Unity 7 Readiness
 
+See the generated [runtime capability matrix](docs/CAPABILITY_MATRIX.md) for capability evidence and configured CI versions. Untested cells are not support claims.
+
 | Editor family | Current position |
 | --- | --- |
 | Unity 2019.4 through 2022 LTS | Declared core package range; preserve the Mono debugger and legacy hot-reload path and add exact-version evidence |

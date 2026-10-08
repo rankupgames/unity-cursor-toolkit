@@ -375,6 +375,8 @@ async function connectToLinkedUnityProjectOnce(projectPath: string, generation: 
 			return null;
 		}
 		if (matchesUnityProjectInfo(projectPath, expectedVersion, response)) {
+			const projectInfo = typeof response?.result === 'string' ? JSON.parse(response.result) : response?.result;
+			connection.acceptProjectInfo(projectInfo);
 			return port;
 		}
 

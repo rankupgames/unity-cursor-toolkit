@@ -14,6 +14,22 @@ Never silently switch to another Editor version or backend. Report the selected
 Editor, backend, and capability set in plans and results. See
 `docs/ROADMAP.md`.
 
+## Runtime Capability Handshake
+
+`project_info` adds `runtime: { isCoreCLR: boolean, hasDomainReload: boolean }`.
+The fields describe the running Editor, not its Player scripting backend.
+`hasDomainReload` reports runtime support, not the Enter Play Mode option.
+
+The extension reads these fields through `connectionManager.getRuntimeCapabilities()`.
+Mono with domain reload support enables the existing IL refresh and Mono debug paths.
+CoreCLR leaves script compilation and code reload to Unity and blocks the Mono debug adapter.
+This does not enable instant hot reload or add a CoreCLR debugger.
+
+A missing entire runtime block preserves shipped legacy Mono behavior.
+A present invalid block or unknown runtime returns `capability_unavailable` and disables runtime features.
+Capability refusals never trigger a full-refresh fallback.
+See the generated [capability matrix](CAPABILITY_MATRIX.md) for recorded version evidence.
+
 ## What Agents Can Do
 
 - Read recent Unity console output with `read_console`.

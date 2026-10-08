@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "bands": [
+    "2019.4",
+    "2020-2022 LTS",
+    "6.0-6.5",
+    "6.6-6.7",
+    "6.8+",
+    "Unity 7"
+  ],
+  "rows": [
+    {
+      "capability": "hasDomainReload",
+      "cells": {
+        "2019.4": {
+          "state": "untested"
+        },
+        "2020-2022 LTS": {
+          "state": "untested"
+        },
+        "6.0-6.5": {
+          "state": "verified",
+          "evidence": "2026-10-08: Unity 6000.3.9f1 (7a9955a4f2fa), Windows x86_64. Internal Unity smoke confirmed hasDomainReload=true against the loaded Mono runtime; other versions and platforms remain untested."
+        },
+        "6.6-6.7": {
+          "state": "untested"
+        },
+        "6.8+": {
+          "state": "untested"
+        },
+        "Unity 7": {
+          "state": "untested"
+        }
+      }
+    },
+    {
+      "capability": "isCoreCLR",
+      "cells": {
+        "2019.4": {
+          "state": "untested"
+        },
+        "2020-2022 LTS": {
+          "state": "untested"
+        },
+        "6.0-6.5": {
+          "state": "verified",
+          "evidence": "2026-10-08: Unity 6000.3.9f1 (7a9955a4f2fa), Windows x86_64. Internal Unity smoke confirmed isCoreCLR=false against the loaded Mono runtime."
+        },
+        "6.6-6.7": {
+          "state": "untested"
+        },
+        "6.8+": {
+          "state": "untested"
+        },
+        "Unity 7": {
+          "state": "untested"
+        }
+      }
+    }
+  ],
+  "ci": {
+    "include": [
+      {
+        "id": "unity-2019-windows-exclusion",
+        "band": "2019.4",
+        "editorVersion": "2019.4.40f1",
+        "platform": "Windows"
+      },
+      {
+        "id": "unity-6000-macos-smoke",
+        "band": "6.0-6.5",
+        "editorVersion": "6000.3.9f1",
+        "platform": "macOS"
+      },
+      {
+        "id": "unity-6000-windows-smoke",
+        "band": "6.0-6.5",
+        "editorVersion": "6000.3.9f1",
+        "platform": "Windows"
+      }
+    ]
+  }
+}

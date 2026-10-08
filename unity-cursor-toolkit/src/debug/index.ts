@@ -10,6 +10,7 @@ import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction }
 import { UnityDebugAdapterDescriptorFactory } from './debugAdapter';
 import { generateLaunchJson } from './launchJsonGenerator';
 import { getLinkedProjectPath } from '../project/index';
+import { getDebuggerType } from '../core/runtimeCapabilities';
 
 const DEBUG_TYPE = 'unityCursorToolkit.debug';
 
@@ -20,7 +21,7 @@ export class DebugModule implements IModule {
 	private disposables: vscode.Disposable[] = [];
 
 	public async activate(ctx: ModuleContext): Promise<void> {
-		const factory = new UnityDebugAdapterDescriptorFactory();
+		const factory = new UnityDebugAdapterDescriptorFactory(() => ctx.connectionManager.getRuntimeCapabilities());
 		this.disposables.push(
 			vscode.debug.registerDebugAdapterDescriptorFactory(DEBUG_TYPE, factory)
 		);
@@ -32,6 +33,12 @@ export class DebugModule implements IModule {
 				_token?: vscode.CancellationToken
 			): vscode.ProviderResult<vscode.DebugConfiguration> {
 				if (config.type === DEBUG_TYPE && config.request === 'attach') {
+					try {
+						getDebuggerType(ctx.connectionManager.getRuntimeCapabilities());
+					} catch (error) {
+						vscode.window.showErrorMessage(String(error));
+						return undefined;
+					}
 					config.debugPort = config.debugPort ?? 56000;
 				}
 				return config;
@@ -42,6 +49,12 @@ export class DebugModule implements IModule {
 		);
 
 		ctx.registerCommand('unity-cursor-toolkit.debug.attach', async () => {
+			try {
+				getDebuggerType(ctx.connectionManager.getRuntimeCapabilities());
+			} catch (error) {
+				vscode.window.showErrorMessage(String(error));
+				return;
+			}
 			const projectPath = getLinkedProjectPath();
 			if (projectPath == null) {
 				vscode.window.showWarningMessage('No Unity project attached. Use "Start/Attach" first.');
@@ -56,10 +69,17 @@ export class DebugModule implements IModule {
 
 		ctx.registerStatusBarContributor(new DebugStatusContributor());
 
-		const projectPath = getLinkedProjectPath();
-		if (projectPath != null) {
-			await generateLaunchJson(projectPath);
-		}
+		this.disposables.push(ctx.connectionManager.onRuntimeCapabilitiesChanged(() => {
+			try {
+				getDebuggerType(ctx.connectionManager.getRuntimeCapabilities());
+			} catch { return; }
+			const projectPath = getLinkedProjectPath();
+			if (projectPath != null) {
+				void generateLaunchJson(projectPath).catch((error: unknown) => {
+					vscode.window.showErrorMessage(`Unity debug configuration failed for ${projectPath}: ${error instanceof Error ? error.message : String(error)}. Check .vscode/launch.json permissions and reconnect.`);
+				});
+			}
+		}));
 	}
 
 	public async deactivate(): Promise<void> {

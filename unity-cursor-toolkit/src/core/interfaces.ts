@@ -8,6 +8,7 @@
 
 import * as vscode from 'vscode';
 import type { ConnectionInfo, IncomingMessage } from './types';
+import type { RuntimeCapabilities } from './runtimeCapabilities';
 
 export interface IModule {
 	readonly id: string;
@@ -29,6 +30,8 @@ export interface IConnectionManager {
 	readonly onStateChanged: vscode.Event<ConnectionInfo>;
 	readonly onMessage: vscode.Event<IncomingMessage>;
 	readonly info: ConnectionInfo;
+	readonly onRuntimeCapabilitiesChanged: vscode.Event<void>;
+	getRuntimeCapabilities(): RuntimeCapabilities;
 	connect(): Promise<number | null>;
 	disconnect(): void;
 	send(command: string, payload?: Record<string, unknown>): void;

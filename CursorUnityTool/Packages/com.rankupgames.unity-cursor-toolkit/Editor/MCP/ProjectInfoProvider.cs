@@ -27,6 +27,9 @@ namespace UnityCursorToolkit.MCP
 			var sb = new StringBuilder();
 			sb.Append("{");
 			sb.Append("\"unityVersion\":\"").Append(Escape(Application.unityVersion)).Append("\",");
+			sb.Append("\"runtime\":{");
+			sb.Append("\"isCoreCLR\":").Append(RuntimeCapabilities.IsCoreCLR ? "true" : "false").Append(",");
+			sb.Append("\"hasDomainReload\":").Append(RuntimeCapabilities.HasDomainReload ? "true" : "false").Append("},");
 			sb.Append("\"activeScene\":\"").Append(Escape(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path)).Append("\",");
 			sb.Append("\"buildTarget\":\"").Append(Escape(EditorUserBuildSettings.activeBuildTarget.ToString())).Append("\",");
 			sb.Append("\"platform\":\"").Append(Escape(Application.platform.ToString())).Append("\",");

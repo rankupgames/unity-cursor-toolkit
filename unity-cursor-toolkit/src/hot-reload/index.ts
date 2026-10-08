@@ -9,6 +9,7 @@ import * as vscode from 'vscode';
 import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { ConnectionState } from '../core/types';
 import { FileWatcher } from './fileWatcher';
+import { getHotReloadMode } from '../core/runtimeCapabilities';
 
 export class HotReloadModule implements IModule {
 
@@ -22,13 +23,26 @@ export class HotReloadModule implements IModule {
 
 		this.disposables.push(this.fileWatcher);
 
-		ctx.connectionManager.onStateChanged((info) => {
-			if (info.state === ConnectionState.Connected) {
-				this.fileWatcher?.enable();
-			} else if (info.state === ConnectionState.Disconnected) {
-				this.fileWatcher?.disable();
-			}
-		});
+		const updateWatcher = () => {
+			this.fileWatcher?.disable();
+			if (ctx.connectionManager.info.state !== ConnectionState.Connected) return;
+			try {
+				// CoreCLR leaves code reload to Unity's compilation workflow. Do not send IL refresh requests.
+				if (getHotReloadMode(ctx.connectionManager.getRuntimeCapabilities()) === 'il-patch') {
+					this.fileWatcher?.enable();
+				}
+			} catch { /* Pending or invalid handshake keeps runtime features disabled. */ }
+		};
+		this.disposables.push(
+			ctx.connectionManager.onStateChanged(updateWatcher),
+			ctx.connectionManager.onRuntimeCapabilitiesChanged(updateWatcher),
+			ctx.connectionManager.onMessage(msg => {
+				if (msg.command === 'compilationResult' && msg.payload.errorCode === 'capability_unavailable') {
+					vscode.window.showWarningMessage(`capability_unavailable: ${String(msg.payload.error ?? 'IL patching is unavailable.')}`);
+				}
+			})
+		);
+		updateWatcher();
 
 		ctx.registerStatusBarContributor(new HotReloadStatusContributor());
 	}
