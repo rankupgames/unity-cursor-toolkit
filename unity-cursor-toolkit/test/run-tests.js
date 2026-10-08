@@ -3867,7 +3867,7 @@ function testStatusBarController() {
 	for (const [name, result, text] of [
 		['found', { ok: true, data: { version: '1.0.0-beta.12', expectedVersion: '1.0.0-beta.12' }, binaryPath: '/fixture/unity' }, 'CLI 1.0.0-beta.12'],
 		['missing', { ok: false, error: { code: 'cli_not_found', message: 'Not found', recovery: 'Set path' } }, 'CLI not found'],
-		['mismatch', { ok: false, binaryPath: '/fixture/unity', error: { code: 'version_mismatch', foundVersion: 'fixture-version', message: 'Expected pinned version', recovery: 'Select pinned binary' } }, 'CLI fixture-version']
+		['mismatch', { ok: false, binaryPath: '/fixture/unity', error: { code: 'version_mismatch', foundVersion: '1.0.0-beta.11', message: 'Expected pinned version', recovery: 'Select pinned binary' } }, 'CLI 1.0.0-beta.11']
 	]) {
 		test('CLI status ' + name + ' remains distinct from bridge and compilation state', () => {
 			const { ctrl, cliItem, connectItem } = makeController();
@@ -5096,49 +5096,314 @@ async function testUnityCliAdapter() {
 	});
 	await testAsync('CLI module registers doctor and exposes only selected diagnostics', async () => {
 		const { UnityCliModule } = require(path.join(outDir, 'unity-cli', 'index'));
+		const { StatusBarController } = require(path.join(outDir, 'core', 'statusBarController'));
 		const originalProbe = UnityCliAdapter.prototype.probe, originalInvoke = UnityCliAdapter.prototype.invoke;
-		const originalOutput = vscode.window.createOutputChannel;
-		const commands = new Map(), statuses = [], actions = [], lines = [];
+		const originalOutput = vscode.window.createOutputChannel, originalStatusBar = vscode.window.createStatusBarItem;
+		const originalWarning = vscode.window.showWarningMessage, originalError = vscode.window.showErrorMessage;
+		const commands = new Map(), statuses = [], actions = [], lines = [], notifications = [], items = [];
+		const marker = 'synthetic-private-marker';
+		const goodProbe = () => ({ ok: true, binaryPath: process.execPath, exitCode: 0, signal: null, stdout: '', stderr: '', warnings: [], data: { version: UNITY_CLI_EXPECTED_VERSION, expectedVersion: UNITY_CLI_EXPECTED_VERSION } });
+		const goodData = () => ({ platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime', status: 'ok', messageKey: marker }], auth: { email: marker }, recentLog: [marker] });
+		const privateFailure = code => ({ ok: false, binaryPath: process.execPath, exitCode: 6, signal: null, stdout: marker, stderr: marker, error: { code, nativeCode: marker, message: marker, recovery: marker, expectedVersion: marker, foundVersion: marker } });
+		const assertPrivateAbsent = () => assert.ok(![...lines, ...notifications.map(item => item.message), ...items.flatMap(item => [String(item.text), String(item.tooltip)])].join('\n').includes(marker), 'CLI UI exposed private native diagnostic data');
 		let disposed = false;
-		UnityCliAdapter.prototype.probe = async () => ({ ok: true, binaryPath: process.execPath, exitCode: 0, signal: null, stdout: '', stderr: '', warnings: [], data: { version: UNITY_CLI_EXPECTED_VERSION, expectedVersion: UNITY_CLI_EXPECTED_VERSION } });
+		UnityCliAdapter.prototype.probe = async () => goodProbe();
 		UnityCliAdapter.prototype.invoke = async command => {
 			assert.strictEqual(command, 'doctor');
-			return { ok: true, warnings: [], data: { platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime', status: 'ok', messageKey: 'private-detail' }], auth: { email: 'private@example.invalid' }, recentLog: ['private-log'] } };
+			return { ok: true, warnings: [], data: goodData() };
 		};
 		vscode.window.createOutputChannel = () => ({ clear() {}, show() {}, appendLine: line => lines.push(line), dispose() { disposed = true; } });
-		const module = new UnityCliModule(result => statuses.push(result));
+		vscode.window.createStatusBarItem = () => {
+			const item = { show() {}, hide() {}, dispose() {} }; items.push(item); return item;
+		};
+		vscode.window.showWarningMessage = async message => { notifications.push({ severity: 'warning', message }); };
+		vscode.window.showErrorMessage = async message => { notifications.push({ severity: 'error', message }); };
+		const statusBar = new StatusBarController({ subscriptions: [] });
+		const module = new UnityCliModule(result => { statuses.push(result); statusBar.setUnityCliStatus(result); });
 		try {
 			await module.activate({ registerCommand: (id, run) => commands.set(id, run), registerStatusBarContributor: contributor => actions.push(...contributor.getActions()) });
 			await commands.get('unity-cursor-toolkit.doctor')();
 			assert.strictEqual(actions[0].command, 'unity-cursor-toolkit.doctor');
 			assert.strictEqual(statuses.at(-1).data.version, UNITY_CLI_EXPECTED_VERSION);
-			assert.ok(lines.includes('runtime: ok'));
-			assert.ok(!lines.join('\n').includes('private'));
+			assert.ok(lines.some(line => line.includes(UNITY_CLI_EXPECTED_VERSION)));
+			assert.ok(lines.includes('Binary: ' + process.execPath));
+			assert.ok(items.at(-1).text.includes(UNITY_CLI_EXPECTED_VERSION));
+			assert.ok(items.at(-1).tooltip.includes('Binary: ' + process.execPath));
+			assertPrivateAbsent();
+
+			lines.length = 0;
+			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: { platform: marker, arch: marker, checks: [{ id: marker, status: marker }, { id: marker, status: 'ok' }] } });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assertPrivateAbsent();
+			assert.ok(lines.includes('Doctor checks: 2; ok: 1; other: 1.'));
+
+			for (const stage of ['probe', 'doctor']) for (const code of ['operation_failed', 'version_mismatch']) {
+				lines.length = 0; notifications.length = 0;
+				UnityCliAdapter.prototype.probe = async () => stage === 'probe' ? privateFailure(code) : goodProbe();
+				UnityCliAdapter.prototype.invoke = async () => privateFailure(code);
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				const expected = code === 'version_mismatch' ? 'version_mismatch: Unity CLI version does not match the pinned version.' : code + ': Unity CLI diagnostics failed. Check the pinned CLI installation and configuration.';
+				assert.ok(lines.includes(expected));
+				assert.ok(notifications.some(item => item.severity === (code === 'version_mismatch' ? 'warning' : 'error') && item.message === expected));
+				assert.ok(lines.includes('Binary: ' + process.execPath));
+			}
+			for (const version of [marker, '1.0.0-beta.12\n' + marker, '1.2.3-' + 'x'.repeat(65), null]) {
+				lines.length = 0; notifications.length = 0;
+				UnityCliAdapter.prototype.probe = async () => ({ ...privateFailure('version_mismatch'), error: { ...privateFailure('version_mismatch').error, foundVersion: version } });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				assert.ok(items.at(-1).text.includes('unverified version'));
+				assert.strictEqual(items.at(-1).tooltip, 'version_mismatch: Run Unity CLI Doctor to check the installation.\nBinary: ' + process.execPath + '\nClick to run Unity CLI Doctor.');
+				UnityCliAdapter.prototype.probe = async () => ({ ...goodProbe(), data: { version, expectedVersion: marker } });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				assert.ok(lines.includes('Unity CLI: unverified version (expected ' + UNITY_CLI_EXPECTED_VERSION + ')'));
+			}
+			UnityCliAdapter.prototype.probe = async () => ({ ...privateFailure('version_mismatch'), error: { ...privateFailure('version_mismatch').error, foundVersion: '1.0.0-beta.11' } });
+			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: goodData() });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assert.ok(items.at(-1).text.includes('1.0.0-beta.11'));
+			assertPrivateAbsent();
+			UnityCliAdapter.prototype.probe = async () => goodProbe();
 			for (const data of [null, { platform: 'fixture', arch: 'x64', checks: [] }, { platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime' }] }]) {
 				lines.length = 0;
 				UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data });
 				await commands.get('unity-cursor-toolkit.doctor')();
 				assert.ok(lines.some(line => line.includes('invalid_output')));
-				assert.ok(!lines.some(line => line.includes('Doctor completed')));
+				assert.ok(!lines.some(line => line.includes('Doctor checks')));
 			}
 			await module.deactivate(); assert.ok(disposed);
 			const logged = [], originalConsoleError = console.error;
 			console.error = message => logged.push(message);
-			const failingModule = new UnityCliModule(() => { throw new Error('fixture callback failure'); });
+			const failingModule = new UnityCliModule(() => { throw new Error(marker); });
 			try {
 				await failingModule.activate({ registerCommand() {}, registerStatusBarContributor() {} });
 				await new Promise(done => setImmediate(done));
 				await failingModule.deactivate();
-				assert.ok(logged.some(message => message.includes('fixture callback failure')));
+				assert.ok(logged.includes('[UnityCliModule] Diagnostic activation failed.'));
+				assert.ok(!logged.join('\n').includes(marker), 'Activation logging exposed private exception data');
 			} finally { console.error = originalConsoleError; }
-
 		} finally {
+			await module.deactivate(); statusBar.dispose();
 			UnityCliAdapter.prototype.probe = originalProbe; UnityCliAdapter.prototype.invoke = originalInvoke;
-			vscode.window.createOutputChannel = originalOutput;
+			vscode.window.createOutputChannel = originalOutput; vscode.window.createStatusBarItem = originalStatusBar;
+			vscode.window.showWarningMessage = originalWarning; vscode.window.showErrorMessage = originalError;
 		}
 	});
 }
 
+function testCliEvidencePrivacy() {
+	test('CLI and Pipeline captures redact identities and keep public evidence', () => {
+		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
+		const read = file => {
+			try { return JSON.parse(fs.readFileSync(path.join(root, file), 'utf8')); }
+			catch { throw new Error(file + ': invalid capture JSON'); }
+		};
+		const baseline = read('2026-10-08-cli-1.0.0-beta.12-windows-x64.json');
+		assert.ok(/^[a-f0-9]{64}$/.test(baseline.binarySha256), 'CLI checksum must remain a SHA-256 digest');
+		const sensitive = /licensing|Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|access[ -]?token|bearer|license[ -]?(?:serial|key|id)|hardware[ -]?id|user[ -]?id|account[ -]?id|^\s*(?:Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im;
+		const inspect = (value, file) => {
+			if (!value || typeof value !== 'object') return;
+			for (const [key, item] of Object.entries(value)) {
+				if (['stdout', 'stderr', 'editorLog'].includes(key) && typeof item === 'string') {
+					const log = item.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)).join('\n');
+					assert.ok(!sensitive.test(log), file + ': unredacted identity or licensing log field');
+				} else inspect(item, file);
+			}
+		};
+
+		const marker = 'fixtureSensitive';
+		const rawLog = '-hubSessionId\n' + marker + '\nSession Id: ' + marker + '\nId: ' + marker + '\nProduct: ' + marker + '\nType: ' + marker + '\nExpiration: ' + marker + '\npublic diagnostic\n';
+		const sourceRoot = path.resolve(root, '..');
+		for (const file of ['capture-baseline.js', 'capture-proof.js']) {
+			const source = fs.readFileSync(path.join(sourceRoot, file), 'utf8');
+			const baselineScript = file === 'capture-baseline.js';
+			const start = source.indexOf(baselineScript ? 'function scrubRoots(' : 'function scrub(');
+			const end = source.indexOf(baselineScript ? 'const commands =' : "if (name === 'build-dirty-versioned'", start);
+			assert.ok(start >= 0 && end > start, file + ': scrubber boundary missing');
+			const context = { root: '/fixture', repo: '/fixture', editorRoots: [], process: { env: {} } };
+			require('vm').createContext(context);
+			require('vm').runInContext(source.slice(start, end), context);
+			for (const text of [context.scrub(rawLog), ...(baselineScript ? [JSON.parse(context.output(JSON.stringify({ success: true, data: { log: rawLog } }))).data.log] : [])]) {
+				assert.ok(!text.includes(marker), file + ': credential continuation leaked');
+				assert.ok(text.includes('public diagnostic'), file + ': public diagnostic removed');
+			}
+		}
+
+		const pipelineRoot = path.resolve(root, '../../pipeline-install-proof');
+		const pipelineSource = fs.readFileSync(path.join(pipelineRoot, 'capture-proof.js'), 'utf8');
+		const pipelineStart = pipelineSource.indexOf('function withoutSecrets(');
+		const pipelineEnd = pipelineSource.indexOf('function record(', pipelineStart);
+		const logExpression = pipelineSource.match(/evidence\.editorLog = ([^\n]+);/);
+		assert.ok(pipelineStart >= 0 && pipelineEnd > pipelineStart && logExpression, 'Pipeline log sanitizer boundary missing');
+		const pipelineContext = {
+			fixture: undefined, editorRoot: undefined, binaryPath: undefined, log: rawLog,
+			os: { tmpdir: () => '', homedir: () => '', hostname: () => '' }, process: { env: {} }
+		};
+		require('vm').createContext(pipelineContext);
+		require('vm').runInContext(pipelineSource.slice(pipelineStart, pipelineEnd), pipelineContext);
+		const pipelineLog = require('vm').runInContext(logExpression[1], pipelineContext);
+		assert.ok(!pipelineLog.includes(marker), 'Pipeline capture leaked an identity or licensing continuation');
+		assert.ok(pipelineLog.includes('public diagnostic'), 'Pipeline capture removed public diagnostics');
+		const publicData = { Id: 'public-id', Product: 'public-product', Type: 'public-type', binarySha256: baseline.binarySha256 };
+		assert.strictEqual(JSON.stringify(pipelineContext.scrub(publicData)), JSON.stringify(publicData), 'Pipeline scrubber changed public metadata');
+		for (const file of fs.readdirSync(path.join(pipelineRoot, 'results')).filter(file => file.endsWith('.json'))) {
+			let capture;
+			try { capture = JSON.parse(fs.readFileSync(path.join(pipelineRoot, 'results', file), 'utf8')); }
+			catch { throw new Error(file + ': invalid Pipeline capture JSON'); }
+			inspect(capture, file);
+		}
+		for (const file of fs.readdirSync(root).filter(file => file.endsWith('.json'))) inspect(read(file), file);
+	});
+}
+
+function testCoreClrEvidencePrivacy() {
+	test('Unity proof captures remove identity and licensing continuations', () => {
+		const root = path.resolve(__dirname, '../../experiments/coreclr-package-audit');
+		const input = '-hubSessionId\nfixtureSensitive\nSession Id: fixtureSensitive\nCorrelation-Id: fixtureSensitive\nMachine Id: fixtureSensitive\nId: fixtureSensitive\nProduct: fixtureSensitive\nType: fixtureSensitive\nExpiration: fixtureSensitive\npublic diagnostic\n';
+		for (const [file, symbol, endMarker, startMarker] of [
+			['run-lifecycle-probe.js', 'sanitize', '\n\t\t};'],
+			['run-render-smoke.js', 'clean', '\n\t};'],
+			['../coreclr-debug-probe/run-debug-probe.js', 'sanitize', '\n\t\t};'],
+			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', ' };'],
+			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', '\n\t}', 'function sanitize(text) {'],
+			['../test-runner-bridge/run-bridge-proof.js', 'sanitize', '\n\t}', 'function sanitize(text, raw = false) {'],
+			['../test-runner-bridge/run-optional-compile-proof.js', 'sanitize', '\n\t}', 'function sanitize(text, rawLog = false) {'],
+			['../../unity-cursor-toolkit/scripts/run-editor-window-capture-spike.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function cleanString(value) {'],
+			['../../unity-cursor-toolkit/scripts/build-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
+			['../../unity-cursor-toolkit/scripts/run-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
+			['../../unity-cursor-toolkit/scripts/measure-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {']
+		]) {
+			const source = fs.readFileSync(path.join(root, file), 'utf8');
+			const start = source.indexOf(startMarker || 'const ' + symbol + ' = value => {');
+			const end = source.indexOf(endMarker, start) + endMarker.length;
+			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');
+			const sanitize = require('vm').runInNewContext(source.slice(start, end) + '\n' + symbol, {
+				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', debugRoot: '/debugger', sanitizers: [], replacements: [], path,
+				project: '/fixture', projectRoot: '/fixture', proofRoot: '/proof', ownedRoot: '/output', repo: '/repo', repoRoot: '/repo', options: { unity: '/editor/Unity', proofRoot: '/proof' },
+				os: { homedir: () => '/home/fixture', hostname: () => 'fixtureHost', networkInterfaces: () => ({}) }
+			});
+			const output = sanitize(input);
+			assert.ok(!output.includes('fixtureSensitive'), file + ': sanitizer leaked an identity or licensing value');
+			assert.ok(output.includes('public diagnostic'), file + ': sanitizer removed public diagnostics');
+			if (symbol === 'sanitizeLog') {
+				const label = 'DOTNET_SYSTEM_GLOBALIZATION_USENLS', secret = 'private'.repeat(6);
+				assert.strictEqual(sanitize(label + '=1'), label + '=1');
+				if (file.endsWith('-viewport-service.js')) assert.ok(!sanitize('ContinuationId: fixtureSensitive').includes('fixtureSensitive'));
+				assert.ok(sanitize(label + '=' + secret).startsWith(label + '='));
+				for (const value of [label + '=' + secret, 'inline ' + secret + ' end', 'inline ' + secret + '== end', secret + '+/=']) {
+					assert.ok(!sanitize(value).includes(secret), 'viewport capture retained an opaque value');
+				}
+			}
+			if (file.includes('/test-runner-bridge/')) {
+				const opaque = 'fixture'.repeat(6) + '+/=';
+				assert.ok(!sanitize(opaque, true).includes(opaque), file + ': raw log retained an opaque credential');
+				assert.strictEqual(sanitize(opaque, false), opaque, file + ': structured public values changed');
+				assert.strictEqual(sanitize('[Physics::Module] Id: 0x12345678', true), '[Physics::Module] Id: 0x12345678');
+				assert.strictEqual(sanitize('DOTNET_SYSTEM_GLOBALIZATION_USENLS=1', true), 'DOTNET_SYSTEM_GLOBALIZATION_USENLS=1');
+			}
+		}
+		for (const file of [
+			'results/unity7-lifecycle-2026-10-08T04-57-52-040Z/Editor.log',
+			'results/unity7-console-reset-baseline-2026-10-08T05-29-37-263Z/Editor.log',
+			'results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/Editor.log',
+			'results/unity7-urp-smoke-2026-10-08T05-58-37-071Z/Editor.log',
+			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/build.log',
+			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-22-05-773Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-25-10-927Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-36-43-227Z/editor.log',
+			'results/unity6-package-lifecycle-2026-10-08T06-48-05-022Z/Editor.log',
+			'results/unity6-package-lifecycle-2026-10-08T06-51-17-382Z/Editor.log',
+			'results/unity7-package-lifecycle-2026-10-08T06-53-39-341Z/Editor.log',
+			'../test-runner-bridge/results/absent-2026-10-08T06-55-44-135Z/editor.log',
+			'../test-runner-bridge/results/absent-2026-10-08T07-29-54-107Z/editor.log',
+			'../test-runner-bridge/results/bridge-absent-2026-10-08T07-38-39-672Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-38-57-653Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-44-20-292Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-53-48-415Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-58-15-643Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-59-23-494Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-09-27-212Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-15-52-148Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-19-44-038Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-27-02-241Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-31-11-797Z/editor.log',
+			'../test-runner-bridge/results/present-2026-10-08T06-55-58-646Z/editor.log',
+			'../test-runner-bridge/results/present-2026-10-08T07-30-11-939Z/editor.log'
+		]) {
+			const capture = fs.readFileSync(path.join(root, file), 'utf8');
+			const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)
+				&& !/^-+$/.test(line.trim()) && !/^__uct_lifecycle_current_[a-f0-9]{32}$/.test(line.trim())).join('\n');
+			assert.ok(!/^\s*(?:(?:Session|(?:External )?Correlation|Machine)[ -]?Id|Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/_-]{32,}={0,2}\s*$/im.test(log), file + ': Unity capture contains an identity or licensing value');
+		}
+	});
+}
+
+
+async function testAssistantRelayProof() {
+	const root = path.resolve(__dirname, '../../experiments/assistant-relay-probe');
+	const runner = fs.readFileSync(path.join(root, 'run-assistant-probe.js'), 'utf8');
+	const providerSource = fs.readFileSync(path.join(root, 'relay-provider.js'), 'utf8');
+	const localRequire = require('module').createRequire(path.join(root, 'run-assistant-probe.js'));
+	const providerHash = require('crypto').createHash('sha256').update(providerSource).digest('hex');
+	const valid = { passed: true, providerSha256: providerHash, allowed: { isError: false }, faults: [{}] };
+	await testAsync('Assistant proof refuses failed or unbound policy evidence before Editor work', async () => {
+		const evaluate = evidence => {
+			const context = { __dirname: root, process: { argv: ['node', 'probe', '--policy-evidence', 'policy-fixture'] },
+				require: name => name === 'fs' ? { ...fs, readFileSync: (file, ...args) => file === 'policy-fixture' ? JSON.stringify(evidence) : fs.readFileSync(file, ...args) } : localRequire(name) };
+			const end = runner.lastIndexOf('\nmain().catch(');
+			assert.ok(end > 0, 'Assistant runner entry boundary missing');
+			require('vm').runInNewContext(runner.slice(0, end), context);
+			return context.main();
+		};
+		for (const evidence of [
+			{ ...valid, passed: false }, { ...valid, providerSha256: undefined },
+			{ ...valid, providerSha256: '0'.repeat(64) }, { ...valid, allowed: { isError: true } },
+			{ ...valid, policyTests: { ...valid, passed: false } }
+		]) await assert.rejects(evaluate(evidence), /successful policy checks|current provider|does not match current provider/);
+		for (const evidence of [valid, { ...valid, policyTests: valid }])
+			await assert.rejects(evaluate(evidence), /--editor and --archive are required/);
+	});
+	test('Assistant proof requires normal relay exit before successful cleanup', () => {
+		const expression = runner.match(/record\.normalEditorExit = ([^\n]+);/);
+		assert.ok(expression, 'Assistant cleanup decision missing');
+		for (const [childExit, expected] of [
+			[{ exited: true, code: 0, signal: null }, true],
+			[{ exited: true, code: 9, signal: null }, false],
+			[{ exited: true, code: 0, signal: 'SIGTERM' }, false],
+			[{ exited: false, code: 0, signal: null }, false]
+		]) {
+			const result = require('vm').runInNewContext(expression[1], {
+				record: { editorExit: { code: 0 }, remainingOwnedProcesses: [], childExit }, relay: {},
+				fs: { existsSync: () => true }, path, proof: '/owned-proof'
+			});
+			assert.strictEqual(result, expected, 'Relay failure must block normal cleanup');
+		}
+	});
+	test('Assistant relay rejects malformed JSON-RPC without escaping pending-request cleanup', () => {
+		const relayModule = { exports: {} };
+		require('vm').runInNewContext(providerSource, { module: relayModule, require: localRequire, clearTimeout, setTimeout });
+		const { RelayClient } = relayModule.exports;
+		for (const value of [null, [], 'unexpected', 7]) {
+			let rejected;
+			const client = Object.assign(Object.create(RelayClient.prototype), {
+				buffer: '', messages: [], pending: new Map([[1, { reject: error => { rejected = error; } }]])
+			});
+			assert.doesNotThrow(() => client.receive(JSON.stringify(value) + '\n'));
+			assert.strictEqual(rejected?.code, 'relay_protocol_error');
+			assert.strictEqual(client.pending.size, 0);
+		}
+		let received;
+		const client = Object.assign(Object.create(RelayClient.prototype), {
+			buffer: '', messages: [], pending: new Map([[1, { resolve: value => { received = value; } }]])
+		});
+		client.receive(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { tools: [] } }) + '\n');
+		assert.strictEqual(JSON.stringify(received), '{"tools":[]}');
+		assert.strictEqual(client.failure, undefined);
+	});
+}
 
 async function testPipelineEligibility() {
 	const { checkPipelineEligibility, evaluatePipelineEligibility, PIPELINE_REGISTRY_URL } = require(path.join(outDir, 'core', 'pipelineEligibility'));
@@ -5157,6 +5422,9 @@ async function testPipelineEligibility() {
 			['6000.3.9f1', 'latest', {}, 'pipeline_pin_invalid'],
 			['6000.3.9f1', '^0.8.0-exp.1', {}, 'pipeline_pin_invalid'],
 			[null, '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9junk', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9f1 extra', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
 			['2019.4.40f1', '0.8.0-exp.1', {}, 'pipeline_editor_unsupported'],
 			['6000.3.9f1', '0.9.0-exp.1', {}, 'pipeline_version_unavailable'],
 			['6000.3.9f1', '0.8.0-exp.1', { httpDate: 'Sat, 26 Sep 2026 18:42:15 GMT' }, 'pipeline_version_too_recent'],
@@ -5231,6 +5499,9 @@ async function main() {
 		process.exit(1);
 	}
 
+	testCliEvidencePrivacy();
+	testCoreClrEvidencePrivacy();
+	await testAssistantRelayProof();
 	testTypes();
 	testRuntimeCapabilities();
 	await testRuntimeConsumers();

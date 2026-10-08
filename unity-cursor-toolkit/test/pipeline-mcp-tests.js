@@ -102,7 +102,7 @@ async function main() {
  }));
  await test('invalid arguments and absent audit configuration fail before backend traffic', async () => fixture(async f => {
   const invalid = [{ projectPath: 'relative' }, { editorPid: 0 }, { editorPid: '731' }, { timeoutMs: 0 }, { timeoutMs: 120001 },
-   { dryRun: 'true' }, { args: [] }, { trustProject: true }, { action: 'run' }, { command: 'read_text_file' }];
+   { action: ['list'] }, { action: ['run'] }, { dryRun: 'true' }, { args: [] }, { trustProject: true }, { action: 'run' }, { command: 'read_text_file' }];
   for (const change of invalid) assert.equal(payload(await f.provider.handleToolCall('commands', { ...f.request, ...change })).error.code, 'invalid_arguments');
   assert.equal(payload(await f.provider.handleToolCall('foreign.commands', f.request)).error.code, 'unknown_tool');
   const cyclic = {}; cyclic.self = cyclic;
@@ -192,11 +192,15 @@ async function main() {
  await test('abort and total deadline stop before every next diagnostic and before successful completion', async () => {
   for (const step of ['probe', 'status-before', 'list', 'status-after']) for (const stop of ['abort', 'deadline']) await fixture(async f => {
    const controller = new AbortController(), probe = f.adapter.probe, invoke = f.adapter.invoke;
+   const realNow = Date.now;
+   let now = realNow();
+   Date.now = () => now;
+   try {
    let statusCalls = 0;
    const interrupt = async current => {
     if (current !== step) return;
     if (stop === 'abort') controller.abort();
-    else await new Promise(resolve => setTimeout(resolve, 25));
+    else now += 25;
    };
    f.adapter.probe = async options => { const result = await probe(options); await interrupt('probe'); return result; };
    f.adapter.invoke = async (command, args, options) => {
@@ -209,6 +213,7 @@ async function main() {
    const count = ['probe', 'status-before', 'list', 'status-after'].indexOf(step) + 1;
    assert.deepStrictEqual(f.calls.map(call => call.command), ['probe', 'status', 'list', 'status'].slice(0, count));
    assert.equal(events(f.auditPath).at(-1).outcome, 'refused');
+   } finally { Date.now = realNow; }
   });
  });
  console.log('\n  ' + passed + ' passed, ' + failed + ' failed, ' + (passed + failed) + ' total');

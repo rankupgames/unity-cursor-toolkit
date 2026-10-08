@@ -6,7 +6,7 @@ let passed = 0, failed = 0;
 const projectPath = path.resolve(__dirname, '../..');
 const capabilities = { success: true, backend: 'bridge', available: true, projectPath, editorPid: 731, editorVersion: '6000.3.9f1', modes: ['EditMode', 'PlayMode'], supportsCancellation: true };
 const snapshot = (args, status = 'listed') => ({ success: !['cancelled', 'error'].includes(status), backend: 'bridge', editorVersion: capabilities.editorVersion, editorPid: 731, runId: args.runId, mode: args.mode, status,
- selection: [], tests: [], summary: { total: 0, passed: 0, failed: 0, skipped: 0, inconclusive: 0, notRun: 0, durationMs: 0 },
+ workStopped: ['listed', 'completed', 'failed', 'cancelled', 'timed_out', 'error'].includes(status), selection: [], tests: [], summary: { total: 0, passed: 0, failed: 0, skipped: 0, inconclusive: 0, notRun: 0, durationMs: 0 },
  ...(status === 'cancelled' ? { error: { code: 'cancelled', message: 'Cancelled', recovery: 'Inspect the run.' } } : {}) });
 async function test(name, run) { try { await run(); passed++; console.log('PASS ' + name); } catch (error) { failed++; console.error('FAIL ' + name + ': ' + error.message); } }
 async function main() {
