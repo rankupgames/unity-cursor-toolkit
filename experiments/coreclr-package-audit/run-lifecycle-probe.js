@@ -82,8 +82,10 @@ async function main() {
 				[path.dirname(unityPath), '<unity-install>'], [os.homedir(), '<user-home>']]) {
 				value = value.split(location).join(label).split(location.split(path.sep).join('/')).join(label);
 			}
-			return value.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.id/i.test(line)
-				? '<licensing or credential line omitted>' : line.trimEnd()).join('\n');
+			return value.replace(/^\s*-hubSessionId\r?\n[^\r\n]*/gmi, '<session argument omitted>')
+				.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.?id|session.?id|correlation.?id|bearer|hardware.?id|user.?id|account.?id/i.test(line)
+					|| /^\s*(?:Id|Product|Type|Expiration):/i.test(line) || /^[A-Za-z0-9+\/=_-]{32,}$/.test(line.trim())
+					? '<licensing or credential line omitted>' : line.trimEnd()).join('\n');
 		};
 		const cleanEvent = value => typeof value === 'string' ? sanitize(value) : Array.isArray(value)
 			? value.map(cleanEvent) : value && typeof value === 'object'

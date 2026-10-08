@@ -1337,13 +1337,13 @@
     },
     {
       "name": "search",
-      "risk": "read-only",
+      "risk": "policy-escape",
       "source": {
         "file": "Editor/Commands/Navigation/NavigationCommands.cs",
         "symbol": "Search",
         "line": 93
       },
-      "rationale": "Reads status, profiling counters, selection, or SearchService query results; diagnostic sampling excluded.",
+      "rationale": "SearchService.Request and SearchItem label, description and object conversion can invoke project-defined SearchProvider callbacks. Source-based conservative inference; no exploit executed.",
       "evidence": "installed-package-source"
     },
     {
