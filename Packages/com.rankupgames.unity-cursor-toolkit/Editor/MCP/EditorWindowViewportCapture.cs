@@ -28,6 +28,15 @@ namespace UnityCursorToolkit.MCP
 		{
 			AssemblyReloadEvents.beforeAssemblyReload += DisposeCachedResources;
 			EditorApplication.quitting += DisposeCachedResources;
+			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+		}
+
+		private static void OnPlayModeStateChanged(PlayModeStateChange state)
+		{
+			if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
+			{
+				DisposeCachedResources();
+			}
 		}
 
 		internal sealed class Frame
@@ -429,7 +438,7 @@ namespace UnityCursorToolkit.MCP
 			Type windowType = Type.GetType(typeName);
 			if (windowType == null)
 			{
-				foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+				foreach (Assembly assembly in UnityCursorToolkit.Core.AssemblyEnumerator.GetLoaded())
 				{
 					windowType = assembly.GetType(typeName);
 					if (windowType != null)

@@ -112,6 +112,7 @@ public class HotReloadHandler : EditorWindow
 
         // Register shutdown handler
         AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+        AssemblyReloadEvents.afterAssemblyReload += OnAfterAssemblyReload;
         EditorApplication.quitting += OnEditorQuitting;
 
         #if UNITY_2019_1_OR_NEWER
@@ -404,16 +405,26 @@ public class HotReloadHandler : EditorWindow
     {
         isServerRunning = false;
         shouldRequestRefresh = false;
+        isRefreshInProgress = false;
+        #if UNITY_2019_1_OR_NEWER
+        refreshCompilationPending = false;
+        refreshCompilationStarted = false;
+        refreshCompilationTimeoutAt = 0.0d;
+        #endif
 
         lock (messageQueue)
         {
             messageQueue.Clear();
             queuedMessageCharacters = 0;
+            messageQueueOverflowed = false;
+            messageQueueOverflowWarningLogged = false;
         }
 
         lock (mainThreadActionsLock)
         {
             mainThreadActions.Clear();
+            mainThreadActionsOverflowed = false;
+            mainThreadActionsOverflowWarningLogged = false;
         }
 
         // Disconnect all clients
@@ -489,8 +500,9 @@ public class HotReloadHandler : EditorWindow
     /// </summary>
     private static void OnBeforeAssemblyReload()
     {
-        // Mark that we were running before reload
-        if (isInitialized && isServerRunning)
+        // Remember active state when this assembly survives the reload.
+        wasRunningBeforeReload = isInitialized && isServerRunning;
+        if (wasRunningBeforeReload)
         {
             EditorPrefs.SetBool(wasRunningPrefKey, true);
         }
@@ -508,6 +520,16 @@ public class HotReloadHandler : EditorWindow
         }
 
         StopServer();
+        isInitialized = false;
+    }
+
+    private static void OnAfterAssemblyReload()
+    {
+        if (wasRunningBeforeReload)
+        {
+            wasRunningBeforeReload = false;
+            StartWithoutMutex();
+        }
     }
 
     /// <summary>
@@ -1071,6 +1093,14 @@ public class HotReloadHandler : EditorWindow
         if (EditorApplication.isPlaying && preferILPatch && changedFiles != null && changedFiles.Length > 0)
         {
             var result = UnityCursorToolkit.HotReload.ILPatcher.TryPatch(changedFiles);
+
+            if (result.ErrorCode == UnityCursorToolkit.HotReload.PatchErrorCode.CapabilityUnavailable)
+            {
+                string payload = "{\"command\":\"compilationResult\",\"success\":false,\"method\":\"ilPatch\",\"errorCode\":\"capability_unavailable\",\"capability\":\"ilPatching\",\"error\":\""
+                    + UnityCursorToolkit.AgentCommands.AgentCommandJson.Escape(result.FallbackReason) + "\"}";
+                BroadcastToClients(payload);
+                return;
+            }
 
             if (result.Success)
             {

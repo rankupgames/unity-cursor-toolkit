@@ -73,7 +73,40 @@ public static class ConsoleToCursor
 	static ConsoleToCursor()
 	{
 		ProfilerSessionRecorder.EnsureInitialized();
+		InitializeCapture();
+		AssemblyReloadEvents.beforeAssemblyReload += Shutdown;
+		AssemblyReloadEvents.afterAssemblyReload += InitializeCapture;
+		EditorApplication.quitting += Shutdown;
+		EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+	}
+
+	private static void InitializeCapture()
+	{
+		ResetBuffer();
+		Application.logMessageReceived -= OnLogReceived;
 		Application.logMessageReceived += OnLogReceived;
+	}
+
+	private static void Shutdown()
+	{
+		Application.logMessageReceived -= OnLogReceived;
+		ResetBuffer();
+	}
+
+	private static void OnPlayModeStateChanged(PlayModeStateChange state)
+	{
+		if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
+		{
+			ResetBuffer();
+		}
+	}
+
+	private static void ResetBuffer()
+	{
+		lock (bufferLock)
+		{
+			entryBuffer.Clear();
+		}
 	}
 
 	#endregion
@@ -182,10 +215,7 @@ public static class ConsoleToCursor
 	[MenuItem("Tools/Hot Reload/Clear Console Buffer")]
 	public static void ClearBuffer()
 	{
-		lock (bufferLock)
-		{
-			entryBuffer.Clear();
-		}
+		ResetBuffer();
 		Debug.Log("(ConsoleToCursor) Console buffer cleared.");
 	}
 
