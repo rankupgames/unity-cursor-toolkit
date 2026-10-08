@@ -32,6 +32,7 @@ import { DebugModule } from './debug/index';
 import { ProjectModule, hasLinkedUnityProject, getLinkedProjectPath, isScriptInstalledInLinkedProject, handleUnityProjectSetup } from './project/index';
 import { RemoteShellModule } from './remote-shell/index';
 import { ViewportPrototypeModule } from './viewport/index';
+import { UnityCliModule } from './unity-cli/index';
 
 let connection: ConnectionManager;
 let commandSender: CommandSender;
@@ -101,6 +102,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	moduleLoader.register(new DebugModule());
 	moduleLoader.register(new RemoteShellModule());
 	moduleLoader.register(new ViewportPrototypeModule());
+	moduleLoader.register(new UnityCliModule(result => statusBar.setUnityCliStatus(result)));
 
 	context.subscriptions.push(connection, moduleLoader);
 

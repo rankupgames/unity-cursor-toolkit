@@ -6,13 +6,45 @@ Unity Cursor Toolkit is designed to give agents direct Unity Editor context with
 
 The core package declares Unity 2019.4 or later. Current operations use the
 toolkit bridge or an explicitly requested batchmode Editor. Standalone Unity
-CLI, Pipeline, CoreCLR-specific behavior, and Unity 7 support are planned or
+CLI Editor operations, Pipeline, CoreCLR-specific behavior, and Unity 7 support are planned or
 evidence-gated backends; agents must not claim they are shipped until the
 capability response and recorded matrix prove them.
 
 Never silently switch to another Editor version or backend. Report the selected
 Editor, backend, and capability set in plans and results. See
 `docs/ROADMAP.md`.
+
+## Unity CLI Diagnostic Backend
+
+The extension composes the first-party standalone CLI through the pure Node
+`UnityCliAdapter`. **Unity Toolkit: Unity CLI Doctor** probes the configured,
+environment-selected, or PATH binary and compares its version with the recorded
+`1.0.0-beta.12` pin. The CLI status is independent of the toolkit bridge.
+A version mismatch is a warning with expected and found values; no install,
+upgrade, Editor substitution, or automatic backend fallback occurs.
+
+Production callers in this batch are version and doctor. The status bar shows CLI version availability.
+The local read-only guard permits version, doctor, and project-scoped status plans. Other invocations
+require an explicit mutating caller; the guard refuses before spawning. Existing
+MCP schemas, policy handling, and game_command batchmode execution are unchanged.
+
+Every call passes arguments directly with JSON and non-interactive flags, keeps
+stdout and stderr separate, and requires one complete result envelope. Mixed,
+truncated, contradictory, or oversized output returns `invalid_output`, with
+an excerpt limited to 500 characters. Do not recover a success object from the
+middle of logs. The captured build output does not satisfy this parser.
+
+Typed failures retain the native CLI code and exit value. In particular,
+`COMMAND_FAILED` is generic; it does not prove authentication, locking,
+compilation, or module failure. The exact captured missing-Editor message has a
+local `missing_editor` diagnosis without changing its native code. See the
+[failure matrix](UNITY_LANDSCAPE.md#adapter-failure-matrix) for pending cases.
+
+Caller timeout and cancellation have separate codes. Windows cleanup uses the
+spawned CLI PID and its child tree; POSIX cleanup uses its own process group.
+Failure to confirm cleanup returns `cleanup_failed` and a typed
+`terminationReason`. Never target a user Editor or process name. Interrupted
+operations can leave partial artifacts; inspect them before retrying.
 
 ## Runtime Capability Handshake
 

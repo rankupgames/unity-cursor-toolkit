@@ -41,7 +41,8 @@
     "onCommand:unity-cursor-toolkit.remoteShell.launch",
     "onCommand:unity-cursor-toolkit.remoteShell.stop",
     "onCommand:unity-cursor-toolkit.remoteShell.status",
-    "onCommand:unity-cursor-toolkit.migration.scan"
+    "onCommand:unity-cursor-toolkit.migration.scan",
+    "onCommand:unity-cursor-toolkit.doctor"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -84,6 +85,11 @@
             "default": true,
             "description": "Automatically launch the installed Unity Editor for the linked project when attaching or opening viewport panels."
           },
+          "unityCursorToolkit.unityCli.path": {
+            "type": "string",
+            "default": "",
+            "description": "Optional native Unity CLI executable path. Leave empty to resolve UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH or PATH. Expected version: 1.0.0-beta.12; no automatic install or upgrade."
+          },
           "unityCursorToolkit.unityEditorPath": {
             "type": "string",
             "default": "",
@@ -116,6 +122,10 @@
       }
     ],
     "commands": [
+      {
+        "command": "unity-cursor-toolkit.doctor",
+        "title": "Unity Toolkit: Unity CLI Doctor"
+      },
       {
         "command": "unity-cursor-toolkit.migration.scan",
         "title": "Unity Toolkit: CoreCLR Migration Scan"
