@@ -77,6 +77,12 @@ jobs:
         with:
           persist-credentials: false
 
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 26.4.0
+          cache: npm
+          cache-dependency-path: unity-cursor-toolkit/package-lock.json
+
       - name: Require activated Unity 6000.3.9f1 host
         run: |
           if [[ -z "$UNITY_CURSOR_TOOLKIT_UNITY_PATH" || ! -x "$UNITY_CURSOR_TOOLKIT_UNITY_PATH" ]]; then
@@ -84,9 +90,10 @@ jobs:
             exit 1
           fi
           unity_contents="$(dirname "$(dirname "$UNITY_CURSOR_TOOLKIT_UNITY_PATH")")"
+          required_version="$(node -p "require('./capability-matrix.json').ci.include.find(entry => entry.id === process.env.GITHUB_JOB).editorVersion")"
           version="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleVersion' "$unity_contents/Info.plist")"
-          if [[ "$version" != 6000.3.9f1 ]]; then
-            echo "::error::Unity Editor version is $version; 6000.3.9f1 is required."
+          if [[ "$version" != "$required_version" ]]; then
+            echo "::error::Unity Editor version is $version; $required_version is required."
             exit 1
           fi
           unity_process_status=0
@@ -95,12 +102,6 @@ jobs:
             echo "::error::An existing Unity Editor is running or its process status cannot be verified. Leave it open and run this check after normal save and quit."
             exit 1
           fi
-
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
-        with:
-          node-version: 26.4.0
-          cache: npm
-          cache-dependency-path: unity-cursor-toolkit/package-lock.json
 
       - name: Verify age-gated npm
         run: |
@@ -139,7 +140,9 @@ jobs:
         run: |
           if ([string]::IsNullOrWhiteSpace($env:UNITY_CURSOR_TOOLKIT_UNITY_PATH) -or -not (Test-Path -LiteralPath $env:UNITY_CURSOR_TOOLKIT_UNITY_PATH -PathType Leaf)) { throw 'UNITY_6000_3_9F1_WINDOWS_EDITOR_PATH must point to an installed, activated Unity Editor' }
           $version = (Get-Item -LiteralPath $env:UNITY_CURSOR_TOOLKIT_UNITY_PATH).VersionInfo.ProductVersion
-          if ($version -ne '6000.3.9f1_7a9955a4f2fa') { throw "Unity Editor version is $version; 6000.3.9f1_7a9955a4f2fa is required" }
+          $requiredVersion = ((Get-Content -Raw -LiteralPath './capability-matrix.json' | ConvertFrom-Json).ci.include | Where-Object { $_.id -eq $env:GITHUB_JOB }).editorVersion
+          if ([string]::IsNullOrWhiteSpace($requiredVersion)) { throw 'The configured CI Editor version is missing' }
+          if ($version -ne "${requiredVersion}_7a9955a4f2fa") { throw "Unity Editor version is $version; ${requiredVersion}_7a9955a4f2fa is required" }
           $unityProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'Unity.exe'")
           if ($unityProcesses | Where-Object { [string]::IsNullOrWhiteSpace($_.ExecutablePath) -or $_.ExecutablePath -match '[\\/]Editor[\\/]Unity\.exe$' }) { throw 'An existing Unity Editor is running or its path cannot be verified. Leave it open and run this check after normal save and quit' }
 
@@ -184,13 +187,18 @@ jobs:
         run: |
           if ([string]::IsNullOrWhiteSpace($env:UNITY_LEGACY_PATH) -or -not (Test-Path -LiteralPath $env:UNITY_LEGACY_PATH -PathType Leaf)) { throw 'UNITY_2019_4_40F1_WINDOWS_EDITOR_PATH must point to an installed, activated Unity Editor' }
           $version = (Get-Item -LiteralPath $env:UNITY_LEGACY_PATH).VersionInfo.ProductVersion
-          if ($version -ne '2019.4.40f1_ffc62b691db5') { throw "Unity Editor version is $version; 2019.4.40f1_ffc62b691db5 is required" }
+          $matrixPath = Join-Path $env:GITHUB_WORKSPACE 'unity-cursor-toolkit/capability-matrix.json'
+          $requiredVersion = ((Get-Content -Raw -LiteralPath $matrixPath | ConvertFrom-Json).ci.include | Where-Object { $_.id -eq $env:GITHUB_JOB }).editorVersion
+          if ([string]::IsNullOrWhiteSpace($requiredVersion)) { throw 'The configured CI Editor version is missing' }
+          if ($version -ne "${requiredVersion}_ffc62b691db5") { throw "Unity Editor version is $version; ${requiredVersion}_ffc62b691db5 is required" }
           $unityProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'Unity.exe'")
           if ($unityProcesses | Where-Object { [string]::IsNullOrWhiteSpace($_.ExecutablePath) -or $_.ExecutablePath -match '[\\/]Editor[\\/]Unity\.exe$' }) { throw 'An existing Unity Editor is running or its path cannot be verified. Leave it open and run this check after normal save and quit' }
 
       - name: Create Unity 2019 package compatibility project
         shell: pwsh
         run: |
+          $matrixPath = Join-Path $env:GITHUB_WORKSPACE 'unity-cursor-toolkit/capability-matrix.json'
+          $requiredVersion = ((Get-Content -Raw -LiteralPath $matrixPath | ConvertFrom-Json).ci.include | Where-Object { $_.id -eq $env:GITHUB_JOB }).editorVersion
           $projectPath = Join-Path $env:RUNNER_TEMP 'unity-2019-vendor-exclusion'
           $assetsPath = Join-Path $projectPath 'Assets\Editor'
           $packagesPath = Join-Path $projectPath 'Packages'
@@ -198,7 +206,7 @@ jobs:
           New-Item -ItemType Directory -Force $assetsPath, $embeddedPackagePath, (Join-Path $projectPath 'ProjectSettings') | Out-Null
           Copy-Item -Recurse -Force (Join-Path $env:GITHUB_WORKSPACE 'Packages\com.rankupgames.unity-cursor-toolkit\*') $embeddedPackagePath
           '{"dependencies":{"com.rankupgames.unity-cursor-toolkit":"file:com.rankupgames.unity-cursor-toolkit"}}' | Set-Content -Encoding utf8 (Join-Path $packagesPath 'manifest.json')
-          "m_EditorVersion: 2019.4.40f1`nm_EditorVersionWithRevision: 2019.4.40f1 (ffc62b691db5)" | Set-Content -Encoding utf8 (Join-Path $projectPath 'ProjectSettings\ProjectVersion.txt')
+          "m_EditorVersion: $requiredVersion`nm_EditorVersionWithRevision: $requiredVersion (ffc62b691db5)" | Set-Content -Encoding utf8 (Join-Path $projectPath 'ProjectSettings\ProjectVersion.txt')
           @'
           using System;
           using UnityEditor;

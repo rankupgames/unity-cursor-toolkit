@@ -368,6 +368,173 @@ const outDir = path.join(__dirname, '..', 'out');
 // core/types.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+function testRuntimeCapabilities() {
+	const { parseRuntimeCapabilities, getHotReloadMode, getDebuggerType, getReloadSemantics, RuntimeCapabilityError } = require(path.join(outDir, 'core/runtimeCapabilities'));
+	const fixtures = [
+		[{ unityVersion: '2019.4.40f1' }, 'legacy', 'il-patch', 'domain-reload', 'unityCursorToolkit.debug'],
+		[{ unityVersion: '7000.0.0a7', runtime: { isCoreCLR: false, hasDomainReload: true } }, 'handshake', 'il-patch', 'domain-reload', 'unityCursorToolkit.debug'],
+		[{ unityVersion: '6000.3.9f1', runtime: { isCoreCLR: true, hasDomainReload: false } }, 'handshake', 'unity-reload', 'explicit-cleanup', null]
+	];
+	test('runtime handshake selects reload and debug behavior independently of version strings', () => {
+		for (const [payload, source, reload, semantics, debuggerType] of fixtures) {
+			const runtime = parseRuntimeCapabilities(payload);
+			assert.strictEqual(runtime.source, source);
+			assert.strictEqual(getHotReloadMode(runtime), reload);
+			assert.strictEqual(getReloadSemantics(runtime), semantics);
+			if (debuggerType) assert.strictEqual(getDebuggerType(runtime), debuggerType);
+			else assert.throws(() => getDebuggerType(runtime), error => error instanceof RuntimeCapabilityError && error.capability === 'monoDebugger');
+		}
+		assert.deepStrictEqual(parseRuntimeCapabilities({}), { isCoreCLR: false, hasDomainReload: true, source: 'legacy' });
+	});
+	test('present invalid runtime capabilities and unknown runtimes cannot select legacy features', () => {
+		for (const runtime of [null, undefined, [], {}, { isCoreCLR: false }, { isCoreCLR: 'false', hasDomainReload: true }, { isCoreCLR: true, hasDomainReload: true }]) {
+			assert.throws(() => parseRuntimeCapabilities({ runtime }), error => error instanceof RuntimeCapabilityError && error.code === 'capability_unavailable');
+		}
+		const unknown = parseRuntimeCapabilities({ runtime: { isCoreCLR: false, hasDomainReload: false } });
+		for (const select of [getHotReloadMode, getReloadSemantics, getDebuggerType]) {
+			assert.throws(() => select(unknown), error => error instanceof RuntimeCapabilityError);
+		}
+	});
+	test('connection caches runtime capabilities and logs once until disconnect', () => {
+		const { ConnectionManager } = require(path.join(outDir, 'core/connection'));
+		const conn = new ConnectionManager();
+		const oldInfo = console.info;
+		const logs = [];
+		console.info = (...args) => logs.push(args);
+		try {
+			assert.throws(() => conn.getRuntimeCapabilities(), RuntimeCapabilityError);
+			conn.acceptProjectInfo(fixtures[0][0]);
+			conn.acceptProjectInfo(fixtures[2][0]);
+			assert.strictEqual(conn.getRuntimeCapabilities().source, 'legacy');
+			assert.strictEqual(logs.length, 1);
+			conn.disconnect();
+			assert.throws(() => conn.getRuntimeCapabilities(), RuntimeCapabilityError);
+			conn.acceptProjectInfo(fixtures[2][0]);
+			assert.strictEqual(conn.getRuntimeCapabilities().isCoreCLR, true);
+			assert.strictEqual(logs.length, 2);
+		} finally { console.info = oldInfo; conn.dispose(); }
+	});
+}
+
+async function testRuntimeConsumers() {
+	const { ConnectionManager } = require(path.join(outDir, 'core/connection'));
+	const { ConnectionState } = require(path.join(outDir, 'core/types'));
+	const { HotReloadModule } = require(path.join(outDir, 'hot-reload/index'));
+	const { UnityDebugAdapterDescriptorFactory } = require(path.join(outDir, 'debug/debugAdapter'));
+	const { RuntimeCapabilityError } = require(path.join(outDir, 'core/runtimeCapabilities'));
+	await testAsync('hot reload waits for capabilities, preserves Mono, and disables IL refresh for CoreCLR or invalid payloads', async () => {
+		const conn = new ConnectionManager();
+		const module = new HotReloadModule();
+		_allCreatedWatchers = [];
+		await module.activate({ connectionManager: conn, registerStatusBarContributor() {} });
+		const factory = new UnityDebugAdapterDescriptorFactory(() => conn.getRuntimeCapabilities());
+		try {
+			conn.setState(ConnectionState.Connected);
+			assert.strictEqual(_allCreatedWatchers.length, 0);
+			conn.acceptProjectInfo({});
+			assert.strictEqual(_allCreatedWatchers.length, 1);
+			assert.ok(factory.createDebugAdapterDescriptor({ configuration: {} }, undefined) instanceof vscode.DebugAdapterInlineImplementation);
+			conn.disconnect();
+			conn.setState(ConnectionState.Connected);
+			conn.acceptProjectInfo({ runtime: { isCoreCLR: true, hasDomainReload: false } });
+			assert.strictEqual(_allCreatedWatchers.length, 1);
+			assert.throws(() => factory.createDebugAdapterDescriptor({ configuration: {} }, undefined), RuntimeCapabilityError);
+			conn.disconnect();
+			conn.setState(ConnectionState.Connected);
+			conn.acceptProjectInfo({ runtime: {} });
+			assert.strictEqual(_allCreatedWatchers.length, 1);
+			assert.throws(() => conn.getRuntimeCapabilities(), RuntimeCapabilityError);
+		} finally { await module.deactivate(); conn.dispose(); }
+	});
+	await testAsync('typed IL refusal is surfaced without a refresh fallback', async () => {
+		const conn = new ConnectionManager();
+		const module = new HotReloadModule();
+		const oldWarning = vscode.window.showWarningMessage;
+		const messages = [];
+		const sent = [];
+		vscode.window.showWarningMessage = async message => messages.push(message);
+		conn.send = (...args) => sent.push(args);
+		await module.activate({ connectionManager: conn, registerStatusBarContributor() {} });
+		try {
+			conn._onMessage.fire({ command: 'compilationResult', payload: { success: false, errorCode: 'capability_unavailable', capability: 'ilPatching', error: 'IL patching is unavailable.' } });
+			assert.deepStrictEqual(messages, ['capability_unavailable: IL patching is unavailable.']);
+			assert.deepStrictEqual(sent, []);
+		} finally { await module.deactivate(); conn.dispose(); vscode.window.showWarningMessage = oldWarning; }
+	});
+	await testAsync('debug capability callback reports launch configuration filesystem failures without unhandled rejections', async () => {
+		const { DebugModule } = require(path.join(outDir, 'debug/index'));
+		const project = require(path.join(outDir, 'project/projectHandler'));
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-debug-config-error-'));
+		const conn = new ConnectionManager();
+		const module = new DebugModule();
+		const oldProjectPath = project.getLinkedProjectPath;
+		const oldMkdir = fs.promises.mkdir;
+		const oldWrite = fs.promises.writeFile;
+		const oldError = vscode.window.showErrorMessage;
+		const messages = [];
+		const unhandled = [];
+		const captureRejection = error => unhandled.push(error);
+		project.getLinkedProjectPath = () => tmpDir;
+		vscode.window.showErrorMessage = async message => messages.push(message);
+		process.on('unhandledRejection', captureRejection);
+		try {
+			await module.activate({ connectionManager: conn, registerCommand() {}, registerStatusBarContributor() {} });
+			for (const stage of ['mkdir', 'writeFile']) {
+				const error = Object.assign(new Error(stage + ' denied'), { code: 'EACCES' });
+				const failureStarted = createDeferred();
+				fs.promises.mkdir = stage === 'mkdir' ? async () => { failureStarted.resolve(); throw error; } : oldMkdir;
+				fs.promises.writeFile = stage === 'writeFile' ? async () => { failureStarted.resolve(); throw error; } : oldWrite;
+				conn.disconnect();
+				conn.acceptProjectInfo({});
+				await failureStarted.promise;
+				await new Promise(resolve => setImmediate(resolve));
+				assert.ok(messages.at(-1)?.includes(error.message), 'The filesystem failure must be reported');
+				assert.ok(messages.at(-1).includes(tmpDir));
+				assert.ok(messages.at(-1).includes('.vscode/launch.json'));
+				assert.deepStrictEqual(unhandled, []);
+			}
+			assert.strictEqual(messages.length, 2);
+		} finally {
+			await module.deactivate();
+			conn.dispose();
+			project.getLinkedProjectPath = oldProjectPath;
+			fs.promises.mkdir = oldMkdir;
+			fs.promises.writeFile = oldWrite;
+			vscode.window.showErrorMessage = oldError;
+			process.removeListener('unhandledRejection', captureRejection);
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+}
+
+function testCapabilityMatrix() {
+	const { advertisedCapabilities, generateMatrix, renderMarkdown } = require('../scripts/generate-capability-matrix');
+	const input = { bands: ['old', 'new'], ci: { include: [] }, observations: [{ capability: 'isCoreCLR', band: 'new', state: 'verified', evidence: 'fixture run' }] };
+	test('matrix rows track advertised capability additions and removals with untested defaults', () => {
+		const source = String.raw`sb.Append("\"runtime\":{");
+			sb.Append("\"isCoreCLR\":").Append("false,");
+			sb.Append("\"newCapability\":").Append("true").Append("},");`;
+		const names = advertisedCapabilities(source);
+		assert.deepStrictEqual(names, ['isCoreCLR', 'newCapability']);
+		const matrix = generateMatrix(names, input);
+		assert.strictEqual(matrix.rows[0].cells.new.state, 'verified');
+		assert.strictEqual(matrix.rows[0].cells.old.state, 'untested');
+		assert.deepStrictEqual(matrix.rows[1].cells, { old: { state: 'untested' }, new: { state: 'untested' } });
+		assert.deepStrictEqual(generateMatrix(['newCapability'], input).rows.map(row => row.capability), ['newCapability']);
+		assert.strictEqual(JSON.stringify(matrix), JSON.stringify(generateMatrix([...names].reverse(), input)));
+		assert.strictEqual(renderMarkdown(matrix), renderMarkdown(generateMatrix(names, input)));
+		assert.throws(() => generateMatrix(names, { ...input, observations: [{ capability: 'isCoreCLR', band: 'new', state: 'verified' }] }));
+	});
+	test('committed matrix matches the current project_info payload and generation is deterministic', () => {
+		const root = path.resolve(__dirname, '../..');
+		const source = fs.readFileSync(path.join(root, 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs'), 'utf8');
+		const config = JSON.parse(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix-input.json'), 'utf8'));
+		const matrix = generateMatrix(advertisedCapabilities(source), config);
+		assert.strictEqual(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix.json'), 'utf8').replace(/\r\n/g, '\n'), JSON.stringify(matrix, null, 2) + '\n');
+		assert.strictEqual(fs.readFileSync(path.join(root, 'docs/CAPABILITY_MATRIX.md'), 'utf8').replace(/\r\n/g, '\n'), renderMarkdown(matrix));
+	});
+}
+
 function testTypes() {
 	console.log('\n── core/types.ts ──');
 	const { safeJsonParse } = require(path.join(outDir, 'core', 'types'));
@@ -3323,7 +3490,7 @@ function testDebugAdapter() {
 	});
 
 	test('DescriptorFactory creates inline adapter with correct port', () => {
-		const factory = new UnityDebugAdapterDescriptorFactory();
+		const factory = new UnityDebugAdapterDescriptorFactory(() => ({ isCoreCLR: false, hasDomainReload: true, source: 'legacy' }));
 		const descriptor = factory.createDebugAdapterDescriptor(
 			{ configuration: { type: 'unityCursorToolkit.debug', request: 'attach', debugPort: 99999, name: 'test' } },
 			undefined
@@ -4405,25 +4572,35 @@ async function testMigrationScanner() {
 				fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
 				fs.writeFileSync(path.join(root, file), source);
 			}
-			fs.symlinkSync(path.join(root, 'Library/Hidden.cs'), path.join(root, 'Assets/Linked.cs'));
-			fs.symlinkSync(path.join(root, 'Library'), path.join(root, 'Assets/LinkedDirectory'));
+			if (process.platform !== 'win32') fs.symlinkSync(path.join(root, 'Library/Hidden.cs'), path.join(root, 'Assets/Linked.cs'));
+			fs.symlinkSync(path.join(root, 'Library'), path.join(root, 'Assets/LinkedDirectory'), process.platform === 'win32' ? 'junction' : 'dir');
 			const result = await scan(root);
 			assert.deepStrictEqual(result.findings, []);
 			assert.strictEqual(result.scanned, 1);
-			assert.strictEqual(result.skipped, 5);
+			assert.strictEqual(result.skipped, process.platform === 'win32' ? 4 : 5);
 		});
 
 		await testAsync('migration scan fails with a typed error when project files cannot be read', async () => {
 			const broken = path.join(tmpDir, 'broken');
 			fs.mkdirSync(path.join(broken, 'Assets'), { recursive: true });
 			fs.writeFileSync(path.join(broken, 'Assets/Unreadable.cs'), 'public static int counter;');
-			fs.chmodSync(path.join(broken, 'Assets/Unreadable.cs'), 0);
+			const unreadable = path.join(broken, 'Assets/Unreadable.cs');
+			const promises = require('fs/promises');
+			const readFile = promises.readFile;
+			if (process.platform === 'win32') {
+				// Windows chmod does not deny reads. Inject the filesystem failure at the owner boundary.
+				promises.readFile = async (file, ...args) => {
+					if (file === unreadable) throw Object.assign(new Error('Permission denied'), { code: 'EACCES' });
+					return readFile(file, ...args);
+				};
+			} else fs.chmodSync(unreadable, 0);
 			try {
 				for (const root of [undefined, null, '', path.join(tmpDir, 'missing'), path.join(tmpDir, 'rules.json'), tmpDir, broken]) {
 					await assert.rejects(scan(root), error => error instanceof MigrationError && error.code === 'PROJECT_UNREADABLE');
 				}
 			} finally {
-				fs.chmodSync(path.join(broken, 'Assets/Unreadable.cs'), 0o600);
+				promises.readFile = readFile;
+				if (process.platform !== 'win32') fs.chmodSync(unreadable, 0o600);
 			}
 		});
 
@@ -4462,6 +4639,9 @@ async function main() {
 	}
 
 	testTypes();
+	testRuntimeCapabilities();
+	await testRuntimeConsumers();
+	testCapabilityMatrix();
 	testConnectionUnit();
 	await testUnityEditorLauncher();
 	testUnityLicenseScript();
