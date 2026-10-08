@@ -1,0 +1,1781 @@
+{
+  "cliVersion": "1.0.0-beta.12",
+  "pipelineVersion": "0.8.0-exp.1",
+  "editorVersion": "6000.3.9f1",
+  "scope": "Observed live Editor catalog; classify maximum supported effect. Operational logs/cache are excluded from authoring mutations.",
+  "commands": [
+    {
+      "name": "add_animator_layer",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimatorControllerCommands.cs",
+        "symbol": "AddAnimatorLayer",
+        "line": 142
+      },
+      "rationale": "Uses fixed typed Animator APIs or allowlisted timeline track types; persists asset changes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "add_animator_parameter",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimatorControllerCommands.cs",
+        "symbol": "AddAnimatorParameter",
+        "line": 75
+      },
+      "rationale": "Uses fixed typed Animator APIs or allowlisted timeline track types; persists asset changes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "add_animator_state",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimatorControllerCommands.cs",
+        "symbol": "AddAnimatorState",
+        "line": 186
+      },
+      "rationale": "Uses fixed typed Animator APIs or allowlisted timeline track types; persists asset changes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "add_animator_transition",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimatorControllerCommands.cs",
+        "symbol": "AddAnimatorTransition",
+        "line": 263
+      },
+      "rationale": "Uses fixed typed Animator APIs or allowlisted timeline track types; persists asset changes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "add_component",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/ComponentCommands.cs",
+        "symbol": "AddComponent",
+        "line": 32
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "add_scene_to_build",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "AddSceneToBuild",
+        "line": 221
+      },
+      "rationale": "Changes loaded/active scene, persists scene edits, or updates EditorBuildSettings scenes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "add_timeline_clip",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/Animation/TimelineCommands.cs",
+        "symbol": "AddTimelineClip",
+        "line": 162
+      },
+      "rationale": "Reflects and invokes caller-selected existing custom track CreateClip/CreateDefaultClip methods without concrete track-type gate. Source-based inference.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "add_timeline_track",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Animation/TimelineCommands.cs",
+        "symbol": "AddTimelineTrack",
+        "line": 104
+      },
+      "rationale": "Uses fixed typed Animator APIs or allowlisted timeline track types; persists asset changes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "apply_prefab_overrides",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Prefabs/PrefabCommands.cs",
+        "symbol": "ApplyPrefabOverrides",
+        "line": 158
+      },
+      "rationale": "Instantiates or edits prefab/scene state; some variants persist assets through SaveAssets.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "attach_script",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Scripts/AttachScriptCommand.cs",
+        "symbol": "AttachScript",
+        "line": 36
+      },
+      "rationale": "Moves/renames/creates authoring data or adds/edits components through Undo/serialized state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "audit",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/ProjectAudit/ProjectAuditCommands.cs",
+        "symbol": "Audit",
+        "line": 75
+      },
+      "rationale": "ResolveCsvPath accepts caller output path; WriteCsv overwrites via File.WriteAllText.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "audit_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectAudit/ProjectAuditCommands.cs",
+        "symbol": "AuditStatus",
+        "line": 108
+      },
+      "rationale": "Reads audit status or package metadata; search uses Client.Search/SearchAll without package writes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "bake_lighting",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Baking/LightingBakeCommands.cs",
+        "symbol": "BakeLighting",
+        "line": 57
+      },
+      "rationale": "BakeAsync replaces baked data; clear invokes Clear/ClearDiskCache. Bake confirmation parameter is not required.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "bake_navmesh",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Baking/NavMeshBakeCommands.cs",
+        "symbol": "BakeNavMesh",
+        "line": 69
+      },
+      "rationale": "Replaces or clears baked navigation/occlusion data; bake confirm is optional/ignored, clear confirm precedes dry-run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "bake_navmesh_surfaces",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Baking/NavMeshBakeCommands.cs",
+        "symbol": "BakeNavMeshSurfaces",
+        "line": 200
+      },
+      "rationale": "Exact 0.8.0-exp.1 implementation is a refusal-only stub: package_not_found/not_implemented; Type.GetType check, no baking occurs.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "bake_occlusion_culling",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Baking/OcclusionBakeCommands.cs",
+        "symbol": "BakeOcclusionCulling",
+        "line": 57
+      },
+      "rationale": "Replaces or clears baked navigation/occlusion data; bake confirm is optional/ignored, clear confirm precedes dry-run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "batch",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/Batch/BatchCommand.cs",
+        "symbol": "Batch",
+        "line": 187
+      },
+      "rationale": "Dispatches registered commands with curated exclusions; nontransactional mode permits create_script/write_text_file and therefore imported executable source.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "build",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Build/BuildCommand.cs",
+        "symbol": "Build",
+        "line": 97
+      },
+      "rationale": "Caller-resolved absolute/relative output is written by BuildPipeline.BuildPlayer; outputs can overwrite and CleanBuildCache is supported.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "build_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Build/BuildCommand.cs",
+        "symbol": "BuildStatus",
+        "line": 230
+      },
+      "rationale": "Reads supported target enums, fixed Editor settings/BuildProfile fields, or fixed status file.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "cancel_lighting_bake",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Baking/LightingBakeCommands.cs",
+        "symbol": "CancelLightingBake",
+        "line": 108
+      },
+      "rationale": "Cancels bake and writes status or assigns allowlisted lighting settings; may create scene settings.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "cancel_navmesh_bake",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Baking/NavMeshBakeCommands.cs",
+        "symbol": "CancelNavMeshBake",
+        "line": 110
+      },
+      "rationale": "Cancels bake/writes status or applies allowlisted serialized navigation settings.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "cancel_occlusion_bake",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Baking/OcclusionBakeCommands.cs",
+        "symbol": "CancelOcclusionBake",
+        "line": 129
+      },
+      "rationale": "Cancels bake/writes status or applies allowlisted serialized navigation settings.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "cancel_tests",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/TestCommands.cs",
+        "symbol": "CancelTests",
+        "line": 113
+      },
+      "rationale": "Cancels active test state/writes status/exits Play Mode, or changes per-project EditorPrefs authoring root.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "capture_game_view",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Capture/CaptureCommands.cs",
+        "symbol": "CaptureGameView",
+        "line": 32
+      },
+      "rationale": "Optional caller output path is written with File.WriteAllBytes; overwrite lacks confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "capture_scene_view",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Capture/CaptureCommands.cs",
+        "symbol": "CaptureSceneView",
+        "line": 74
+      },
+      "rationale": "Optional caller output path is written with File.WriteAllBytes; overwrite lacks confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "cleanup_codereload",
+      "risk": "destructive",
+      "source": {
+        "file": "Runtime/Commands/CodeReloadCommands.cs",
+        "symbol": "CleanupCodeReload",
+        "line": 181
+      },
+      "rationale": "CleanupCodeReloadDlls deletes DLLs in a caller directory and can request script reload.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "clear_baked_lighting",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Baking/LightingBakeCommands.cs",
+        "symbol": "ClearBakedLighting",
+        "line": 134
+      },
+      "rationale": "BakeAsync replaces baked data; clear invokes Clear/ClearDiskCache. Bake confirmation parameter is not required.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "clear_console",
+      "risk": "destructive",
+      "source": {
+        "file": "Runtime/Commands/ConsoleCommand.cs",
+        "symbol": "ClearConsole",
+        "line": 64
+      },
+      "rationale": "Clears captured console and reflected Unity LogEntries buffer.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "clear_navmesh",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Baking/NavMeshBakeCommands.cs",
+        "symbol": "ClearNavMesh",
+        "line": 136
+      },
+      "rationale": "Replaces or clears baked navigation/occlusion data; bake confirm is optional/ignored, clear confirm precedes dry-run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "clear_occlusion_culling",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Baking/OcclusionBakeCommands.cs",
+        "symbol": "ClearOcclusionCulling",
+        "line": 155
+      },
+      "rationale": "Replaces or clears baked navigation/occlusion data; bake confirm is optional/ignored, clear confirm precedes dry-run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "codereload_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Runtime/Commands/CodeReloadCommands.cs",
+        "symbol": "CodeReloadStatus",
+        "line": 246
+      },
+      "rationale": "Reads runtime/console/telemetry snapshots; reviewed helpers do not write authoring data.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "console",
+      "risk": "read-only",
+      "source": {
+        "file": "Runtime/Commands/ConsoleCommand.cs",
+        "symbol": "GetConsole",
+        "line": 36
+      },
+      "rationale": "Reads runtime/console/telemetry snapshots; reviewed helpers do not write authoring data.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "console_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Runtime/Commands/ConsoleCommand.cs",
+        "symbol": "GetConsoleStatus",
+        "line": 54
+      },
+      "rationale": "Reads runtime/console/telemetry snapshots; reviewed helpers do not write authoring data.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "copy_asset",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetCommands.cs",
+        "symbol": "CopyAsset",
+        "line": 206
+      },
+      "rationale": "Maximum variant overwrites existing assets; copy/create explicitly delete existing assets after confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_animation_clip",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimationClipCommands.cs",
+        "symbol": "CreateAnimationClip",
+        "line": 37
+      },
+      "rationale": "Confirmed overwrite deletes existing asset before CreateAsset.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_animator_controller",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimatorControllerCommands.cs",
+        "symbol": "CreateAnimatorController",
+        "line": 36
+      },
+      "rationale": "Confirmed overwrite deletes existing asset before CreateAsset.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_asset",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetCommands.cs",
+        "symbol": "CreateAsset",
+        "line": 33
+      },
+      "rationale": "Maximum variant overwrites existing assets; copy/create explicitly delete existing assets after confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_folder",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Assets/FolderCommands.cs",
+        "symbol": "CreateFolder",
+        "line": 19
+      },
+      "rationale": "Moves/renames/creates authoring data or adds/edits components through Undo/serialized state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_gameobject",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "CreateGameObject",
+        "line": 42
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_gameobjects",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "CreateGameObjects",
+        "line": 77
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_prefab",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Prefabs/PrefabCommands.cs",
+        "symbol": "CreatePrefab",
+        "line": 45
+      },
+      "rationale": "SaveAsPrefabAsset writes caller path with no existing-asset confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_prefab_variant",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Prefabs/PrefabCommands.cs",
+        "symbol": "CreatePrefabVariant",
+        "line": 113
+      },
+      "rationale": "SaveAsPrefabAsset writes caller path with no existing-asset confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_scene",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "CreateScene",
+        "line": 41
+      },
+      "rationale": "NewScene(Single) replaces scene state and SaveScene writes caller-resolved path without overwrite confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_script",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/Scripts/CreateScriptCommand.cs",
+        "symbol": "CreateScript",
+        "line": 49
+      },
+      "rationale": "Caller namespace/base_class is interpolated without validation into imported executable C# source. Source-based inference.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "create_timeline",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Animation/TimelineCommands.cs",
+        "symbol": "CreateTimeline",
+        "line": 54
+      },
+      "rationale": "Confirmed overwrite deletes existing asset before CreateAsset.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "delete_asset",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetCommands.cs",
+        "symbol": "DeleteAsset",
+        "line": 277
+      },
+      "rationale": "Deletes confined asset via AssetDatabase.DeleteAsset; dry_run precedes confirmation and does not delete.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "delete_gameobject",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "DeleteGameObject",
+        "line": 326
+      },
+      "rationale": "Undo.DestroyObjectImmediate removes selected scene objects/components; Undo supported.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "editor_focus",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/FocusEditorCommand.cs",
+        "symbol": "FocusEditor",
+        "line": 35
+      },
+      "rationale": "Refreshes scripts, assigns Editor state, or changes update/focus/play subscriptions.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "editor_pause",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/PlayModeCommands.cs",
+        "symbol": "PausePlayMode",
+        "line": 42
+      },
+      "rationale": "Refreshes scripts, assigns Editor state, or changes update/focus/play subscriptions.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "editor_play",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/PlayModeCommands.cs",
+        "symbol": "EnterPlayMode",
+        "line": 16
+      },
+      "rationale": "Refreshes scripts, assigns Editor state, or changes update/focus/play subscriptions.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "editor_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/EditorStatusCommand.cs",
+        "symbol": "GetEditorStatus",
+        "line": 18
+      },
+      "rationale": "Reads status, profiling counters, selection, or SearchService query results; diagnostic sampling excluded.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "editor_stop",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/PlayModeCommands.cs",
+        "symbol": "ExitPlayMode",
+        "line": 29
+      },
+      "rationale": "Refreshes scripts, assigns Editor state, or changes update/focus/play subscriptions.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "eval",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Runtime/Commands/CodeEvalCommand.cs",
+        "symbol": "EvaluateCode",
+        "line": 17
+      },
+      "rationale": "CompileAndExecuteOnMainThread accepts arbitrary source; eval_file accepts any existing .cs file without dry-run/confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "eval_file",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Runtime/Commands/CodeEvalCommand.cs",
+        "symbol": "EvaluateFile",
+        "line": 28
+      },
+      "rationale": "CompileAndExecuteOnMainThread accepts arbitrary source; eval_file accepts any existing .cs file without dry-run/confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "find_assets",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetCommands.cs",
+        "symbol": "FindAssets",
+        "line": 302
+      },
+      "rationale": "Reads asset metadata, serialized fields, confined text, or known importer getters.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "find_gameobjects",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "FindGameObjects",
+        "line": 136
+      },
+      "rationale": "Reads SerializedProperty primitives/object identities or known scene fields; converter uses explicit type switch, no caller-selected CLR getters.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_animation_clip",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimationClipCommands.cs",
+        "symbol": "GetAnimationClip",
+        "line": 138
+      },
+      "rationale": "Returns fixed typed curve/key or animator fields and transition DTOs.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_animator_controller",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimatorControllerCommands.cs",
+        "symbol": "GetAnimatorController",
+        "line": 389
+      },
+      "rationale": "Returns fixed typed curve/key or animator fields and transition DTOs.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_audio_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/AudioSettingsCommands.cs",
+        "symbol": "Get",
+        "line": 24
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_authoring_root",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Authoring/AuthoringConfigCommands.cs",
+        "symbol": "GetAuthoringRoot",
+        "line": 14
+      },
+      "rationale": "Reads fixed test status, enumerates test metadata, or reads project-specific authoring root.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_build_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Build/BuildConfigCommands.cs",
+        "symbol": "GetBuildSettings",
+        "line": 73
+      },
+      "rationale": "Reads supported target enums, fixed Editor settings/BuildProfile fields, or fixed status file.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_component_properties",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/GameObjects/ComponentCommands.cs",
+        "symbol": "GetComponentProperties",
+        "line": 86
+      },
+      "rationale": "Reads SerializedProperty primitives/object identities or known scene fields; converter uses explicit type switch, no caller-selected CLR getters.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_graphics_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/GraphicsSettingsCommands.cs",
+        "symbol": "Get",
+        "line": 19
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_import_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetImportCommands.cs",
+        "symbol": "GetImportSettings",
+        "line": 128
+      },
+      "rationale": "Reads asset metadata, serialized fields, confined text, or known importer getters.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_input_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/InputSettingsCommands.cs",
+        "symbol": "Get",
+        "line": 24
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_lighting_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Baking/LightingBakeCommands.cs",
+        "symbol": "GetLightingSettings",
+        "line": 157
+      },
+      "rationale": "Reads fixed status file or known typed lighting properties.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_material_properties",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Materials/MaterialCommands.cs",
+        "symbol": "GetMaterialProperties",
+        "line": 37
+      },
+      "rationale": "Reads known Material/Shader properties and explicit value converters; no caller-selected CLR getter.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_navmesh_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Baking/NavMeshBakeCommands.cs",
+        "symbol": "GetNavMeshSettings",
+        "line": 155
+      },
+      "rationale": "Reads fixed status file or fixed SerializedObject navigation settings fields.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_performance_stats",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Observability/PerformanceCommands.cs",
+        "symbol": "GetPerformanceStats",
+        "line": 115
+      },
+      "rationale": "Reads status, profiling counters, selection, or SearchService query results; diagnostic sampling excluded.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_physics_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/PhysicsSettingsCommands.cs",
+        "symbol": "Get",
+        "line": 17
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_player_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/PlayerSettingsCommands.cs",
+        "symbol": "Get",
+        "line": 22
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_quality_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/QualitySettingsCommands.cs",
+        "symbol": "Get",
+        "line": 18
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_runtime_pipeline_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/RuntimePipelineSettingsCommands.cs",
+        "symbol": "Get",
+        "line": 30
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_scene_hierarchy",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "GetSceneHierarchy",
+        "line": 187
+      },
+      "rationale": "Reads SerializedProperty primitives/object identities or known scene fields; converter uses explicit type switch, no caller-selected CLR getters.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_selection",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Navigation/NavigationCommands.cs",
+        "symbol": "GetSelection",
+        "line": 27
+      },
+      "rationale": "Reads status, profiling counters, selection, or SearchService query results; diagnostic sampling excluded.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_serialized_fields",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Scripts/SerializedFieldCommands.cs",
+        "symbol": "GetSerializedFields",
+        "line": 76
+      },
+      "rationale": "Reads asset metadata, serialized fields, confined text, or known importer getters.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_shader_properties",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Materials/ShaderCommands.cs",
+        "symbol": "GetShaderProperties",
+        "line": 102
+      },
+      "rationale": "Reads known Material/Shader properties and explicit value converters; no caller-selected CLR getter.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_tags_layers",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/TagsLayersCommands.cs",
+        "symbol": "Get",
+        "line": 21
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_time_settings",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/TimeSettingsCommands.cs",
+        "symbol": "Get",
+        "line": 17
+      },
+      "rationale": "Reads known settings APIs or fixed RuntimePipeline config file; LoadOrCreateConfig does not save.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "get_timeline",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/Animation/TimelineCommands.cs",
+        "symbol": "GetTimeline",
+        "line": 238
+      },
+      "rationale": "Reflects custom derived track GetClips and GetName; may invoke hidden project methods/getters. Source-based conservative inference; no exploit executed.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "import_asset",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetCommands.cs",
+        "symbol": "ImportAsset",
+        "line": 137
+      },
+      "rationale": "Maximum variant overwrites existing assets; copy/create explicitly delete existing assets after confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "instantiate_prefab",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Prefabs/PrefabCommands.cs",
+        "symbol": "InstantiatePrefab",
+        "line": 76
+      },
+      "rationale": "Instantiates or edits prefab/scene state; some variants persist assets through SaveAssets.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "lighting_bake_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Baking/LightingBakeCommands.cs",
+        "symbol": "LightingBakeStatus",
+        "line": 102
+      },
+      "rationale": "Reads fixed status file or known typed lighting properties.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "list_build_profiles",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Build/BuildConfigCommands.cs",
+        "symbol": "ListBuildProfiles",
+        "line": 157
+      },
+      "rationale": "Reads supported target enums, fixed Editor settings/BuildProfile fields, or fixed status file.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "list_build_targets",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Build/BuildConfigCommands.cs",
+        "symbol": "ListBuildTargets",
+        "line": 30
+      },
+      "rationale": "Reads supported target enums, fixed Editor settings/BuildProfile fields, or fixed status file.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "list_open_scenes",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "ListOpenScenes",
+        "line": 150
+      },
+      "rationale": "Reads SerializedProperty primitives/object identities or known scene fields; converter uses explicit type switch, no caller-selected CLR getters.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "list_shaders",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Materials/ShaderCommands.cs",
+        "symbol": "ListShaders",
+        "line": 28
+      },
+      "rationale": "Reads known Material/Shader properties and explicit value converters; no caller-selected CLR getter.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "list_tests",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/TestCommands.cs",
+        "symbol": "ListTests",
+        "line": 50
+      },
+      "rationale": "Reads fixed test status, enumerates test metadata, or reads project-specific authoring root.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "log",
+      "risk": "mutating",
+      "source": {
+        "file": "Runtime/Commands/RuntimeLogCommand.cs",
+        "symbol": "LogMessage",
+        "line": 13
+      },
+      "rationale": "Writes global runtime state, queues synthetic input callbacks, or explicitly writes console state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "menu",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/MenuItemCommand.cs",
+        "symbol": "ExecuteMenu",
+        "line": 46
+      },
+      "rationale": "ExecuteMenuItem invokes arbitrary registered menu handlers; listing mode does not constrain maximum effect.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "move_asset",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetCommands.cs",
+        "symbol": "MoveAsset",
+        "line": 170
+      },
+      "rationale": "Moves/renames/creates authoring data or adds/edits components through Undo/serialized state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "navmesh_bake_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Baking/NavMeshBakeCommands.cs",
+        "symbol": "NavMeshBakeStatus",
+        "line": 104
+      },
+      "rationale": "Reads fixed status file or fixed SerializedObject navigation settings fields.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "occlusion_bake_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Baking/OcclusionBakeCommands.cs",
+        "symbol": "OcclusionBakeStatus",
+        "line": 123
+      },
+      "rationale": "Reads fixed status file or fixed SerializedObject navigation settings fields.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "open_scene",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "OpenScene",
+        "line": 70
+      },
+      "rationale": "Changes loaded/active scene, persists scene edits, or updates EditorBuildSettings scenes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "package_add",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/PackageManager/PackageManagerCommand.cs",
+        "symbol": "PackageAdd",
+        "line": 256
+      },
+      "rationale": "Client.Add accepts caller git/file packages containing executable code; dry-run and confirm guard optional writes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "package_list",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/PackageManager/PackageManagerCommand.cs",
+        "symbol": "PackageList",
+        "line": 87
+      },
+      "rationale": "Reads audit status or package metadata; search uses Client.Search/SearchAll without package writes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "package_remove",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/PackageManager/PackageManagerCommand.cs",
+        "symbol": "PackageRemove",
+        "line": 290
+      },
+      "rationale": "Client.Remove removes the selected dependency.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "package_resolve",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/PackageManager/PackageManagerCommand.cs",
+        "symbol": "PackageResolve",
+        "line": 321
+      },
+      "rationale": "Client.Resolve changes resolved dependency state and may reload; no confirm argument.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "package_search",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/PackageManager/PackageManagerCommand.cs",
+        "symbol": "PackageSearch",
+        "line": 213
+      },
+      "rationale": "Reads audit status or package metadata; search uses Client.Search/SearchAll without package writes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "package_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/PackageManager/PackageManagerCommand.cs",
+        "symbol": "GetPackageStatus",
+        "line": 374
+      },
+      "rationale": "Reads audit status or package metadata; search uses Client.Search/SearchAll without package writes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "quit",
+      "risk": "destructive",
+      "source": {
+        "file": "Runtime/Commands/RuntimeApplicationCommand.cs",
+        "symbol": "QuitApplication",
+        "line": 13
+      },
+      "rationale": "Schedules Application.Quit.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "read_text_file",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Assets/TextFileCommands.cs",
+        "symbol": "ReadTextFile",
+        "line": 26
+      },
+      "rationale": "Reads asset metadata, serialized fields, confined text, or known importer getters.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "recompile",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/RecompileCommand.cs",
+        "symbol": "Recompile",
+        "line": 85
+      },
+      "rationale": "Refreshes scripts, assigns Editor state, or changes update/focus/play subscriptions.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "recompile_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/RecompileCommand.cs",
+        "symbol": "RecompileStatus",
+        "line": 125
+      },
+      "rationale": "Reads status, profiling counters, selection, or SearchService query results; diagnostic sampling excluded.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "reload_file",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Runtime/Commands/CodeReloadCommands.cs",
+        "symbol": "ReloadFile",
+        "line": 18
+      },
+      "rationale": "ProcessSourceFileAsync replaces executable methods and invokes reload callbacks; Editor source paths may be absolute.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "reload_file_editor_interpreter",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Runtime/Commands/CodeReloadCommands.cs",
+        "symbol": "ReloadFileEditorInterpreter",
+        "line": 28
+      },
+      "rationale": "ProcessSourceFileAsync replaces executable methods and invokes reload callbacks; Editor source paths may be absolute.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "reload_file_player_interpreter",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/PushReloadCommand.cs",
+        "symbol": "PushReload",
+        "line": 50
+      },
+      "rationale": "CompileOverrideForPush compiles source then PushSigner.PushOrDefer applies executable changes to players.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "remove_animation_curve",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimationClipCommands.cs",
+        "symbol": "RemoveAnimationCurve",
+        "line": 191
+      },
+      "rationale": "SetEditorCurve(null) removes the selected curve after confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "remove_component",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/GameObjects/ComponentCommands.cs",
+        "symbol": "RemoveComponent",
+        "line": 61
+      },
+      "rationale": "Undo.DestroyObjectImmediate removes selected scene objects/components; Undo supported.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "remove_scene_from_build",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "RemoveSceneFromBuild",
+        "line": 249
+      },
+      "rationale": "Changes loaded/active scene, persists scene edits, or updates EditorBuildSettings scenes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "rename_asset",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetCommands.cs",
+        "symbol": "RenameAsset",
+        "line": 242
+      },
+      "rationale": "Moves/renames/creates authoring data or adds/edits components through Undo/serialized state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "rename_gameobject",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "RenameGameObject",
+        "line": 303
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "report_evals",
+      "risk": "read-only",
+      "source": {
+        "file": "Runtime/Commands/EvalTelemetryCommand.cs",
+        "symbol": "ReportEvals",
+        "line": 25
+      },
+      "rationale": "Reads runtime/console/telemetry snapshots; reviewed helpers do not write authoring data.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "revert_prefab_overrides",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Prefabs/PrefabCommands.cs",
+        "symbol": "RevertPrefabOverrides",
+        "line": 191
+      },
+      "rationale": "Instantiates or edits prefab/scene state; some variants persist assets through SaveAssets.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "run_script",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/Scripts/RunScriptCommand.cs",
+        "symbol": "RunScript",
+        "line": 48
+      },
+      "rationale": "RoslynCompilationService compiles source and invokes MethodInfo; hot-patch delegates reload.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "run_tests",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/TestCommands.cs",
+        "symbol": "RunTests",
+        "line": 24
+      },
+      "rationale": "PipelineTestRunner executes project-defined test code; maximum effects are not constrained to reads.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "runtime_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Runtime/Commands/RuntimeStatusCommand.cs",
+        "symbol": "GetRuntimeStatus",
+        "line": 18
+      },
+      "rationale": "Reads runtime/console/telemetry snapshots; reviewed helpers do not write authoring data.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "save_all",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "SaveAll",
+        "line": 120
+      },
+      "rationale": "Changes loaded/active scene, persists scene edits, or updates EditorBuildSettings scenes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "save_prefab_contents",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Prefabs/PrefabCommands.cs",
+        "symbol": "SavePrefabContents",
+        "line": 252
+      },
+      "rationale": "Instantiates or edits prefab/scene state; some variants persist assets through SaveAssets.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "save_scene",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "SaveScene",
+        "line": 89
+      },
+      "rationale": "Changes loaded/active scene, persists scene edits, or updates EditorBuildSettings scenes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "screenshot",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/ScreenshotCommand.cs",
+        "symbol": "CaptureScreenshot",
+        "line": 29
+      },
+      "rationale": "Optional caller output path is written with File.WriteAllBytes; overwrite lacks confirmation.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "search",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Navigation/NavigationCommands.cs",
+        "symbol": "Search",
+        "line": 93
+      },
+      "rationale": "Reads status, profiling counters, selection, or SearchService query results; diagnostic sampling excluded.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_active",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "SetActive",
+        "line": 243
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_active_scene",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Scenes/SceneCommands.cs",
+        "symbol": "SetActiveScene",
+        "line": 170
+      },
+      "rationale": "Changes loaded/active scene, persists scene edits, or updates EditorBuildSettings scenes.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_animation_curve",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/Animation/AnimationClipCommands.cs",
+        "symbol": "SetAnimationCurve",
+        "line": 90
+      },
+      "rationale": "SetEditorCurve replaces existing animation curve without confirmation; dry-run supported.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_audio_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/AudioSettingsCommands.cs",
+        "symbol": "Set",
+        "line": 27
+      },
+      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_authoring_root",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Authoring/AuthoringConfigCommands.cs",
+        "symbol": "SetAuthoringRoot",
+        "line": 20
+      },
+      "rationale": "Cancels active test state/writes status/exits Play Mode, or changes per-project EditorPrefs authoring root.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_autotick",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/AutoTickCommand.cs",
+        "symbol": "SetAutoTick",
+        "line": 47
+      },
+      "rationale": "Refreshes scripts, assigns Editor state, or changes update/focus/play subscriptions.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_build_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Build/BuildConfigCommands.cs",
+        "symbol": "SetBuildSettings",
+        "line": 102
+      },
+      "rationale": "Plans known settings then assigns fixed fields; invalid IL2CPP value can fail after earlier writes, not atomic. Confirm/dry-run supported.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_component_properties",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/ComponentCommands.cs",
+        "symbol": "SetComponentProperties",
+        "line": 130
+      },
+      "rationale": "Writes SerializedProperty values, ApplyModifiedProperties and Undo; reviewed explicit converter.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_graphics_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/GraphicsSettingsCommands.cs",
+        "symbol": "Set",
+        "line": 22
+      },
+      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_import_settings",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/Assets/AssetImportCommands.cs",
+        "symbol": "SetImportSettings",
+        "line": 58
+      },
+      "rationale": "Reflects caller-selected public writable members on possibly custom AssetImporter then SaveAndReimport, permitting project-defined setters/import callbacks. Source-based conservative inference.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_input_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/InputSettingsCommands.cs",
+        "symbol": "Set",
+        "line": 27
+      },
+      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_layer",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "SetLayer",
+        "line": 285
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_lighting_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Baking/LightingBakeCommands.cs",
+        "symbol": "SetLightingSettings",
+        "line": 163
+      },
+      "rationale": "Cancels bake and writes status or assigns allowlisted lighting settings; may create scene settings.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_material_properties",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Materials/MaterialCommands.cs",
+        "symbol": "SetMaterialProperties",
+        "line": 91
+      },
+      "rationale": "Assigns known material properties/keywords/shader, records Undo and persists asset via SaveAssetIfDirty.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_navmesh_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Baking/NavMeshBakeCommands.cs",
+        "symbol": "SetNavMeshSettings",
+        "line": 161
+      },
+      "rationale": "Cancels bake/writes status or applies allowlisted serialized navigation settings.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_parent",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "SetParent",
+        "line": 223
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_physics_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/PhysicsSettingsCommands.cs",
+        "symbol": "Set",
+        "line": 20
+      },
+      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_player_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/PlayerSettingsCommands.cs",
+        "symbol": "Set",
+        "line": 25
+      },
+      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_quality_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/QualitySettingsCommands.cs",
+        "symbol": "Set",
+        "line": 21
+      },
+      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_runtime_pipeline_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/RuntimePipelineSettingsCommands.cs",
+        "symbol": "Set",
+        "line": 33
+      },
+      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_selection",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Navigation/NavigationCommands.cs",
+        "symbol": "SetSelection",
+        "line": 42
+      },
+      "rationale": "Assigns Selection.objects/activeObject.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_serialized_field",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Scripts/SerializedFieldCommands.cs",
+        "symbol": "SetSerializedField",
+        "line": 36
+      },
+      "rationale": "Moves/renames/creates authoring data or adds/edits components through Undo/serialized state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_tag",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "SetTag",
+        "line": 263
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_tags_layers",
+      "risk": "destructive",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/TagsLayersCommands.cs",
+        "symbol": "Set",
+        "line": 24
+      },
+      "rationale": "Maximum variant removes tags or clears/overwrites user layers.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_target_framerate",
+      "risk": "mutating",
+      "source": {
+        "file": "Runtime/Commands/RuntimeApplicationCommand.cs",
+        "symbol": "SetTargetFrameRate",
+        "line": 25
+      },
+      "rationale": "Writes global runtime state, queues synthetic input callbacks, or explicitly writes console state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_time_settings",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/ProjectSettings/TimeSettingsCommands.cs",
+        "symbol": "Set",
+        "line": 20
+      },
+      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_timescale",
+      "risk": "mutating",
+      "source": {
+        "file": "Runtime/Commands/RuntimeApplicationCommand.cs",
+        "symbol": "SetTimeScale",
+        "line": 42
+      },
+      "rationale": "Writes global runtime state, queues synthetic input callbacks, or explicitly writes console state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "set_transform",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/GameObjects/GameObjectCommands.cs",
+        "symbol": "SetTransform",
+        "line": 190
+      },
+      "rationale": "Changes scene objects inside AuthoringUndoScope; project lifecycle callbacks may run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "simulate_key",
+      "risk": "mutating",
+      "source": {
+        "file": "Runtime/Commands/RuntimeInputCommand.cs",
+        "symbol": "SimulateKey",
+        "line": 36
+      },
+      "rationale": "Writes global runtime state, queues synthetic input callbacks, or explicitly writes console state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "simulate_pointer",
+      "risk": "mutating",
+      "source": {
+        "file": "Runtime/Commands/RuntimeInputCommand.cs",
+        "symbol": "SimulatePointer",
+        "line": 77
+      },
+      "rationale": "Writes global runtime state, queues synthetic input callbacks, or explicitly writes console state.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "switch_build_target",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Build/SwitchBuildTargetCommand.cs",
+        "symbol": "SwitchBuildTarget",
+        "line": 52
+      },
+      "rationale": "SwitchActiveBuildTarget changes selected platform and triggers reimports after confirmation; no dry-run.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "switch_build_target_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/Build/SwitchBuildTargetCommand.cs",
+        "symbol": "SwitchBuildTargetStatus",
+        "line": 111
+      },
+      "rationale": "Reads supported target enums, fixed Editor settings/BuildProfile fields, or fixed status file.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "test_status",
+      "risk": "read-only",
+      "source": {
+        "file": "Editor/Commands/TestCommands.cs",
+        "symbol": "GetTestStatus",
+        "line": 101
+      },
+      "rationale": "Reads fixed test status, enumerates test metadata, or reads project-specific authoring root.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "unpack_prefab",
+      "risk": "mutating",
+      "source": {
+        "file": "Editor/Commands/Prefabs/PrefabCommands.cs",
+        "symbol": "UnpackPrefab",
+        "line": 217
+      },
+      "rationale": "Instantiates or edits prefab/scene state; some variants persist assets through SaveAssets.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "wait_cancel",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/WaitForCommands.cs",
+        "symbol": "WaitCancel",
+        "line": 222
+      },
+      "rationale": "WaitRegistry.ToResult calls Jsonify on arbitrary returned objects, invoking user-defined ToString; cancel also changes state. Source-based conservative inference.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "wait_for",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/WaitForCommands.cs",
+        "symbol": "WaitFor",
+        "line": 51
+      },
+      "rationale": "TryReadMember invokes caller-selected public getters; on_met may pause or write captures. Source-based conservative inference.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "wait_status",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/WaitForCommands.cs",
+        "symbol": "WaitStatus",
+        "line": 201
+      },
+      "rationale": "WaitRegistry.ToResult calls Jsonify on arbitrary returned objects, invoking user-defined ToString; cancel also changes state. Source-based conservative inference.",
+      "evidence": "installed-package-source"
+    },
+    {
+      "name": "write_text_file",
+      "risk": "policy-escape",
+      "source": {
+        "file": "Editor/Commands/Assets/TextFileCommands.cs",
+        "symbol": "WriteTextFile",
+        "line": 51
+      },
+      "rationale": "Caller contents and extension permit arbitrary .cs/Editor source imported into the project; ordinary text is narrower. Source-based inference.",
+      "evidence": "installed-package-source"
+    }
+  ],
+  "fixtureCommands": [
+    {
+      "name": "proof_delay",
+      "risk": "read-only",
+      "source": {
+        "file": "fixture/Assets/Editor/PipelineSafetyProof.cs",
+        "symbol": "Delay",
+        "line": 76
+      },
+      "rationale": "Disposable-only 0-8000 ms background delay with progress and diagnostic markers, no caller code evaluation or authoring writes.",
+      "evidence": "authored-fixture-source"
+    }
+  ]
+}

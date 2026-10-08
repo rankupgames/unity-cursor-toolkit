@@ -1,0 +1,28 @@
+Commit to a narrow direct CLI backend for a later read-only Pipeline integration. Do not relay the full unity mcp catalog. This is a private proof decision; this change ships no provider, MCP schema, or UI.
+
+The [completed capture](results/2026-10-08T06-32-23-165Z-windows-x64.json) uses CLI 1.0.0-beta.12, Pipeline 0.8.0-exp.1, and two disposable Windows Editors at 6000.3.9f1_7a9955a4f2fa. A fresh official registry age/minimum-Editor gate preceded the second exact-pin install. Both targets returned different seeded text through both backends. A read-only inspection after normal shutdown confirmed the second fixture's resolved pin and 13-package lock.
+
+| Boundary | Direct CLI | Stdio MCP |
+| --- | --- | --- |
+| Success | One complete JSON envelope; native exit 0 | JSON-RPC tool result containing JSON text |
+| Missing file | COMMAND_FAILED, native exit 6 | isError: true, text message; daemon remains alive |
+| Progress | NDJSON progress frames at 40% and 100%, followed by a result | No notifications/progress during the same delay, despite a supplied progress token |
+| Deadline | Native timeout: COMMAND_FAILED, exit 6 | Local bounded request deadline; a later successful reply was recorded |
+| Cancellation | Exact owned CLI PID-tree termination; observed exit 1 | notifications/cancelled suppressed the reply; fixture operation still completed |
+| Shutdown | Per-call child exits | Stdin close exited both MCP daemons with native exit 0 |
+
+proof_delay deliberately omits cooperative cancellation checks. Its completion after a caller deadline/cancel proves that cancelling the caller does not force the Editor to stop. It does not prove how SDK commands that check cancellation behave. Native PID-tree cancellation is distinct from the earlier baseline's native PTY Ctrl+C result. The unrelated sentinel survived.
+
+The CLI success tag was 'command read_text_file'; failures used 'unity command read_text_file'. A future parser must validate these captured forms and retain the native error, exit code, and streams. The current diagnostic adapter does not parse registered Pipeline commands. Do not broaden it in this proof change. JSON and NDJSON require separate framing contracts.
+
+Both SDK servers listened on loopback, rejected requests through a routable host interface with ECONNRESET, returned 401 for missing/wrong credentials and 200 for the valid in-memory credential, and rejected foreign and null Origins with 403. The descriptor at Library/Pipeline/.unity-pipeline-port had inheritance disabled and one current-user FullControl grant. The fixtures declare Library/ ignored; they are not Git repositories, so Git ignore behavior was not proven. Source supports an explicit browser opt-in that permits Origin: null; observed default refusal is not a universal claim.
+
+The [matrix](command-risk-matrix.json) covers all 160 package commands: 50 read-only, 62 mutating, 30 destructive, and 18 policy-escape. Each row names the installed source file, symbol, and line. Classification uses reviewed implementations and helpers, not tags or command names. Operational diagnostic logs/cache are excluded from authoring mutations. Custom getter/setter or executable-source risks are conservative source inferences; no exploit was executed. The exact-version bake_navmesh_surfaces stub only refuses and is classified accordingly. Unknown/new commands fail closed.
+
+The authoring checks set and observed Assets/PipelineSafety before refusal calls. Asset deletion dry-run preserved bytes; deletion without confirmation refused; outside-root text writes refused in both dry-run and write modes. A batch dry-run left scene bytes and hierarchy unchanged. Standalone create_gameobjects, create_scene, and menu do not advertise dry-run; no scene/menu command was executed. The explicitly approved two-object creation was removed by one Undo. Both Editors emitted normal-quit and quitting markers and exited; no forced cleanup was used. Editor exit codes are unknown because the launcher did not retain them.
+
+The [failed refinement](results/2026-10-08T06-35-57-475Z-windows-x64.json) preserves a recorder issue: readiness briefly saw an earlier log before Unity replaced it. Only the first Editor launched and it quit normally; the second was never launched. The final reproducer deletes only its exact owned log before launch and filters events by launch time. No additional run was made for this recorder correction.
+
+The direct CLI option fits the existing bounded, shell-free adapter and exposes native failures and observed progress. An unrestricted MCP relay advertises all 160 risk classes plus the fixture command and supplies no enforced read-only boundary. Any later integration still needs an explicit source-backed read allowlist, exact target/pin checks, captured tag validation, and owned-process cleanup. No automatic updates, eval, package mutation, or fallback are authorized by this decision.
+
+Run the reproducer after compiling the extension, with PIPELINE_OWNED_FIXTURE set to the retained TEMP project created by the isolated install proof. It refuses a non-TEMP path, a different package pin, or an already-open fixture. Exact Editor/CLI paths come from inventory/environment. Endpoint credentials stay in memory and are never written to artifacts.
