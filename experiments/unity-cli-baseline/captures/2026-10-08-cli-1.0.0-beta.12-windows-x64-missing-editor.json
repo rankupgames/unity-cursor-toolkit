@@ -1,0 +1,24 @@
+{
+  "capturedAt": "2026-10-08T04:26:14.462Z",
+  "cliVersion": "1.0.0-beta.12",
+  "platform": "windows-x64",
+  "declaredEditorVersion": "6000.6.999f1",
+  "args": [
+    "open",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-missing-editor",
+    "--non-interactive",
+    "--no-log-proxy",
+    "--no-banner",
+    "--format",
+    "json"
+  ],
+  "exitCode": 6,
+  "signal": null,
+  "durationMs": 620,
+  "stdout": "{\n  \"success\": false,\n  \"command\": \"open\",\n  \"data\": null,\n  \"errors\": [\n    {\n      \"code\": \"COMMAND_FAILED\",\n      \"message\": \"Editor 6000.6.999f1 is not installed. Run unity install 6000.6.999f1 -a x86_64 to install it, then retry.\"\n    }\n  ],\n  \"warnings\": []\n}\n",
+  "stderr": "Warning: \"<repo>\\experiments\\unity-cli-baseline\\fixture-missing-editor\" was not found in the Hub project registry, opening as a file path.\n",
+  "fixtureFiles": {
+    "ProjectSettings/ProjectVersion.txt": "m_EditorVersion: 6000.6.999f1\n",
+    "Packages/manifest.json": "{\"dependencies\":{}}\n"
+  }
+}

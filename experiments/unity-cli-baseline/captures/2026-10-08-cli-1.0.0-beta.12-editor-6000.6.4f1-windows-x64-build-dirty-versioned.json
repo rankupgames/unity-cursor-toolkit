@@ -1,0 +1,75 @@
+{
+  "packages": [
+    {
+      "name": "com.unity.test-framework",
+      "version": "1.8.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework"
+    },
+    {
+      "name": "com.unity.ext.nunit",
+      "version": "2.1.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.ext.nunit"
+    }
+  ],
+  "frames": [
+    {
+      "elapsedMs": 27,
+      "stream": "stdout",
+      "characters": 71
+    },
+    {
+      "elapsedMs": 30,
+      "stream": "stdout",
+      "characters": 77
+    },
+    {
+      "elapsedMs": 133,
+      "stream": "stdout",
+      "characters": 254
+    }
+  ],
+  "leftoverEditorPids": [],
+  "startedAt": "2026-10-08T04:38:09.405Z",
+  "completedAt": "2026-10-08T04:38:10.617Z",
+  "cliVersion": "1.0.0-beta.12",
+  "editorVersion": "6000.6.4f1",
+  "platform": "windows-x64",
+  "args": [
+    "build",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1",
+    "--target",
+    "StandaloneWindows64",
+    "--execute-method",
+    "CliProof.Build",
+    "--output-path",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Build\\Proof.exe",
+    "--log-file",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Logs\\build-dirty-versioned.log",
+    "--timeout",
+    "180",
+    "--non-interactive",
+    "--no-log-proxy",
+    "--no-banner",
+    "--format",
+    "json",
+    "--versioning-strategy",
+    "semantic"
+  ],
+  "exitCode": 6,
+  "signal": null,
+  "durationMs": 1211,
+  "stdout": "{\"type\":\"progress\",\"command\":\"build\",\"message\":\"Resolving project...\"}\n{\"type\":\"progress\",\"command\":\"build\",\"message\":\"Resolving build version...\"}\n{\n  \"success\": false,\n  \"command\": \"build\",\n  \"data\": null,\n  \"errors\": [\n    {\n      \"code\": \"COMMAND_FAILED\",\n      \"message\": \"Working tree has uncommitted changes. Commit the changes or re-run with --allow-dirty-build.\"\n    }\n  ],\n  \"warnings\": []\n}\n",
+  "stderr": "",
+  "editorLog": null,
+  "xmlProduced": false,
+  "buildArtifactPresentAfter": true,
+  "projectVersionFileUnchanged": true,
+  "projectVersionAfter": "m_EditorVersion: 6000.6.4f1\nm_EditorVersionWithRevision: 6000.6.4f1 (12bfff696524)\n",
+  "declaredEditorVersionUnchanged": true,
+  "redactions": [
+    "repository/user roots",
+    "Editor roots",
+    "OS-user/host identifiers",
+    "credential/identity log lines"
+  ]
+}

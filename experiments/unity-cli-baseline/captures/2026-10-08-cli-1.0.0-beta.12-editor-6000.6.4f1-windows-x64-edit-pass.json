@@ -1,0 +1,728 @@
+{
+  "packages": [
+    {
+      "name": "com.unity.test-framework",
+      "version": "1.8.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework"
+    },
+    {
+      "name": "com.unity.ext.nunit",
+      "version": "2.1.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.ext.nunit"
+    }
+  ],
+  "frames": [
+    {
+      "elapsedMs": 937,
+      "stream": "stderr",
+      "characters": 58
+    },
+    {
+      "elapsedMs": 940,
+      "stream": "stderr",
+      "characters": 61
+    },
+    {
+      "elapsedMs": 940,
+      "stream": "stderr",
+      "characters": 36
+    },
+    {
+      "elapsedMs": 942,
+      "stream": "stderr",
+      "characters": 58
+    },
+    {
+      "elapsedMs": 943,
+      "stream": "stderr",
+      "characters": 97
+    },
+    {
+      "elapsedMs": 955,
+      "stream": "stderr",
+      "characters": 79
+    },
+    {
+      "elapsedMs": 955,
+      "stream": "stderr",
+      "characters": 110
+    },
+    {
+      "elapsedMs": 956,
+      "stream": "stderr",
+      "characters": 402
+    },
+    {
+      "elapsedMs": 1045,
+      "stream": "stderr",
+      "characters": 178
+    },
+    {
+      "elapsedMs": 1045,
+      "stream": "stderr",
+      "characters": 69
+    },
+    {
+      "elapsedMs": 1052,
+      "stream": "stderr",
+      "characters": 732
+    },
+    {
+      "elapsedMs": 1054,
+      "stream": "stderr",
+      "characters": 198
+    },
+    {
+      "elapsedMs": 1057,
+      "stream": "stderr",
+      "characters": 148
+    },
+    {
+      "elapsedMs": 1149,
+      "stream": "stderr",
+      "characters": 27
+    },
+    {
+      "elapsedMs": 1149,
+      "stream": "stderr",
+      "characters": 458
+    },
+    {
+      "elapsedMs": 1149,
+      "stream": "stderr",
+      "characters": 96
+    },
+    {
+      "elapsedMs": 1151,
+      "stream": "stderr",
+      "characters": 58
+    },
+    {
+      "elapsedMs": 1153,
+      "stream": "stderr",
+      "characters": 260
+    },
+    {
+      "elapsedMs": 1153,
+      "stream": "stderr",
+      "characters": 938
+    },
+    {
+      "elapsedMs": 1153,
+      "stream": "stderr",
+      "characters": 392
+    },
+    {
+      "elapsedMs": 1153,
+      "stream": "stderr",
+      "characters": 244
+    },
+    {
+      "elapsedMs": 1153,
+      "stream": "stderr",
+      "characters": 232
+    },
+    {
+      "elapsedMs": 1153,
+      "stream": "stderr",
+      "characters": 139
+    },
+    {
+      "elapsedMs": 1154,
+      "stream": "stderr",
+      "characters": 107
+    },
+    {
+      "elapsedMs": 1163,
+      "stream": "stderr",
+      "characters": 68
+    },
+    {
+      "elapsedMs": 1163,
+      "stream": "stderr",
+      "characters": 50
+    },
+    {
+      "elapsedMs": 1163,
+      "stream": "stderr",
+      "characters": 1148
+    },
+    {
+      "elapsedMs": 1163,
+      "stream": "stderr",
+      "characters": 64
+    },
+    {
+      "elapsedMs": 1174,
+      "stream": "stderr",
+      "characters": 91
+    },
+    {
+      "elapsedMs": 1178,
+      "stream": "stderr",
+      "characters": 52
+    },
+    {
+      "elapsedMs": 1182,
+      "stream": "stderr",
+      "characters": 83
+    },
+    {
+      "elapsedMs": 1582,
+      "stream": "stderr",
+      "characters": 74
+    },
+    {
+      "elapsedMs": 1583,
+      "stream": "stderr",
+      "characters": 63
+    },
+    {
+      "elapsedMs": 1584,
+      "stream": "stderr",
+      "characters": 33
+    },
+    {
+      "elapsedMs": 1636,
+      "stream": "stderr",
+      "characters": 35
+    },
+    {
+      "elapsedMs": 1636,
+      "stream": "stderr",
+      "characters": 337
+    },
+    {
+      "elapsedMs": 1641,
+      "stream": "stderr",
+      "characters": 121
+    },
+    {
+      "elapsedMs": 1766,
+      "stream": "stderr",
+      "characters": 42
+    },
+    {
+      "elapsedMs": 1780,
+      "stream": "stderr",
+      "characters": 61
+    },
+    {
+      "elapsedMs": 1780,
+      "stream": "stderr",
+      "characters": 65
+    },
+    {
+      "elapsedMs": 1780,
+      "stream": "stderr",
+      "characters": 38
+    },
+    {
+      "elapsedMs": 1780,
+      "stream": "stderr",
+      "characters": 96
+    },
+    {
+      "elapsedMs": 1781,
+      "stream": "stderr",
+      "characters": 54
+    },
+    {
+      "elapsedMs": 1781,
+      "stream": "stderr",
+      "characters": 139
+    },
+    {
+      "elapsedMs": 1781,
+      "stream": "stderr",
+      "characters": 112
+    },
+    {
+      "elapsedMs": 1782,
+      "stream": "stderr",
+      "characters": 109
+    },
+    {
+      "elapsedMs": 1782,
+      "stream": "stderr",
+      "characters": 25
+    },
+    {
+      "elapsedMs": 1782,
+      "stream": "stderr",
+      "characters": 65
+    },
+    {
+      "elapsedMs": 1782,
+      "stream": "stderr",
+      "characters": 46
+    },
+    {
+      "elapsedMs": 1782,
+      "stream": "stderr",
+      "characters": 61
+    },
+    {
+      "elapsedMs": 1804,
+      "stream": "stderr",
+      "characters": 280
+    },
+    {
+      "elapsedMs": 1804,
+      "stream": "stderr",
+      "characters": 195
+    },
+    {
+      "elapsedMs": 1841,
+      "stream": "stderr",
+      "characters": 31
+    },
+    {
+      "elapsedMs": 1842,
+      "stream": "stderr",
+      "characters": 40
+    },
+    {
+      "elapsedMs": 1842,
+      "stream": "stderr",
+      "characters": 57
+    },
+    {
+      "elapsedMs": 1883,
+      "stream": "stderr",
+      "characters": 34
+    },
+    {
+      "elapsedMs": 2142,
+      "stream": "stderr",
+      "characters": 41
+    },
+    {
+      "elapsedMs": 2143,
+      "stream": "stderr",
+      "characters": 162
+    },
+    {
+      "elapsedMs": 2143,
+      "stream": "stderr",
+      "characters": 33
+    },
+    {
+      "elapsedMs": 2854,
+      "stream": "stderr",
+      "characters": 57
+    },
+    {
+      "elapsedMs": 3196,
+      "stream": "stderr",
+      "characters": 38
+    },
+    {
+      "elapsedMs": 3271,
+      "stream": "stderr",
+      "characters": 66
+    },
+    {
+      "elapsedMs": 3271,
+      "stream": "stderr",
+      "characters": 2
+    },
+    {
+      "elapsedMs": 3500,
+      "stream": "stderr",
+      "characters": 43
+    },
+    {
+      "elapsedMs": 3535,
+      "stream": "stderr",
+      "characters": 60
+    },
+    {
+      "elapsedMs": 3537,
+      "stream": "stderr",
+      "characters": 620
+    },
+    {
+      "elapsedMs": 3560,
+      "stream": "stderr",
+      "characters": 176
+    },
+    {
+      "elapsedMs": 3567,
+      "stream": "stderr",
+      "characters": 935
+    },
+    {
+      "elapsedMs": 3568,
+      "stream": "stderr",
+      "characters": 64
+    },
+    {
+      "elapsedMs": 3568,
+      "stream": "stderr",
+      "characters": 61
+    },
+    {
+      "elapsedMs": 4176,
+      "stream": "stderr",
+      "characters": 233
+    },
+    {
+      "elapsedMs": 4177,
+      "stream": "stderr",
+      "characters": 2
+    },
+    {
+      "elapsedMs": 4177,
+      "stream": "stderr",
+      "characters": 68
+    },
+    {
+      "elapsedMs": 4177,
+      "stream": "stderr",
+      "characters": 2
+    },
+    {
+      "elapsedMs": 4292,
+      "stream": "stderr",
+      "characters": 39
+    },
+    {
+      "elapsedMs": 4338,
+      "stream": "stderr",
+      "characters": 31
+    },
+    {
+      "elapsedMs": 4338,
+      "stream": "stderr",
+      "characters": 157
+    },
+    {
+      "elapsedMs": 4371,
+      "stream": "stderr",
+      "characters": 51
+    },
+    {
+      "elapsedMs": 4407,
+      "stream": "stderr",
+      "characters": 34
+    },
+    {
+      "elapsedMs": 5499,
+      "stream": "stderr",
+      "characters": 57
+    },
+    {
+      "elapsedMs": 5793,
+      "stream": "stderr",
+      "characters": 65
+    },
+    {
+      "elapsedMs": 5793,
+      "stream": "stderr",
+      "characters": 2
+    },
+    {
+      "elapsedMs": 5894,
+      "stream": "stderr",
+      "characters": 43
+    },
+    {
+      "elapsedMs": 5933,
+      "stream": "stderr",
+      "characters": 60
+    },
+    {
+      "elapsedMs": 5935,
+      "stream": "stderr",
+      "characters": 720
+    },
+    {
+      "elapsedMs": 5956,
+      "stream": "stderr",
+      "characters": 126
+    },
+    {
+      "elapsedMs": 6002,
+      "stream": "stderr",
+      "characters": 1688
+    },
+    {
+      "elapsedMs": 6002,
+      "stream": "stderr",
+      "characters": 47
+    },
+    {
+      "elapsedMs": 6042,
+      "stream": "stderr",
+      "characters": 36
+    },
+    {
+      "elapsedMs": 6042,
+      "stream": "stderr",
+      "characters": 32
+    },
+    {
+      "elapsedMs": 6076,
+      "stream": "stderr",
+      "characters": 38
+    },
+    {
+      "elapsedMs": 6076,
+      "stream": "stderr",
+      "characters": 37
+    },
+    {
+      "elapsedMs": 6099,
+      "stream": "stderr",
+      "characters": 71
+    },
+    {
+      "elapsedMs": 6099,
+      "stream": "stderr",
+      "characters": 2
+    },
+    {
+      "elapsedMs": 6198,
+      "stream": "stderr",
+      "characters": 70
+    },
+    {
+      "elapsedMs": 6205,
+      "stream": "stderr",
+      "characters": 119
+    },
+    {
+      "elapsedMs": 6205,
+      "stream": "stderr",
+      "characters": 139
+    },
+    {
+      "elapsedMs": 6240,
+      "stream": "stderr",
+      "characters": 195
+    },
+    {
+      "elapsedMs": 6240,
+      "stream": "stderr",
+      "characters": 44
+    },
+    {
+      "elapsedMs": 6240,
+      "stream": "stderr",
+      "characters": 262
+    },
+    {
+      "elapsedMs": 6240,
+      "stream": "stderr",
+      "characters": 132
+    },
+    {
+      "elapsedMs": 6240,
+      "stream": "stderr",
+      "characters": 393
+    },
+    {
+      "elapsedMs": 6240,
+      "stream": "stderr",
+      "characters": 213
+    },
+    {
+      "elapsedMs": 6321,
+      "stream": "stderr",
+      "characters": 63
+    },
+    {
+      "elapsedMs": 6340,
+      "stream": "stderr",
+      "characters": 1510
+    },
+    {
+      "elapsedMs": 6644,
+      "stream": "stderr",
+      "characters": 72
+    },
+    {
+      "elapsedMs": 6644,
+      "stream": "stderr",
+      "characters": 99
+    },
+    {
+      "elapsedMs": 7146,
+      "stream": "stderr",
+      "characters": 70
+    },
+    {
+      "elapsedMs": 7153,
+      "stream": "stderr",
+      "characters": 253
+    },
+    {
+      "elapsedMs": 7235,
+      "stream": "stderr",
+      "characters": 140
+    },
+    {
+      "elapsedMs": 7271,
+      "stream": "stderr",
+      "characters": 70
+    },
+    {
+      "elapsedMs": 7278,
+      "stream": "stderr",
+      "characters": 253
+    },
+    {
+      "elapsedMs": 7280,
+      "stream": "stderr",
+      "characters": 26
+    },
+    {
+      "elapsedMs": 7283,
+      "stream": "stderr",
+      "characters": 1286
+    },
+    {
+      "elapsedMs": 7286,
+      "stream": "stderr",
+      "characters": 65
+    },
+    {
+      "elapsedMs": 7286,
+      "stream": "stderr",
+      "characters": 49
+    },
+    {
+      "elapsedMs": 7507,
+      "stream": "stderr",
+      "characters": 44
+    },
+    {
+      "elapsedMs": 7507,
+      "stream": "stderr",
+      "characters": 34
+    },
+    {
+      "elapsedMs": 7507,
+      "stream": "stderr",
+      "characters": 138
+    },
+    {
+      "elapsedMs": 7507,
+      "stream": "stderr",
+      "characters": 178
+    },
+    {
+      "elapsedMs": 7581,
+      "stream": "stderr",
+      "characters": 92
+    },
+    {
+      "elapsedMs": 7592,
+      "stream": "stderr",
+      "characters": 39
+    },
+    {
+      "elapsedMs": 7603,
+      "stream": "stderr",
+      "characters": 57
+    },
+    {
+      "elapsedMs": 7627,
+      "stream": "stderr",
+      "characters": 14
+    },
+    {
+      "elapsedMs": 7627,
+      "stream": "stderr",
+      "characters": 29
+    },
+    {
+      "elapsedMs": 7676,
+      "stream": "stderr",
+      "characters": 90
+    },
+    {
+      "elapsedMs": 7676,
+      "stream": "stderr",
+      "characters": 90
+    },
+    {
+      "elapsedMs": 7677,
+      "stream": "stderr",
+      "characters": 90
+    },
+    {
+      "elapsedMs": 7677,
+      "stream": "stderr",
+      "characters": 270
+    },
+    {
+      "elapsedMs": 7691,
+      "stream": "stderr",
+      "characters": 56
+    },
+    {
+      "elapsedMs": 7693,
+      "stream": "stderr",
+      "characters": 59
+    },
+    {
+      "elapsedMs": 7717,
+      "stream": "stderr",
+      "characters": 47
+    },
+    {
+      "elapsedMs": 7723,
+      "stream": "stderr",
+      "characters": 1749
+    },
+    {
+      "elapsedMs": 7810,
+      "stream": "stdout",
+      "characters": 598
+    }
+  ],
+  "leftoverEditorPids": [],
+  "startedAt": "2026-10-08T04:34:23.060Z",
+  "completedAt": "2026-10-08T04:34:31.901Z",
+  "cliVersion": "1.0.0-beta.12",
+  "editorVersion": "6000.6.4f1",
+  "platform": "windows-x64",
+  "args": [
+    "test",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1",
+    "--mode",
+    "EditMode",
+    "--filter",
+    "CliEditTests.Passing",
+    "--output",
+    "<repo>\\experiments\\unity-cli-baseline\\captures\\2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-edit-pass.xml",
+    "--timeout",
+    "90",
+    "--non-interactive",
+    "--no-log-proxy",
+    "--no-banner",
+    "--format",
+    "json",
+    "--",
+    "-nographics"
+  ],
+  "exitCode": 0,
+  "signal": null,
+  "durationMs": 8840,
+  "stdout": "{\n  \"success\": true,\n  \"command\": \"test\",\n  \"data\": {\n    \"projectPath\": \"<repo>\\\\experiments\\\\unity-cli-baseline\\\\fixture-6000.6.4f1\",\n    \"output\": \"<repo>\\\\experiments\\\\unity-cli-baseline\\\\captures\\\\2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-edit-pass.xml\",\n    \"reports\": {\n      \"nunit\": \"<repo>\\\\experiments\\\\unity-cli-baseline\\\\captures\\\\2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-edit-pass.xml\",\n      \"junit\": null\n    },\n    \"coverage\": {\n      \"requested\": false,\n      \"enabled\": false,\n      \"output\": null\n    }\n  },\n  \"errors\": [],\n  \"warnings\": []\n}\n",
+  "stderr": "VBCSCompilerPreWarmer: watching VBCSCompiler (PID 64412)\r\nVBCSCompilerPreWarmer: pre-warm launched (dotnet PID 76140)\r\nVBCSCompiler prewarm took 13.63 ms\r\nVBCSCompilerPreWarmer: watching VBCSCompiler (PID 64412)\r\nVBCSCompilerPreWarmer: pre-warm launched (dotnet PID 76140)\r\nVBCSCompiler prewarm took 13.63 ms\r\n[Licensing::Module] Trying to connect to existing licensing client channel...\r\n[Licensing::IpcConnector] Successfully connected to: \"LicenseClient-<os-user>\" at \"2026-10-08T04:34:24.0167368Z\"\r\nBuilt from '6000.6/staging' branch; Version is '6000.6.4f1 (12bfff696524) revision 1228799'; Using compiler version '194234433'; Build Type 'Release'\r\nOS: 'Windows 10  (10.0.19045) 64bit Enterprise' Language: 'en' Physical Memory: 32702 MB\r\nBatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1\r\nSystem  architecture: x64\r\nProcess architecture: x64\r\nDate: 2026-10-08T04:34:24Z\r\n[Licensing::Client] Code 10 while verifying Licensing Client signature (process Id: 3420, path: \"C:/Program Files/Unity Hub/UnityLicensingClient_V1/Unity.Licensing.Client.exe\")\r\n[Licensing::Module] LicensingClient has failed validation; ignoring\r\n[Licensing::Client] Handshaking with LicensingClient:\r\n  Version:                 1.18.3+d7ffd15\r\n  Session Id:              c440c50e61174a1797d9670476f7d558\r\n  Correlation Id:          7dd4c49322022beedc59f86dc24e9db9\r\n  External correlation Id: 5952909232053419317\r\n  Machine Id:              ahCZEfjKEqWrlAmpZkTuAf1Bp7Q=\r\n[Licensing::Module] Successfully connected to LicensingClient on channel: \"LicenseClient-<os-user>\" (connect: 0.00s, validation: 0.00s, handshake: 0.09s)\r\n[Licensing::IpcConnector] Successfully connected to: \"LicenseClient-<os-user>-notifications\" at \"2026-10-08T04:34:24.1094636Z\"\r\n<redacted credential or identity log line>\r\n<redacted credential or identity log line>\r\n[Licensing::Client] Successfully resolved entitlement details\r\n[Licensing::Module] License group:\r\n  Id: 3011720-UnityPersXXXX\r\n  Product: Unity Personal\r\n  Type: Assigned\r\n  Expiration: Unlimited\r\n[Licensing::Client] Successfully updated license, isAsync: True, time: 0.00\r\n[Licensing::Module] Licensing Background thread has ended after 0.10s\r\n\r\nCOMMAND LINE ARGUMENTS:\r\n<editors>\\6000.6.4f1\\Editor\\Unity.exe\r\n-batchmode\r\n-runTests\r\n-projectPath\r\n<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\r\n-testResults\r\n<repo>\\experiments\\unity-cli-baseline\\captures\\2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-edit-pass.xml\r\n-testPlatform\r\nEditMode\r\n-testFilter\r\nCliEditTests.Passing\r\n-nographics\r\n-hubSessionId\r\ne13b7e89-651f-4408-b7ab-7ab445475146\r\n<redacted credential or identity log line>\r\nqNQrnDeYKDPwvSuR8921MjHbwSS55QkdjN_Znp0GI6A002f\r\nSuccessfully changed project path to: <repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\r\n<repo>/experiments/unity-cli-baseline/fixture-6000.6.4f1\r\n[UnityMemory] Configuration Parameters - Can be set up in boot.config\r\n    \"memorysetup-temp-allocator-size-gi-baking-worker=262144\"\r\n    \"memorysetup-temp-allocator-size-gi-baking-worker=262144\"\r\n    \"memorysetup-temp-allocator-size-gi-baking-worker=262144\"\r\n    \"memorysetup-temp-allocator-size-gi-baking-worker=262144\"\r\n    \"memorysetup-temp-allocator-size-gi-baking-worker=262144\"\r\n    \"memorysetup-temp-allocator-size-nav-mesh-worker=65536\"\r\n    \"memorysetup-temp-allocator-size-audio-worker=65536\"\r\n    \"memorysetup-temp-allocator-size-cloud-worker=32768\"\r\n    \"memorysetup-temp-allocator-size-gfx=262144\"\r\n    \"memorysetup-remapper-allocator-initial-capacity=32768\"\r\n    \"memorysetup-temp-allocator-size-preload-manager=33554432\"\r\n    \"memorysetup-allocator-temp-initial-block-size-main=262144\"\r\n    \"memorysetup-allocator-temp-initial-block-size-worker=262144\"\r\n    \"memorysetup-temp-allocator-size-job-worker=262144\"\r\n    \"memorysetup-temp-allocator-size-background-worker=32768\"\r\n    \"memorysetup-bucket-allocator-granularity=16\"\r\n    \"memorysetup-bucket-allocator-bucket-count=8\"\r\n    \"memorysetup-bucket-allocator-block-size=33554432\"\r\n    \"memorysetup-bucket-allocator-block-count=8\"\r\n    \"memorysetup-main-allocator-block-size=16777216\"\r\n    \"memorysetup-thread-allocator-block-size=16777216\"\r\n    \"memorysetup-main-allocator-mimalloc-enabled=1\"\r\n    \"memorysetup-gfx-main-allocator-block-size=16777216\"\r\n    \"memorysetup-gfx-thread-allocator-block-size=16777216\"\r\n    \"memorysetup-cache-allocator-block-size=4194304\"\r\n    \"memorysetup-typetree-allocator-block-size=2097152\"\r\n    \"memorysetup-profiler-bucket-allocator-granularity=16\"\r\n    \"memorysetup-profiler-bucket-allocator-bucket-count=8\"\r\n    \"memorysetup-profiler-bucket-allocator-block-size=33554432\"\r\n    \"memorysetup-profiler-bucket-allocator-block-count=8\"\r\n    \"memorysetup-profiler-allocator-block-size=16777216\"\r\n    \"memorysetup-profiler-editor-allocator-block-size=1048576\"\r\n    \"memorysetup-temp-allocator-size-main=16777216\"\r\n    \"memorysetup-job-temp-allocator-block-size=2097152\"\r\n    \"memorysetup-job-temp-allocator-block-size-background=1048576\"\r\n    \"memorysetup-job-temp-allocator-reduction-small-platforms=262144\"\r\nProject log output is redirected from a regular file (e.g., to a terminal or pipe), skipping project log.\r\nFailed to start primary listening socket at (0.0.0.0:55504-55512).\r\nPlayer connection [24444]  Target information:\r\n\r\nPlayer connection [24444]  * \"[IP] 192.168.4.23 [Port] 55511 [Flags] 2 [Guid] 217431208 [EditorId] 217431208 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor\" \r\n\r\nPlayer connection [24444]  * \"[IP] 172.30.143.174 [Port] 55511 [Flags] 2 [Guid] 217431208 [EditorId] 217431208 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor\" \r\n\r\nPlayer connection [24444]  * \"[IP] 192.168.240.1 [Port] 55511 [Flags] 2 [Guid] 217431208 [EditorId] 217431208 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor\" \r\n\r\nPlayer connection [24444]  * \"[IP] 192.168.144.1 [Port] 55511 [Flags] 2 [Guid] 217431208 [EditorId] 217431208 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor\" \r\n\r\nPlayer connection [24444]  * \"[IP] 100.96.0.19 [Port] 55511 [Flags] 2 [Guid] 217431208 [EditorId] 217431208 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor\" \r\n\r\nUnable to join player connection multicast group (err: 10013).\r\nPlayer connection [24444] Host joined alternative multi-casting on [225.0.0.222:34997]...\r\nInput System module state changed to: Initialized.\r\n[Physics::Module] Initialized fallback backend.\r\n[Physics::Module] Id: 0xdecafbad\r\n[Package Manager] Connected to IPC stream \"Upm-19600\" after 0.4 seconds.\r\n[Licensing::Client] Successfully resolved entitlement details\r\nLibrary Redirect Path: Library/\r\nInitialising UDS system complete:\r\n  - System type: Client\r\n  - Resource namespace: 268cb477f726162c6fa2ac48a962cb42\r\n  - Shared memory size: 1073741824\r\n  - Command buffer id: 1052576\r\n  - Command buffer size: 8192\r\n  - Hashmap size: 4194304\r\n  - Service connected: false\r\nLaunching Unity Data Store - G:/Unity Launcher/6000.6.4f1/Editor/Data/Tools/Unity.DataStore.exe \r\nUnity Data Store artifact dir = Library/DataStore, working dir = <repo>/experiments/unity-cli-baseline/fixture-6000.6.4f1Unity Data Store running and initialised\r\n[Physics::Module] Selected backend (deferred post-plugins).\r\n[Physics::Module] Name: PhysX\r\n[Physics::Module] Id: 0xf2b8ea05\r\n[Physics::Module] SDK Version: 4.1.2\r\n[Physics::Module] Integration Version: 1.0.0\r\n[Physics::Module] Threading Mode: Multi-Threaded\r\nInitialize engine version: 6000.6.4f1 (12bfff696524)\r\n[EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=1048576, entitiesPerBlock=256, slots reserved=4294967296 bytes\r\n[Subsystems] Discovering subsystems at path G:/Unity Launcher/6000.6.4f1/Editor/Data/Resources/UnitySubsystems\r\n[Subsystems] Discovering subsystems at path <repo>/experiments/unity-cli-baseline/fixture-6000.6.4f1/Assets\r\nForcing GfxDevice: Null\r\nGfxDevice: creating device client; kGfxThreadingModeNonThreaded\r\nNullGfxDevice:\r\n    Version:  NULL 1.0 [1.0]\r\n    Renderer: Null Device\r\n    Vendor:   Unity Technologies\r\nInitialize mono\r\nMono path[0] = 'G:/Unity Launcher/6000.6.4f1/Editor/Data/Managed'\r\nMono path[1] = 'G:/Unity Launcher/6000.6.4f1/Editor/Data/BCLExtensions/runtime/netstandard2.1'\r\nMono path[2] = 'G:/Unity Launcher/6000.6.4f1/Editor/Data/MonoBleedingEdge/lib/mono/unityjit-win32'\r\nMono config path = 'G:/Unity Launcher/6000.6.4f1/Editor/Data/MonoBleedingEdge/etc'\r\nUsing monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56600\r\nCodeReloadManager initialized\r\nImportWorker Server TCP listen port: 0\r\nAcceleratorClientConnectionCallback - disconnected - :0\r\nBegin MonoManager ReloadAssembly\r\nRegistering precompiled unity dll's ...\r\nRegister platform support module: G:/Unity Launcher/6000.6.4f1/Editor/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll\r\nRegistered in 0.001542 seconds.\r\nNative extension for WindowsStandalone target not found\r\nPackage Manager log level set to [2]\r\nScheduleIndexationOnStartup MainProcess:False IndexOnStartup:False\r\nScripting: successfully reloaded assembly\r\n- Finished resetting the current domain, in  0.948 seconds\r\nDomain Reload Profiling: 1654ms\r\n\tBeginReloadAssembly (206ms)\r\n\t\tCreateAndSetChildDomain (3ms)\r\n\tRebuildCommonClasses (6ms)\r\n\tRebuildNativeTypeToScriptingClass (23ms)\r\n\tinitialDomainReloadingComplete (82ms)\r\n\tLoadAllAssembliesAndSetupDomain (388ms)\r\n\t\tLoadAssemblies (203ms)\r\n\t\tTypeCache.Refresh (268ms)\r\n\t\t\tTypeCache.ScanAssembly (250ms)\r\n\t\tAnalyzeDomain (1ms)\r\n\tFinalizeReload (950ms)\r\n\t\tSetupLoadedEditorAssemblies (0ms)\r\n\t\t\tInitializePlatformSupportModulesInManaged (3ms)\r\n\t\t\tBeforeProcessingInitializeOnLoad (153ms)\r\n\t\t\tProcessInitializeOnLoadAttributes (192ms)\r\n\t\t\tProcessInitializeOnLoadMethodAttributes (298ms)\r\n[Licensing::Client] Successfully resolved entitlement details\r\nApplication.AssetDatabase Initial Refresh Start\r\n[Package Manager] Restoring resolved packages state from cache\r\n[Licensing::Client] Successfully resolved entitlement details\r\n[Package Manager] Registered 4 packages:\r\n  Built-in packages:\r\n    com.unity.modules.imgui@1.0.0 (location: <repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Library\\PackageCache\\com.unity.modules.imgui)\r\n    com.unity.modules.jsonserialize@1.0.0 (location: <repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Library\\PackageCache\\com.unity.modules.jsonserialize)\r\n  Local packages:\r\n    com.unity.test-framework@file:<editors>\\6000.6.4f1\\Editor\\Data\\Resources\\PackageManager\\BuiltInPackages\\com.unity.test-framework (location: <editors>\\6000.6.4f1\\Editor\\Data\\Resources\\PackageManager\\BuiltInPackages\\com.unity.test-framework)\r\n    com.unity.ext.nunit@file:<editors>\\6000.6.4f1\\Editor\\Data\\Resources\\PackageManager\\BuiltInPackages\\com.unity.ext.nunit (location: <editors>\\6000.6.4f1\\Editor\\Data\\Resources\\PackageManager\\BuiltInPackages\\com.unity.ext.nunit)\r\n[Subsystems] No new subsystems found in resolved package list.\r\n[Package Manager] Done registering packages in 0.01 seconds\r\nStarting: <editors>\\6000.6.4f1\\Editor\\Data\\Tools\\BuildPipeline\\bee_backend.exe --ipc --defer-dag-verification --dagfile=\"Library/Bee/1900b0aEDbg.dag\" --continue-on-failure --profile=\"Library/Bee/backend1.traceevents\" ScriptAssemblies\r\nWorkingDir: <repo>/experiments/unity-cli-baseline/fixture-6000.6.4f1\r\nDisplayProgressbar: Compiling Scripts\r\nExitCode: 0 Duration: 0s162ms\r\n[197/213    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput\r\n*** Tundra build success (0.12 seconds), 1 items updated, 213 evaluated\r\nAssetDatabase: script compilation time: 0.639388s\r\nBegin MonoManager ReloadAssembly\r\nNative extension for WindowsStandalone target not found\r\nScheduleIndexationOnStartup MainProcess:True IndexOnStartup:False\r\nScripting: successfully reloaded assembly\r\n- Finished resetting the current domain, in  0.671 seconds\r\nDomain Reload Profiling: 1490ms\r\n\tBeginReloadAssembly (467ms)\r\n\t\tDisableScriptedObjects (29ms)\r\n\t\tCreateAndSetChildDomain (175ms)\r\n\tRebuildCommonClasses (13ms)\r\n\tRebuildNativeTypeToScriptingClass (22ms)\r\n\tinitialDomainReloadingComplete (61ms)\r\n\tLoadAllAssembliesAndSetupDomain (255ms)\r\n\t\tLoadAssemblies (294ms)\r\n\t\tTypeCache.Refresh (15ms)\r\n\t\t\tTypeCache.ScanAssembly (9ms)\r\n\t\tAnalyzeDomain (7ms)\r\n\t\t\tBuildScriptInfoCaches (5ms)\r\n\tFinalizeReload (673ms)\r\n\t\tSetupLoadedEditorAssemblies (0ms)\r\n\t\t\tBeforeProcessingInitializeOnLoad (166ms)\r\n\t\t\tProcessInitializeOnLoadAttributes (91ms)\r\n\t\t\tProcessInitializeOnLoadMethodAttributes (74ms)\r\n\t\t\tAfterProcessingInitializeOnLoad (6ms)\r\n\t\tAwakeInstancesAfterBackupRestoration (50ms)\r\nStarting new worker id: 0 with log in <repo>/experiments/unity-cli-baseline/fixture-6000.6.4f1/Logs/AssetImportWorkerHW0.log\r\n\r\nAsset Pipeline Refresh (id=f394fb8f84afe7645a045071339e95cb): Total: 2.443 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)\r\n\t(Values over 0.05ms)\r\n\tSummary:\r\n\t\tImports: total=0 (actual=0, local cache=0, cache server=0)\r\n\t\tAsset DB Process Time: managed=0 ms, native=894 ms\r\n\t\tAsset DB Callback time: managed=32 ms, native=10 ms\r\n\t\tScripting: domain reloads=1, domain reload time=851 ms, compile time=642 ms, other=11 ms\r\n\t\tProject Asset Count: scripts=85, non-scripts=12\r\n\t\tAsset File Changes: new=0, changed=0, moved=0, deleted=0\r\n\t\tScan Filter Count: 0\r\n\tInvokePackagesCallback: 16.701ms\r\n\tApplyChangesToAssetFolders: 0.632ms\r\n\tScan: 75.373ms\r\n\tCollect global state as custom dependencies: 11.672ms\r\n\tCategorizeScriptCompilationAssets: 2.431ms\r\n\tProcessAssetsWithTransientArtifactChanges: 5.677ms\r\n\tCategorizeAssets: 0.851ms\r\n\tCompileScripts: 642.337ms\r\n\tImportOutOfDateAssets: 687.398ms (673.232ms without children)\r\n\t\tUnloadImportedAssets: 0.144ms\r\n\t\tEnsureUptoDateAssetsAreRegisteredWithGuidPM: 0.115ms\r\n\t\tImportSchedulerStart: 13.904ms\r\n\tPostProcessAllAssets: 32.125ms\r\n\t\tMonoPostProcessAllAssets: 32.051ms\r\n\t\t\tWindowAssetPostprocessingWatcher.OnPostprocessAllAssets 14.990ms\r\n\t\t\tSyncVS.PostprocessSyncProject 2.431ms\r\n\t\t\tEditModeScopePostprocessor.OnPostprocessAllAssets 1.125ms\r\n\t\t\tSpeedTree9Postprocessor.OnPostprocessAllAssets 0.870ms\r\n\t\t\tTerrainToolbarOverlayPostProcessor.OnPostprocessAllAssets 0.325ms\r\n\t\t\tAssetDatabaseCallbacks.OnPostprocessAllAssets 0.247ms\r\n\t\t\tReferencedClipsPostProcessor.OnPostprocessAllAssets 0.188ms\r\n\t\t\tRenderPipelineGlobalSettingsPostprocessor.OnPostprocessAllAssets 0.098ms\r\n\tUnloadStreamsBegin: 1.866ms\r\n\tUntracked: 940.669ms\r\n\r\nApplication.AssetDatabase Initial Refresh End\r\nScanning for USB devices : 3.534ms\r\nInitializing Unity extensions:\r\n[MODES] ModeService[none].Initialize\r\n[MODES] ModeService[none].LoadModes\r\n[MODES] Loading mode Default (0) for mode-current-id-fixture-6000.6.4f1\r\nUnloading 3 Unused Serialized files (Serialized files now loaded: 0)\r\nUnloading 410 unused Assets / (0.6 MB). Loaded Objects now: 1132.\r\nMemory consumption went from 222.2 MB to 221.6 MB.\r\nTotal: 6.168400 ms (FindLiveObjects: 0.242600 ms CreateObjectMapping: 0.035500 ms MarkObjects: 5.421100 ms  DeleteObjects: 0.311900 ms)\r\n\r\nMicrosoft Media Foundation video decoding to texture disabled: graphics device is Null, only Direct3D 11 and Direct3D 12 (only on desktop) are supported for hardware-accelerated video decoding.\r\n[Project] Loading completed in 5.319 seconds\r\n\tProject init time: \t\t\t\t4.930 seconds\r\n\t\tTemplate init time: \t\t0.000 seconds\r\n\t\tPackage Manager init time: \t\t0.362 seconds\r\n\t\tAsset Database init time: \t\t0.196 seconds\r\n\t\tGlobal illumination init time: \t0.003 seconds\r\n\t\tAssemblies load time: \t\t\t1.710 seconds\r\n\t\tUnity extensions init time: \t0.003 seconds\r\n\t\tAsset Database refresh time: \t2.443 seconds\r\n\tScene opening time: \t\t\t0.141 seconds\r\n##utp:{\"type\":\"ProjectInfo\",\"version\":2,\"phase\":\"Immediate\",\"time\":1791434069302,\"processId\":19600,\"projectLoad\":5.3186415,\"projectInit\":4.9300475,\"templateInit\":0.0,\"packageManagerInit\":0.3617288,\"assetDatabaseInit\":0.1960222,\"globalIlluminationInit\":0.0034136,\"assembliesLoad\":1.7102834,\"unityExtensionsInit\":0.0028769999999999998,\"assetDatabaseRefresh\":2.4434459,\"sceneOpening\":0.1407019}\r\n##utp:{\"type\":\"EditorInfo\",\"version\":2,\"phase\":\"Immediate\",\"time\":1791434069302,\"processId\":19600,\"editorVersion\":\"6000.6.4f1 (12bfff696524)\",\"branch\":\"6000.6/staging\",\"buildType\":\"Release\",\"platform\":\"Windows\"}\r\n[Licensing::Client] Successfully resolved entitlement details\r\nRunning tests for ExecutionSettings with details:\r\ntargetPlatform = \r\nplayerHeartbeatTimeout = 600\r\nfilters[0] = \r\n   Filter with settings:\r\n   testMode = EditMode\r\n   targetPlatform = \r\n   testNames = null\r\n   groupNames = CliEditTests.Passing\r\n   categoryNames = null\r\n   assemblyNames = null\r\nignoreTests = {}\r\nfeatureFlags = null\r\n\r\nUnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)\r\nUnityEngine.StackTraceUtility:ExtractStackTrace ()\r\nUnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)\r\nUnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])\r\nUnityEngine.Logger:Log (UnityEngine.LogType,object)\r\nUnityEngine.Debug:Log (object)\r\nUnityEditor.TestTools.TestRunner.CommandLineTest.Executer:InitializeAndExecuteRun (string[]) (at G:/Unity Launcher/6000.6.4f1/Editor/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework/UnityEditor.TestRunner/CommandLineTest/Executer.cs:53)\r\nUnityEditor.TestTools.TestRunner.CommandLineTest.TestStarter:InitializeAndExecuteRun () (at G:/Unity Launcher/6000.6.4f1/Editor/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework/UnityEditor.TestRunner/CommandLineTest/TestStarter.cs:64)\r\nUnityEditor.EditorApplication:Internal_CallUpdateFunctions ()\r\n\r\n(Filename: G:/Unity Launcher/6000.6.4f1/Editor/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework/UnityEditor.TestRunner/CommandLineTest/Executer.cs Line: 53)\r\n\r\n[UnityConnectServicesConfig] config is NOT valid, switching to default\r\nCreated GICache directory at G:/Unity Launcher/GiCache. Took: 0.019s, timestamps: [5.324 - 5.343]\r\nUnloading 2 Unused Serialized files (Serialized files now loaded: 0)\r\nUnloading 0 unused Assets / (0 B). Loaded Objects now: 1288.\r\nMemory consumption went from 224.4 MB to 224.4 MB.\r\nTotal: 6.525800 ms (FindLiveObjects: 0.179400 ms CreateObjectMapping: 0.011900 ms MarkObjects: 6.204500 ms  DeleteObjects: 0.004900 ms)\r\n\r\nSaving results to: <repo>\\experiments\\unity-cli-baseline\\captures\\2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-edit-pass.xml\r\nUnloading 0 Unused Serialized files (Serialized files now loaded: 0)\r\nUnloading 0 unused Assets / (0 B). Loaded Objects now: 1288.\r\nMemory consumption went from 227.0 MB to 227.0 MB.\r\nTotal: 6.398300 ms (FindLiveObjects: 0.174100 ms CreateObjectMapping: 0.013100 ms MarkObjects: 6.076900 ms  DeleteObjects: 0.004600 ms)\r\n\r\nDisplayProgressbar: Undo\r\nTest run completed. Exiting with code 0 (Ok). Run completed.\r\nUnityEngine.Debug:ExtractStackTraceNoAlloc (byte*,int,string)\r\nUnityEngine.StackTraceUtility:ExtractStackTrace ()\r\nUnityEngine.DebugLogHandler:Internal_Log (UnityEngine.LogType,UnityEngine.LogOption,string,UnityEngine.Object)\r\nUnityEngine.DebugLogHandler:LogFormat (UnityEngine.LogType,UnityEngine.Object,string,object[])\r\nUnityEngine.Logger:Log (UnityEngine.LogType,object)\r\nUnityEngine.Debug:Log (object)\r\nUnityEditor.TestTools.TestRunner.CommandLineTest.Executer:ExitApplication (UnityEditor.TestTools.TestRunner.CommandLineTest.Executer/ReturnCodes,string) (at G:/Unity Launcher/6000.6.4f1/Editor/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework/UnityEditor.TestRunner/CommandLineTest/Executer.cs:81)\r\nUnityEditor.TestTools.TestRunner.CommandLineTest.Executer:ExitIfRunIsCompleted () (at G:/Unity Launcher/6000.6.4f1/Editor/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework/UnityEditor.TestRunner/CommandLineTest/Executer.cs:74)\r\nUnityEditor.EditorApplication:Internal_CallUpdateFunctions ()\r\n\r\n(Filename: G:/Unity Launcher/6000.6.4f1/Editor/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework/UnityEditor.TestRunner/CommandLineTest/Executer.cs Line: 81)\r\n\r\nMonoPathRemapper: Attempts to remap: 3156; Successful remaps: 8\r\nSerialized file version minimum: 23, current 23\r\n[Physics::Module] Cleanup current backend.\r\n[Physics::Module] Id: 0xf2b8ea05\r\nInput System module state changed to: ShutdownInProgress.\r\nInput Polling Thread exited.\r\nInput System module state changed to: Shutdown.\r\n[Licensing::IpcConnector] LicenseClient-<os-user>-notifications channel disconnected successfully.\r\n[Licensing::IpcConnector] LicenseClient-<os-user> channel disconnected successfully.\r\nUnity Data Store service was successfully shut down\r\nUDS shutting down local client system\r\nShut down UDS service system complete\r\nAcceleratorClientConnectionCallback - disconnected - :0\r\nCleanup mono\r\nCodeReloadManager destroyed\r\nabort_threads: Failed aborting id: 000000000000476C, mono_thread_manage will ignore it\r\n\r\nabort_threads: Failed aborting id: 0000000000003C3C, mono_thread_manage will ignore it\r\n\r\nabort_threads: Failed aborting id: 0000000000002DCC, mono_thread_manage will ignore it\r\n\r\nabort_threads: Failed aborting id: 000000000000476C, mono_thread_manage will ignore it\r\n\r\nabort_threads: Failed aborting id: 0000000000003C3C, mono_thread_manage will ignore it\r\n\r\nabort_threads: Failed aborting id: 0000000000002DCC, mono_thread_manage will ignore it\r\n\r\nVBCSCompilerPreWarmer: requested VBCSCompiler shutdown\r\nChecking for leaked weakptr:\r\n  Found no leaked weakptrs.\r\n[Package Manager] Server process was shutdown\r\n##utp:{\"type\":\"MemoryLeaks\",\"version\":2,\"phase\":\"Immediate\",\"time\":1791434070785,\"processId\":19600,\"allocatedMemory\":10298463,\"memoryLabels\":[{\"Default\":148273},{\"Permanent\":15516},{\"NewDelete\":68647},{\"Thread\":4197944},{\"Manager\":30781},{\"VertexData\":8},{\"Geometry\":816},{\"Texture\":24},{\"Shader\":831840},{\"Material\":132},{\"GfxDevice\":55968},{\"Animation\":952},{\"Audio\":696},{\"FreeType\":8},{\"FontEngine\":736},{\"Physics\":1970},{\"Physics2D\":16},{\"Serialization\":16832},{\"Input\":42840},{\"JobScheduler\":256},{\"TextLib\":280},{\"Mono\":48},{\"ScriptingNativeRuntime\":1218320},{\"BaseObject\":49296},{\"Resource\":1444},{\"Renderer\":2504},{\"Transform\":4685},{\"File\":4416},{\"WebCam\":616},{\"Culling\":32},{\"Terrain\":11442},{\"Wind\":24},{\"STL\":40},{\"String\":15464},{\"StaticString\":3808},{\"Utility\":2673718},{\"Curl\":2498},{\"PoolAlloc\":2168},{\"AI\":80},{\"TypeTree\":14869},{\"ScriptManager\":12656},{\"CodeReload\":448},{\"RuntimeInitializeOnLoadManager\":64},{\"Sprites\":102},{\"SpriteAtlas\":120},{\"GI\":7816},{\"Director\":8296},{\"CloudService\":288},{\"WebRequest\":552},{\"VR\":49650},{\"SceneManager\":608},{\"Video\":64},{\"LazyScriptCache\":32},{\"Camera\":729},{\"Secure\":2377},{\"SerializationCache\":9256},{\"APIUpdating\":10320},{\"Subsystems\":336},{\"VirtualTexturing\":57888},{\"StaticSafetyDebugInfo\":278528},{\"Analytics\":464},{\"Hierarchy\":1188},{\"UIElements\":40},{\"CoreStats\":14456},{\"Identifiers\":7152},{\"Gui\":128},{\"EditorUtility\":111215},{\"VersionControl\":8},{\"Undo\":931},{\"AssetDatabase\":233439},{\"AssetImporter\":40},{\"EditorGi\":328},{\"UnityConnect\":40513},{\"Upm\":1912},{\"UpmDiagnostics\":8},{\"AssetCompliance\":96},{\"DrivenProperties\":72},{\"LocalIPC\":260},{\"ProfilerEditor\":9746},{\"CoreBusinessMetrics\":3190},{\"Windowing\":456},{\"Licensing\":12620},{\"AssetReference\":32},{\"IPCStream\":32}]}\r\n",
+  "editorLog": null,
+  "xmlProduced": true,
+  "buildArtifactPresentAfter": false,
+  "projectVersionFileUnchanged": true,
+  "projectVersionAfter": "m_EditorVersion: 6000.6.4f1\nm_EditorVersionWithRevision: 6000.6.4f1 (12bfff696524)\n",
+  "declaredEditorVersionUnchanged": true,
+  "redactions": [
+    "repository/user roots",
+    "Editor roots",
+    "OS-user/host identifiers",
+    "credential/identity log lines"
+  ]
+}

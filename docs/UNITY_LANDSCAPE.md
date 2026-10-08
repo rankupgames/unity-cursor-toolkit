@@ -1,6 +1,6 @@
 # Unity landscape research
 
-Last reviewed: 2026-08-26
+Last reviewed: 2026-10-08 (CLI baseline and classified inventory; older captures remain dated)
 
 This is dated research input, not a support claim. Nothing here certifies that the toolkit supports Unity 7, the
 standalone CLI, or the Pipeline package.
@@ -101,6 +101,93 @@ docs. Documentation status reviewed 2026-08-13. Captured release: `1.0.0-beta.3`
   Dashboard, Editor package, and REST API.
 - `unity --help` is authoritative for the installed beta. The web reference can trail newly shipped commands and
   flags.
+
+### 3.0 Installed CLI capture, 2026-10-08
+
+The installed Windows x64 binary is pinned to `1.0.0-beta.12`, beta channel, SHA-256
+`94047d1d84d66fc178cee541a9c3f69d2199edf15cdf37d3f308d7d9fb064a96`.
+Unity's [release notes](https://docs.unity.com/en-us/unity-cli/release-notes) date this release to September 30, 2026.
+It is eight days old on this capture date. The original installation date and its age check are not established.
+No CLI, Editor, or package install or upgrade was performed for this capture.
+
+[Baseline evidence](../experiments/unity-cli-baseline/captures/2026-10-08-cli-1.0.0-beta.12-windows-x64.json)
+contains version/build identity, doctor, environment, installed Editors, sanitized authentication state,
+root help, and help for editors, open, build, run, test, pipeline, command, list, status, and mcp.
+[Capture script](../experiments/unity-cli-baseline/capture-baseline.js) refuses a different CLI version.
+Account identifiers, credentials, OS-user/host identifiers, local roots, and doctor recent-log contents are omitted or redacted.
+Capture scripts derive Editor roots from the installed inventory; they contain no machine-specific installation path.
+This installed capture supersedes the August CLI contract below; historical package observations remain separate.
+
+Installed Editors were `6000.3.9f1`, `6000.3.25f1`, `6000.6.4f1`, and `7000.0.0a7`.
+The module inventory records Android as installed for `6000.3.9f1` and available, not installed,
+for `6000.6.4f1`. Installed-module listing alone does not prove build preflight enforcement.
+
+| Contract | Installed beta.12 evidence | Limit |
+| --- | --- | --- |
+| Formats | Root and requested command help advertise human, JSON, TSV, NDJSON, and github | Per-command progress/result framing must be proved |
+| Piped default | Installed-Editor listing without a format produces TSV | Select an explicit format in automation |
+| JSON | Version and usage failures use success/command/data/errors/warnings envelopes | Do not infer every command has identical data |
+| NDJSON | Version emits one bare version object per line | It is not a terminal result envelope; long operations need separate proof |
+| Usage failure | Invalid command and option exit 2 with INVALID_COMMAND_ARGS | Other error classes are not inferred from this case |
+| Missing exact Editor | Empty fixture declares 6000.6.999f1; noninteractive open exits 6, naming that version | Does not prove launch/module selection for an installed version |
+| Run/build/test timeout | All three installed help pages expose timeout in seconds | Timeout cleanup and leftover processes need execution proof |
+| Test selection/reporting | Mode, filter, NUnit/JUnit, sharding, retries, failed/affected selection, coverage | No test discovery/list option is advertised by installed test help |
+| Registered headless command | Run exposes command and parses following arguments against its schema | Requires a verified Pipeline package and registered handler |
+
+The [missing-Editor evidence](../experiments/unity-cli-baseline/captures/2026-10-08-cli-1.0.0-beta.12-windows-x64-missing-editor.json)
+records arguments, both streams, exit code, and the complete empty fixture inputs. The fixture was removed afterward.
+It did not install the missing Editor or select a newer installed Editor.
+
+The current [CLI reference](https://docs.unity.com/en-us/unity-cli/unity-cli-reference#exit-codes)
+documents 0 success, 1 general error, 2 usage, 3 authentication/authorization, 4 missing configuration,
+6 incomplete/failed operation, 7 unavailable service or Editor connection, 8 completed tests with failures,
+130 interruption, and 143 termination. Baseline diagnostics observe 0 and 2; the missing-Editor proof observes 6.
+The old blanket test-failure code 6 below is not a current contract. The execution proof below observes test failure 8 and native Ctrl+C 130.
+
+The [exact-version fixture source](../experiments/unity-cli-baseline/fixture/Assets/Editor/CliProof.cs)
+and [proof runner](../experiments/unity-cli-baseline/capture-proof.js) add no production backend.
+The runner creates a separate project declaring one exact installed version; it does not upgrade the sample project.
+Unity `6000.6.4f1 (12bfff696524)` used its shipped Test Framework `1.8.0` and NUnit `2.1.0` through local file references.
+The existing cached Test Framework `1.6.0` failed to compile on this Editor because AssemblyFlags was ambiguous.
+That failure is retained; no package source was patched. A separate `6000.3.9f1` empty fixture batch run also passed.
+
+All execution captures use the prefix
+`experiments/unity-cli-baseline/captures/2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-`.
+Each JSON contains the actual arguments, stdout, stderr, Editor log where present, duration, project-version check,
+and the exact owned-project leftover-process query result. No case left an owned Editor running.
+Unity added revision metadata on first import; the declared Editor version remained unchanged.
+NUnit XML is retained verbatim beside each completed test capture. Raw logs can contain harmless analyzer or licensing-validation warnings;
+the recorded exit and result are reported separately from those messages.
+
+| Case suffix | Observed result | Coverage or gap |
+| --- | --- | --- |
+| run.json | Exit 0; CLI_PROOF_RUNTIME 6000.6.4f1 | Exact installed-Editor batch execution covered |
+| edit-pass.json / .xml | Exit 0; one passing filtered EditMode test | Mode, filter, XML covered |
+| edit-fail.json / .xml | Exit 8, TESTS_FAILED; one failed test | Completed test failure differs from incomplete operation |
+| play-pass.json / .xml | Exit 0; one passing PlayMode test | PlayMode covered |
+| play-progress.json / .xml | Exit 0; 30 progress log markers over a 39.75-second invocation | Marker 0 arrived at 7.962 s; marker 29 at 36.977 s; stderr carries logs |
+| test-timeout.json | Exit 6, TEST_TIMED_OUT; 10-second setting, 11.782-second invocation; no XML | Timeout and owned-Editor cleanup covered |
+| test-cancel.json | Native PTY Ctrl+C; child CLI exit 130 after 16.076 s; no XML, no owned Editor | Cancellation and cleanup covered; the interrupted parent shell exited 1 |
+| test-list.json | Exit 2, INVALID_COMMAND_ARGS for list | Native CLI discovery missing in this installed contract; no second launcher added |
+| build.json | Exit 0; nonsigning Windows development build | Basic build covered; default none versioning allowed the dirty tree |
+| build-dirty-versioned.json | Exit 6 naming uncommitted changes | Dirty guard covered with semantic versioning |
+| build-versioned.json | Exit 0 with semantic versioning and allow-dirty-build | Explicit guard override covered |
+| missing-module.json | Exit 6; Editor reports unsupported Android target | Per-Editor inventory proves Android exists only on 6000.3.9f1; CLI error does not name the missing module, so resolution acceptance is partial |
+| registered-command.json | Exit 6 naming absent com.unity.pipeline | Registered CliCommand execution blocked; no install or imitation |
+| run-timeout.json / build-timeout.json | Exit 6 after about 17 s with 15-second settings | Owned Editor cleanup covered; deliberate partial Temp file retained by the fixture |
+| run-reserved-flag.json / build-reserved-flag.json | Exit 6 for forwarded quit/nographics flags | CLI-managed reserved flags must not be repeated |
+
+The build method honors the forwarded buildTarget and buildOutput arguments. A custom method remains responsible for its build options.
+The Android refusal comes from BuildPipeline, not a proven CLI module preflight. The real sample's declared Editor remains `6000.3.9f1`;
+CLI-driven real-project launch/resolution is not established by the isolated fixture.
+Shared pre-existing build outputs remain present after failed cases. A presence flag does not mean a failed case created a Player.
+
+Installed output behavior needs per-command handling. Test JSON returned valid result envelopes and report paths on stdout while logs streamed to stderr.
+The long PlayMode NDJSON run emitted no stdout result frames; its logs streamed to stderr, with NUnit XML and exit 0 carrying the result. Build JSON emitted progress records,
+Editor text, then a formatted JSON result on stdout, so the complete stream was not one JSON document.
+Version JSON/NDJSON worked as recorded above. Automation must not use those version examples as a universal parser contract.
+Partial Player output under a real interrupted build and project-specific command parity remain unproved.
+These results do not justify replacing the existing toolkit batch launcher or adding a second test launcher.
 
 ### 3.1 Command-line surface map
 
@@ -254,7 +341,9 @@ proxies or wraps Pipeline commands.
 Assistant MCP capture completed 2026-08-02. Standalone CLI and Pipeline implications added 2026-08-07. Documentation
 status reviewed 2026-08-13.
 
-Both inventories are observed, not read off marketing pages. Raw captures live in `.agent/runs/TASK-6.1/artifacts/`.
+Both inventories were observed on the historical capture dates, not inferred from marketing pages.
+The recorded raw-capture location was `.agent/runs/TASK-6.1/artifacts/`; those artifacts are unavailable in this checkout.
+The historical inventory below cannot be independently replayed from these missing files and is not a current registration claim.
 This section compares the AI Assistant MCP (`com.unity.ai.assistant`) with Unity Cursor Toolkit. The standalone
 `unity` CLI and `com.unity.pipeline` are a different product and transport; sections 3 and 4 own those.
 
@@ -431,6 +520,40 @@ unity pipeline install --package-version 0.4.0-exp.1
 unity pipeline list && unity status && unity list
 unity command editor_status
 ```
+
+### 5.10 Classified composition inventory, 2026-10-08
+
+Each origin has its own identity and transport. These rows classify capabilities, not tool counts.
+Assistant and Pipeline registration have not been recaptured in this checkout; their historical snapshots are not current support evidence.
+
+| Origin | Source identity/date | Minimum Editor | Transport and execution |
+| --- | --- | --- | --- |
+| toolkit | Package 1.1.0; current source reviewed 2026-10-08 | Declared 2019.4; exact-version proof remains separate | Node stdio to toolkit TCP bridge; live Editor; explicit editorBatchmode game command path |
+| Assistant MCP | 2.17.0-pre.1 capture 2026-08-02; versioned docs checked 2026-10-08 | Captured 6000.0.60f1 | Relay stdio with local IPC to a live Editor; batchmode capture does not make commands headless |
+| CLI | Installed 1.0.0-beta.12 capture 2026-10-08 | Independent binary; launched Editor must match project | Local process; build/run/test batchmode; command/list/status/mcp target Pipeline |
+| Pipeline | 0.4.0-exp.1 documentation checked 2026-10-08; registration not recaptured | Documented Unity 6.0; individual commands can be narrower | Authenticated loopback HTTP in live Editor or development Player; CLI MCP adds stdio |
+
+| Capability and origin | Risk class | Composition status |
+| --- | --- | --- |
+| Project/console reads: toolkit project_info/read_console; Assistant Unity_GetProjectData/Unity_GetConsoleLogs; Pipeline status/console reads | Read-only | Overlap; fresh official schemas and registration still required |
+| Scene/object reads: toolkit getHierarchy/find/getProperties; Assistant and Pipeline scene/object queries | Read-only | Overlap; classify actions rather than entire multi-action tools |
+| Scene/object/material changes: all three Editor surfaces | Mutating | Overlap; preserve each origin's confirmation and dry-run semantics |
+| Asset deletion: toolkit manage_asset delete; Assistant asset management; Pipeline delete asset | Destructive | Overlap; never present as read-only through a proxy |
+| Play mode and menu execution: toolkit, Assistant, Pipeline | Mutating | Overlap; project code can execute, so read-only status is separate |
+| Build/test execution: toolkit build_trigger/editor_validation; CLI build/test; Pipeline build/test | Mutating | Overlap in workflow intent; process, result, discovery, and cancel parity unproved |
+| Standalone Editor/module management: CLI | Mutating; uninstall destructive | Distinct local lifecycle surface; does not establish safe project upgrade behavior |
+| Generic code evaluation: Assistant Unity_RunCommand; Pipeline eval/eval_file | Policy escape | Arbitrary C# can exceed narrower tool policy; block or isolate for read-only composition |
+| Registered headless command: CLI run command; toolkit game_command editorBatchmode | Mutating | Similar deployment intent, different registration contract; no automatic substitution |
+| Profiler capture lifecycle and console-fused sessions: toolkit profiler_snapshot | Read-only reads; mutating save; destructive clear | Distinct from dated Assistant loaded-capture analysis; broader Pipeline comparison unproved |
+| Asset graph/meta queries: toolkit unity_context query/read/summary and resolve_meta | Read-only | Distinct graph contract in dated comparison; current official equivalent unproved |
+| Viewport stream and input: toolkit viewport_stream | Read-only status; mutating session/input | Candidate distinction from historical single captures; no current uniqueness claim |
+| Batch execution: toolkit batch_execute | Inherits mutating/destructive children | Propagate child classifications and origin; official batching parity unproved |
+
+Toolkit classifications come from [toolMetadata.ts](../unity-cursor-toolkit/src/mcp/toolMetadata.ts).
+Official rows use the [versioned Assistant overview](https://docs.unity3d.com/Packages/com.unity.ai.assistant@2.17/manual/integration/unity-mcp-overview.html),
+[Pipeline 0.4 documentation](https://docs.unity3d.com/Packages/com.unity.pipeline@0.4/manual/index.html),
+and installed CLI help in the linked baseline capture. Package documentation is not an observed enabled-tool inventory.
+No proxy, adapter, debugger, or fallback backend was added. Current official inventories and execution proofs remain prerequisites for composition spikes.
 
 ## 6. Sources
 
