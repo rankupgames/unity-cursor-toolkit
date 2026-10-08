@@ -382,6 +382,22 @@ is the only project source copied into TEMP. No sample, toolkit package or user 
 This proves one isolated install and read path. It does not establish command safety, MCP composition,
 development-Player behavior or newer Editor compatibility.
 
+### Current transport and composition proof, 2026-10-08
+
+The proof-only [composition experiment](../experiments/pipeline-composition-spike/DECISION.md) compares direct CLI and stdio MCP with CLI 1.0.0-beta.12, Pipeline 0.8.0-exp.1, and two exact 6000.3.9f1_7a9955a4f2fa disposable Windows Editors. The [completed capture](../experiments/pipeline-composition-spike/results/2026-10-08T06-32-23-165Z-windows-x64.json) records a fresh eligibility gate before the second explicit-pin install, distinct seeded target results, transport refusals, authoring checks, and both normal shutdowns. The second resolved pin and 13-package lock were inspected after shutdown.
+
+Both servers had loopback listeners. Requests through a routable host interface failed with ECONNRESET; missing/wrong credentials returned 401, valid in-memory credentials returned 200, and foreign/null Origins returned 403. The Library descriptor had inheritance disabled and one current-user FullControl grant. Library/ is declared ignored in these non-Git fixtures; Git ignore behavior is not claimed. Source permits Origin: null through a separate browser opt-in, so the observed rejection describes the tested default only. Credential values, host interface addresses, account identifiers, and machine paths are omitted.
+
+The [source-reviewed matrix](../experiments/pipeline-composition-spike/command-risk-matrix.json) covers the whole 160-command package catalog: 50 read-only, 62 mutating, 30 destructive, and 18 policy-escape. It records relative source paths, symbols, lines, and reasons. Arbitrary eval/menu/package-source paths, imported caller C#, and reflected custom getters/setters remain outside the read-only prototype. Some labels are conservative source inferences; no exploit was executed. The refusal-only bake_navmesh_surfaces implementation is classified for this exact version, not its advertised name.
+
+The authoring checks observed the confined root before calls. Deletion dry-run preserved asset bytes; deletion without confirmation refused; outside-root text writes refused; a batch dry-run left scene bytes and hierarchy unchanged. Standalone object creation, scene creation, and menu execution lack dry-run parameters. Scene/menu commands were not executed; the approved two-object creation was removed by one Undo.
+
+Direct CLI returned complete JSON/native errors and real NDJSON progress frames at 40% and 100%. The tested stdio MCP delay returned JSON text but no progress notifications. CLI missing-file and native timeout failures both used COMMAND_FAILED/exit 6. MCP returned isError for the missing file; its bounded local deadline later received a successful reply. MCP cancellation suppressed the reply, while the deliberately noncooperative delay continued. These observations do not establish behavior for SDK commands that check cooperative cancellation.
+
+The private decision is to use a narrow direct CLI backend in a later integration and decline unrestricted MCP catalog relay. Success and failure tags differ ('command read_text_file' versus 'unity command read_text_file'); a future parser must preserve the captured contract. This proof adds no production provider, public schema, or UI, and keeps the installed CLI pin despite an upstream update advertisement.
+
+A [failed readiness refinement](../experiments/pipeline-composition-spike/results/2026-10-08T06-35-57-475Z-windows-x64.json) is retained. Only one Editor launched and quit normally; an old log was briefly visible before Unity replaced it. The reproducer now removes its exact owned log before launch and filters current-launch events. That recorder correction was syntax-checked without another Editor run.
+
 ### 4.1 Capability map
 
 **Assets and files.** Create ScriptableObject and Object assets; import external files; move, copy, rename, delete,
