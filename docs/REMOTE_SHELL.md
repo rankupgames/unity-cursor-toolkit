@@ -293,6 +293,33 @@ Installed-Cursor evidence in `../experiments/installed-cursor-smoke/results/`:
 
 Open E2 work: an opt-in cold run needs operator approval to wipe `CursorUnityTool/Library`; sustained multi-window soak is unmeasured; the Windows hidden `GrabPixels` spike must record whether PowerShell/user32 hiding changes repaint or input behavior.
 
+### E2a -- Windows version matrix (2026-10-08)
+
+The standalone spike calls the production capture and input helpers by reflection. It records the exact Editor version, revision, core library, five JPEGs, and Scene View rotation change. Missing methods fail with `capture_api_missing` or `input_api_missing` and include available signatures. The disposable fixture uses installed URP, a red cube and green sphere, isolated preference keys, and one explicit owned bridge port. This configuration does not prove default-install behavior.
+
+| Exact Editor | Runtime / platform | Five surfaces | Scene drag | Exit |
+| --- | --- | --- | ---: | --- |
+| `6000.3.9f1 (7a9955a4f2fa)` | `mscorlib`, Windows x64 | Passed; red/green Game content checked | `13.275` degrees | Normal `0`; no owned processes or preference keys remained |
+| `7000.0.0a7 (581996e1a8f7)` | Windows x64; runtime not reached in GUI attempt | N/A: software-terms dialog before probe entry | N/A | Failed timeout; exact owned process required forced cleanup |
+
+The accepted Unity 6.3 result is [the dated Windows observation](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-16-28-266Z-6000.3.9f1-win32/observation.json). Scene, Game, Inspector, Package Manager, and custom frames measured `800x520`, `813x915`, `775x915`, `1066x737`, and `420x280`, with `pixelsPerPoint=1`. Earlier cyan shader-placeholder frames were rejected as semantic evidence. The final probe waits for shader compilation and requires red and green Game pixels. Failed attempts remain in the result directory.
+
+The [first Unity 7 GUI attempt](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-20-29-542Z-7000.0.0a7-win32/observation.json) timed out after 300s, followed by a bounded normal-stop attempt. The owned Editor was then terminated under the disposable-proof exception; no user Editor or shared licensing process was changed. Protocol `505` preceded client startup and license assignment, so it does not establish the cause. Earlier Unity 7 URP batch-mode smoke passed; it does not prove GUI or hidden startup. A [bounded 60s read-only diagnostic](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-45-50-963Z-7000.0.0a7-win32/startup-diagnosis.json) then observed a visible `EditorSoftwareTermsWindowClass` dialog with terms/Unity text categories in every sample. No button matched the safe standard-label allowlist. No consent was submitted; the failed owned run required forced cleanup after the normal-stop wait. GUI functional proof and three warm hidden-cost runs remain blocked by the terms prompt.
+
+| Cost field | Historical macOS 26.5 / Unity 6.3 | Windows Unity 7 | Delta |
+| --- | ---: | --- | --- |
+| Three warm launch-to-result runs | `28.478 / 20.061 / 22.173s`; median `22.173s` | N/A: GUI startup blocked | N/A |
+| Launch-to-first-frame | N/A: raw timestamp unavailable | N/A | N/A |
+| Warm peak RSS | `918.2 / 1168.6 / 667.3 MiB` | N/A | N/A |
+| Idle RSS average / maximum | `1077.5 / 1199.7 MiB` | N/A | N/A |
+| Streaming RSS average / maximum | `1294.0 / 1882.0 MiB` | N/A | N/A |
+| Idle / streaming CPU average | `191.0 / 242.2%`, macOS `ps` estimator | N/A | Not comparable |
+| Stream frames / effective rate | `717 / 11.95fps` over nominal 60s | N/A | N/A |
+
+Windows CPU uses the change in `TotalProcessorTime` divided by elapsed wall time; values can exceed 100% across cores. macOS `ps` reports a decaying average covering up to a minute, according to [Apple primary source](https://raw.githubusercontent.com/apple-oss-distributions/adv_cmds/main/ps/ps.1). These estimators cannot establish a CPU delta. RSS is reported in MiB on both paths, but graphics, DPI, SRP, output dimensions, shader waits, project, and host platform differ. The historical raw macOS artifacts are unavailable in this checkout; documented aggregates cannot supply missing timestamps or matching samples. The fresh Unity 6.3 import took `136.913s` to first frame and `137.424s` to result. This visible cold-import functional run is not a warm hidden cost measurement.
+
+Repeat the isolated Windows path with `--fixture --unity <Editor.exe> --version <exact-version> --revision <exact-revision> --template <bundled-URP-template.tgz> --hide --warm-runs 3`. The unmeasured first launch warms the fixture; subsequent launches measure 15s idle and 60s Scene streaming at 12fps, quality 55. The runner verifies owned window visibility through first capture, input, and streaming. The sampler binds project, version, runtime, and listener PID; checks valid status immediately before start and refuses an occupied view; drains metric samples; freezes the actual frame window before stop; and requires stop acknowledgement plus validated session absence. Cleanup uses only its session ID, leaving foreign sessions running. Status and start are separate requests: use the Editor exclusively during measurement, since the production start API can replace a same-view stream created between those requests. Unsupported `--hide` combinations refuse before launch. No hidden Unity 7 cost or causal CoreCLR regression claim is supported yet.
+
 ### E3 -- Player Viewport Service
 
 2026-06-10, Unity 6000.3.9f1, macOS 26.5.0. Build with `build:viewport-service -- --target macos --timeout 900`: **GREEN**; produced `CursorUnityTool/Builds/ViewportService/ViewportService.app`. The player answered toolkit `ping` on `127.0.0.1:55500`. `probe:viewport-service` returned Scene and Game frames at `640x360`, `host:"player"`, `captureMode:"camera"`, in-band data length `19892`, with scene input routed through the runtime layer. A later direct probe returned the same shape with data length `20564`. With the editor not running, installed Cursor rendered Player Scene View `1280x720 #1271` and Player Game View `1280x720 #465`, both with Connect tooltips reading "Attach to a running Viewport Service player bridge".
