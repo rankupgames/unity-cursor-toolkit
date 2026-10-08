@@ -28,7 +28,7 @@ function fail(snapshot: UnityTestSnapshot, code: string, message: string, recove
 	snapshot.error = { code, message, recovery };
 	if (native) {
 		snapshot.error.exitCode = native.exitCode;
-		if (!native.ok && native.error.nativeCode && /^[A-Z][A-Z0-9_]{0,63}$/.test(native.error.nativeCode)
+		if (!native.ok && native.error.nativeCode && ['INVALID_COMMAND_ARGS', 'TESTS_FAILED', 'TEST_TIMED_OUT', 'COMMAND_FAILED'].includes(native.error.nativeCode)
 			&& redact(native.error.nativeCode, '') === native.error.nativeCode) { snapshot.error.nativeCode = native.error.nativeCode; }
 	}
 	return snapshot;
