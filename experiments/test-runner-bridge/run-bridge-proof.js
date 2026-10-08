@@ -103,7 +103,8 @@ async function run(editor, present) {
 		return text.split(/\r?\n/).map(line => {
 			const following = hideNext; hideNext = /-hubSessionId\s*$/i.test(line);
 			return following || /licensing|license|access.token|auth.token|serial.number|session[\s_-]*id|correlation[\s_-]*id|machine[\s_-]*id/i.test(line)
-				|| raw && /^[A-Za-z0-9_-]{32,}$/.test(line.trim()) ? '<session or credential line omitted>' : line.trimEnd();
+				|| /^\s*(?:Id|Product|Type|Expiration):/i.test(line)
+				|| raw && /^[A-Za-z0-9+\/_-]{32,}={0,2}$/.test(line.trim()) ? '<session or credential line omitted>' : line.trimEnd();
 		}).join('\n').trimEnd();
 	}
 	function clean(value) { return typeof value === 'string' ? sanitize(value) : Array.isArray(value) ? value.map(clean)

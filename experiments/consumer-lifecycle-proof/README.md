@@ -10,7 +10,7 @@ Run on Windows with the reviewed exact Editor:
 node experiments/consumer-lifecycle-proof/run-proof.js --editor $env:UCT_UNITY7_EDITOR --editor-version 7000.0.0a7 --editor-revision 581996e1a8f7
 ```
 
-The runner checks executable metadata before creating TEMP fixtures. It uses shipped built-in modules and the local package, installs no registry packages, and changes only owned fixture code and play settings. Startup is bounded to 180 seconds and execution to 150 seconds. Normal shutdown requires the fixture quitting marker, exit code zero, and absence of processes whose command line names the exact fixture. Failure-only forced cleanup targets the owned Editor PID tree and is never recorded as normal shutdown.
+The runner checks executable metadata before creating TEMP fixtures. It uses shipped built-in modules and the local package, installs no registry packages, and changes only owned fixture code and play settings. Startup is bounded to 180 seconds and execution to 160 seconds. Metadata, process queries and forced cleanup helpers each have a 10-second timeout. Normal shutdown requires the fixture quitting marker, exit code zero, and absence of processes whose command line names the exact fixture. Failure-only forced cleanup targets the owned Editor PID tree and is never recorded as normal shutdown.
 
 Only structured observations are persisted under evidence. Raw Editor logs stay in TEMP. Successful fixtures are deleted after a fresh scoped process query; failed fixtures remain available for diagnosis.
 
