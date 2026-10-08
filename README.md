@@ -6,10 +6,15 @@
 [![CI](https://img.shields.io/github/actions/workflow/status/rankupgames/unity-cursor-toolkit/ci.yml?branch=main&label=CI)](https://github.com/rankupgames/unity-cursor-toolkit/actions)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A VS Code / Cursor extension and Unity package for live console context, safe
-MCP automation, debugging, hot reload, and remote Unity workflows. The package
-declares Unity 2019.4 as its core baseline; Unity 7 is an explicit,
-evidence-gated readiness target.
+Unity Cursor Toolkit connects VS Code, Cursor, and MCP agents to Unity. The
+package targets Unity 2019.4 or later; the recorded Windows baseline is
+6000.3.9f1. Unity 2019.4 parity remains blocked, and Unity 7/CoreCLR is readiness
+work rather than general shipped support.
+
+Use it for console and project context on local, remote, or virtual desktops,
+with enforced MCP read-only and dry-run controls. The toolkit composes Unity's
+first-party CLI where supported and keeps each backend explicit. Remote
+streaming remains experimental; Pipeline production execution is pending.
 
 ## Disclaimer
 
@@ -19,11 +24,11 @@ This extension is not affiliated with, endorsed by, or an official product of Un
 
 ### Hot Reload
 
-Save-to-refresh with debounced file watching and compilation feedback in the status bar. IL patching support for play-mode method body swapping without domain reload.
+Save-to-refresh with debounced file watching and compilation feedback in the status bar. IL patching supports play-mode method body updates on the compatible Mono path. CoreCLR capability checks refuse IL patching.
 
 ### Live Console
 
-Real-time streaming, severity filtering, text search across messages and stack traces, safe clickable `Assets/...` stack traces, copy/export, send-to-AI-chat, and a ring buffer (10k entries, configurable). Console snapshots can include the current Unity profiler session so agents get logs, frame trends, hot frames, and hot paths together. The native Unity copy button also captures the current main-camera application view to one stable temporary PNG, overwrites it on every click, and appends its absolute path to the copied context.
+Real-time streaming, severity filtering, text search across messages and stack traces, safe clickable `Assets/...` stack traces, copy/export, send-to-AI-chat, and a bounded ring buffer (up to 1,000 entries). Console snapshots can include the current Unity profiler session so agents get logs, frame trends, hot frames, and hot paths together. The native Unity copy button also captures the visible main Unity Editor window to one stable temporary PNG, overwrites it on every click, and appends its absolute path to the copied context.
 
 ### Connection
 
@@ -91,20 +96,49 @@ See the [documentation index](docs/README.md), [AI Agent Guide](docs/AI_AGENTS.m
 
 ## Unity Version Support and Unity 7 Readiness
 
-See the generated [runtime capability matrix](docs/CAPABILITY_MATRIX.md) for capability evidence and configured CI versions. Untested cells are not support claims.
+The [capability matrix](docs/CAPABILITY_MATRIX.md) records exact observations,
+not certification of an entire Editor family. The
+[local compatibility runner](docs/UNITY_COMPATIBILITY.md) describes fixture
+isolation and proof limits.
 
-| Editor family | Current position |
+| Target | Recorded scope |
 | --- | --- |
-| Unity 2019.4 through 2022 LTS | Declared core package range; preserve the Mono debugger and legacy hot-reload path and add exact-version evidence |
-| Current Unity 6 releases | Unity-Unterm declares Unity 6000.3+ on macOS or Windows; the local sample baseline is Unity 6000.3.9f1 on macOS |
-| CoreCLR transition releases | Capability gates, reload fixes, migration checks, and a debugger replacement are planned and not yet complete |
-| Unity 7 | Readiness target only; do not treat this README as a compatibility certification |
+| Unity 2019.4 | Declared package minimum; real parity proof is user-blocked |
+| Unity 2020-2022 LTS | Declared legacy range; no exact LTS candidate is configured, so it remains untested |
+| Unity 6000.3.9f1, Windows | Isolated canonical-package activation, TCP handshake, console and standalone MCP checks passed |
+| Other Unity 6 versions and macOS | Evidence is per exact version and operation; unrun matrix cells remain untested |
+| Unity 7000.0.0a7, Windows/CoreCLR | Exact isolated checks passed as readiness preparation; no general Unity 7 support claim |
 
-The plan is one stable agent interface across Editor generations, with an
-explicit backend and capability set for every operation. See the
-[roadmap](docs/ROADMAP.md), the dated
-[landscape research](docs/UNITY_LANDSCAPE.md), and the
-[GitHub issues](https://github.com/rankupgames/unity-cursor-toolkit/issues).
+The fixture configures an available port and isolates its preferences.
+Default-install listener activation is not proved by those checks.
+
+### First-party backend composition
+
+The current source stack includes a Unity CLI adapter, CLI Doctor, and an
+explicitly selected test backend. Unity owns the CLI's build and test execution;
+the toolkit adds transport, capability checks, policy, normalized results, and
+owned-process cleanup. It does not replace the existing batchmode path.
+
+Pipeline 0.8.0-exp.1 has an eligibility gate and disposable install, safety, and
+composition experiments. Production Pipeline execution is still pending.
+Source-stack additions are not a claim that an older published extension
+contains them. See the dated [backend evidence](docs/UNITY_LANDSCAPE.md) and
+[Unity 7 delta watch](docs/UNITY7_DELTA_WATCH.md).
+
+### Migration and debugger status
+
+The current source includes a [CoreCLR migration assistant](docs/AI_AGENTS.md#coreclr-migration-inspection)
+that reports source review candidates and can inspect bounded static metadata.
+It does not rewrite scripts or certify a migration.
+
+| Runtime | Debugger position |
+| --- | --- |
+| Mono | Existing soft-debugger attach path for the Editor or Development Player |
+| CoreCLR, exact 7000.0.0a7 | netcoredbg feasibility failed; shipping is blocked, with no verified breakpoint, step, or locals flow |
+
+The [debugger experiment](experiments/coreclr-debug-probe/README.md) records the
+failure. Runtime capability checks select supported paths; they do not add a
+CoreCLR debugger. See the [roadmap](docs/ROADMAP.md) for remaining work.
 
 ## Unity Package Installation
 
@@ -176,7 +210,7 @@ BYOL, and operator approval before activation.
 |---------|---------|-------------|
 | `unityCursorToolkit.console.enabled` | `true` | Enable the Unity Console panel in the sidebar |
 | `unityCursorToolkit.console.autoStream` | `true` | Auto-stream console output when connected |
-| `unityCursorToolkit.console.maxEntries` | `10000` | Max entries in the console ring buffer |
+| `unityCursorToolkit.console.maxEntries` | `1000` | Max entries in the console ring buffer |
 | `unityCursorToolkit.hotReload.preferILPatch` | `true` | Prefer IL patching over full asset refresh in play mode |
 | `unityCursorToolkit.hotReload.ilPatchTimeout` | `5000` | Timeout (ms) for IL patch before falling back to full refresh |
 | `unityCursorToolkit.workspaceScanPaths` | `[]` | Additional paths to scan for `.code-workspace` files |

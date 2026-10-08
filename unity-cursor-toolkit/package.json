@@ -1,7 +1,7 @@
 {
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
-  "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
+  "description": "Unity 2019.4+ target, remote and virtual desktop workflows, enforced MCP safety, first-party Unity CLI composition, migration and Mono debugging.",
   "version": "0.6.1052826",
   "packageManager": "npm@11.16.0",
   "publisher": "rankupgames",
@@ -433,12 +433,12 @@
   "keywords": [
     "unity",
     "cursor",
-    "toolkit",
-    "hot reload",
-    "live reload",
-    "csharp",
-    "unity3d",
-    "vs-code"
+    "mcp",
+    "remote development",
+    "virtual desktop",
+    "unity cli",
+    "migration",
+    "debugger"
   ],
   "author": {
     "name": "Rank Up Games LLC",

@@ -1,18 +1,40 @@
 # AI Agent Guide
 
-Unity Cursor Toolkit is designed to give agents direct Unity Editor context without requiring users to paste console logs, scene state, or `.meta` files manually.
+Unity Cursor Toolkit targets Unity 2019.4+ and gives agents Unity console,
+profiler, project, and runtime context in local, remote, or virtual desktop
+workflows. Use the enforced MCP read-only and dry-run policy, select a backend
+explicitly, and compose Unity's first-party tools only where capabilities are
+proved. Remote streaming is experimental.
 
 ## Unity Version and Backend Status
 
-The core package declares Unity 2019.4 or later. Current operations use the
-toolkit bridge or an explicitly requested batchmode Editor. Standalone Unity
-CLI Editor operations, Pipeline, CoreCLR-specific behavior, and Unity 7 support are planned or
-evidence-gated backends; agents must not claim they are shipped until the
-capability response and recorded matrix prove them.
+The recorded Windows baseline is exact 6000.3.9f1: isolated package activation,
+TCP handshake, console, and standalone MCP checks passed. The fixture uses an
+available port and isolated preferences, so it does not prove default-install
+listener activation. Unity 2019.4 parity is user-blocked; no exact legacy LTS
+candidate is configured. Unrun versions and platforms remain untested.
 
-Never silently switch to another Editor version or backend. Report the selected
-Editor, backend, and capability set in plans and results. See
-`docs/ROADMAP.md`.
+Exact 7000.0.0a7/CoreCLR observations are readiness preparation, not general
+shipped Unity 7 support. Read the [capability matrix](CAPABILITY_MATRIX.md),
+[compatibility proof limits](UNITY_COMPATIBILITY.md), and
+[Unity 7 delta watch](UNITY7_DELTA_WATCH.md).
+
+The current source includes the toolkit bridge, explicit batchmode execution,
+a Unity CLI diagnostic adapter and selected test backend, and a CoreCLR
+migration assistant. Unity owns CLI build/test execution. Pipeline eligibility
+and disposable composition proofs exist; production Pipeline execution is
+pending. Source-stack status does not imply availability in an older published
+extension.
+
+| Runtime | Debugger status |
+| --- | --- |
+| Mono | Existing Editor/Development Player soft-debugger attach path |
+| CoreCLR, exact 7000.0.0a7 | Feasibility failed; no verified breakpoint, step, or locals flow, and shipping is blocked |
+
+See the [debugger evidence](../experiments/coreclr-debug-probe/README.md).
+Never silently switch Editor version or backend. Report the selected Editor,
+backend, and capability set in plans and results. See the
+[roadmap](ROADMAP.md).
 
 ## Unity CLI Diagnostic Backend
 
@@ -23,7 +45,7 @@ environment-selected, or PATH binary and compares its version with the recorded
 A version mismatch is a warning with expected and found values; no install,
 upgrade, Editor substitution, or automatic backend fallback occurs.
 
-Production callers include version, doctor and explicitly selected test execution. The status bar shows CLI version availability.
+Current source callers include version, doctor and explicitly selected test execution. The status bar shows CLI version availability.
 The local read-only guard permits version, doctor, and project-scoped status plans. Other invocations
 require an explicit mutating caller; the guard refuses before spawning. Existing
 game_command batchmode execution retains its existing path. Test execution applies the shared test policy described below.
@@ -207,7 +229,7 @@ These prompts are intentionally conservative: inspect first, summarize state, th
 
 ### Scene object IDs
 
-Unity 7 and newer return opaque `entityId` strings from scene hierarchy and GameObject create/find calls, and `componentEntityId` from component creation. Pass `entityId` to GameObject/component actions and `parentEntityId` to setParent. Keep these strings unchanged; do not convert them to JavaScript numbers.
+The current Unity 7 readiness source returns opaque `entityId` strings from scene hierarchy and GameObject create/find calls, and `componentEntityId` from component creation. Pass `entityId` to GameObject/component actions and `parentEntityId` to setParent. Keep these strings unchanged; do not convert them to JavaScript numbers.
 
 Editors before Unity 7 retain integer `instanceId`, `parentInstanceId`, and `componentInstanceId`. Version guards select the supported Unity API at compile time. A supplied string ID takes precedence; unsupported or malformed IDs fail before mutation. Names remain available when no ID is supplied. An unresolved parent is an error; omit all parent identifiers to detach.
 
