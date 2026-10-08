@@ -5135,14 +5135,15 @@ function testCoreClrEvidencePrivacy() {
 		const input = '-hubSessionId\nfixtureSensitive\nSession Id: fixtureSensitive\nCorrelation-Id: fixtureSensitive\nMachine Id: fixtureSensitive\nId: fixtureSensitive\nProduct: fixtureSensitive\nType: fixtureSensitive\nExpiration: fixtureSensitive\npublic diagnostic\n';
 		for (const [file, symbol, endMarker] of [
 			['run-lifecycle-probe.js', 'sanitize', '\n\t\t};'],
-			['run-render-smoke.js', 'clean', '\n\t};']
+			['run-render-smoke.js', 'clean', '\n\t};'],
+			['../coreclr-debug-probe/run-debug-probe.js', 'sanitize', '\n\t\t};']
 		]) {
 			const source = fs.readFileSync(path.join(root, file), 'utf8');
 			const start = source.indexOf('const ' + symbol + ' = value => {');
 			const end = source.indexOf(endMarker, start) + endMarker.length;
 			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');
 			const output = require('vm').runInNewContext(source.slice(start, end) + '\n' + symbol + '(input)', {
-				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', path,
+				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', debugRoot: '/debugger', path,
 				os: { homedir: () => '/home/fixture', hostname: () => 'fixtureHost', networkInterfaces: () => ({}) }
 			});
 			assert.ok(!output.includes('fixtureSensitive'), file + ': sanitizer leaked an identity or licensing value');
@@ -5152,11 +5153,13 @@ function testCoreClrEvidencePrivacy() {
 			'results/unity7-lifecycle-2026-10-08T04-57-52-040Z/Editor.log',
 			'results/unity7-console-reset-baseline-2026-10-08T05-29-37-263Z/Editor.log',
 			'results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/Editor.log',
-			'results/unity7-urp-smoke-2026-10-08T05-58-37-071Z/Editor.log'
+			'results/unity7-urp-smoke-2026-10-08T05-58-37-071Z/Editor.log',
+			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/build.log',
+			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/editor.log'
 		]) {
 			const capture = fs.readFileSync(path.join(root, file), 'utf8');
 			const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)
-				&& !/^__uct_lifecycle_current_[a-f0-9]{32}$/.test(line.trim())).join('\n');
+				&& !/^-+$/.test(line.trim()) && !/^__uct_lifecycle_current_[a-f0-9]{32}$/.test(line.trim())).join('\n');
 			assert.ok(!/^\s*(?:(?:Session|(?:External )?Correlation|Machine)[ -]?Id|Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im.test(log), file + ': CoreCLR capture contains an identity or licensing value');
 		}
 	});
