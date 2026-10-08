@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Skipped:Ignored" total="1" passed="0" failed="0" inconclusive="0" skipped="1" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-08 08:22:31Z" end-time="2026-10-08 08:22:31Z" duration="0.035091">
+  <test-suite type="TestSuite" id="1000" name="uct-test-bridge-fcvDFe" fullname="uct-test-bridge-fcvDFe" runstate="Runnable" testcasecount="10" result="Skipped" label="Ignored" start-time="2026-10-08 08:22:31Z" end-time="2026-10-08 08:22:31Z" duration="0.035091" total="1" passed="0" failed="0" inconclusive="0" skipped="1" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <reason>
+      <message><![CDATA[One or more child tests were ignored]]></message>
+    </reason>
+    <test-suite type="Assembly" id="1013" name="UCT.Proof.EditMode.dll" fullname="fixture/Library/ScriptAssemblies/UCT.Proof.EditMode.dll" runstate="Runnable" testcasecount="8" result="Skipped" label="Ignored" start-time="2026-10-08 08:22:31Z" end-time="2026-10-08 08:22:31Z" duration="0.019523" total="1" passed="0" failed="0" inconclusive="0" skipped="1" asserts="0">
+      <properties>
+        <property name="_PID" value="57560" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <reason>
+        <message><![CDATA[One or more child tests were ignored]]></message>
+      </reason>
+      <test-suite type="TestSuite" id="1014" name="BridgeProof" fullname="BridgeProof" runstate="Runnable" testcasecount="8" result="Skipped" label="Ignored" start-time="2026-10-08 08:22:31Z" end-time="2026-10-08 08:22:31Z" duration="0.017716" total="1" passed="0" failed="0" inconclusive="0" skipped="1" asserts="0">
+        <properties />
+        <reason>
+          <message><![CDATA[One or more child tests were ignored]]></message>
+        </reason>
+        <test-suite type="TestSuite" id="1016" name="Scope" fullname="BridgeProof.Scope" runstate="Runnable" testcasecount="7" result="Skipped" label="Ignored" start-time="2026-10-08 08:22:31Z" end-time="2026-10-08 08:22:31Z" duration="0.016384" total="1" passed="0" failed="0" inconclusive="0" skipped="1" asserts="0">
+          <properties />
+          <reason>
+            <message><![CDATA[One or more child tests were ignored]]></message>
+          </reason>
+          <test-suite type="TestFixture" id="1003" name="Arithmetic" fullname="BridgeProof.Scope.Arithmetic" classname="BridgeProof.Scope.Arithmetic" runstate="Runnable" testcasecount="6" result="Skipped" label="Ignored" start-time="2026-10-08 08:22:31Z" end-time="2026-10-08 08:22:31Z" duration="0.014169" total="1" passed="0" failed="0" inconclusive="0" skipped="1" asserts="0">
+            <properties>
+              <property name="Category" value="scope" />
+            </properties>
+            <reason>
+              <message><![CDATA[One or more child tests were ignored]]></message>
+            </reason>
+            <test-case id="1006" name="Skipped" fullname="BridgeProof.Scope.Arithmetic.Skipped" methodname="Skipped" classname="BridgeProof.Scope.Arithmetic" runstate="Ignored" seed="844465069" result="Skipped" label="Ignored" start-time="2026-10-08 08:22:31Z" end-time="2026-10-08 08:22:31Z" duration="0.001307" asserts="0">
+              <properties>
+                <property name="_SKIPREASON" value="UCT_EXPECTED_SKIP" />
+              </properties>
+              <reason>
+                <message><![CDATA[UCT_EXPECTED_SKIP]]></message>
+              </reason>
+              <output><![CDATA[Saving results to: temp-redacted\uct-cli-tests-Kpu4Uw\results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

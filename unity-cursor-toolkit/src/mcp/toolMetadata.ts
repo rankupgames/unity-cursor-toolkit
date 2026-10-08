@@ -8,6 +8,7 @@
 import type { ToolAnnotations } from '../core/interfaces';
 
 const MUTATING_TOOLS = {
+	run_tests: true,
 	manage_asset: true,
 	manage_component: true,
 	manage_gameobject: true,
@@ -25,6 +26,7 @@ const MUTATING_TOOLS = {
 } as const;
 
 const READ_ONLY_TOOLS = {
+	list_tests: true,
 	project_info: true,
 	coreclr_migration: true,
 	screenshot: true,
@@ -165,4 +167,9 @@ function toToolTitle(toolName: string): string {
 		.split('_')
 		.map((part) => part.length === 0 ? part : part[0].toUpperCase() + part.slice(1))
 		.join(' ');
+}
+
+export function isMcpReadOnlyMode(): boolean {
+	const value = process.env.UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY;
+	return value === '1' || value === 'true';
 }

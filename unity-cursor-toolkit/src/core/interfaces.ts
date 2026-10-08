@@ -49,10 +49,15 @@ export interface IMessageHandler {
 	handle(payload: Record<string, unknown>): void;
 }
 
+export interface ToolCallContext {
+	readonly signal?: AbortSignal;
+	readonly reportProgress?: (progress: number, total: number, message?: string) => void;
+}
+
 export interface IToolProvider {
 	readonly toolGroupName: string;
 	getTools(): ToolDefinition[];
-	handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult>;
+	handleToolCall(name: string, args: Record<string, unknown>, context?: ToolCallContext): Promise<ToolResult>;
 }
 
 export interface ToolDefinition {

@@ -12,13 +12,14 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { ToolRouter } from './toolRouter';
 import { UnityMcpTools } from './unityMcpTools';
+import { UnityTestMcpTools } from './unityTestTools';
 import { StandaloneUnityConnection } from './standaloneConnection';
 import { StandaloneConsoleMcpTools, StandaloneConsoleStore } from './standaloneConsole';
 import { StandaloneProjectMcpTools } from './standaloneProjectTools';
 import { UnityContextMcpTools } from './unityContextIndex';
 import { ViewportStreamMcpTools } from './viewportStreamTools';
-import { isDryRun, isMutatingToolCall } from './toolMetadata';
-import type { ToolDefinition, ToolResult } from '../core/interfaces';
+import { isDryRun, isMutatingToolCall, isMcpReadOnlyMode } from './toolMetadata';
+import type { ToolCallContext, ToolDefinition, ToolResult } from '../core/interfaces';
 
 const PROTOCOL_VERSION = '2025-06-18';
 const SERVER_NAME = 'unity-cursor-toolkit';
@@ -70,7 +71,7 @@ export interface StandaloneMcpRuntime {
 	readonly viewportTools: ViewportStreamMcpTools;
 	readonly readOnly: boolean;
 	handleRequest(request: JsonRpcRequest): Promise<unknown>;
-	dispose(): void;
+	dispose(): Promise<void>;
 }
 
 const RESOURCES: readonly ResourceDefinition[] = [
@@ -141,15 +142,17 @@ const PROMPTS: readonly PromptDefinition[] = [
 	}
 ];
 
-export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): StandaloneMcpRuntime {
+export function createStandaloneMcpRuntime(readOnly = isMcpReadOnlyMode(), notify: (notification: Record<string, unknown>) => void = () => undefined): StandaloneMcpRuntime {
 	const router = new ToolRouter();
 	const connection = new StandaloneUnityConnection();
 	const consoleStore = new StandaloneConsoleStore();
 	const viewportTools = new ViewportStreamMcpTools(connection);
+	const active = new Map<string | number, AbortController>();
 
 	connection.onMessage((message) => consoleStore.addFromUnityMessage(message));
 	connection.onMessage((message) => viewportTools.handleUnityMessage(message));
 	router.register(new UnityMcpTools(connection));
+	router.register(new UnityTestMcpTools(connection, undefined, undefined, readOnly));
 	router.register(new UnityContextMcpTools());
 	router.register(viewportTools);
 	router.register(new StandaloneConsoleMcpTools(consoleStore));
@@ -161,15 +164,38 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 		consoleStore,
 		viewportTools,
 		readOnly,
-		handleRequest: (request) => handleRequest(router, consoleStore, readOnly, request),
-		dispose: () => {
-			void viewportTools.dispose();
+		handleRequest: async (request) => {
+			if (request.method === 'notifications/cancelled') {
+				const id = (request.params as { requestId?: unknown } | undefined)?.requestId;
+				if (typeof id === 'string' || typeof id === 'number') { active.get(id)?.abort(); }
+				return {};
+			}
+			if (request.method !== 'tools/call' || request.id == null) { return handleRequest(router, consoleStore, readOnly, request); }
+			if (active.has(request.id)) { throw new InvalidParamsError('Request id is already active'); }
+			const controller = new AbortController();
+			const token = (request.params as { _meta?: { progressToken?: unknown } } | undefined)?._meta?.progressToken;
+			active.set(request.id, controller);
+			let sequence = 0;
+			try { return await handleRequest(router, consoleStore, readOnly, request, {
+				signal: controller.signal,
+				reportProgress: (progress, total, message) => {
+					if (typeof token === 'string' || typeof token === 'number') {
+						notify({ jsonrpc: '2.0', method: 'notifications/progress', params: { progressToken: token, progress: ++sequence, message: (message ?? '') + ' (' + progress + '/' + total + ' tests)' } });
+					}
+				}
+			}); } finally { active.delete(request.id); }
+		},
+		dispose: async () => {
+			for (const controller of active.values()) { controller.abort(); }
+			await viewportTools.dispose();
+			const deadline = Date.now() + 30000;
+			while (active.size > 0 && Date.now() < deadline) { await new Promise(resolve => setTimeout(resolve, 50)); }
 			connection.dispose();
 		}
 	};
 }
 
-export function startStdioServer(runtime = createStandaloneMcpRuntime()): void {
+export function startStdioServer(runtime = createStandaloneMcpRuntime(isMcpReadOnlyMode(), notification => process.stdout.write(JSON.stringify(notification) + '\n'))): void {
 	let buffer = '';
 
 	process.stdin.setEncoding('utf8');
@@ -187,14 +213,12 @@ export function startStdioServer(runtime = createStandaloneMcpRuntime()): void {
 		}
 	});
 
-	process.stdin.on('end', () => runtime.dispose());
+	process.stdin.on('end', () => { void runtime.dispose(); });
 	process.on('SIGTERM', () => {
-		runtime.dispose();
-		process.exit(0);
+		void runtime.dispose().finally(() => process.exit(0));
 	});
 	process.on('SIGINT', () => {
-		runtime.dispose();
-		process.exit(0);
+		void runtime.dispose().finally(() => process.exit(0));
 	});
 }
 
@@ -208,6 +232,7 @@ async function handleLine(runtime: StandaloneMcpRuntime, line: string): Promise<
 	}
 
 	if (request.id == null) {
+		if (request.method === 'notifications/cancelled') { await runtime.handleRequest(request); }
 		return;
 	}
 
@@ -223,7 +248,8 @@ async function handleRequest(
 	router: ToolRouter,
 	consoleStore: StandaloneConsoleStore,
 	readOnly: boolean,
-	request: JsonRpcRequest
+	request: JsonRpcRequest,
+	context?: ToolCallContext
 ): Promise<unknown> {
 	switch (request.method) {
 		case 'initialize':
@@ -233,7 +259,7 @@ async function handleRequest(
 		case 'tools/list':
 			return { tools: router.getToolDefinitions() };
 		case 'tools/call':
-			return callTool(router, readOnly, parseToolCallParams(request.params));
+			return callTool(router, readOnly, parseToolCallParams(request.params), context);
 		case 'resources/list':
 			return { resources: RESOURCES };
 		case 'resources/read':
@@ -247,8 +273,8 @@ async function handleRequest(
 	}
 }
 
-async function callTool(router: ToolRouter, readOnly: boolean, params: ToolCallParams): Promise<ToolResult> {
-	if (readOnly && isMutatingToolCall(params.name, params.arguments) && isDryRun(params.arguments) === false) {
+async function callTool(router: ToolRouter, readOnly: boolean, params: ToolCallParams, context?: ToolCallContext): Promise<ToolResult> {
+	if (readOnly && params.name !== 'run_tests' && isMutatingToolCall(params.name, params.arguments) && isDryRun(params.arguments) === false) {
 		return {
 			content: [{
 				type: 'text',
@@ -258,7 +284,7 @@ async function callTool(router: ToolRouter, readOnly: boolean, params: ToolCallP
 		};
 	}
 
-	return router.routeToolCall(params.name, params.arguments);
+	return router.routeToolCall(params.name, params.arguments, context);
 }
 
 async function readResource(
@@ -433,11 +459,6 @@ function readPackageVersion(): string {
 	}
 }
 
-function isReadOnlyMode(): boolean {
-	const value = process.env[READ_ONLY_ENV];
-	return value === '1' || value === 'true';
-}
-
 function writeResponse(response: JsonRpcResponse): void {
 	process.stdout.write(JSON.stringify(response) + '\n');
 }
@@ -464,6 +485,5 @@ class InvalidParamsError extends Error {}
 class MethodNotFoundError extends Error {}
 
 if (require.main === module) {
-	const runtime = createStandaloneMcpRuntime();
-	startStdioServer(runtime);
+	startStdioServer();
 }

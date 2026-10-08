@@ -1,0 +1,10 @@
+{
+    "pid": 73392,
+    "editorVersion": "6000.3.9f1",
+    "coreLibrary": "mscorlib",
+    "isMono": true,
+    "frameworkPresent": true,
+    "childPresent": true,
+    "childObservation": "{\"apiAssembly\":\"UnityEditor.TestRunner\",\"cancelSignature\":\"Boolean CancelTestRun(System.String)\",\"callbacksCompiled\":true,\"typeMetadataProperty\":true,\"editMode\":\"EditMode\",\"playMode\":\"PlayMode\"}",
+    "error": ""
+}

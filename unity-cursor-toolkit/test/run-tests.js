@@ -5138,18 +5138,28 @@ function testCoreClrEvidencePrivacy() {
 			['run-render-smoke.js', 'clean', '\n\t};'],
 			['../coreclr-debug-probe/run-debug-probe.js', 'sanitize', '\n\t\t};'],
 			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', ' };'],
-			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', '\n\t}', 'function sanitize(text) {']
+			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', '\n\t}', 'function sanitize(text) {'],
+			['../test-runner-bridge/run-bridge-proof.js', 'sanitize', '\n\t}', 'function sanitize(text, raw = false) {'],
+			['../test-runner-bridge/run-optional-compile-proof.js', 'sanitize', '\n\t}', 'function sanitize(text, rawLog = false) {']
 		]) {
 			const source = fs.readFileSync(path.join(root, file), 'utf8');
 			const start = source.indexOf(startMarker || 'const ' + symbol + ' = value => {');
 			const end = source.indexOf(endMarker, start) + endMarker.length;
 			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');
 			const output = require('vm').runInNewContext(source.slice(start, end) + '\n' + symbol + '(input)', {
-				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', debugRoot: '/debugger', sanitizers: [], path,
+				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', debugRoot: '/debugger', sanitizers: [], replacements: [], path,
 				os: { homedir: () => '/home/fixture', hostname: () => 'fixtureHost', networkInterfaces: () => ({}) }
 			});
 			assert.ok(!output.includes('fixtureSensitive'), file + ': sanitizer leaked an identity or licensing value');
 			assert.ok(output.includes('public diagnostic'), file + ': sanitizer removed public diagnostics');
+			if (file.includes('/test-runner-bridge/')) {
+				const sanitize = require('vm').runInNewContext(source.slice(start, end) + '\n' + symbol, { replacements: [] });
+				const opaque = 'fixture'.repeat(6) + '+/=';
+				assert.ok(!sanitize(opaque, true).includes(opaque), file + ': raw log retained an opaque credential');
+				assert.strictEqual(sanitize(opaque, false), opaque, file + ': structured public values changed');
+				assert.strictEqual(sanitize('[Physics::Module] Id: 0x12345678', true), '[Physics::Module] Id: 0x12345678');
+				assert.strictEqual(sanitize('DOTNET_SYSTEM_GLOBALIZATION_USENLS=1', true), 'DOTNET_SYSTEM_GLOBALIZATION_USENLS=1');
+			}
 		}
 		for (const file of [
 			'results/unity7-lifecycle-2026-10-08T04-57-52-040Z/Editor.log',
@@ -5163,12 +5173,27 @@ function testCoreClrEvidencePrivacy() {
 			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-36-43-227Z/editor.log',
 			'results/unity6-package-lifecycle-2026-10-08T06-48-05-022Z/Editor.log',
 			'results/unity6-package-lifecycle-2026-10-08T06-51-17-382Z/Editor.log',
-			'results/unity7-package-lifecycle-2026-10-08T06-53-39-341Z/Editor.log'
+			'results/unity7-package-lifecycle-2026-10-08T06-53-39-341Z/Editor.log',
+			'../test-runner-bridge/results/absent-2026-10-08T06-55-44-135Z/editor.log',
+			'../test-runner-bridge/results/absent-2026-10-08T07-29-54-107Z/editor.log',
+			'../test-runner-bridge/results/bridge-absent-2026-10-08T07-38-39-672Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-38-57-653Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-44-20-292Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-53-48-415Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-58-15-643Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-59-23-494Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-09-27-212Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-15-52-148Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-19-44-038Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-27-02-241Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-31-11-797Z/editor.log',
+			'../test-runner-bridge/results/present-2026-10-08T06-55-58-646Z/editor.log',
+			'../test-runner-bridge/results/present-2026-10-08T07-30-11-939Z/editor.log'
 		]) {
 			const capture = fs.readFileSync(path.join(root, file), 'utf8');
 			const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)
 				&& !/^-+$/.test(line.trim()) && !/^__uct_lifecycle_current_[a-f0-9]{32}$/.test(line.trim())).join('\n');
-			assert.ok(!/^\s*(?:(?:Session|(?:External )?Correlation|Machine)[ -]?Id|Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im.test(log), file + ': Unity capture contains an identity or licensing value');
+			assert.ok(!/^\s*(?:(?:Session|(?:External )?Correlation|Machine)[ -]?Id|Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/_-]{32,}={0,2}\s*$/im.test(log), file + ': Unity capture contains an identity or licensing value');
 		}
 	});
 }

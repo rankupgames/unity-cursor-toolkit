@@ -1,0 +1,234 @@
+{
+  "passed": false,
+  "observedAt": "2026-10-08T08:13:18.177Z",
+  "editorVersion": "6000.3.9f1",
+  "bridgeCapture": "bridge-present-2026-10-08T08-09-27-212Z",
+  "cases": [
+    {
+      "name": "literal-metacharacter-name",
+      "elapsedMs": 38966,
+      "matched": true,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Literal[1].*"
+        ],
+        "testStatus": "passed"
+      },
+      "cli": {
+        "success": true,
+        "backend": "cli",
+        "runId": "cli-6a7a40c2675f6ac9220270a9b163be0a",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Literal[1].*"
+        ],
+        "tests": [
+          {
+            "id": "1009",
+            "fullName": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+            "status": "passed",
+            "durationMs": 20.257,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 61.8999
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "failure-stack",
+      "elapsedMs": 13881,
+      "matched": true,
+      "bridge": {
+        "status": "failed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Failing"
+        ],
+        "testStatus": "failed"
+      },
+      "cli": {
+        "success": false,
+        "backend": "cli",
+        "runId": "cli-37c6a9e3843a9e968514ebcd1eac9ddb",
+        "status": "failed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Failing"
+        ],
+        "tests": [
+          {
+            "id": "1005",
+            "fullName": "BridgeProof.Scope.Arithmetic.Failing",
+            "status": "failed",
+            "durationMs": 9.649,
+            "message": "UCT_EXPECTED_FAILURE_STACK",
+            "stackTrace": "at BridgeProof.Scope.Arithmetic.Failing () [0x00001] in <project>\\Assets\\EditCases\\EditModeCases.cs:9\r\n"
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 41.6121
+        },
+        "error": {
+          "code": "tests_failed",
+          "message": "Unity CLI test operation failed (tests_failed).",
+          "recovery": "Inspect the normalized test failures.",
+          "exitCode": 8,
+          "nativeCode": "TESTS_FAILED"
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "skipped-mapping",
+      "elapsedMs": 13770,
+      "matched": false,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Skipped"
+        ],
+        "testStatus": "skipped"
+      },
+      "cli": {
+        "success": false,
+        "backend": "cli",
+        "runId": "cli-e135aa7b24a7f6699d083b669c18d492",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "invalid_results",
+          "message": "Unity CLI did not produce a complete consistent NUnit report.",
+          "recovery": "Inspect the Editor and report; no partial result is treated as success."
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "inconclusive-mapping",
+      "elapsedMs": 13736,
+      "matched": false,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Inconclusive"
+        ],
+        "testStatus": "inconclusive"
+      },
+      "cli": {
+        "success": false,
+        "backend": "cli",
+        "runId": "cli-1e4f5b6cad2d8a8591b6ecf97dc05e40",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "invalid_results",
+          "message": "Unity CLI did not produce a complete consistent NUnit report.",
+          "recovery": "Inspect the Editor and report; no partial result is treated as success."
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "play-reload-and-heartbeat",
+      "elapsedMs": 19792,
+      "matched": true,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Play.Waiting.Heartbeats"
+        ],
+        "testStatus": "passed"
+      },
+      "cli": {
+        "success": true,
+        "backend": "cli",
+        "runId": "cli-7e42b1c65b6e7dd9f6669e7e11943be8",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "PlayMode",
+        "selection": [
+          "BridgeProof.Play.Waiting.Heartbeats"
+        ],
+        "tests": [
+          {
+            "id": "1002",
+            "fullName": "BridgeProof.Play.Waiting.Heartbeats",
+            "status": "passed",
+            "durationMs": 4017.792,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 4050.6205
+        }
+      },
+      "editorsRemaining": []
+    }
+  ],
+  "fixtureRemoved": true,
+  "sources": [
+    {
+      "file": "unityCliTestAdapter.ts",
+      "sha256": "4a2b243c7e59ca272f4a7792c409a4ae79a178f419df7d1dd935da29828ff0c2"
+    },
+    {
+      "file": "unityTestTypes.ts",
+      "sha256": "2070c9e8e9b1b8879fcd4056c551fb2e4acb2698a26fd1915f88e82a757ffbbc"
+    },
+    {
+      "file": "unityTestPrivacy.ts",
+      "sha256": "4918e4cc4265c47b5600e60aebdacc0559eb7706089834797e665226f8e229b9"
+    }
+  ],
+  "editorsRemaining": []
+}

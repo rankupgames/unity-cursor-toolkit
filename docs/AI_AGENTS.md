@@ -23,10 +23,10 @@ environment-selected, or PATH binary and compares its version with the recorded
 A version mismatch is a warning with expected and found values; no install,
 upgrade, Editor substitution, or automatic backend fallback occurs.
 
-Production callers in this batch are version and doctor. The status bar shows CLI version availability.
+Production callers include version, doctor and explicitly selected test execution. The status bar shows CLI version availability.
 The local read-only guard permits version, doctor, and project-scoped status plans. Other invocations
 require an explicit mutating caller; the guard refuses before spawning. Existing
-MCP schemas, policy handling, and game_command batchmode execution are unchanged.
+game_command batchmode execution retains its existing path. Test execution applies the shared test policy described below.
 
 Every call passes arguments directly with JSON and non-interactive flags, keeps
 stdout and stderr separate, and requires one complete result envelope. Mixed,
@@ -200,7 +200,6 @@ These prompts are intentionally conservative: inspect first, summarize state, th
 ## Useful Feature Ideas
 
 - Prefab workflow tools: unpack/apply variants, inspect overrides, and instantiate prefabs safely.
-- Unity Test Runner tools: list tests, run EditMode/PlayMode tests, and return structured failures.
 - Build report tools: parse build output, surface warnings/errors, and compare artifact sizes.
 - Package Manager tools: list packages, inspect versions, and propose dependency changes with dry-run output.
 - CoreCLR and Unity 7 work is tracked in `docs/ROADMAP.md` and GitHub issues; do not
@@ -211,3 +210,11 @@ These prompts are intentionally conservative: inspect first, summarize state, th
 Unity 7 and newer return opaque `entityId` strings from scene hierarchy and GameObject create/find calls, and `componentEntityId` from component creation. Pass `entityId` to GameObject/component actions and `parentEntityId` to setParent. Keep these strings unchanged; do not convert them to JavaScript numbers.
 
 Editors before Unity 7 retain integer `instanceId`, `parentInstanceId`, and `componentInstanceId`. Version guards select the supported Unity API at compile time. A supplied string ID takes precedence; unsupported or malformed IDs fail before mutation. Names remain available when no ID is supplied. An unresolved parent is an error; omit all parent identifiers to detach.
+
+## Test execution
+
+After an edit, run the smallest relevant filtered selection, inspect structured failures, fix the cause, and repeat that selection before broadening the run.
+
+Use `list_tests` or `run_tests` with `dryRun: true` to inspect a bridge selection. Read-only mode blocks execution in both EditMode and PlayMode. Select a backend before running and report its exact Editor version. The CLI cannot list tests; do not describe an explicit CLI refusal as an empty selection. An unavailable or failed selected backend never triggers an automatic retry.
+
+Use the structured per-test results and typed errors. Do not expose raw CLI output, owner tokens, or machine paths. Cancellation requires a terminal owned-run response; `cancellation_unconfirmed` requires inspection of the same Editor. The legacy package remains loadable without Test Framework through a separate optional assembly. Actual Editor coverage is limited to the recorded proof versions, not every version accepted by the package manifest. See [client inputs and results](MCP_CLIENTS.md#unity-tests).
