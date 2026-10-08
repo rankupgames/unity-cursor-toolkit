@@ -33,10 +33,57 @@ function generateMatrix(capabilities, input) {
 		}))
 	}));
 	const include = input.ci.include.map(entry => {
-		if (!input.bands.includes(entry.band) || !entry.editorVersion || !entry.id || !entry.platform) throw new Error('CI candidate is invalid');
+		if (!input.bands.includes(entry.band) || typeof entry.editorVersion !== 'string' || !/^\d+\.\d+\.\d+[abfp]\d+$/.test(entry.editorVersion) || typeof entry.id !== 'string' || !entry.id || typeof entry.platform !== 'string' || !entry.platform) throw new Error('CI candidate is invalid');
 		return entry;
 	}).sort((a, b) => a.id.localeCompare(b.id));
+	if (new Set(include.map(entry => entry.id)).size !== include.length) throw new Error('Duplicate compatibility candidate');
 	return { schemaVersion: 1, bands: input.bands, rows, ci: { include } };
+}
+
+/** A passing local smoke is evidence for this exact candidate, never an entire band. */
+function validateCompatibilityReport(report, matrix) {
+	const candidate = report && matrix.ci.include.find(entry => entry.id === report.candidateId);
+	if (!candidate || report.band !== candidate.band || report.editorVersion !== candidate.editorVersion || report.requestedEditorVersion !== candidate.editorVersion || report.observedEditorVersion !== candidate.editorVersion || report.platform !== candidate.platform ||
+		!['x64', 'arm64'].includes(report.architecture) || !Number.isInteger(report.pid) || report.pid <= 0 ||
+		typeof report.observedAt !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(report.observedAt) || !Number.isFinite(Date.parse(report.observedAt))) throw new Error('Compatibility candidate identity is invalid');
+	if (report.passed !== true || report.outcome !== 'passed' || report.identityConfirmed !== true || report.normalExitConfirmed !== true || report.launched !== true || report.listenerOwnerConfirmed !== true || report.ownedPreferencesAbsent !== true || report.ownedPreferenceQueryConfirmed !== true || Object.prototype.hasOwnProperty.call(report, 'cleanupError') ||
+		['forcedMcpStop', 'forcedEditorStop'].some(key => key in report && report[key] !== false) || Object.prototype.hasOwnProperty.call(report, 'error') || !Array.isArray(report.remainingOwnedPids) || report.remainingOwnedPids.length ||
+		!report.editorExit || report.editorExit.code !== 0 || report.editorExit.signal !== null || report.editorExit.spawnError !== false ||
+		!report.mcpExit || report.mcpExit.code !== 0 || report.mcpExit.signal !== null || report.mcpExit.spawnError !== false) throw new Error('Compatibility run did not complete successfully');
+	const checks = ['activation', 'handshake', 'console', 'mcp'];
+	if (!Array.isArray(report.checks) || report.checks.length !== checks.length ||
+		!checks.every(name => report.checks.filter(check => check && check.name === name && check.status === 'pass').length === 1)) throw new Error('All compatibility checks must pass');
+	const runtime = report.runtime, activation = report.activation;
+	if (!runtime || typeof runtime.isCoreCLR !== 'boolean' || typeof runtime.hasDomainReload !== 'boolean' || runtime.isCoreCLR === runtime.hasDomainReload ||
+		!activation || activation.assembly !== 'UnityCursorToolkit.Editor' || typeof activation.assemblyMvid !== 'string' ||
+		!/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(activation.assemblyMvid) || !Number.isInteger(activation.handlerCount) || activation.handlerCount < 1 ||
+		typeof activation.automaticListenerObserved !== 'boolean' || !activation.runtime ||
+		activation.runtime.isCoreCLR !== runtime.isCoreCLR || activation.runtime.hasDomainReload !== runtime.hasDomainReload) throw new Error('Observed runtime identity is invalid');
+	if (!report.isolation || report.isolation.disposableProject !== true || report.isolation.defaultInstallActivationProven !== false ||
+		!report.isolation.handlerSource || typeof report.isolation.handlerSource.originalSha256 !== 'string' || typeof report.isolation.handlerSource.fixtureSha256 !== 'string' || report.isolation.handlerSource.originalSha256 === report.isolation.handlerSource.fixtureSha256 || !/^[0-9a-f]{64}$/.test(report.isolation.handlerSource.originalSha256) ||
+		!/^[0-9a-f]{64}$/.test(report.isolation.handlerSource.fixtureSha256) ||
+		report.isolation.handlerSource.delta !== 'two preference key literals only') throw new Error('Compatibility fixture isolation is invalid');
+	return candidate;
+}
+
+function importCompatibilityResults(input, reports) {
+	const next = JSON.parse(JSON.stringify(input));
+	const matrix = generateMatrix(['isCoreCLR', 'hasDomainReload'], input);
+	for (const report of reports) {
+		const candidate = validateCompatibilityReport(report, matrix);
+		for (const capability of ['isCoreCLR', 'hasDomainReload']) {
+			const evidence = report.observedAt + ': Unity ' + candidate.editorVersion + ', ' + candidate.platform + ' ' + report.architecture +
+				'. Isolated local activation, handshake, console and stdio MCP checks passed; ' + capability + '=' + report.runtime[capability] +
+				'. Two fixture-only preference keys and an OS-selected port; default-install activation and other versions/platforms remain untested.';
+			const existing = next.observations.find(record => record.capability === capability && record.band === candidate.band);
+			if (existing) {
+				existing.state = 'verified';
+				existing.evidence = [...new Set([...(existing.evidence ? existing.evidence.split('\n') : []), evidence])].sort().join('\n');
+			} else next.observations.push({ capability, band: candidate.band, state: 'verified', evidence });
+		}
+	}
+	next.observations.sort((a, b) => a.capability.localeCompare(b.capability) || a.band.localeCompare(b.band));
+	return next;
 }
 
 function renderMarkdown(matrix) {
@@ -63,7 +110,7 @@ function renderMarkdown(matrix) {
 		'## Recorded evidence', ''
 	];
 	for (const row of matrix.rows) for (const band of matrix.bands) {
-		if (row.cells[band].evidence) lines.push('- ' + row.capability + ' / ' + band + ': ' + row.cells[band].evidence);
+		if (row.cells[band].evidence) lines.push('- ' + row.capability + ' / ' + band + ': ' + row.cells[band].evidence.replace(/\n/g, ' '));
 	}
 	if (!matrix.rows.some(row => matrix.bands.some(band => row.cells[band].evidence))) lines.push('No runtime capability runs are recorded.');
 	return lines.join('\n') + '\n';
@@ -72,7 +119,13 @@ function renderMarkdown(matrix) {
 function main() {
 	const root = path.resolve(__dirname, '..', '..');
 	const source = fs.readFileSync(path.join(root, 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs'), 'utf8');
-	const input = JSON.parse(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix-input.json'), 'utf8'));
+	let input = JSON.parse(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix-input.json'), 'utf8'));
+	const importIndex = process.argv.indexOf('--import-results');
+	if (importIndex >= 0) {
+		if (process.argv.includes('--check') || !process.argv[importIndex + 1]) throw new Error('--import-results requires a report and cannot be combined with --check');
+		input = importCompatibilityResults(input, [JSON.parse(fs.readFileSync(process.argv[importIndex + 1], 'utf8'))]);
+		fs.writeFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix-input.json'), JSON.stringify(input, null, 2) + '\n');
+	}
 	const matrix = generateMatrix(advertisedCapabilities(source), input);
 	const outputs = [
 		['unity-cursor-toolkit/capability-matrix.json', JSON.stringify(matrix, null, 2) + '\n'],
@@ -86,5 +139,5 @@ function main() {
 	}
 }
 
-module.exports = { advertisedCapabilities, generateMatrix, renderMarkdown };
+module.exports = { advertisedCapabilities, generateMatrix, renderMarkdown, validateCompatibilityReport };
 if (require.main === module) main();

@@ -508,7 +508,7 @@ async function testRuntimeConsumers() {
 }
 
 function testCapabilityMatrix() {
-	const { advertisedCapabilities, generateMatrix, renderMarkdown } = require('../scripts/generate-capability-matrix');
+	const { advertisedCapabilities, generateMatrix, renderMarkdown, validateCompatibilityReport } = require('../scripts/generate-capability-matrix');
 	const input = { bands: ['old', 'new'], ci: { include: [] }, observations: [{ capability: 'isCoreCLR', band: 'new', state: 'verified', evidence: 'fixture run' }] };
 	test('matrix rows track advertised capability additions and removals with untested defaults', () => {
 		const source = String.raw`sb.Append("\"runtime\":{");
@@ -533,6 +533,131 @@ function testCapabilityMatrix() {
 		assert.strictEqual(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix.json'), 'utf8').replace(/\r\n/g, '\n'), JSON.stringify(matrix, null, 2) + '\n');
 		assert.strictEqual(fs.readFileSync(path.join(root, 'docs/CAPABILITY_MATRIX.md'), 'utf8').replace(/\r\n/g, '\n'), renderMarkdown(matrix));
 	});
+	test('local compatibility import requires exact identity, all checks, runtime and normal owned exits', () => {
+		const config = { bands: ['Mono', 'Core'], ci: { include: [
+			{ id: 'mono-windows', band: 'Mono', editorVersion: '6000.3.9f1', platform: 'Windows' },
+			{ id: 'core-windows', band: 'Core', editorVersion: '7000.0.0a7', platform: 'Windows' }
+		] }, observations: [] };
+		const valid = {
+			observedAt: '2026-10-08T00:00:00.000Z', candidateId: 'mono-windows', band: 'Mono', editorVersion: '6000.3.9f1', platform: 'Windows', architecture: 'x64', pid: 123,
+			requestedEditorVersion: '6000.3.9f1', observedEditorVersion: '6000.3.9f1', launched: true, listenerOwnerConfirmed: true, ownedPreferencesAbsent: true, ownedPreferenceQueryConfirmed: true,
+			passed: true, outcome: 'passed', identityConfirmed: true, normalExitConfirmed: true, remainingOwnedPids: [],
+			editorExit: { code: 0, signal: null, spawnError: false }, mcpExit: { code: 0, signal: null, spawnError: false },
+			checks: ['activation', 'handshake', 'console', 'mcp'].map(name => ({ name, status: 'pass' })),
+			runtime: { isCoreCLR: false, hasDomainReload: true },
+			activation: { assembly: 'UnityCursorToolkit.Editor', assemblyMvid: '00000000-0000-0000-0000-000000000001', handlerCount: 2, automaticListenerObserved: false, runtime: { isCoreCLR: false, hasDomainReload: true } },
+			isolation: { disposableProject: true, defaultInstallActivationProven: false, handlerSource: { originalSha256: 'a'.repeat(64), fixtureSha256: 'b'.repeat(64), delta: 'two preference key literals only' } }
+		};
+		const matrix = generateMatrix(['isCoreCLR', 'hasDomainReload'], config);
+		assert.strictEqual(validateCompatibilityReport(valid, matrix).id, 'mono-windows');
+		for (const mutate of [
+			r => { r.editorVersion = '6000.3.25f1'; }, r => { r.platform = 'macOS'; }, r => { r.band = 'Core'; },
+			r => { r.runtime.isCoreCLR = 'false'; }, r => { delete r.runtime.hasDomainReload; },
+			r => { r.activation.runtime.isCoreCLR = true; }, r => { r.checks.pop(); },
+			r => { r.checks[3] = r.checks[2]; }, r => { r.checks[0].status = true; }, r => { r.passed = 'true'; },
+			r => { r.listenerOwnerConfirmed = 'true'; }, r => { delete r.ownedPreferencesAbsent; }, r => { delete r.ownedPreferenceQueryConfirmed; }, r => { r.observedEditorVersion = ''; },
+			r => { r.identityConfirmed = 1; }, r => { r.normalExitConfirmed = 'true'; }, r => { r.editorExit.signal = 'SIGKILL'; },
+			r => { r.mcpExit.code = 1; }, r => { r.forcedEditorStop = true; }, r => { r.forcedMcpStop = 0; }, r => { r.error = null; }, r => { r.cleanupError = null; }, r => { r.remainingOwnedPids = [123]; },
+			r => { r.isolation.defaultInstallActivationProven = true; }, r => { r.isolation.handlerSource.fixtureSha256 = r.isolation.handlerSource.originalSha256; }
+		]) {
+			const invalid = JSON.parse(JSON.stringify(valid)); mutate(invalid);
+			assert.throws(() => validateCompatibilityReport(invalid, matrix));
+		}
+		const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-compatibility-import-test-'));
+		const script = path.join(temp, 'unity-cursor-toolkit/scripts/generate-capability-matrix.js');
+		const configFile = path.join(temp, 'unity-cursor-toolkit/capability-matrix-input.json');
+		const sourceFile = path.join(temp, 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs');
+		const reportFile = path.join(temp, 'report.json');
+		try {
+			fs.mkdirSync(path.dirname(script), { recursive: true });
+			fs.mkdirSync(path.dirname(sourceFile), { recursive: true });
+			fs.mkdirSync(path.join(temp, 'docs'));
+			fs.copyFileSync(path.resolve(__dirname, '../scripts/generate-capability-matrix.js'), script);
+			fs.copyFileSync(path.resolve(__dirname, '../../Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs'), sourceFile);
+			const runImports = reports => {
+				fs.writeFileSync(configFile, JSON.stringify(config));
+				for (const report of reports) {
+					fs.writeFileSync(reportFile, JSON.stringify(report));
+					const result = require('child_process').spawnSync(process.execPath, [script, '--import-results', reportFile], { encoding: 'utf8', timeout: 10000 });
+					assert.strictEqual(result.status, 0, result.stderr);
+				}
+				return JSON.parse(fs.readFileSync(configFile, 'utf8'));
+			};
+			const imported = runImports([valid]);
+			assert.strictEqual(config.observations.length, 0, 'import never mutates its caller input');
+			assert.strictEqual(generateMatrix(['isCoreCLR'], imported).rows[0].cells.Core.state, 'untested');
+			assert.ok(imported.observations.every(o => o.evidence.includes('default-install activation') && o.evidence.includes('6000.3.9f1')));
+			assert.deepStrictEqual(runImports([valid, valid]), imported, 'repeat CLI imports are idempotent');
+			const second = JSON.parse(JSON.stringify(valid)); second.observedAt = '2026-10-09T00:00:00.000Z';
+			assert.deepStrictEqual(runImports([valid, second]), runImports([second, valid]));
+			const before = fs.readFileSync(configFile, 'utf8');
+			const invalid = JSON.parse(JSON.stringify(valid)); invalid.checks.pop();
+			fs.writeFileSync(reportFile, JSON.stringify(invalid));
+			assert.strictEqual(require('child_process').spawnSync(process.execPath, [script, '--import-results', reportFile], { encoding: 'utf8', timeout: 10000 }).status, 1);
+			assert.strictEqual(fs.readFileSync(configFile, 'utf8'), before, 'refused import must not write input');
+		} finally { fs.rmSync(temp, { recursive: true, force: true }); }
+
+	});
+	test('compatibility preflight emits an untested machine report without launching a missing or unknown candidate', () => {
+		const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-compatibility-preflight-test-'));
+		try {
+			const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../capability-matrix.json'), 'utf8'));
+			const platform = process.platform === 'win32' ? 'Windows' : process.platform === 'darwin' ? 'macOS' : 'Linux';
+			const candidate = config.ci.include.find(c => c.platform === platform);
+			for (const id of ['not-configured', ...(candidate ? [candidate.id] : [])]) {
+				const output = path.join(temp, id + '.json');
+				const result = require('child_process').spawnSync(process.execPath, [path.resolve(__dirname, '../scripts/run-unity-compatibility.js'), '--candidate', id,
+					'--unity', path.join(temp, 'missing-editor'), '--output', output], { encoding: 'utf8', timeout: 15000 });
+				assert.strictEqual(result.status, 1);
+				const report = JSON.parse(fs.readFileSync(output, 'utf8'));
+				assert.strictEqual(report.launched, false);
+				assert.strictEqual(report.observedEditorVersion, '');
+				assert.strictEqual(report.outcome, 'untested');
+				assert.strictEqual(report.passed, false);
+				assert.ok(report.checks.every(c => c.status === 'untested'));
+				assert.strictEqual(report.error.code, id === 'not-configured' ? 'configured_candidate_required' : process.platform === 'win32' ? 'installed_editor_required' : 'owned_process_enumeration_unavailable');
+			}
+		} finally { fs.rmSync(temp, { recursive: true, force: true }); }
+	});
+
+	if (process.platform === 'win32') test('compatibility cleanup CLI detects a real owned registry sentinel before confirming absence', () => {
+		const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-compatibility-cleanup-test-'));
+		const prefix = 'UCT_Compatibility_' + require('crypto').randomUUID();
+		const keyName = prefix + '_Sentinel';
+		const reportFile = path.join(temp, 'historical.json'), output = path.join(temp, 'reassessment.json');
+		const closed = require('child_process').spawnSync(process.execPath, ['-e', ''], { timeout: 10000 });
+		assert.strictEqual(closed.status, 0);
+		fs.writeFileSync(reportFile, JSON.stringify({ observedAt: '2026-10-08T00:00:00.000Z', editorVersion: '6000.3.9f1', platform: 'Windows', pid: closed.pid, isolation: { disposableProject: true } }));
+		const registry = remove => {
+			const key = 'HKCU:\\Software\\Unity Technologies\\Unity Editor 5.x';
+			const script = '$ErrorActionPreference="Stop";$key=$env:UCT_COMPAT_TEST_REGISTRY;' + (remove
+				? 'Remove-ItemProperty -LiteralPath $key -Name $env:UCT_COMPAT_TEST_KEY -ErrorAction Stop'
+				: 'New-ItemProperty -LiteralPath $key -Name $env:UCT_COMPAT_TEST_KEY -Value "owned regression sentinel" -PropertyType String -Force -ErrorAction Stop | Out-Null');
+			const r = require('child_process').spawnSync('powershell.exe', ['-NoProfile', '-Command', script], { env: { ...process.env, UCT_COMPAT_TEST_REGISTRY: key, UCT_COMPAT_TEST_KEY: keyName }, encoding: 'utf8', timeout: 10000, windowsHide: true });
+			assert.strictEqual(r.status, 0, r.stderr);
+		};
+		let created = false;
+		try {
+			registry(false); created = true;
+			const args = [path.resolve(__dirname, '../scripts/run-unity-compatibility.js'), '--verify-cleanup', reportFile, '--project', temp, '--preference-prefix', prefix, '--output', output];
+			const blocked = require('child_process').spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 20000 });
+			assert.strictEqual(blocked.status, 1);
+			const refusal = JSON.parse(fs.readFileSync(output, 'utf8'));
+			assert.strictEqual(refusal.error.code, 'owned_preferences_remain');
+			assert.strictEqual(refusal.remainingPreferenceCount, 1);
+			assert.strictEqual(refusal.passed, false);
+			registry(true); created = false;
+			const confirmed = require('child_process').spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 20000 });
+			assert.strictEqual(confirmed.status, 0, confirmed.stderr);
+			const result = JSON.parse(fs.readFileSync(output, 'utf8'));
+			assert.strictEqual(result.passed, true);
+			assert.strictEqual(result.remainingPreferenceCount, 0);
+			assert.deepStrictEqual(result.remainingOwnedPids, []);
+			assert.strictEqual(result.historicalOverallResultUnchanged, true);
+			assert.strictEqual(result.mustRerunForMatrixImport, true);
+		} finally { if (created) registry(true); fs.rmSync(temp, { recursive: true, force: true }); }
+	});
+
 }
 
 function testTypes() {
