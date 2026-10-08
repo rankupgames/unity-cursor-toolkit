@@ -154,14 +154,14 @@ No runtime gate is selected by this inventory. Confirm availability and lifecycl
 The table above preserves the original frozen source inventory. Current canonical
 sites after RUG-517/518 are below; sample synchronization is validated separately.
 Unity 7 uses the exact observed Unity.Scripting.LifecycleManagement attributes.
-The guide\'s earlier BeforeCodeUnloading name is absent in the installed 7000.0.0a7
+The guide's earlier BeforeCodeUnloading name is absent in the installed 7000.0.0a7
 metadata. Older Editors keep AssemblyReloadEvents behind the opposite guard.
 
 | Owner file | Older-Editor before/after lines | Unity 7 unload/initialize attribute lines |
 | --- | --- | --- |
 | Editor/HotReloadHandler.cs | 136 / 137 | 505 / 535 |
 | Editor/ConsoleToCursor.cs | 80 / 81 | 102 / 86 |
-| Editor/ProfilerSnapshot.cs | 175?176, 429 / 151 | 418 / 156 |
+| Editor/ProfilerSnapshot.cs | 175-176, 429 / 151 | 418 / 156 |
 | Editor/MCP/MCPBridge.cs | 37 / 38 | 45 / 72 |
 | Editor/MCP/EditorWindowViewportCapture.cs | 42 / none | 420 / 36 |
 | Editor/MCP/ViewportStreamTool.cs | 42 / none | 55 / 36 |
@@ -174,3 +174,9 @@ remains unchanged over two recompiles. Recreated coordinator static state is
 recorded, not treated as proof of selective assembly retention. Normal shutdown,
 manual Stop, console/profiler reset and capture disposal passed. Viewport frame
 delivery passed; correct pixel content remains outside this proof.
+
+## Render fixture correction, 2026-10-08
+
+Unity 7 removed the Built-in Render Pipeline ([Unity announcement](https://discussions.unity.com/t/the-path-to-a-single-render-pipeline-in-unity-7/1737908)). The first empty fixture had no supported render pipeline and produced black frames. The [fresh URP observation](unity7-urp-smoke-2026-10-08T05-58-37-071Z/observation.json) passed the existing full internal smoke on 7000.0.0a7 (581996e1a8f7), Windows x64, with normal exit 0. The installed Editor template supplies the settings and exact URP 17.7.0 pin; its SHA-256 is recorded. The [captured frame](unity7-urp-smoke-2026-10-08T05-58-37-071Z/viewport.jpg) shows the blue cube, orange sphere, and floor. No capture implementation changed.
+
+Reproduce with `run-render-smoke.js --unity <Unity.exe> --version 7000.0.0a7 --template <bundled-urp-template.tgz>`. This creates and removes an owned temporary project after normal exit. The smoke selects an available local TCP port because the host excludes the default bridge port range; default-port connectivity is not proven. This exact alpha observation does not establish general Unity 7 readiness or complete the separate vendor audit.

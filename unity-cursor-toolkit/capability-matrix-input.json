@@ -42,6 +42,18 @@
       "capability": "hasDomainReload",
       "band": "6.0-6.5",
       "state": "verified"
+    },
+    {
+      "capability": "isCoreCLR",
+      "band": "Unity 7",
+      "state": "verified",
+      "evidence": "2026-10-08: Unity 7000.0.0a7 (581996e1a8f7), Windows x64. Production TCP project_info confirmed isCoreCLR=true against System.Private.CoreLib during two real recompiles. Evidence: experiments/coreclr-package-audit/results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json. Other versions and platforms remain untested; this does not certify all toolkit flows."
+    },
+    {
+      "capability": "hasDomainReload",
+      "band": "Unity 7",
+      "state": "verified",
+      "evidence": "2026-10-08: Unity 7000.0.0a7 (581996e1a8f7), Windows x64. Production TCP project_info confirmed hasDomainReload=false against System.Private.CoreLib during two real recompiles. Evidence: experiments/coreclr-package-audit/results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json. Other versions and platforms remain untested; this does not certify all toolkit flows."
     }
   ]
 }
