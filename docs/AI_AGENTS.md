@@ -131,7 +131,7 @@ APIs present in Unity 2019.4. Actual 2019.4 runtime proof remains pending.
 - Read recent Unity console output with `read_console`.
 - Capture current console/profiler context with `profiler_snapshot`.
 - Use the Unity toolbar copy action when a human wants clipboard context plus a
-  current main-camera application screenshot path. Each click overwrites the
+  current visible main Unity Editor window screenshot path. Each click overwrites the
   same temporary PNG.
 - Read compact whole-console session transcripts with `profiler_snapshot` using `action: "readConsoleTranscript"` after capturing or listing a session id.
 - Scan, summarize, query, and read the local Unity asset/object/reference graph with `unity_context`.

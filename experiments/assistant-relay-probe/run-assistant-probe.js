@@ -89,7 +89,7 @@ async function discoveryPreflight() {
 	const foundOwnedRegistry = client.stderr.includes('Using connection from ' + marker + ': ' + pipe);
 	const output = path.join(__dirname, 'results', 'discovery-preflight-' + new Date().toISOString().replace(/[:.]/g, '-'));
 	fs.mkdirSync(output, { recursive: true });
-	const sanitize = value => { for(const [original,replacement] of [[fixture,'<fixture>'],[os.homedir(),'<home>'],[os.hostname(),'<host-name>']])for(const form of [original,original.replace(/\\/g,'/'),JSON.stringify(original).slice(1,-1)])value=value.split(form).join(replacement);return value.split(/\r?\n/).map(line=>/licensing|license|access.token|auth.token|serial.number|machine.id/i.test(line)?'<licensing or credential line omitted>':line.trimEnd()).join('\n').trimEnd(); };
+	const sanitize = value => { for(const [original,replacement] of [[fixture,'<fixture>'],[os.homedir(),'<home>'],[os.hostname(),'<host-name>']])for(const form of [original,original.replace(/\\/g,'/'),JSON.stringify(original).slice(1,-1)])value=value.split(form).join(replacement);return value.replace(/^\s*-hubSessionId\r?\n[^\r\n]*/gim,'<credential line omitted>').split(/\r?\n/).map(line=>/licensing|license|access.token|auth.token|serial.number|machine.?id|session.?id|correlation.?id|bearer|hardware.?id|user.?id|account.?id|^\s*(?:Id|Product|Type|Expiration):/i.test(line)?'<licensing or credential line omitted>':line.trimEnd()).join('\n').trimEnd(); };
 	fs.writeFileSync(path.join(output, 'child-stderr.log'), sanitize(client.stderr) + '\n');
 	fs.writeFileSync(path.join(output, 'observation.json'), JSON.stringify({
 		foundOwnedRegistry, marker, pipe, error, exit, childPid: client.child.pid,
@@ -107,10 +107,11 @@ async function discoveryPreflight() {
 
 async function main() {
 	if(process.argv.includes('--discovery-preflight'))return discoveryPreflight();
-	const tests = process.argv.includes('--policy-tests') ? await policyTests() : (() => { const evidence=json(arg('--policy-evidence'));return evidence?.policyTests || evidence; })();
-	if (!tests?.faults?.length || !tests?.allowed) throw new Error('--policy-evidence must name the recorded successful policy checks.');
-	if(!process.argv.includes('--policy-tests') && tests.providerSha256 && tests.providerSha256!==hash(path.join(__dirname,'relay-provider.js')))throw new Error('Recorded policy evidence does not match current provider.');
-	if (process.argv.includes('--policy-tests')) { const result={passed:true,providerSha256:hash(path.join(__dirname,'relay-provider.js')),...tests};if(arg('--output'))fs.writeFileSync(arg('--output'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2)); return; }
+	const evidence = process.argv.includes('--policy-tests') ? { passed: true, providerSha256: hash(path.join(__dirname, 'relay-provider.js')), ...await policyTests() } : json(arg('--policy-evidence'));
+	const tests = evidence?.policyTests || evidence;
+	if (evidence?.passed !== true || tests?.passed !== true || !tests?.faults?.length || tests?.allowed?.isError !== false) throw new Error('--policy-evidence must name the recorded successful policy checks.');
+	if(evidence.providerSha256!==hash(path.join(__dirname,'relay-provider.js')))throw new Error('Recorded policy evidence does not match current provider.');
+	if (process.argv.includes('--policy-tests')) { const result=evidence;if(arg('--output'))fs.writeFileSync(arg('--output'),JSON.stringify(result,null,2)+'\n');console.log(JSON.stringify(result,null,2)); return; }
 	const editor = arg('--editor'), archive = arg('--archive');
 	if (!editor || !archive) throw new Error('--editor and --archive are required.');
 	if (hash(archive) !== SHA256) throw new Error('Pinned Assistant archive checksum differs.');
@@ -184,7 +185,7 @@ async function main() {
 	function sanitize(text) {
 		for (const [value, replacement] of sanitizers) for (const form of [value, value.replace(/\\/g, '/'), JSON.stringify(value).slice(1,-1)])
 			text = text.split(form).join(replacement);
-		return text.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.id/i.test(line)
+		return text.replace(/^\s*-hubSessionId\r?\n[^\r\n]*/gim, '<credential line omitted>').split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.?id|session.?id|correlation.?id|bearer|hardware.?id|user.?id|account.?id|^\s*(?:Id|Product|Type|Expiration):/i.test(line)
 			? '<licensing or credential line omitted>' : line.trimEnd()).join('\n').trimEnd();
 	}
 	function clean(value) { return typeof value === 'string' ? sanitize(value) : Array.isArray(value) ? value.map(clean)
@@ -246,7 +247,7 @@ async function main() {
 		for (const name of fs.readdirSync(proof)) if (name !== 'stop') save(name, fs.readFileSync(path.join(proof, name), 'utf8'));
 		for (const item of immutableHashes) assert.equal(hash(path.join(pkg, item.relative)), item.sha256);
 		record.remainingOwnedProcesses=ownedProcesses();
-		record.normalEditorExit = record.editorExit?.code === 0 && fs.existsSync(path.join(proof, 'quitting.json')) && record.remainingOwnedProcesses.length===0 && (!relay || record.childExit.exited);
+		record.normalEditorExit = record.editorExit?.code === 0 && fs.existsSync(path.join(proof, 'quitting.json')) && record.remainingOwnedProcesses.length===0 && (!relay || (record.childExit.exited && record.childExit.code === 0 && record.childExit.signal === null));
 		if(!record.normalEditorExit){record.passed=false;record.cleanupError=record.cleanupError||'Owned process normal exit or absence not proved.';}
 		if (record.normalEditorExit && (!relay || record.childExit.exited)) { record.deletedOwnedPrefs = ownedPrefs(true); assert.equal(ownedPrefs(false).length, 0); }
 		save('observation.json', record);
