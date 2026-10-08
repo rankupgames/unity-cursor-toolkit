@@ -196,7 +196,7 @@ function main() {
 			"cp.execFile=(command,args,options,callback)=>{assert.strictEqual(command,'ssh');",
 			"assert.strictEqual(options.windowsHide,true);assert.strictEqual(options.timeout,10000);assert.strictEqual(options.maxBuffer,65536);",
 			"assert(args.includes('BatchMode=yes'));assert(args.includes('StrictHostKeyChecking=yes'));assert(args.includes('ConnectTimeout=5'));",
-			"for(const option of ['UpdateHostKeys=no','PermitLocalCommand=no','ClearAllForwardings=yes','ForwardAgent=no','ForwardX11=no','Tunnel=no','ControlMaster=no','ControlPath=none','ControlPersist=no','ForkAfterAuthentication=no']){assert(args.includes(option),'Doctor must disable '+option);}",
+			"for(const option of ['UpdateHostKeys=no','CheckHostIP=no','PermitLocalCommand=no','ClearAllForwardings=yes','ForwardAgent=no','ForwardX11=no','Tunnel=no','ControlMaster=no','ControlPath=none','ControlPersist=no','ForkAfterAuthentication=no']){assert(args.includes(option),'Doctor must disable '+option);}",
 			"const encoded=args[args.length-1].split(' ').pop();const script=Buffer.from(encoded,'base64').toString('utf16le');",
 			"calls.push(script.includes('-VersionOnly')?'sidecarversion':script.includes('Test-Path')?'remotepaths':'ssh');",
 			"assert(!/Start-Process|New-Item|license status|license activate|license return|auth logout/.test(script));",
@@ -268,7 +268,7 @@ function main() {
 		try {
 			const invalid = [
 				undefined, '{malformed PRIVATE_KEY',
-				{}, createManifest({ sshTarget: '-oProxyCommand=PRIVATE_KEY' }),
+				{}, createManifest({ sshTarget: '-oProxyCommand=PRIVATE_KEY' }), createManifest({ sshTarget: '-Ffixture@host' }),
 				createManifest({ remoteWorkspacePath: 'relative-path' }),
 				createManifest({ unityPlayerPath: 'C:\\private\nuser.exe' }),
 				createManifest({ display: 'bad' }), createManifest({ ports: { stream: 70000, control: 70001 } }),

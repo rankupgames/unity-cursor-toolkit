@@ -9,7 +9,7 @@ const repo = path.resolve(__dirname, '../..');
 const option = name => { const i = process.argv.indexOf(name); return i < 0 ? '' : process.argv[i + 1] || ''; };
 const editor = option('--editor'), version = option('--editor-version'), revision = option('--editor-revision');
 if (!editor || version !== '7000.0.0a7' || revision !== '581996e1a8f7' || !fs.existsSync(editor)) throw Error('Supply the reviewed exact Editor, version and revision.');
-const metadata = spawnSync('powershell.exe', ['-NoProfile', '-Command', '(Get-Item -LiteralPath $env:UCT_PROOF_EDITOR).VersionInfo.ProductVersion'], { encoding: 'utf8', env: { ...process.env, UCT_PROOF_EDITOR: editor } });
+const metadata = spawnSync('powershell.exe', ['-NoProfile', '-Command', '(Get-Item -LiteralPath $env:UCT_PROOF_EDITOR).VersionInfo.ProductVersion'], { timeout: 10000, windowsHide: true, encoding: 'utf8', env: { ...process.env, UCT_PROOF_EDITOR: editor } });
 if (metadata.status !== 0 || metadata.stdout.trim() !== version + '_' + revision) throw Error('Exact executable metadata mismatch.');
 const source = path.join(repo, 'Packages/com.rankupgames.unity-cursor-toolkit');
 const runnerRelative = 'Runtime/AgentCommands/AgentCommandRunner.cs';
@@ -21,7 +21,7 @@ const exists = file => fs.existsSync(file);
 const json = file => JSON.parse(fs.readFileSync(file, 'utf8'));
 const roots = [];
 function ownedProcesses(root) {
-  const result = spawnSync('powershell.exe', ['-NoProfile', '-Command', 'Get-CimInstance Win32_Process | Where-Object { $_.Name -match "^Unity" -and $_.CommandLine -and $_.CommandLine.Contains($env:UCT_PROOF_ROOT) } | Select-Object -ExpandProperty ProcessId | ConvertTo-Json -Compress'], { encoding: 'utf8', env: { ...process.env, UCT_PROOF_ROOT: root } });
+  const result = spawnSync('powershell.exe', ['-NoProfile', '-Command', 'Get-CimInstance Win32_Process | Where-Object { $_.Name -match "^Unity" -and $_.CommandLine -and $_.CommandLine.Contains($env:UCT_PROOF_ROOT) } | Select-Object -ExpandProperty ProcessId | ConvertTo-Json -Compress'], { timeout: 10000, windowsHide: true, encoding: 'utf8', env: { ...process.env, UCT_PROOF_ROOT: root } });
   if (result.status !== 0) throw Error('Owned process query failed.');
   const parsed = result.stdout.trim() ? JSON.parse(result.stdout) : [];
   return Array.isArray(parsed) ? parsed : [parsed];
@@ -80,7 +80,7 @@ async function run(variant) {
   let forcedCleanup = false;
   if (!exited && ownedProcesses(root).includes(child.pid)) {
     forcedCleanup = true;
-    spawnSync('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, encoding: 'utf8' });
+    spawnSync('taskkill.exe', ['/PID', String(child.pid), '/T', '/F'], { timeout: 10000, windowsHide: true, encoding: 'utf8' });
     for (let i = 0; !exited && i < 40; i++) await sleep(250);
   }
   const processes = ownedProcesses(root), observation = exists(path.join(proof, 'observation.json')) ? json(path.join(proof, 'observation.json')) : null;

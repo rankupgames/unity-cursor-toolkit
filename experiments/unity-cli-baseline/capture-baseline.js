@@ -31,7 +31,11 @@ function scrub(value, key = '') {
             .replace(/Bearer\s+[^\s"']+/gi, 'Bearer <redacted>')
             .replace(/^(?:recentLog\.\d+).*\n?/gm, '')
             .replace(/^(auth\.(?:name|serviceAccountClientId)\t).*$/gm, '$1<redacted>')
-            .replace(/Unity-auth-broker-[^\s\t"']+/g, 'Unity-auth-broker-<user>'));
+            .replace(/Unity-auth-broker-[^\s\t"']+/g, 'Unity-auth-broker-<user>')
+            .replace(/^-hubSessionId\r?\n[^\r\n]*/gim, '<redacted credential or identity log line>')
+            .replace(/^.*(?:licensing|Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|access[ -]?token|bearer|license[ -]?(?:serial|key|id)|hardware[ -]?id|user[ -]?id|account[ -]?id).*$/gim, '<redacted credential or identity log line>')
+            .replace(/^\s*(?:Id|Product|Type|Expiration):[^\r\n]*$/gim, '<redacted licensing metadata>')
+            .replace(/^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/gm, '<redacted credential or identity log line>'));
     }
     if (Array.isArray(value)) return value.map(item => scrub(item));
     if (key === 'user' && value && typeof value === 'object') value = { ...value, name: '<redacted>' };

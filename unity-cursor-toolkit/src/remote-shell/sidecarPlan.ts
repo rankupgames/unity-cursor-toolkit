@@ -179,7 +179,7 @@ export function createRemoteShellDoctorPlans(manifest: RemoteShellManifest): { s
 	const encoded = (script: string): CommandPlan => ({
 		command: 'ssh',
 		args: ['-T', '-o', 'BatchMode=yes', '-o', 'StrictHostKeyChecking=yes', '-o', 'ConnectTimeout=5',
-			'-o', 'ConnectionAttempts=1', '-o', 'UpdateHostKeys=no', '-o', 'PermitLocalCommand=no',
+			'-o', 'ConnectionAttempts=1', '-o', 'UpdateHostKeys=no', '-o', 'CheckHostIP=no', '-o', 'PermitLocalCommand=no',
 			'-o', 'ClearAllForwardings=yes', '-o', 'ForwardAgent=no', '-o', 'ForwardX11=no', '-o', 'Tunnel=no',
 			'-o', 'ControlMaster=no', '-o', 'ControlPath=none', '-o', 'ControlPersist=no', '-o', 'ForkAfterAuthentication=no', manifest.sshTarget,
 			'powershell.exe -NoProfile -NonInteractive -EncodedCommand ' + Buffer.from("$ErrorActionPreference='Stop'; " + script, 'utf16le').toString('base64')]
