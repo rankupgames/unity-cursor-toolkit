@@ -61,13 +61,13 @@
     },
     {
       "name": "add_scene_to_build",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/Scenes/SceneCommands.cs",
         "symbol": "AddSceneToBuild",
         "line": 221
       },
-      "rationale": "Changes loaded/active scene, persists scene edits, or updates EditorBuildSettings scenes.",
+      "rationale": "Assigns EditorBuildSettings.scenes, changing persisted build inclusion/enabled flags; no confirm or dry-run gate.",
       "evidence": "installed-package-source"
     },
     {
@@ -1073,13 +1073,13 @@
     },
     {
       "name": "package_resolve",
-      "risk": "mutating",
+      "risk": "policy-escape",
       "source": {
         "file": "Editor/Commands/PackageManager/PackageManagerCommand.cs",
         "symbol": "PackageResolve",
         "line": 321
       },
-      "rationale": "Client.Resolve changes resolved dependency state and may reload; no confirm argument.",
+      "rationale": "Client.Resolve re-fetches/re-links the manifest dependency graph, which can load executable package code and trigger recompilation/reload; no confirm or dry-run gate.",
       "evidence": "installed-package-source"
     },
     {
@@ -1205,13 +1205,13 @@
     },
     {
       "name": "remove_scene_from_build",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/Scenes/SceneCommands.cs",
         "symbol": "RemoveSceneFromBuild",
         "line": 249
       },
-      "rationale": "Changes loaded/active scene, persists scene edits, or updates EditorBuildSettings scenes.",
+      "rationale": "Removes a scene entry and assigns EditorBuildSettings.scenes, changing persisted build configuration; no confirm or dry-run gate.",
       "evidence": "installed-package-source"
     },
     {
@@ -1381,24 +1381,24 @@
     },
     {
       "name": "set_audio_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/ProjectSettings/AudioSettingsCommands.cs",
         "symbol": "Set",
         "line": 27
       },
-      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "rationale": "Shared non-Undoable project-settings Apply writes serialized AudioManager fields and saves assets; confirm/dry-run gate writes, not their project-wide effect.",
       "evidence": "installed-package-source"
     },
     {
       "name": "set_authoring_root",
-      "risk": "mutating",
+      "risk": "policy-escape",
       "source": {
         "file": "Editor/Commands/Authoring/AuthoringConfigCommands.cs",
         "symbol": "SetAuthoringRoot",
         "line": 20
       },
-      "rationale": "Cancels active test state/writes status/exits Play Mode, or changes per-project EditorPrefs authoring root.",
+      "rationale": "Changes the persisted per-project authoring sandbox through ProjectPaths.AuthoringRoot and can broaden a restricted subtree to all Assets; no confirm or dry-run gate.",
       "evidence": "installed-package-source"
     },
     {
@@ -1414,13 +1414,13 @@
     },
     {
       "name": "set_build_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/Build/BuildConfigCommands.cs",
         "symbol": "SetBuildSettings",
         "line": 102
       },
-      "rationale": "Plans known settings then assigns fixed fields; invalid IL2CPP value can fail after earlier writes, not atomic. Confirm/dry-run supported.",
+      "rationale": "Writes EditorUserBuildSettings and PlayerSettings.SetIl2CppCodeGeneration; an invalid later field can fail after earlier writes. Confirm/dry-run do not make applied project-setting changes Undoable.",
       "evidence": "installed-package-source"
     },
     {
@@ -1436,13 +1436,13 @@
     },
     {
       "name": "set_graphics_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/ProjectSettings/GraphicsSettingsCommands.cs",
         "symbol": "Set",
         "line": 22
       },
-      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "rationale": "Shared non-Undoable project-settings Apply assigns GraphicsSettings.defaultRenderPipeline and saves assets; confirm/dry-run gate writes, not their project-wide effect.",
       "evidence": "installed-package-source"
     },
     {
@@ -1458,13 +1458,13 @@
     },
     {
       "name": "set_input_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/ProjectSettings/InputSettingsCommands.cs",
         "symbol": "Set",
         "line": 27
       },
-      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "rationale": "Shared non-Undoable project-settings Apply changes serialized InputManager axis fields and saves assets; confirm/dry-run gate writes, not their project-wide effect.",
       "evidence": "installed-package-source"
     },
     {
@@ -1480,13 +1480,13 @@
     },
     {
       "name": "set_lighting_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/Baking/LightingBakeCommands.cs",
         "symbol": "SetLightingSettings",
         "line": 163
       },
-      "rationale": "Cancels bake and writes status or assigns allowlisted lighting settings; may create scene settings.",
+      "rationale": "Changes and dirties active LightingSettings and may create/assign scene settings; dry-run avoids writes, but applying has no confirm gate or Undo restoration.",
       "evidence": "installed-package-source"
     },
     {
@@ -1502,13 +1502,13 @@
     },
     {
       "name": "set_navmesh_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/Baking/NavMeshBakeCommands.cs",
         "symbol": "SetNavMeshSettings",
         "line": 161
       },
-      "rationale": "Cancels bake/writes status or applies allowlisted serialized navigation settings.",
+      "rationale": "Writes Navigation m_BuildSettings through ApplyModifiedPropertiesWithoutUndo; dry-run avoids writes, but applying project settings has no confirm gate or Undo restoration.",
       "evidence": "installed-package-source"
     },
     {
@@ -1524,46 +1524,46 @@
     },
     {
       "name": "set_physics_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/ProjectSettings/PhysicsSettingsCommands.cs",
         "symbol": "Set",
         "line": 20
       },
-      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "rationale": "Shared non-Undoable project-settings Apply changes global Physics settings and saves assets; confirm/dry-run gate writes, not their project-wide effect.",
       "evidence": "installed-package-source"
     },
     {
       "name": "set_player_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/ProjectSettings/PlayerSettingsCommands.cs",
         "symbol": "Set",
         "line": 25
       },
-      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "rationale": "Shared non-Undoable project-settings Apply changes PlayerSettings including scripting backend/API compatibility and saves assets; may require reload. Confirm/dry-run do not reduce the maximum effect.",
       "evidence": "installed-package-source"
     },
     {
       "name": "set_quality_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/ProjectSettings/QualitySettingsCommands.cs",
         "symbol": "Set",
         "line": 21
       },
-      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "rationale": "Shared non-Undoable project-settings Apply changes QualitySettings level/vSync/antiAliasing and saves assets; confirm/dry-run gate writes, not their project-wide effect.",
       "evidence": "installed-package-source"
     },
     {
       "name": "set_runtime_pipeline_settings",
-      "risk": "mutating",
+      "risk": "policy-escape",
       "source": {
         "file": "Editor/Commands/ProjectSettings/RuntimePipelineSettingsCommands.cs",
         "symbol": "Set",
         "line": 33
       },
-      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "rationale": "Persists privileged Runtime Pipeline controls including enableInBuilds, autoStart, port and enableAuditLogging through config.Save; confirm/dry-run do not reduce the maximum policy effect.",
       "evidence": "installed-package-source"
     },
     {
@@ -1623,13 +1623,13 @@
     },
     {
       "name": "set_time_settings",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/ProjectSettings/TimeSettingsCommands.cs",
         "symbol": "Set",
         "line": 20
       },
-      "rationale": "Shared Apply validates/plans dry-run before writing known settings and confirmation guard.",
+      "rationale": "Shared non-Undoable project-settings Apply changes global Time settings and saves assets; confirm/dry-run gate writes, not their project-wide effect.",
       "evidence": "installed-package-source"
     },
     {
@@ -1678,13 +1678,13 @@
     },
     {
       "name": "switch_build_target",
-      "risk": "mutating",
+      "risk": "destructive",
       "source": {
         "file": "Editor/Commands/Build/SwitchBuildTargetCommand.cs",
         "symbol": "SwitchBuildTarget",
         "line": 52
       },
-      "rationale": "SwitchActiveBuildTarget changes selected platform and triggers reimports after confirmation; no dry-run.",
+      "rationale": "EditorUserBuildSettings.SwitchActiveBuildTarget changes the project platform and triggers full reimport/reload after confirmation; no dry-run or Undo restoration.",
       "evidence": "installed-package-source"
     },
     {
