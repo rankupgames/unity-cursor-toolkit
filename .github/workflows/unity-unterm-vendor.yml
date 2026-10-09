@@ -156,8 +156,7 @@ jobs:
           $requiredVersion = ((Get-Content -Raw -LiteralPath './capability-matrix.json' | ConvertFrom-Json).ci.include | Where-Object { $_.id -eq $env:GITHUB_JOB }).editorVersion
           if ([string]::IsNullOrWhiteSpace($requiredVersion)) { throw 'The configured CI Editor version is missing' }
           if ($version -ne "${requiredVersion}_7a9955a4f2fa") { throw "Unity Editor version is $version; ${requiredVersion}_7a9955a4f2fa is required" }
-          $unityProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'Unity.exe'")
-          if ($unityProcesses | Where-Object { [string]::IsNullOrWhiteSpace($_.ExecutablePath) -or $_.ExecutablePath -match '[\\/]Editor[\\/]Unity\.exe$' }) { throw 'An existing Unity Editor is running or its path cannot be verified. Leave it open and run this check after normal save and quit' }
+          & (Join-Path $env:GITHUB_WORKSPACE 'unity-cursor-toolkit/scripts/assert-unity-editor-idle.ps1')
 
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
@@ -203,8 +202,7 @@ jobs:
           $requiredVersion = ((Get-Content -Raw -LiteralPath $matrixPath | ConvertFrom-Json).ci.include | Where-Object { $_.id -eq $env:GITHUB_JOB }).editorVersion
           if ([string]::IsNullOrWhiteSpace($requiredVersion)) { throw 'The configured CI Editor version is missing' }
           if ($version -ne "${requiredVersion}_ffc62b691db5") { throw "Unity Editor version is $version; ${requiredVersion}_ffc62b691db5 is required" }
-          $unityProcesses = @(Get-CimInstance Win32_Process -Filter "Name = 'Unity.exe'")
-          if ($unityProcesses | Where-Object { [string]::IsNullOrWhiteSpace($_.ExecutablePath) -or $_.ExecutablePath -match '[\\/]Editor[\\/]Unity\.exe$' }) { throw 'An existing Unity Editor is running or its path cannot be verified. Leave it open and run this check after normal save and quit' }
+          & (Join-Path $env:GITHUB_WORKSPACE 'unity-cursor-toolkit/scripts/assert-unity-editor-idle.ps1')
 
       - name: Create Unity 2019 package compatibility project
         shell: powershell
