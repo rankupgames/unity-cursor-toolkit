@@ -246,7 +246,6 @@ jobs:
           $logPath = Join-Path $env:RUNNER_TEMP 'unity-2019-smoke.log'
           $smokeProcess = Start-Process -FilePath $env:UNITY_LEGACY_PATH -ArgumentList '-quit','-batchmode','-nographics','-projectPath',$env:UNITY_LEGACY_SMOKE_PROJECT,'-executeMethod','LegacyVendorExclusionSmoke.Run','-logFile',$logPath -PassThru -Wait
           if ($smokeProcess.ExitCode -ne 0) {
-            if (Test-Path -LiteralPath $logPath) { Get-Content -LiteralPath $logPath -Tail 80 }
             throw "Unity 2019.4 compatibility smoke failed with exit code $($smokeProcess.ExitCode)"
           }
 
