@@ -119,9 +119,7 @@ jobs:
   unity-6000-windows-smoke:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: vendor-integrity
-    runs-on:
-      group: 'Unity Toolkit Runtime'
-      labels: [self-hosted, Windows, dev-3, unity-windows-runtime]
+    runs-on: [self-hosted, Windows, dev-3, unity-windows-runtime]
     concurrency:
       group: unity-runtime-dev3
       queue: max
@@ -138,7 +136,7 @@ jobs:
           persist-credentials: false
 
       - name: Require activated Unity 6000.3.9f1 host
-        shell: pwsh
+        shell: powershell
         run: |
           if ([string]::IsNullOrWhiteSpace($env:UNITY_CURSOR_TOOLKIT_UNITY_PATH) -or -not (Test-Path -LiteralPath $env:UNITY_CURSOR_TOOLKIT_UNITY_PATH -PathType Leaf)) { throw 'UNITY_6000_3_9F1_WINDOWS_EDITOR_PATH must point to an installed, activated Unity Editor' }
           $version = (Get-Item -LiteralPath $env:UNITY_CURSOR_TOOLKIT_UNITY_PATH).VersionInfo.ProductVersion
@@ -155,7 +153,7 @@ jobs:
           cache-dependency-path: unity-cursor-toolkit/package-lock.json
 
       - name: Verify age-gated npm
-        shell: pwsh
+        shell: powershell
         run: |
           if ((node --version).Trim() -ne 'v26.4.0') { throw 'Unexpected Node version' }
           if ([Version](npm --version) -lt [Version]'11.14.1') { throw 'npm 11.14.1 or newer is required' }
@@ -170,9 +168,7 @@ jobs:
   unity-2019-windows-exclusion:
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: vendor-integrity
-    runs-on:
-      group: 'Unity Toolkit Runtime'
-      labels: [self-hosted, Windows, dev-3, unity-windows-runtime]
+    runs-on: [self-hosted, Windows, dev-3, unity-windows-runtime]
     concurrency:
       group: unity-runtime-dev3
       queue: max
@@ -186,7 +182,7 @@ jobs:
           persist-credentials: false
 
       - name: Require activated Unity 2019.4.40f1 host
-        shell: pwsh
+        shell: powershell
         run: |
           if ([string]::IsNullOrWhiteSpace($env:UNITY_LEGACY_PATH) -or -not (Test-Path -LiteralPath $env:UNITY_LEGACY_PATH -PathType Leaf)) { throw 'UNITY_2019_4_40F1_WINDOWS_EDITOR_PATH must point to an installed, activated Unity Editor' }
           $version = (Get-Item -LiteralPath $env:UNITY_LEGACY_PATH).VersionInfo.ProductVersion
@@ -198,7 +194,7 @@ jobs:
           if ($unityProcesses | Where-Object { [string]::IsNullOrWhiteSpace($_.ExecutablePath) -or $_.ExecutablePath -match '[\\/]Editor[\\/]Unity\.exe$' }) { throw 'An existing Unity Editor is running or its path cannot be verified. Leave it open and run this check after normal save and quit' }
 
       - name: Create Unity 2019 package compatibility project
-        shell: pwsh
+        shell: powershell
         run: |
           $matrixPath = Join-Path $env:GITHUB_WORKSPACE 'unity-cursor-toolkit/capability-matrix.json'
           $requiredVersion = ((Get-Content -Raw -LiteralPath $matrixPath | ConvertFrom-Json).ci.include | Where-Object { $_.id -eq $env:GITHUB_JOB }).editorVersion
@@ -245,7 +241,7 @@ jobs:
           "UNITY_LEGACY_SMOKE_PROJECT=$projectPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
 
       - name: Prove Unity 2019.4 vendor exclusion
-        shell: pwsh
+        shell: powershell
         run: |
           $logPath = Join-Path $env:RUNNER_TEMP 'unity-2019-smoke.log'
           $smokeProcess = Start-Process -FilePath $env:UNITY_LEGACY_PATH -ArgumentList '-quit','-batchmode','-nographics','-projectPath',$env:UNITY_LEGACY_SMOKE_PROJECT,'-executeMethod','LegacyVendorExclusionSmoke.Run','-logFile',$logPath -PassThru -Wait
