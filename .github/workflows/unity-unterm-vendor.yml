@@ -44,12 +44,25 @@ jobs:
           source_commit="$(node -p "require('../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/VENDOR.json').sourceCommit")"
           source_ref="$(node -p "require('../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/VENDOR.json').sourceRef")"
           verify_attestation() {
-            gh attestation verify "$1" \
-              --repo rankupgames/Unity-Unterm \
-              --signer-workflow rankupgames/Unity-Unterm/.github/workflows/split-upm.yml \
-              --source-digest "$source_commit" \
-              --source-ref "$source_ref" \
-              --deny-self-hosted-runners
+            local attempt output status
+            for attempt in 1 2 3; do
+              if output="$(gh attestation verify "$1" \
+                --repo rankupgames/Unity-Unterm \
+                --signer-workflow rankupgames/Unity-Unterm/.github/workflows/split-upm.yml \
+                --source-digest "$source_commit" \
+                --source-ref "$source_ref" \
+                --deny-self-hosted-runners 2>&1)"; then
+                printf '%s\n' "$output"
+                return 0
+              else
+                status=$?
+              fi
+              printf '%s\n' "$output" >&2
+              if [[ "$output" != *"HTTP 503"* || "$attempt" -eq 3 ]]; then
+                return "$status"
+              fi
+              sleep "$((attempt * 2))"
+            done
           }
           verify_attestation ../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/macOS/unterm.dylib
           verify_attestation ../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Plugins/macOS/unterm-debugger
