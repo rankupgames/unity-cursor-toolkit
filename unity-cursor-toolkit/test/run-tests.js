@@ -72,6 +72,7 @@ const vscode = {
 			update: async () => {}
 		}),
 		workspaceFolders: null,
+		onDidChangeConfiguration: () => ({ dispose() {} }),
 		createFileSystemWatcher: (globPattern) => {
 			_lastCreatedWatcher = createMockFileSystemWatcher(globPattern);
 			_allCreatedWatchers.push(_lastCreatedWatcher);
@@ -3444,6 +3445,33 @@ async function testModuleLoader() {
 		await loader.deactivateAll();
 		assert.ok(log.includes('good:off'), 'Good module deactivated');
 		assert.ok(!log.includes('bad:off'), 'Bad module never in active list');
+	});
+
+	await testAsync('static settings stay off by default, synchronize opt-in changes, and disable on disposal', async () => {
+		const { StaticsModule } = require(path.join(outDir, 'statics', 'index'));
+		const originalConfig = vscode.workspace.getConfiguration;
+		const originalEvent = vscode.workspace.onDidChangeConfiguration;
+		let changed, stateChanged, configuration = {}, disposed = 0;
+		const calls = [];
+		const connection = { info: { state: 'disconnected' }, onStateChanged: handler => { stateChanged = handler; return { dispose() { disposed++; } }; } };
+		vscode.workspace.getConfiguration = section => { assert.strictEqual(section, 'unityCursorToolkit.statics'); return { get: (key, fallback) => configuration[key] === undefined ? fallback : configuration[key] }; };
+		vscode.workspace.onDidChangeConfiguration = handler => { changed = handler; return { dispose() { disposed++; } }; };
+		const module = new StaticsModule();
+		try {
+			await module.activate({ connectionManager: connection, commandSender: { send: (command, payload) => calls.push({ command, payload }) } });
+			assert.deepStrictEqual(calls, [], 'Disabled/disconnected configuration must not request scanning or connection');
+			connection.info.state = 'connected'; stateChanged();
+			assert.deepStrictEqual(calls.pop(), { command: 'configureStatics', payload: { enabled: false, assemblyAllowlist: [], maxFields: 1000, maxScanMilliseconds: 10 } });
+			configuration = { enabled: true, assemblyAllowlist: ['Assembly-CSharp'], maxFields: 25, maxScanMilliseconds: 8 };
+			changed({ affectsConfiguration: section => section === 'unrelated' }); assert.strictEqual(calls.length, 0);
+			changed({ affectsConfiguration: section => section === 'unityCursorToolkit.statics' });
+			assert.deepStrictEqual(calls.pop().payload, configuration);
+			for (const enabled of [false, null, 'true', [], {}]) { configuration.enabled = enabled; changed({ affectsConfiguration: () => true }); assert.strictEqual(calls.pop().payload.enabled, enabled, 'Preserve invalid types for the Editor fail-closed validator'); }
+			await module.deactivate(); assert.deepStrictEqual(calls.pop(), { command: 'configureStatics', payload: { enabled: false } });
+			changed({ affectsConfiguration: () => true }); stateChanged(); assert.strictEqual(calls.length, 0); assert.strictEqual(disposed, 2);
+			const properties = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')).contributes.configuration[0].properties;
+			for (const [key, value] of Object.entries({ enabled: false, assemblyAllowlist: [], maxFields: 1000, maxScanMilliseconds: 10 })) { assert(properties['unityCursorToolkit.statics.' + key], 'Static snapshot opt-in settings must ship defaults'); assert.deepStrictEqual(properties['unityCursorToolkit.statics.' + key].default, value); }
+		} finally { vscode.workspace.getConfiguration = originalConfig; vscode.workspace.onDidChangeConfiguration = originalEvent; }
 	});
 
 	await testAsync('disabled module is skipped (config returns false)', async () => {
