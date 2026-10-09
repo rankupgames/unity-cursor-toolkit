@@ -65,6 +65,7 @@ jobs:
       labels: [self-hosted, macOS, ARM64, unity-macos-runtime]
     concurrency:
       group: unity-runtime-macos
+      queue: max
       cancel-in-progress: false
     environment: unity-ci
     env:
@@ -123,6 +124,7 @@ jobs:
       labels: [self-hosted, Windows, dev-3, unity-windows-runtime]
     concurrency:
       group: unity-runtime-dev3
+      queue: max
       cancel-in-progress: false
     environment: unity-ci
     env:
@@ -173,6 +175,7 @@ jobs:
       labels: [self-hosted, Windows, dev-3, unity-windows-runtime]
     concurrency:
       group: unity-runtime-dev3
+      queue: max
       cancel-in-progress: false
     environment: unity-ci
     env:
