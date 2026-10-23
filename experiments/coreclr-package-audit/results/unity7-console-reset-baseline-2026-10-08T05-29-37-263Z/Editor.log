@@ -64,15 +64,15 @@ Logging is directed to a specific file, skipping project log.
 Failed to start primary listening socket at (0.0.0.0:55504-55512).
 Player connection [78144]  Target information:
 
-Player connection [78144]  * "[IP] 192.168.4.23 [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [78144]  * "[IP] <private-ip> [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
-Player connection [78144]  * "[IP] 172.30.143.174 [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [78144]  * "[IP] <private-ip> [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
-Player connection [78144]  * "[IP] 192.168.240.1 [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [78144]  * "[IP] <private-ip> [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
-Player connection [78144]  * "[IP] 192.168.144.1 [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [78144]  * "[IP] <private-ip> [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
-Player connection [78144]  * "[IP] 100.96.0.19 [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [78144]  * "[IP] 100.96.0.19 [Port] 55511 [ProcessId] 37036 [Flags] 130 [Guid] 1764005561 [EditorId] 1764005561 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
 Unable to join player connection multicast group (err: 10013).
 Player connection [78144] Host joined alternative multi-casting on [225.0.0.222:34997]...
@@ -95,9 +95,6 @@ Starting IPC server.
 <licensing or credential line omitted>
 <licensing or credential line omitted>
   Version:                 1.19.0-rc.1+a1d64c6
-  Session Id:              44ca14fdb4c440b58f0ccab9da1129f6
-  Correlation Id:          4a694e932fad883e2a43d8892e45e317
-  External correlation Id: 2902961344892494106
 <licensing or credential line omitted>
 <licensing or credential line omitted>
 <licensing or credential line omitted>
@@ -105,10 +102,13 @@ Starting IPC server.
 <licensing or credential line omitted>
 <licensing or credential line omitted>
 <licensing or credential line omitted>
-  Id: 3011720-UnityPersXXXX
-  Product: Unity Personal
-  Type: Assigned
-  Expiration: Unlimited
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
 <licensing or credential line omitted>
 <licensing or credential line omitted>
 <licensing or credential line omitted>

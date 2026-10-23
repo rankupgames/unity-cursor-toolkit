@@ -1,5 +1,5 @@
 /**
- * Auto-bump version: 0.6.<increment><MMDDYY>
+ * Auto-bump version: 0.7.<increment><MMDDYY>
  * - If bumped same day, increment prefix digit
  * - If new day, reset to 1
  */
@@ -15,7 +15,7 @@ const dd = String(now.getDate()).padStart(2, '0');
 const yy = String(now.getFullYear()).slice(-2);
 const todayStamp = `${mm}${dd}${yy}`;
 
-const current = pkg.version; // e.g. "0.6.1031226"
+const current = pkg.version; // e.g. "0.7.1031226"
 const parts = current.split('.');
 const patch = parts[2] || '0';
 
@@ -28,7 +28,7 @@ if (patch.length > 6) {
   }
 }
 
-const newVersion = `0.6.${increment}${todayStamp}`;
+const newVersion = `0.7.${increment}${todayStamp}`;
 pkg.version = newVersion;
 
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');

@@ -72,6 +72,7 @@ const vscode = {
 			update: async () => {}
 		}),
 		workspaceFolders: null,
+		onDidChangeConfiguration: () => ({ dispose() {} }),
 		createFileSystemWatcher: (globPattern) => {
 			_lastCreatedWatcher = createMockFileSystemWatcher(globPattern);
 			_allCreatedWatchers.push(_lastCreatedWatcher);
@@ -532,6 +533,29 @@ function testCapabilityMatrix() {
 		const matrix = generateMatrix(advertisedCapabilities(source), config);
 		assert.strictEqual(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix.json'), 'utf8').replace(/\r\n/g, '\n'), JSON.stringify(matrix, null, 2) + '\n');
 		assert.strictEqual(fs.readFileSync(path.join(root, 'docs/CAPABILITY_MATRIX.md'), 'utf8').replace(/\r\n/g, '\n'), renderMarkdown(matrix));
+		const workflow = fs.readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8').replace(/\r\n/g, '\n');
+		assert.ok(workflow.includes('matrix: \${{ fromJSON(needs.check-changes.outputs.capability_matrix) }}'), 'CI does not consume the generated capability matrix');
+		assert.ok(workflow.includes('needs: [check-changes, capability-definitions]'), 'Build must require capability definition validation');
+		const body = name => workflow.slice(workflow.indexOf('- name: ' + name)).match(/node <<'NODE'\n([\s\S]*?)\n\s+NODE/)[1];
+		const producer = body('Export capability CI matrix'), consumer = body('Validate capability candidate definition');
+		const run = (code, output, fixture = config) => {
+			let exported, reported;
+			const fakeFs = {
+				readFileSync: file => file.endsWith('ProjectInfoProvider.cs') ? source : JSON.stringify(file.endsWith('capability-matrix-input.json') ? fixture : output),
+				appendFileSync: (_file, value) => { exported = value; }
+			};
+			new Function('require', 'process', 'console', code)(id => id === 'fs' ? fakeFs : id.includes('generate-capability-matrix') ? require('../scripts/generate-capability-matrix') : require(id),
+				{ env: { GITHUB_OUTPUT: 'fixture-output', CAPABILITY_CANDIDATE: JSON.stringify(matrix.ci.include[0]) } }, { log: value => { reported = JSON.parse(value); } });
+			return { exported, reported };
+		};
+		assert.deepStrictEqual(JSON.parse(run(producer, matrix).exported.trim().slice('capability_matrix='.length)), matrix.ci);
+		assert.strictEqual(run(consumer, matrix).reported.nativeExecution, 'untested');
+		for (const mutate of [output => output.rows.pop(), output => output.ci.include.shift()]) {
+			const stale = JSON.parse(JSON.stringify(matrix)); mutate(stale);
+			assert.throws(() => run(consumer, stale));
+		}
+		const missingEvidence = JSON.parse(JSON.stringify(config)); delete missingEvidence.observations[0].evidence;
+		assert.throws(() => run(consumer, matrix, missingEvidence));
 	});
 	test('local compatibility import requires exact identity, all checks, runtime and normal owned exits', () => {
 		const config = { bands: ['Mono', 'Core'], ci: { include: [
@@ -3446,6 +3470,33 @@ async function testModuleLoader() {
 		assert.ok(!log.includes('bad:off'), 'Bad module never in active list');
 	});
 
+	await testAsync('static settings stay off by default, synchronize opt-in changes, and disable on disposal', async () => {
+		const { StaticsModule } = require(path.join(outDir, 'statics', 'index'));
+		const originalConfig = vscode.workspace.getConfiguration;
+		const originalEvent = vscode.workspace.onDidChangeConfiguration;
+		let changed, stateChanged, configuration = {}, disposed = 0;
+		const calls = [];
+		const connection = { info: { state: 'disconnected' }, onStateChanged: handler => { stateChanged = handler; return { dispose() { disposed++; } }; } };
+		vscode.workspace.getConfiguration = section => { assert.strictEqual(section, 'unityCursorToolkit.statics'); return { get: (key, fallback) => configuration[key] === undefined ? fallback : configuration[key] }; };
+		vscode.workspace.onDidChangeConfiguration = handler => { changed = handler; return { dispose() { disposed++; } }; };
+		const module = new StaticsModule();
+		try {
+			await module.activate({ connectionManager: connection, commandSender: { send: (command, payload) => calls.push({ command, payload }) } });
+			assert.deepStrictEqual(calls, [], 'Disabled/disconnected configuration must not request scanning or connection');
+			connection.info.state = 'connected'; stateChanged();
+			assert.deepStrictEqual(calls.pop(), { command: 'configureStatics', payload: { enabled: false, assemblyAllowlist: [], maxFields: 1000, maxScanMilliseconds: 10 } });
+			configuration = { enabled: true, assemblyAllowlist: ['Assembly-CSharp'], maxFields: 25, maxScanMilliseconds: 8 };
+			changed({ affectsConfiguration: section => section === 'unrelated' }); assert.strictEqual(calls.length, 0);
+			changed({ affectsConfiguration: section => section === 'unityCursorToolkit.statics' });
+			assert.deepStrictEqual(calls.pop().payload, configuration);
+			for (const enabled of [false, null, 'true', [], {}]) { configuration.enabled = enabled; changed({ affectsConfiguration: () => true }); assert.strictEqual(calls.pop().payload.enabled, enabled, 'Preserve invalid types for the Editor fail-closed validator'); }
+			await module.deactivate(); assert.deepStrictEqual(calls.pop(), { command: 'configureStatics', payload: { enabled: false } });
+			changed({ affectsConfiguration: () => true }); stateChanged(); assert.strictEqual(calls.length, 0); assert.strictEqual(disposed, 2);
+			const properties = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')).contributes.configuration[0].properties;
+			for (const [key, value] of Object.entries({ enabled: false, assemblyAllowlist: [], maxFields: 1000, maxScanMilliseconds: 10 })) { assert(properties['unityCursorToolkit.statics.' + key], 'Static snapshot opt-in settings must ship defaults'); assert.deepStrictEqual(properties['unityCursorToolkit.statics.' + key].default, value); }
+		} finally { vscode.workspace.getConfiguration = originalConfig; vscode.workspace.onDidChangeConfiguration = originalEvent; }
+	});
+
 	await testAsync('disabled module is skipped (config returns false)', async () => {
 		const origGetConfig = vscode.workspace.getConfiguration;
 		vscode.workspace.getConfiguration = () => ({
@@ -3806,9 +3857,9 @@ function testStatusBarController() {
 	const { StatusBarController } = require(path.join(outDir, 'core', 'statusBarController'));
 	const { ConnectionState } = require(path.join(outDir, 'core', 'types'));
 
-	function makeController() {
+	function makeController(getRuntimeCapabilities) {
 		const ctx = createMockExtensionContext();
-		const ctrl = new StatusBarController(ctx);
+		const ctrl = new StatusBarController(ctx, getRuntimeCapabilities);
 		const connectItem = ctx.subscriptions[0];
 		const quickAccessItem = ctx.subscriptions[1];
 		return { ctrl, connectItem, quickAccessItem, cliItem: ctx.subscriptions[2] };
@@ -3835,15 +3886,37 @@ function testStatusBarController() {
 		ctrl.dispose();
 	});
 
-	test('Connected: green color, port in tooltip, stop command', () => {
-		const { ctrl, connectItem, quickAccessItem } = makeController();
-		ctrl.update(ConnectionState.Connected, 55500);
-
-		assert.ok(connectItem.text.includes('circle-filled') || connectItem.text.includes('Unity'));
-		assert.ok(connectItem.tooltip.includes('55500'));
-		assert.ok(connectItem.color instanceof vscode.ThemeColor);
-		assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.stopConnection');
-		ctrl.dispose();
+	test('Connected: shows capability-selected reload mode through compilation and clears it on reconnect', () => {
+		const { parseRuntimeCapabilities } = require(path.join(outDir, 'core', 'runtimeCapabilities'));
+		let payload;
+		const { ctrl, connectItem } = makeController(() => parseRuntimeCapabilities(payload));
+		try {
+			for (const [info, mode] of [
+				[undefined, 'Reload unavailable'],
+				[{}, 'Mono reload'],
+				[{ unityVersion: '7000.0.0a7', runtime: { isCoreCLR: false, hasDomainReload: true } }, 'Mono reload'],
+				[{ unityVersion: '6000.3.9f1', runtime: { isCoreCLR: true, hasDomainReload: false } }, 'Unity reload'],
+				[{ runtime: {} }, 'Reload unavailable'],
+				[{ runtime: { isCoreCLR: false, hasDomainReload: false } }, 'Reload unavailable']
+			]) {
+				payload = info;
+				ctrl.update(ConnectionState.Connected, 55500);
+				assert.ok(connectItem.text.includes(mode), 'Status bar omitted the active reload mode');
+				assert.ok(connectItem.tooltip.includes(mode));
+				assert.ok(connectItem.tooltip.includes('55500'));
+				assert.ok(connectItem.color instanceof vscode.ThemeColor);
+				assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.stopConnection');
+				for (const success of [true, false]) {
+					ctrl.showCompilationResult(success, 1, 1);
+					assert.ok(connectItem.text.includes(mode), 'Compilation result lost the reload mode');
+				}
+				for (const state of [ConnectionState.Reconnecting, ConnectionState.Disconnected]) {
+					ctrl.update(state, null);
+					assert.ok(!connectItem.text.includes(mode));
+					assert.ok(!connectItem.tooltip.includes(mode));
+				}
+			}
+		} finally { ctrl.dispose(); }
 	});
 
 	test('Connecting: shows sync spinner, hides quick access', () => {
@@ -3867,7 +3940,7 @@ function testStatusBarController() {
 	for (const [name, result, text] of [
 		['found', { ok: true, data: { version: '1.0.0-beta.12', expectedVersion: '1.0.0-beta.12' }, binaryPath: '/fixture/unity' }, 'CLI 1.0.0-beta.12'],
 		['missing', { ok: false, error: { code: 'cli_not_found', message: 'Not found', recovery: 'Set path' } }, 'CLI not found'],
-		['mismatch', { ok: false, binaryPath: '/fixture/unity', error: { code: 'version_mismatch', foundVersion: 'fixture-version', message: 'Expected pinned version', recovery: 'Select pinned binary' } }, 'CLI fixture-version']
+		['mismatch', { ok: false, binaryPath: '/fixture/unity', error: { code: 'version_mismatch', foundVersion: '1.0.0-beta.11', message: 'Expected pinned version', recovery: 'Select pinned binary' } }, 'CLI 1.0.0-beta.11']
 	]) {
 		test('CLI status ' + name + ' remains distinct from bridge and compilation state', () => {
 			const { ctrl, cliItem, connectItem } = makeController();
@@ -4744,11 +4817,11 @@ async function testMigrationScanner() {
 				const listed = await server.request('tools/list', {});
 				const definition = listed.result.tools.find(tool => tool.name === 'toolkit.coreclr_migration');
 				assert.strictEqual(definition.annotations.readOnlyHint, true);
-				for (const action of ['scan', 'report', 'rules', 'invalid']) {
+				for (const action of ['scan', 'report', 'rules', 'invalid', ['scan'], ['report'], ['rules'], null, 1, {}]) {
 					const response = await server.request('tools/call', { name: 'coreclr_migration', arguments: { action } });
 					assert.ok(!response.error);
 					const result = response.result;
-					if (action === 'invalid') {
+					if (typeof action !== 'string' || action === 'invalid') {
 						assert.strictEqual(result.isError, true);
 						assert.strictEqual(JSON.parse(result.content[0].text).errorCode, 'INVALID_ACTION');
 					} else {
@@ -5096,45 +5169,103 @@ async function testUnityCliAdapter() {
 	});
 	await testAsync('CLI module registers doctor and exposes only selected diagnostics', async () => {
 		const { UnityCliModule } = require(path.join(outDir, 'unity-cli', 'index'));
+		const { StatusBarController } = require(path.join(outDir, 'core', 'statusBarController'));
 		const originalProbe = UnityCliAdapter.prototype.probe, originalInvoke = UnityCliAdapter.prototype.invoke;
-		const originalOutput = vscode.window.createOutputChannel;
-		const commands = new Map(), statuses = [], actions = [], lines = [];
+		const originalOutput = vscode.window.createOutputChannel, originalStatusBar = vscode.window.createStatusBarItem;
+		const originalWarning = vscode.window.showWarningMessage, originalError = vscode.window.showErrorMessage;
+		const commands = new Map(), statuses = [], actions = [], lines = [], notifications = [], items = [];
+		const marker = 'synthetic-private-marker';
+		const goodProbe = () => ({ ok: true, binaryPath: process.execPath, exitCode: 0, signal: null, stdout: '', stderr: '', warnings: [], data: { version: UNITY_CLI_EXPECTED_VERSION, expectedVersion: UNITY_CLI_EXPECTED_VERSION } });
+		const goodData = () => ({ platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime', status: 'ok', messageKey: marker }], auth: { email: marker }, recentLog: [marker] });
+		const privateFailure = code => ({ ok: false, binaryPath: process.execPath, exitCode: 6, signal: null, stdout: marker, stderr: marker, error: { code, nativeCode: marker, message: marker, recovery: marker, expectedVersion: marker, foundVersion: marker } });
+		const assertPrivateAbsent = () => assert.ok(![...lines, ...notifications.map(item => item.message), ...items.flatMap(item => [String(item.text), String(item.tooltip)])].join('\n').includes(marker), 'CLI UI exposed private native diagnostic data');
 		let disposed = false;
-		UnityCliAdapter.prototype.probe = async () => ({ ok: true, binaryPath: process.execPath, exitCode: 0, signal: null, stdout: '', stderr: '', warnings: [], data: { version: UNITY_CLI_EXPECTED_VERSION, expectedVersion: UNITY_CLI_EXPECTED_VERSION } });
+		UnityCliAdapter.prototype.probe = async () => goodProbe();
 		UnityCliAdapter.prototype.invoke = async command => {
 			assert.strictEqual(command, 'doctor');
-			return { ok: true, warnings: [], data: { platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime', status: 'ok', messageKey: 'private-detail' }], auth: { email: 'private@example.invalid' }, recentLog: ['private-log'] } };
+			return { ok: true, warnings: [], data: goodData() };
 		};
 		vscode.window.createOutputChannel = () => ({ clear() {}, show() {}, appendLine: line => lines.push(line), dispose() { disposed = true; } });
-		const module = new UnityCliModule(result => statuses.push(result));
+		vscode.window.createStatusBarItem = () => {
+			const item = { show() {}, hide() {}, dispose() {} }; items.push(item); return item;
+		};
+		vscode.window.showWarningMessage = async message => { notifications.push({ severity: 'warning', message }); };
+		vscode.window.showErrorMessage = async message => { notifications.push({ severity: 'error', message }); };
+		const statusBar = new StatusBarController({ subscriptions: [] });
+		const module = new UnityCliModule(result => { statuses.push(result); statusBar.setUnityCliStatus(result); });
 		try {
 			await module.activate({ registerCommand: (id, run) => commands.set(id, run), registerStatusBarContributor: contributor => actions.push(...contributor.getActions()) });
 			await commands.get('unity-cursor-toolkit.doctor')();
 			assert.strictEqual(actions[0].command, 'unity-cursor-toolkit.doctor');
 			assert.strictEqual(statuses.at(-1).data.version, UNITY_CLI_EXPECTED_VERSION);
-			assert.ok(lines.includes('runtime: ok'));
-			assert.ok(!lines.join('\n').includes('private'));
+			assert.ok(lines.some(line => line.includes(UNITY_CLI_EXPECTED_VERSION)));
+			assert.ok(lines.includes('Binary: ' + process.execPath));
+			assert.ok(items.at(-1).text.includes(UNITY_CLI_EXPECTED_VERSION));
+			assert.ok(items.at(-1).tooltip.includes('Binary: ' + process.execPath));
+			assertPrivateAbsent();
+
+			lines.length = 0;
+			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: { platform: marker, arch: marker, checks: [{ id: marker, status: marker }, { id: marker, status: 'ok' }] } });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assertPrivateAbsent();
+			assert.ok(lines.includes('Doctor checks: 2; ok: 1; other: 1.'));
+
+			for (const stage of ['probe', 'doctor']) for (const code of ['operation_failed', 'version_mismatch']) {
+				lines.length = 0; notifications.length = 0;
+				UnityCliAdapter.prototype.probe = async () => stage === 'probe' ? privateFailure(code) : goodProbe();
+				UnityCliAdapter.prototype.invoke = async () => privateFailure(code);
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				const expected = code === 'version_mismatch' ? 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found unverified version.' : code + ': Unity CLI diagnostics failed. Check the pinned CLI installation and configuration.';
+				assert.ok(lines.includes(expected));
+				assert.ok(notifications.some(item => item.severity === (code === 'version_mismatch' ? 'warning' : 'error') && item.message === expected));
+				assert.ok(lines.includes('Binary: ' + process.execPath));
+			}
+			for (const version of [marker, '1.0.0-beta.12\n' + marker, '1.2.3-' + 'x'.repeat(65), null]) {
+				lines.length = 0; notifications.length = 0;
+				UnityCliAdapter.prototype.probe = async () => ({ ...privateFailure('version_mismatch'), error: { ...privateFailure('version_mismatch').error, foundVersion: version } });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				assert.ok(items.at(-1).text.includes('unverified version'));
+				assert.strictEqual(items.at(-1).tooltip, 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found unverified version.\nBinary: ' + process.execPath + '\nClick to run Unity CLI Doctor.');
+				UnityCliAdapter.prototype.probe = async () => ({ ...goodProbe(), data: { version, expectedVersion: marker } });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				assert.ok(lines.includes('Unity CLI: unverified version (expected ' + UNITY_CLI_EXPECTED_VERSION + ')'));
+			}
+			UnityCliAdapter.prototype.probe = async () => ({ ...privateFailure('version_mismatch'), error: { ...privateFailure('version_mismatch').error, foundVersion: '1.0.0-beta.11' } });
+			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: goodData() });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assert.ok(items.at(-1).text.includes('1.0.0-beta.11'));
+			const mismatch = 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found 1.0.0-beta.11.';
+			assert.ok(lines.includes(mismatch));
+			assert.ok(notifications.some(item => item.severity === 'warning' && item.message === mismatch));
+			assert.ok(items.at(-1).tooltip.includes(mismatch));
+			assertPrivateAbsent();
+			UnityCliAdapter.prototype.probe = async () => goodProbe();
 			for (const data of [null, { platform: 'fixture', arch: 'x64', checks: [] }, { platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime' }] }]) {
 				lines.length = 0;
 				UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data });
 				await commands.get('unity-cursor-toolkit.doctor')();
 				assert.ok(lines.some(line => line.includes('invalid_output')));
-				assert.ok(!lines.some(line => line.includes('Doctor completed')));
+				assert.ok(!lines.some(line => line.includes('Doctor checks')));
 			}
 			await module.deactivate(); assert.ok(disposed);
 			const logged = [], originalConsoleError = console.error;
 			console.error = message => logged.push(message);
-			const failingModule = new UnityCliModule(() => { throw new Error('fixture callback failure'); });
+			const failingModule = new UnityCliModule(() => { throw new Error(marker); });
 			try {
 				await failingModule.activate({ registerCommand() {}, registerStatusBarContributor() {} });
 				await new Promise(done => setImmediate(done));
 				await failingModule.deactivate();
-				assert.ok(logged.some(message => message.includes('fixture callback failure')));
+				assert.ok(logged.includes('[UnityCliModule] Diagnostic activation failed.'));
+				assert.ok(!logged.join('\n').includes(marker), 'Activation logging exposed private exception data');
 			} finally { console.error = originalConsoleError; }
-
 		} finally {
+			await module.deactivate(); statusBar.dispose();
 			UnityCliAdapter.prototype.probe = originalProbe; UnityCliAdapter.prototype.invoke = originalInvoke;
-			vscode.window.createOutputChannel = originalOutput;
+			vscode.window.createOutputChannel = originalOutput; vscode.window.createStatusBarItem = originalStatusBar;
+			vscode.window.showWarningMessage = originalWarning; vscode.window.showErrorMessage = originalError;
 		}
 	});
 }
@@ -5157,6 +5288,9 @@ async function testPipelineEligibility() {
 			['6000.3.9f1', 'latest', {}, 'pipeline_pin_invalid'],
 			['6000.3.9f1', '^0.8.0-exp.1', {}, 'pipeline_pin_invalid'],
 			[null, '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9junk', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9f1 extra', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
 			['2019.4.40f1', '0.8.0-exp.1', {}, 'pipeline_editor_unsupported'],
 			['6000.3.9f1', '0.9.0-exp.1', {}, 'pipeline_version_unavailable'],
 			['6000.3.9f1', '0.8.0-exp.1', { httpDate: 'Sat, 26 Sep 2026 18:42:15 GMT' }, 'pipeline_version_too_recent'],

@@ -3,7 +3,7 @@
   "cliVersion": "1.0.0-beta.12",
   "platform": "win32",
   "architecture": "x64",
-  "binarySha256": "<redacted credential or identity log line>",
+  "binarySha256": "94047d1d84d66fc178cee541a9c3f69d2199edf15cdf37d3f308d7d9fb064a96",
   "release": {
     "date": "2026-09-30",
     "source": "https://docs.unity.com/en-us/unity-cli/release-notes",
@@ -13,7 +13,7 @@
     "user path",
     "repository path",
     "Editor roots from inventory and env",
-    "<redacted credential or identity log line>",
+    "account identifiers and credential fields",
     "OS-user and host identifiers",
     "doctor recent logs omitted"
   ],

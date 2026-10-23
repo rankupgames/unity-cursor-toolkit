@@ -8,7 +8,7 @@ export async function handleMigrationTool(
 	args: Record<string, unknown>, projectRoot: string | undefined, sender: ICommandSender
 ): Promise<ToolResult> {
 	try {
-		if (!['scan', 'report', 'rules'].includes(String(args.action))) {
+		if (typeof args.action !== 'string' || !['scan', 'report', 'rules'].includes(args.action)) {
 			throw new MigrationError('INVALID_ACTION', 'action must be scan, report, or rules.');
 		}
 		if (args.action === 'rules') return textResult(JSON.stringify(migrationRules));

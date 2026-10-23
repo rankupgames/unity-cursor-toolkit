@@ -2,9 +2,9 @@ name: Extension Build
 
 on:
   push:
-    branches: [main, 'Version-*']
+    branches: [main, 'Version-*', 'release-0.7-unity-runtime-rework']
   pull_request:
-    branches: [main, 'Version-*']
+    branches: [main, 'Version-*', 'release-0.7-unity-runtime-rework']
   schedule:
     - cron: '0 11 * * 5'  # Friday 6am EST -- weekly build
   workflow_dispatch:
@@ -15,10 +15,21 @@ jobs:
     outputs:
       has_changes: ${{ steps.changes.outputs.has_changes }}
       build_version: ${{ steps.version.outputs.build_version }}
+      capability_matrix: ${{ steps.capabilities.outputs.capability_matrix }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Export capability CI matrix
+        id: capabilities
+        run: |
+          node unity-cursor-toolkit/scripts/generate-capability-matrix.js --check
+          node <<'NODE'
+          const fs = require('fs');
+          const matrix = JSON.parse(fs.readFileSync('unity-cursor-toolkit/capability-matrix.json', 'utf8'));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'capability_matrix=' + JSON.stringify(matrix.ci) + '\n');
+          NODE
 
       - name: Check for changes since last build
         id: changes
@@ -43,12 +54,38 @@ jobs:
             --jq '[.workflow_runs[] | select(.name == "Extension Build")] | length' 2>/dev/null || echo "0")
           DAILY_INCREMENT=${DAILY_RUNS:-0}
 
-          BUILD_VERSION="0.6.${DAILY_INCREMENT}${TODAY}"
+          BUILD_VERSION="0.7.${DAILY_INCREMENT}${TODAY}"
           echo "build_version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${BUILD_VERSION}"
 
-  build:
+  capability-definitions:
+    name: Capability definition (${{ matrix.id }})
     needs: check-changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.check-changes.outputs.capability_matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate capability candidate definition
+        env:
+          CAPABILITY_CANDIDATE: ${{ toJSON(matrix) }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const assert = require('node:assert/strict');
+          const { advertisedCapabilities, generateMatrix } = require('./unity-cursor-toolkit/scripts/generate-capability-matrix');
+          const matrix = JSON.parse(fs.readFileSync('unity-cursor-toolkit/capability-matrix.json', 'utf8'));
+          const input = JSON.parse(fs.readFileSync('unity-cursor-toolkit/capability-matrix-input.json', 'utf8'));
+          const source = fs.readFileSync('Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs', 'utf8');
+          assert.deepStrictEqual(matrix, generateMatrix(advertisedCapabilities(source), input), 'Capability definitions are stale');
+          const candidate = JSON.parse(process.env.CAPABILITY_CANDIDATE);
+          assert.deepStrictEqual(candidate, matrix.ci.include.find(entry => entry.id === candidate.id), 'Capability candidate is missing or stale');
+          console.log(JSON.stringify({ candidate, capabilities: matrix.rows.map(row => ({ capability: row.capability, cell: row.cells[candidate.band] })), nativeExecution: 'untested' }));
+          NODE
+
+  build:
+    needs: [check-changes, capability-definitions]
     if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     defaults:
@@ -142,8 +179,10 @@ jobs:
           echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
 
   publish:
+    environment:
+      name: release-approval
     needs: [check-changes, build]
-    if: needs.check-changes.outputs.has_changes == 'true' && github.event_name != 'pull_request'
+    if: needs.check-changes.outputs.has_changes == 'true' && github.event_name != 'pull_request' && github.ref != 'refs/heads/release-0.7-unity-runtime-rework'
     runs-on: ubuntu-latest
     permissions:
       contents: read

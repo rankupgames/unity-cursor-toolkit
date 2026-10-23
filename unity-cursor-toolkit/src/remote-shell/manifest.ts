@@ -186,7 +186,7 @@ export function parseRemoteShellDoctorManifest(input: unknown): RemoteShellManif
 	}
 	if (input.vddMonitor !== undefined && (typeof input.vddMonitor !== 'number' || !Number.isSafeInteger(input.vddMonitor) || input.vddMonitor <= 0)) { throw new Error('Invalid doctor monitor.'); }
 	const manifest = parseRemoteShellManifest(input);
-	if (!/^(?:[a-zA-Z0-9_.-]+@)?(?:[a-zA-Z0-9][a-zA-Z0-9_.-]*|\[[a-fA-F0-9:]+\])$/.test(manifest.sshTarget)) { throw new Error('Invalid doctor SSH target.'); }
+	if (manifest.sshTarget.startsWith('-') || !/^(?:[a-zA-Z0-9_.-]+@)?(?:[a-zA-Z0-9][a-zA-Z0-9_.-]*|\[[a-fA-F0-9:]+\])$/.test(manifest.sshTarget)) { throw new Error('Invalid doctor SSH target.'); }
 	for (const value of [manifest.remoteWorkspacePath, manifest.unityPlayerPath, manifest.remoteSidecarPath, manifest.remoteRepoPath, manifest.unityEditorPath]) {
 		if (value && (!isFullyQualifiedWindowsPath(value) || value.includes('$' + '{'))) { throw new Error('Unresolved doctor remote path.'); }
 	}

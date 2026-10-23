@@ -32,6 +32,7 @@ class RelayClient {
 			let message;
 			try { message = JSON.parse(line); }
 			catch { this.fail(new RelayError('relay_protocol_error', 'Relay stdout is not newline JSON-RPC.')); return; }
+			if (!message || typeof message !== 'object' || Array.isArray(message)) { this.fail(new RelayError('relay_protocol_error', 'Relay stdout must contain JSON-RPC objects.')); return; }
 			this.messages.push({ direction: 'receive', at: new Date().toISOString(), message });
 			const item = this.pending.get(message.id);
 			if (!item) continue;

@@ -68,7 +68,7 @@ export function queryPipelineRegistry(): Promise<PipelineRegistrySnapshot> {
 }
 
 function requestError(declaredEditorVersion: string | null, requestedVersion: string): PipelineEligibilityResult | undefined {
-	if (!declaredEditorVersion) {
+	if (!declaredEditorVersion || !/^\d+\.\d+\.\d+[abcfp]\d+(?:[A-Za-z0-9._-]*)?$/i.test(declaredEditorVersion)) {
 		return { ok: false, error: { code: 'pipeline_project_version_invalid', message: 'The declared project Editor version is missing or invalid.', requestedVersion } };
 	}
 	if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z]+(?:\.[0-9A-Za-z]+)*)?$/.test(requestedVersion)) {

@@ -16,7 +16,7 @@ function snapshot(args, status = 'completed', states = ['passed']) {
 	const summary = { total: tests.length, passed: 0, failed: 0, skipped: 0, inconclusive: 0, notRun: 0, durationMs: 2 };
 	for (const leaf of tests) summary[leaf.status === 'not_run' ? 'notRun' : leaf.status]++;
 	return { success: ['completed', 'listed'].includes(status), backend: 'bridge', runId: args.runId, status, editorPid: pid, editorVersion: version, mode: args.mode,
-		selection: tests.map(leaf => leaf.fullName), tests, summary,
+		selection: tests.map(leaf => leaf.fullName), tests, summary, workStopped: ['completed', 'listed', 'failed', 'cancelled', 'timed_out', 'error'].includes(status),
 		...(['failed', 'cancelled', 'timed_out', 'error'].includes(status) ? { error: { code: status === 'failed' ? 'test_runner_failed' : status, message: 'Owned test outcome.', recovery: 'Inspect the same Editor.' } } : {}) };
 }
 function fixture(options = {}) {
@@ -57,6 +57,48 @@ async function main() {
 		assert.strictEqual(cli.backend, 'cli'); assert.strictEqual(f.calls.length, 0); assert.strictEqual(f.cliCalls.length, 1);
 		error(await f.provider.execute('run_tests', request), 'capability_unavailable'); assert.strictEqual(f.cliCalls.length, 1);
 	});
+	await test('CLI PlayMode activity is bounded and stops on every owned outcome', async () => {
+		const originalInterval = global.setInterval, originalClear = global.clearInterval;
+		for (const outcome of ['completed', 'failed', 'cancelled', 'timed_out', 'throw', 'abort', 'deadline', 'progress_failure', 'selection_abort', 'unavailable']) {
+			const intervals = [], active = new Set(), progress = [], controller = new AbortController();
+			let release, pending;
+			global.setInterval = (callback, delay) => { const timer = { callback, delay }; intervals.push(timer); active.add(timer); return timer; };
+			global.clearInterval = timer => { assert.ok(intervals.includes(timer)); active.delete(timer); };
+			try {
+				const f = fixture({ cliRun: async req => {
+					if (outcome === 'unavailable') return { ...snapshot({ runId: 'cli-fixture', mode: req.mode }, 'error', []), backend: 'cli', error: { code: 'missing_editor' } };
+					req.onSelected(version);
+					const status = await new Promise(resolve => { release = resolve; if (req.signal.aborted) resolve('cancelled'); else req.signal.addEventListener('abort', () => resolve('cancelled'), { once: true }); });
+					if (status === 'throw') throw new Error('private CLI detail');
+					return { ...snapshot({ runId: 'cli-fixture', mode: req.mode }, status, []), backend: 'cli' };
+				} });
+				pending = f.provider.execute('run_tests', { ...request, mode: 'PlayMode', backend: 'cli', timeoutMs: outcome === 'deadline' ? 5 : 5000 }, { signal: controller.signal, reportProgress: (...event) => {
+					if (outcome === 'progress_failure' && event[2].includes(': active;')) throw new Error('closed progress sink');
+					progress.push(event); if (outcome === 'selection_abort') controller.abort();
+				} });
+				if (!['unavailable', 'selection_abort'].includes(outcome)) {
+					assert.strictEqual(intervals.length, 1); assert.strictEqual(intervals[0].delay, 1000);
+					assert.deepStrictEqual(progress, [[0, 0, 'cli ' + version + ': selected']]);
+					intervals[0].callback();
+					if (outcome === 'progress_failure') assert.strictEqual(active.size, 0);
+					else assert.deepStrictEqual(progress.at(-1), [0, 0, 'cli ' + version + ': active; test counts unavailable']);
+					if (outcome === 'abort') { controller.abort(); assert.strictEqual(active.size, 0); }
+					else if (!['deadline', 'progress_failure'].includes(outcome)) release(outcome);
+					if (['abort', 'progress_failure'].includes(outcome)) { const count = progress.length; intervals[0].callback(); assert.strictEqual(progress.length, count); }
+				} else assert.strictEqual(intervals.length, 0);
+				const result = await pending;
+				assert.strictEqual(active.size, 0); const count = progress.length;
+				for (const timer of intervals) timer.callback();
+				assert.strictEqual(progress.length, count, 'queued activity must not publish after finish');
+				assert.strictEqual(result.status, outcome === 'unavailable' || outcome === 'throw' ? 'error' : outcome === 'deadline' ? 'timed_out' : ['abort', 'progress_failure', 'selection_abort'].includes(outcome) ? 'cancelled' : outcome);
+				assert.strictEqual(f.calls.length, 0); assert.strictEqual(f.cliCalls.length, 1);
+				assert.ok(!JSON.stringify(result).includes('private CLI detail'));
+			} finally {
+				controller.abort(); release?.('cancelled'); await pending;
+				global.setInterval = originalInterval; global.clearInterval = originalClear;
+			}
+		}
+	});
 	await test('auto chooses CLI only before execution when bridge is absent; discovery does not fake a CLI list', async () => {
 		const f = fixture({ absent: true }); const result = await f.provider.execute('run_tests', { ...request, backend: 'auto' });
 		assert.strictEqual(result.backend, 'cli'); assert.strictEqual(f.cliCalls.length, 1);
@@ -75,7 +117,7 @@ async function main() {
 	});
 	await test('invalid modes, filters, timeout and extra arguments refuse before transport', async () => {
 		const f = fixture();
-		for (const change of [{ mode: 'Player' }, { backend: 'guess' }, { filter: null }, { filter: { typo: 'x' } }, { filter: { test: '' } }, { filter: { test: 'a\nb' } }, { timeoutMs: 0 }, { timeoutMs: 600001 }, { dryRun: 'true' }, { command: 'quit' }]) error(await f.provider.execute('run_tests', { ...request, ...change }), 'invalid_test_request');
+		for (const change of [{ mode: 'Player' }, { backend: 'guess' }, { backend: null }, { backend: ['cli'] }, { backend: ['auto'] }, { backend: { toString: () => 'bridge' } }, { filter: null }, { filter: { typo: 'x' } }, { filter: { test: '' } }, { filter: { test: 'a\nb' } }, { timeoutMs: 0 }, { timeoutMs: 600001 }, { dryRun: 'true' }, { command: 'quit' }]) error(await f.provider.execute('run_tests', { ...request, ...change }), 'invalid_test_request');
 		assert.strictEqual(f.calls.length, 0); assert.strictEqual(f.cliCalls.length, 0);
 	});
 	for (const [name, capabilities, expected] of [
@@ -91,6 +133,8 @@ async function main() {
 	const invalidSnapshots = [
 		['wrong run ID', value => { value.runId = 'another-run'; }],
 		['terminal work still pending', value => { value.workStopped = false; }],
+		['missing stopped-work proof', value => { delete value.workStopped; }],
+		['nonboolean stopped-work proof', value => { value.workStopped = 'true'; }],
 		['wrong PID', value => { value.editorPid = pid + 1; }],
 		['wrong exact version', value => { value.editorVersion = '6000.3.9f1'; }],
 		['duplicate IDs', value => { value.tests[1].id = value.tests[0].id; }],
@@ -193,7 +237,7 @@ async function main() {
 		const result = await f.provider.execute('run_tests', { ...request, backend: 'cli', timeoutMs: 5 }); error(result, 'timed_out'); assert.strictEqual(result.status, 'timed_out'); assert.strictEqual(f.calls.length, 0);
 	});
 	await test('foreign or still-pending cancellation acknowledgement waits for correlated stopped status', async () => {
-		for (const mutate of [value => { value.editorPid = pid + 1; }, value => { value.workStopped = false; }]) {
+		for (const mutate of [value => { value.editorPid = pid + 1; }, value => { value.workStopped = false; }, value => { delete value.workStopped; }, value => { value.workStopped = 'true'; }]) {
 			const controller = new AbortController(), f = fixture({ handle: args => {
 				if (args.action === 'run') { controller.abort(); return { result: snapshot(args, 'running', ['not_run']) }; }
 				const value = snapshot(args, 'cancelled', ['not_run']); if (args.action === 'cancel') mutate(value); return { result: value };

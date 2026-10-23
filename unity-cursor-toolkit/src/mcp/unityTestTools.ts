@@ -40,7 +40,7 @@ export class UnityTestMcpTools implements IToolProvider {
 	}
 
 	public async execute(name: string, args: Record<string, unknown>, context: ToolCallContext = {}): Promise<UnityTestSnapshot> {
-		const requested = args.backend ?? 'auto';
+		const requested = args.backend === undefined ? 'auto' : args.backend;
 		const projectPath = args.projectPath ?? this.projectRoot();
 		const snapshot: UnityTestSnapshot = { success: false, backend: requested === 'cli' ? 'cli' : 'bridge', runId: crypto.randomBytes(16).toString('hex'),
 			status: 'error', editorVersion: '', mode: args.mode === 'EditMode' || args.mode === 'PlayMode' ? args.mode : null,
@@ -49,7 +49,7 @@ export class UnityTestMcpTools implements IToolProvider {
 			status: code === 'cancelled' ? 'cancelled' : code === 'timed_out' ? 'timed_out' : 'error', error: { code, message, recovery } });
 		const filters = args.filter === undefined ? undefined : object(args.filter);
 		const timeoutMs = args.timeoutMs ?? 600000;
-		if (!['list_tests', 'run_tests'].includes(name) || !snapshot.mode || !['auto', 'cli', 'bridge'].includes(String(requested))
+		if (!['list_tests', 'run_tests'].includes(name) || !snapshot.mode || (typeof requested !== 'string' || !['auto', 'cli', 'bridge'].includes(requested))
 			|| typeof projectPath !== 'string' || !projectPath.trim() || /[\0\r\n]/.test(projectPath)
 			|| typeof timeoutMs !== 'number' || !Number.isSafeInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 600000
 			|| Object.keys(args).some(key => !['projectPath', 'mode', 'filter', 'backend', 'timeoutMs', ...(name === 'run_tests' ? ['dryRun'] : [])].includes(key))
@@ -76,7 +76,7 @@ export class UnityTestMcpTools implements IToolProvider {
 			do {
 				const reply = await this.sender.request('mcpToolCall', { toolName: 'test_runner', args: { action, ...owner } });
 				const parsed = this.readSnapshot(reply?.result, snapshot, Number(owner.editorPid), projectPath);
-				if (parsed && terminal.has(parsed.status) && object(reply?.result)?.workStopped !== false && (parsed.status !== 'error' || object(reply?.result)?.workStopped === true)) { finished = true; return true; }
+				if (parsed && terminal.has(parsed.status) && object(reply?.result)?.workStopped === true) { finished = true; return true; }
 				action = 'status';
 				await new Promise(resolve => setTimeout(resolve, 250));
 			} while (Date.now() < deadline);
@@ -88,8 +88,23 @@ export class UnityTestMcpTools implements IToolProvider {
 			return confirmed ? fail(code, message) : fail('cancellation_unconfirmed', 'The owned run could not be confirmed stopped.', 'Inspect the same Editor before retrying; no other backend was started.');
 		};
 		const cliRun = async (request: UnityTestRequest): Promise<UnityTestSnapshot> => {
-			const result = await this.cli.runTests({ ...request, onSelected: version => context.reportProgress?.(0, 0, 'cli ' + version + ': selected') });
-			return expired && result.status === 'cancelled' ? { ...result, status: 'timed_out', error: { code: 'timed_out', message: 'The test request deadline expired.', recovery: 'Inspect the interrupted run before retrying.' } } : result;
+			let heartbeat: ReturnType<typeof setInterval> | undefined, stopped = false;
+			const stop = () => { stopped = true; if (heartbeat) { clearInterval(heartbeat); } };
+			request.signal?.addEventListener('abort', stop, { once: true });
+			try {
+				const result = await this.cli.runTests({ ...request, onSelected: version => {
+					if (stopped || request.signal?.aborted || !context.reportProgress) { return; }
+					context.reportProgress(0, 0, 'cli ' + version + ': selected');
+					if (!stopped && !heartbeat) {
+						heartbeat = setInterval(() => {
+							if (stopped || request.signal?.aborted) { return; }
+							try { context.reportProgress?.(0, 0, 'cli ' + version + ': active; test counts unavailable'); }
+							catch { stop(); controller.abort(); }
+						}, 1000);
+					}
+				} });
+				return expired && result.status === 'cancelled' ? { ...result, status: 'timed_out', error: { code: 'timed_out', message: 'The test request deadline expired.', recovery: 'Inspect the interrupted run before retrying.' } } : result;
+			} finally { stop(); request.signal?.removeEventListener('abort', stop); }
 		};
 		const timer = setTimeout(() => { expired = true; controller.abort(); }, timeoutMs);
 		const interruptible = (pending: Promise<Record<string, unknown> | null>): Promise<Record<string, unknown> | null> => new Promise((resolve, reject) => {
@@ -135,7 +150,7 @@ export class UnityTestMcpTools implements IToolProvider {
 					lostSince = undefined;
 					const parsed = this.readSnapshot(result.result, snapshot, Number(owner.editorPid), projectPath);
 					if (!parsed) { return await stoppedError('invalid_output', 'The test bridge returned an incomplete or inconsistent result.'); }
-					if (terminal.has(parsed.status) && object(result.result)?.workStopped === false) { return await stoppedError('invalid_output', 'The bridge returned a terminal result while owned work is still pending.'); }
+					if (terminal.has(parsed.status) && object(result.result)?.workStopped !== true) { return await stoppedError('invalid_output', 'The bridge returned a terminal result while owned work is still pending.'); }
 					Object.assign(snapshot, parsed);
 					if (['error', 'cancelled', 'timed_out'].includes(snapshot.status)) { finished = true; return snapshot; }
 					const completed = snapshot.summary.total - snapshot.summary.notRun;

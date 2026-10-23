@@ -86,7 +86,7 @@ async function measurementBoundary(withFrame) {
 		});
 	});
 	await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-	let settleExit, boundaryError = null;
+	let settleExit, boundaryError = null, firstSampleReport = null;
 	const exited = new Promise(resolve => settleExit = resolve);
 	const fakeProcess = {
 		argv: [process.execPath, scriptPath, '--player', executable, '--port', String(server.address().port), '--idle-seconds', '0', '--duration', '1', '--sample-interval-ms', '5000', '--out', output, ...(withFrame ? ['--frame-out', framePath] : [])],
@@ -108,8 +108,15 @@ async function measurementBoundary(withFrame) {
 			else { samplesRead++; setTimeout(() => callback(null, JSON.stringify({ rssMb: 12, cpuSeconds: samplesRead, sampleAt: Date.now() })), 1500); }
 		}
 	};
+	const observedFs = { ...fs, writeFileSync(file, data, ...args) {
+		if (file === output) {
+			const report = JSON.parse(data);
+			if (report.streamSamples.length > 0 && !firstSampleReport) firstSampleReport = report;
+		}
+		return fs.writeFileSync(file, data, ...args);
+	} };
 	try {
-		const context = { require: name => name === 'child_process' ? mockChildProcess : name === 'net' ? { createConnection: (...args) => realOn(net.createConnection(...args)) } : require(name),
+		const context = { require: name => name === 'fs' ? observedFs : name === 'child_process' ? mockChildProcess : name === 'net' ? { createConnection: (...args) => realOn(net.createConnection(...args)) } : require(name),
 			__dirname: path.dirname(scriptPath), __filename: scriptPath, process: fakeProcess, console: { log() {}, error() {} }, Buffer, performance, setTimeout, clearTimeout, setInterval, clearInterval };
 		vm.runInNewContext(fs.readFileSync(scriptPath, 'utf8'), context, { filename: scriptPath });
 		const guard = setTimeout(() => settleExit(1), 10000);
@@ -119,7 +126,9 @@ async function measurementBoundary(withFrame) {
 		const result = JSON.parse(fs.readFileSync(output, 'utf8'));
 		assert.strictEqual(result.success, true);
 		assert.strictEqual(result.streamSamples.length, 1, 'pending final sample must drain');
-		assert(result.elapsedWindowSeconds >= 1 && result.elapsedWindowSeconds < 1.3, 'window ends before drain/stop');
+		assert(Number.isFinite(result.elapsedWindowSeconds) && result.elapsedWindowSeconds > 0, 'measured window duration');
+		assert.strictEqual(firstSampleReport.elapsedWindowSeconds, result.elapsedWindowSeconds, 'window ends before sample drain');
+		assert.strictEqual(firstSampleReport.streamFinishedAt, result.streamFinishedAt, 'window end excludes drain/stop');
 		assert(Date.parse(result.lastFrameAt) <= Date.parse(result.streamFinishedAt), 'late drain/stop frames excluded');
 		assert(result.frameCount < emitted, 'late frames actually emitted');
 		assert.strictEqual(result.summary.streamWindowFps, Math.round(result.frameCount / result.elapsedWindowSeconds * 100) / 100);

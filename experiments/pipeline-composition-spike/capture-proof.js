@@ -99,8 +99,9 @@ async function transport(f){
  checks.routableInterface=address?await request(address,port,{Authorization:'Bearer '+credential}):{notAvailable:true};
  const acl=JSON.parse(await ps('$a=Get-Acl -LiteralPath '+psQuote(descriptorPath)+'; $sid=[System.Security.Principal.WindowsIdentity]::GetCurrent().User.Value; $rows=@($a.Access | ForEach-Object { $s=$_.IdentityReference.Translate([System.Security.Principal.SecurityIdentifier]).Value; [pscustomobject]@{currentUser=($s -eq $sid); broadPrincipal=($s -in @("S-1-1-0","S-1-5-11","S-1-5-32-545")); inherited=$_.IsInherited; type=$_.AccessControlType.ToString(); rights=$_.FileSystemRights.ToString()} }); [pscustomobject]@{inheritanceProtected=$a.AreAccessRulesProtected; access=$rows} | ConvertTo-Json -Depth 4 -Compress'));
  const ignored=fs.readFileSync(path.join(f.root,'.gitignore'),'utf8').split(/\r?\n/).includes('Library/');
+ const gitIgnoreVerified=await new Promise((resolve,reject)=>execFile('git',['-c','core.excludesFile=','check-ignore','--no-index','--quiet','Library/Pipeline/.unity-pipeline-port'],{cwd:f.root,windowsHide:true,timeout:10000,maxBuffer:1048576},error=>error?reject(Error('Owned Pipeline descriptor is not Git-ignored')):resolve(true)));
  const listeners=JSON.parse(await ps('ConvertTo-Json -Compress -InputObject @((Get-NetTCPConnection -State Listen -LocalPort '+port+' -ErrorAction SilentlyContinue) | Select-Object LocalAddress,LocalPort,OwningProcess)'));
- evidence.transport.push(safe({fixture:f.label,checks,acl,descriptorLocation:'Library/Pipeline/.unity-pipeline-port',libraryIgnoreDeclared:ignored,gitIgnoreVerified:false,listeners:listeners.map(l=>({binding:l.LocalAddress==="127.0.0.1"||l.LocalAddress==="::1"?"loopback":l.LocalAddress==="0.0.0.0"||l.LocalAddress==="::"?"wildcard":"routable",port:l.LocalPort,ownedEditor:l.OwningProcess===f.pid}))}));
+ evidence.transport.push(safe({fixture:f.label,checks,acl,descriptorLocation:'Library/Pipeline/.unity-pipeline-port',libraryIgnoreDeclared:ignored,gitIgnoreVerified,listeners:listeners.map(l=>({binding:l.LocalAddress==="127.0.0.1"||l.LocalAddress==="::1"?"loopback":l.LocalAddress==="0.0.0.0"||l.LocalAddress==="::"?"wildcard":"routable",port:l.LocalPort,ownedEditor:l.OwningProcess===f.pid}))}));
  evidence.transport.at(-1).requiredDefaultsMatch=checks.missingHeader.status===401&&checks.wrongHeader.status===401&&checks.validHeader.status===200&&checks.foreignOrigin.status===403&&checks.nullOrigin.status===403;
  if(checks.validHeader.status!==200)throw Error('Valid owned endpoint unavailable; target cannot be verified safely');
  evidence.transport.at(-1).userRestrictedAcl=acl.inheritanceProtected&&!acl.access.some(a=>a.broadPrincipal&&a.type==='Allow');
@@ -189,6 +190,7 @@ async function safety(f,tools){
   fs.writeFileSync(path.join(f.root,'Assets/PipelineSafety/identity.txt'),f.label+' exact owned project');
   fs.writeFileSync(path.join(f.root,'Assets/PipelineSafety/delete-probe.txt'),'must remain unchanged');
   fs.writeFileSync(path.join(f.root,'.gitignore'),'Library/\nTemp/\nObj/\nLogs/\n');
+  await new Promise((resolve,reject)=>execFile('git',['init','--quiet',f.root],{windowsHide:true,timeout:10000,maxBuffer:1048576},error=>error?reject(Error('Owned Git fixture initialization failed')):resolve()));
  }
  fs.writeFileSync(path.join(second,'Packages/manifest.json'),JSON.stringify({dependencies:{}},null,2));
  fs.writeFileSync(path.join(second,'ProjectSettings/ProjectVersion.txt'),'m_EditorVersion: '+EDITOR+'\nm_EditorVersionWithRevision: '+EDITOR+' (7a9955a4f2fa)\n');

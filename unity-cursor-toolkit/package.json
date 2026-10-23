@@ -2,7 +2,7 @@
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
   "description": "Unity 2019.4+ target, remote and virtual desktop workflows, enforced MCP safety, first-party Unity CLI composition, migration and Mono debugging.",
-  "version": "0.6.1052826",
+  "version": "0.7.1052826",
   "packageManager": "npm@11.16.0",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
@@ -71,6 +71,33 @@
             "minimum": 1,
             "maximum": 1000,
             "description": "Maximum console entries retained in the bounded ring buffer."
+          },
+          "unityCursorToolkit.statics.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Opt in to allowlisted static field fingerprints. Disabling clears the in-memory snapshot; no play-mode hooks are installed yet."
+          },
+          "unityCursorToolkit.statics.assemblyAllowlist": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "maxItems": 128,
+            "uniqueItems": true,
+            "default": [],
+            "description": "Exact assembly names to scan, restricted to compilation sources wholly under this project's Assets. Engine, system and package assemblies are excluded."
+          },
+          "unityCursorToolkit.statics.maxFields": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 1000,
+            "description": "Field-count budget for a static scan. Reaching this cap discards the partial snapshot and emits one structured warning."
+          },
+          "unityCursorToolkit.statics.maxScanMilliseconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "description": "Cooperative scan budget in milliseconds. Metadata calls cannot be interrupted; checks occur before and after them. Reaching the budget discards the snapshot."
           },
           "unityCursorToolkit.hotReload.preferILPatch": {
             "type": "boolean",
@@ -380,7 +407,7 @@
     "watch": "tsc -watch -p ./",
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
-    "test": "node test/run-all-tests.js && node test/viewport-measurement-tests.js && node test/player-viewport-proof-tests.js",
+    "test": "node test/run-all-tests.js && node test/vendor-validation-tests.js && node test/viewport-measurement-tests.js && node test/player-viewport-proof-tests.js",
     "test:unity-internal": "node scripts/run-internal-unity-smoke.js",
     "dev:unity-viewport": "node scripts/run-internal-viewport-stream.js",
     "spike:editor-windows": "node scripts/run-editor-window-capture-spike.js",

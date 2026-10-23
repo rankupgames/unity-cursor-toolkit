@@ -380,7 +380,9 @@ function sanitizeLog(value) {
 	return cleanString(value).split(/\r?\n/).map(line => {
 		if (redactNext) { redactNext = false; return '<private argument omitted>'; }
 		if (/-hubSessionId/i.test(line)) redactNext = true;
+		const assignment = /^(\s*[A-Z][A-Z0-9_]*=)/.exec(line);
+		const prefix = assignment && !/^\s*[a-z0-9+\/_-]{24,}={0,2}\s*$/i.test(line) ? assignment[1] : '';
 		return /licens|access.?token|auth.?token|serial.?number|session.?id|correlation.?id|machine.?id|ownerToken|^\s*(?:Id|Product|Type|Expiration|User|Serial|Username|Account|ConnectionId|ConnectionKey)\s*:/i.test(line)
-			? '<private or licensing line omitted>' : line.replace(/\b[a-z0-9_-]{32,}\b/gi, '<nonce>').replace(/^\s*[a-z0-9+/=_-]{24,}\s*$/i, '<opaque-value>').trimEnd();
+			? '<private or licensing line omitted>' : prefix + line.slice(prefix.length).replace(/\b[a-z0-9_-]{32,}\b/gi, '<nonce>').replace(/^\s*[a-z0-9+\/_-]{24,}={0,2}\s*$/i, '<opaque-value>').trimEnd();
 	}).join('\n');
 }

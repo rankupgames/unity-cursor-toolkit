@@ -250,7 +250,8 @@ async function main() {
 				...Object.values(os.networkInterfaces()).flat().filter(item => item && !item.internal).map(item => [item.address, '<local-ip>'])]) {
 				value = value.split(location).join(label).split(location.split(path.sep).join('/')).join(label);
 			}
-			return value.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.id/i.test(line)
+			return value.replace(/^\s*-hubSessionId\r?\n[^\r\n]*/gim, '<credential line omitted>')
+				.split(/\r?\n/).map(line => /licensing|license|access.token|auth.token|serial.number|machine.?id|session.?id|correlation.?id|bearer|hardware.?id|user.?id|account.?id|^\s*(?:Id|Product|Type|Expiration):/i.test(line)
 				? '<credential or licensing line omitted>' : line.trimEnd()).join('\n');
 		};
 		const clean = value => typeof value === 'string' ? sanitize(value) : Array.isArray(value) ? value.map(clean)

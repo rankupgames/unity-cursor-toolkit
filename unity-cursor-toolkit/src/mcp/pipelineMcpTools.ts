@@ -133,7 +133,7 @@ export class PipelineMcpTools implements IToolProvider {
 	private async handle(name: string, args: ObjectValue | null, context?: ToolCallContext): Promise<PipelineAuditCompletion<ToolResult>> {
 		if (name !== 'commands' && name !== 'pipeline.commands') { return refuse('unknown_tool', 'Unknown Pipeline tool.'); }
 		if (!args || Object.keys(args).some(key => !['action', 'projectPath', 'editorPid', 'command', 'args', 'dryRun', 'timeoutMs'].includes(key))
-			|| !['list', 'run'].includes(String(args.action)) || typeof args.projectPath !== 'string' || !path.isAbsolute(args.projectPath)
+			|| typeof args.action !== 'string' || !['list', 'run'].includes(args.action) || typeof args.projectPath !== 'string' || !path.isAbsolute(args.projectPath)
 			|| /[\0\r\n]/.test(args.projectPath) || !Number.isSafeInteger(args.editorPid) || (args.editorPid as number) <= 0
 			|| (args.dryRun !== undefined && typeof args.dryRun !== 'boolean')
 			|| (args.timeoutMs !== undefined && (!Number.isInteger(args.timeoutMs) || (args.timeoutMs as number) < 1 || (args.timeoutMs as number) > 120000))
