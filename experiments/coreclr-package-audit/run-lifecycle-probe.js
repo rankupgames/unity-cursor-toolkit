@@ -43,6 +43,13 @@ async function main() {
 		if (production) {
 			const source = path.resolve(__dirname, '../../Packages/com.rankupgames.unity-cursor-toolkit');
 			fs.cpSync(source, path.join(fixture, 'Packages/com.rankupgames.unity-cursor-toolkit'), { recursive: true });
+			const handlerFile = path.join(fixture, 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs');
+			let handler = fs.readFileSync(handlerFile, 'utf8');
+			for (const key of ['UnityHotReloadHandler_LastPort', 'UnityHotReloadHandler_ShowDebugLogs']) {
+				if (handler.split('"' + key + '"').length !== 2) throw new Error('Fixture preference-key substitution no longer matches the handler.');
+				handler = handler.replace('"' + key + '"', '"UCT_Lifecycle_' + path.basename(fixture) + '_' + key + '"');
+			}
+			fs.writeFileSync(handlerFile, handler);
 			if (consoleBaseline) {
 				// Reproduce the previous entered-mode behavior in this disposable snapshot only.
 				const consolePath = path.join(fixture, 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/ConsoleToCursor.cs');
@@ -140,15 +147,8 @@ async function main() {
 		}
 		if (!completed || outcome.code !== 0) process.exitCode = 1;
 	} finally {
-		// Never delete a fixture that a live proof Editor still uses.
-		if (exited) {
-			const resolved = path.resolve(fixture);
-			if (!resolved.startsWith(path.resolve(os.tmpdir()) + path.sep) || !path.basename(resolved).startsWith('uct-unity7-lifecycle-')) {
-				throw new Error('Disposable fixture cleanup path is outside the intended temporary root.');
-			}
-			try { fs.rmSync(resolved, { recursive: true, force: true, maxRetries: 10, retryDelay: 300 }); }
-			catch (error) { console.error('Disposable fixture cleanup pending: ' + resolved + ': ' + error.message); }
-		}
+		// Preserve Unity-generated fixtures after every outcome.
+		console.log(JSON.stringify({ event: 'ownedFixtureRetained', projectPath: fixture, exited }));
 	}
 }
 main().catch(error => { console.error(error); process.exitCode = 1; });

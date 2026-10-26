@@ -444,6 +444,9 @@
     "audit": "npm audit"
   },
   "overrides": {
+    "@azure/identity": {
+      "@azure/msal-node": "7.1.0"
+    },
     "ovsx": {
       "@vscode/vsce": "$@vscode/vsce"
     }

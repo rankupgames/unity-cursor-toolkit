@@ -262,15 +262,15 @@ async function main() {
 		const init = await mcp.call('initialize', { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'compatibility-proof', version: '1' } });
 		if (init.protocolVersion !== '2025-06-18' || init.serverInfo.name !== 'unity-cursor-toolkit') throw new Error('mcp_initialize_mismatch');
 		const list = await mcp.call('tools/list', {});
-		if (!Array.isArray(list.tools) || !['project_info', 'read_console'].every(name => list.tools.some(t => t.name === name))) throw new Error('mcp_tools_missing');
-		const result = await mcp.call('tools/call', { name: 'project_info', arguments: {} });
+		if (!Array.isArray(list.tools) || !['toolkit.project_info', 'toolkit.read_console'].every(name => list.tools.some(t => t.name === name))) throw new Error('mcp_tools_missing');
+		const result = await mcp.call('tools/call', { name: 'toolkit.project_info', arguments: {} });
 		if (result.isError || !Array.isArray(result.content) || result.content.length !== 1) throw new Error('mcp_project_info_failed');
 		assertProjectInfo(JSON.parse(result.content[0].text), ready, fixture, candidate);
 		const mcpMarker = 'UCT_COMPATIBILITY_' + crypto.randomUUID();
 		publish(path.join(proof, 'console.request'), mcpMarker);
 		let captured = false;
 		for (let i = 0; i < 20 && !captured; i++) {
-			const logs = await mcp.call('tools/call', { name: 'read_console', arguments: { search: mcpMarker } });
+			const logs = await mcp.call('tools/call', { name: 'toolkit.read_console', arguments: { search: mcpMarker } });
 			captured = logs.isError !== true && Array.isArray(logs.content) && logs.content.some(c => containsConsoleMarker(c.text, mcpMarker));
 			if (!captured) await sleep(100);
 		}
@@ -319,8 +319,7 @@ async function main() {
 		fs.writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
 		console.log(JSON.stringify({ event: 'ownedProofComplete', output, pid: report.pid, passed: report.passed, checks: report.checks, error: report.error, editorExit: report.editorExit, normalExitConfirmed: report.normalExitConfirmed, remainingOwnedPids: report.remainingOwnedPids }));
 		process.exitCode = report.passed ? 0 : 1;
-		// Retain the owned TEMP fixture on failure for local diagnosis; raw logs are never persisted into repository evidence.
-		if (report.passed && report.remainingOwnedPids.length === 0 && fixture.startsWith(os.tmpdir() + path.sep) && path.basename(fixture).startsWith('uct-compatibility-')) fs.rmSync(fixture, { recursive: true, force: true });
+		// Retain Unity fixtures for local diagnosis. Raw logs never enter repository evidence.
 	}
 }
 if (require.main === module) main().catch(error => { console.error(JSON.stringify({ passed: false, error: { code: /^[a-z_]+$/.test(error.message) ? error.message : 'preflight_failed' } })); process.exitCode = 1; });
