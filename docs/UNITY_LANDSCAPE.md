@@ -194,6 +194,10 @@ the recorded exit and result are reported separately from those messages.
 The build method honors the forwarded buildTarget and buildOutput arguments. A custom method remains responsible for its build options.
 The Android refusal comes from BuildPipeline, not a proven CLI module preflight. The real sample's declared Editor remains `6000.3.9f1`;
 CLI-driven real-project launch/resolution is not established by the isolated fixture.
+The 2026-10-09 native/default-path checks retain three separate outcomes for Unity 6000.6.4f1: [the no-profile Android request](../experiments/unity-cli-baseline/captures/2026-10-09-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-missing-module-native.json) exits 2 with a desktop-target refusal;
+[Android profile creation](../experiments/unity-cli-baseline/captures/2026-10-09-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-missing-module-profile.json) exits 0; [the profile build](../experiments/unity-cli-baseline/captures/2026-10-09-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-missing-module-profile-build.json) exits 0, produces no APK, and records a module error.
+These captures do not establish the cause or a named missing-module nonzero refusal. The original source project was not launched; RUG-546 remains incomplete.
+
 Shared pre-existing build outputs remain present after failed cases. A presence flag does not mean a failed case created a Player.
 
 Installed output behavior needs per-command handling. Test JSON returned valid result envelopes and report paths on stdout while logs streamed to stderr.
