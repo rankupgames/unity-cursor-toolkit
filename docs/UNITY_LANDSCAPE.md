@@ -102,21 +102,35 @@ docs. Documentation status reviewed 2026-08-13. Captured release: `1.0.0-beta.3`
 - `unity --help` is authoritative for the installed beta. The web reference can trail newly shipped commands and
   flags.
 
-### 3.0 Installed CLI capture, 2026-10-08
+### 3.0 CLI pin baseline, 2026-10-08 and 2026-10-09
 
-The installed Windows x64 binary is pinned to `1.0.0-beta.12`, beta channel, SHA-256
+The installed Windows x64 binary captured on October 8 is pinned to `1.0.0-beta.12`, beta channel, SHA-256
 `94047d1d84d66fc178cee541a9c3f69d2199edf15cdf37d3f308d7d9fb064a96`.
 Unity's [release notes](https://docs.unity.com/en-us/unity-cli/release-notes) date this release to September 30, 2026.
-It is eight days old on this capture date. The original installation date and its age check are not established.
-No CLI, Editor, or package install or upgrade was performed for this capture.
+The original installation date and its age check remain unknown. No CLI, Editor, or package install or upgrade was performed for that capture.
 
-[Baseline evidence](../experiments/unity-cli-baseline/captures/2026-10-08-cli-1.0.0-beta.12-windows-x64.json)
-contains version/build identity, doctor, environment, installed Editors, sanitized authentication state,
-root help, and help for editors, open, build, run, test, pipeline, command, list, status, and mcp.
-[Capture script](../experiments/unity-cli-baseline/capture-baseline.js) refuses a different CLI version.
+[Fresh installation evidence](../experiments/unity-cli-baseline/captures/2026-10-09-cli-1.0.0-beta.12-windows-x64-fresh-install.json)
+records a separate October 9 placement of the official exact-version standalone binary in a task-owned temporary directory.
+The generator fetched current release dates and the exact beta.12 manifest. Beta.13 was dated October 7 and was not selected.
+Immediately before download, both the local clock and HTTP Date put the artifact's October 1 Last-Modified timestamp over seven days old.
+The downloaded 27,873,200-byte binary matched manifest SHA-256 `3010efdd511df0ca631ba3d51e720afd0cfb19d6446bbf6fd38db39d78cfef6d`
+and had a valid Unity Technologies SF Authenticode signature before execution. Its checksum and length differ from the October 8 binary; the reason is unknown.
+This proves the new placement's age check, not the historical installation's age check.
+
+The [capture script](../experiments/unity-cli-baseline/capture-baseline.js), with `--fresh-install`, runs only
+`--version`, `doctor`, `env --format json`, `editors -i --format json`, and `auth status --format json`.
+All five completed with exit code 0. Background update, crash-report, consent-prompt, Editor-identity and auth-broker helpers were disabled.
+The user CLI, PATH, install receipt and checked Hub config files were preserved; the temporary binary was removed.
+Normal diagnostic log writes and account-cache/WAL activity from `auth status` are permitted. Account database contents were not inspected.
+An earlier attempt withheld its capture after an account WAL change; its diagnostic outputs were not retained, and a logical credential mutation was not established.
+No Unity Editor was launched and no Unity project or Pipeline package was changed.
+
+[October 8 baseline evidence](../experiments/unity-cli-baseline/captures/2026-10-08-cli-1.0.0-beta.12-windows-x64.json)
+also contains version/build identity, root help, and help for editors, open, build, run, test, pipeline, command, list, status, and mcp.
+The generator refuses a different CLI version and refuses to overwrite a capture.
 Account identifiers, credentials, OS-user/host identifiers, local roots, and doctor recent-log contents are omitted or redacted.
 Capture scripts derive Editor roots from the installed inventory; they contain no machine-specific installation path.
-This installed capture supersedes the August CLI contract below; historical package observations remain separate.
+These captures supersede the August CLI contract below; historical package observations remain separate.
 
 Installed Editors were `6000.3.9f1`, `6000.3.25f1`, `6000.6.4f1`, and `7000.0.0a7`.
 The module inventory records Android as installed for `6000.3.9f1` and available, not installed,
