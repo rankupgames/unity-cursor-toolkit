@@ -5369,7 +5369,7 @@ function testCoreClrEvidencePrivacy() {
 			['../../unity-cursor-toolkit/scripts/run-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
 			['../../unity-cursor-toolkit/scripts/measure-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {']
 		]) {
-			const source = fs.readFileSync(path.join(root, file), 'utf8');
+			const source = fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 			const start = source.indexOf(startMarker || 'const ' + symbol + ' = value => {');
 			const end = source.indexOf(endMarker, start) + endMarker.length;
 			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');
