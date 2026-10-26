@@ -1,6 +1,6 @@
 # First-party package static-state inventory
 
-Reviewed 2026-10-08. Scope: canonical first-party Editor and Runtime C#.
+Reviewed 2026-10-09. Scope: canonical first-party Editor and Runtime C#.
 Vendored Unterm state and hook migration belong to RUG-519.
 Constants, pure static methods, and computed properties hold no session state.
 The table lists all first-party static fields and events. Grouped names share a lifetime.
@@ -29,13 +29,19 @@ A lock object is retained while the process runs. Replacing it can break synchro
 | EditorWindowViewportCapture | resourcesByKey, isQuitting | Yes | Existing DisposeCachedResources releases textures and render targets before reload and quitting. EnteredPlayMode and EnteredEditMode release these resources too. |
 | ViewportStreamTool | sessions, running, isQuitting | Yes | Live session configuration remains across play transitions. Capture resources reset separately. Reset removes Tick and clears sessions before code reload and quitting. |
 | ILPatcher | referenceAssemblies | Yes | Clear on beforeAssemblyReload and compilationFinished. Each subsequent patch rebuilds references. |
-| ILPatcher | OnPatchCompleted | Potentially | Subscriber-owned event. No package subscriber exists. Removing consumer subscriptions without a re-registration contract would break the public API. CoreCLR consumer lifecycle remains unverified. |
+| ILPatcher | OnPatchCompleted | Yes for stale consumer delegates | Subscriber-owned event. Consumers explicitly unsubscribe on owner unload and subscribe on initialization; the consumer proof verifies exactly one current callback after each reload. Keep valid subscriptions across disabled-domain-reload play transitions; bulk clearing would break the shipped owner contract. |
 | ILPatcher | cscPath, monoHostPath | No | Editor installation paths. Same Editor installation remains active across reloads. |
 | DebugBridge | _cachedPort | No | Derived from immutable process arguments. |
 | RuntimeCapabilities | IsMono | No | Derived from the loaded core library identity. The process runtime does not change on script reload. |
-| AgentCommandRegistry | registrations | Potentially | Game-owned delegates. Existing Register replaces a name and Unregister removes it. Consumers must unregister stale handlers. Do not bulk-clear registrations at play transitions, because shipped callers can register in edit mode with domain reload disabled. CoreCLR code-unload reset/re-registration remains blocked on lifecycle evidence. |
+| AgentCommandRegistry | registrations | Yes for stale consumer delegates | Game-owned delegates. Register replaces a name and Unregister removes it. The consumer proof verifies owner unload removes its command and initialization registers the current version. Retain unrelated edit-mode registrations across disabled-domain-reload play transitions; consumers own their lifetime. |
 | AgentCommandRunner | instance | Yes if destroyed | Existing OnDestroy clears the reference. GetOrCreate also uses Unity's destroyed-object null check. |
 | AgentCommandRunner | nextRunNumber | No | Monotonic run-ID suffix. Retain to avoid reusing IDs while consumers poll. |
+| TestRunnerAdapter | _api, _callbacks, _initialized, _progress, _observedHolder, _seenRegisteredActive | Yes | Unload saves the owned job then Detach unregisters callbacks, destroys the API object, removes update/quitting hooks and clears these fields. Initialize creates one new API/callback pair. Handler recreation rebinds the progress sink; native stopped-work proof cannot be inherited from the previous holder. |
+| TestRunnerAdapter | _cancel, _isRunning, _getRunner, _holder, _probeSupported, _probeFailed | Yes | Detach clears reflected framework contracts and support state; Initialize rebinds the exact supported framework and clears probe failure. |
+| TestRunnerAdapter | _job, _foreignActive | Yes if ownership is lost | Retain bounded correlated SessionState across reload and Play Mode so the same run can complete or be cancelled. Initialize checks saved project/PID ownership; source-compilation unload marks active owned work interrupted and requests native cancellation. Terminal snapshots remain readable by their runId; a later request cannot reuse that ID. |
+| TestRunnerAdapter | _stateKey, _project, _version, _pid, _home, _editorDirectory | No | Exact process/project identity and privacy context are recomputed on Initialize. A live Editor does not change installation, PID or project. |
+| TestRunnerAdapter | _lastHeartbeat | No | Monotonic process-time cursor; retained across jobs to bound activity to once per second. |
+| TestRunnerAdapter | _quitting | Lifecycle guard | Quit sets this before Detach. Later unload/initialization callbacks cannot access a destroyed native Editor. |
 
 ProfilerSnapshotSettings.Current reads Unity's serialized ScriptableSingleton.
 EditorValidationController keeps its compile-request state in SessionState,
@@ -53,8 +59,9 @@ The issue's 6000.8 assumption does not identify the current CoreCLR release.
 identifies Unity 7.0 alpha as the CoreCLR Editor.
 
 Unity 7 uses the observed OnCodeUnloading and OnCodeInitializing attributes;
-AssemblyReloadEvents remain only in the older-Editor branch for these six owners.
-All six attribute owners are partial classes, as required by Unity compiler UAC0031.
+AssemblyReloadEvents remain only in the older-Editor branch for the six original
+lifecycle owners and the optional TestRunnerAdapter. All seven attribute owners
+are partial classes, as required by Unity compiler UAC0031.
 Generated lifecycle registration forces static constructors before native objects
 are ready, so their Unity 7 constructors contain no native initialization.
 EditorApplication.quitting performs native cleanup before teardown; later unload
@@ -83,4 +90,14 @@ smoke passed the legacy reset/restart and game/viewport checks; that earlier smo
 
 The [actual Mono recompilation proof](results/unity6-package-lifecycle-2026-10-08T06-51-17-382Z/observation.json) now passes on 6000.3.9f1/mscorlib. It observes two real asset-import workers, three source recompiles, stable package MVID/port, handler and session resets, play transitions, persistent manual Stop, closed-port checks, failed-join refusal, and normal exit with stopped workers.
 The [old-code failure](results/unity6-package-lifecycle-2026-10-08T06-48-05-022Z/observation.json) records a different child Unity process listening on the bridge port after the owning Editor stopped. Skipping bridge initialization in asset-import workers removes this failure. The guard uses the API present in [Unity's 2020.2 source](https://github.com/Unity-Technologies/UnityCsReference/blob/2020.2/Modules/AssetDatabase/Editor/ScriptBindings/AssetDatabase.bindings.cs), behind the matching version define.
-The [Unity 7 regression proof](results/unity7-package-lifecycle-2026-10-08T06-53-39-341Z/observation.json) also passes with the guard. These proofs still use a selected free port because the host excludes the default range. Consumer-owned ILPatcher/AgentCommandRegistry lifetimes and selective-assembly retention remain unverified.
+The [Unity 7 regression proof](results/unity7-package-lifecycle-2026-10-08T06-53-39-341Z/observation.json) also passes with the guard. These proofs still use a selected free port because the host excludes the default range. The [consumer lifetime proof](../consumer-lifecycle-proof/evidence/2026-10-08T08-46-00-868Z/observation.json) also passes on the exact Unity 7 Editor: owner unload removes command and patch delegates, and each replacement version receives exactly one current callback. Its old-code control retains terminal handler targets; the fixed runner releases those targets while keeping their results readable. Selective-assembly static retention remains unverified; both observed source reloads reconstructed static state.
+
+## RUG-518 acceptance evidence
+
+The inventory covers first-party package fields/events, including the optional TestRunnerAdapter; locks, process configuration and deliberately retained owned runs have explicit retention rules above. Both package copies contain the same reset/lifecycle implementation. Vendored Unterm ownership remains the separate RUG-519 scope.
+
+The [existing sample owner test](../../CursorUnityTool/Assets/Editor/UnityCursorToolkitInternalSmoke.cs), ValidateRuntimeAndStateReset, seeds retained state and invokes the entered-mode callbacks to check a rebuilt handler table and an empty console buffer, then checks profiler identity/timing reset. The linked [legacy smoke result](results/2026-10-08-6000.3.9f1-lifecycle-smoke.json) passes those simulated owner checks. ProductionLifecycleProbe.CheckReset additionally asserts a new handler instance, no prior console marker, exactly one current console callback and a new profiler session; its reload checks require an empty timing queue. The linked actual Mono and CoreCLR observations each contain three network verifications and four session-reset verifications across source reload and disabled-domain-reload play entry/exit, then normal exit with stopped workers.
+
+Consumer delegates use explicit owner unregister/unsubscribe rather than a package-wide purge. This preserves the proved unrelated registration across Play Mode. Compilation callbacks suspend/resume profiler capture; reload and entered play/edit hooks define new current sessions. Saved profiler snapshots remain addressable by ID and are not current-session state.
+
+Unity 2019.4.40f1 remains configured but unrun; no legacy runtime proof is claimed. Selective-assembly retention is an evidence limit, not an additional RUG-518 acceptance condition.
