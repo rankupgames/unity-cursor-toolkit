@@ -134,6 +134,18 @@ The MCP tool `editor_validation` supports `list`, `status`, `sync_project_files`
 
 `sync_and_compile` regenerates project files using Unity's active code editor integration, requests script compilation, and writes the latest pollable result to `TestResults/UnityCursorToolkit/EditorValidation/latest.json` under the Unity project root. The same action is available inside Unity at **Tools > Unity Cursor Toolkit > Validation > Regenerate Project Files And Compile**.
 
+## Static Snapshot Foundation
+
+The companion extension setting `unityCursorToolkit.statics.enabled` is false by default. Set it to true and add exact user assembly names to `unityCursorToolkit.statics.assemblyAllowlist` (default `[]`). Only assemblies whose compilation sources are wholly under this project's `Assets` are eligible; engine, system, package and precompiled assemblies remain excluded even when named. At connection or a setting change, the Editor takes one snapshot and retains only the latest result in memory. Disabling clears that result and prevents scan work. No play-mode/reload hooks, diff, console report view or MCP report tool are installed in this foundation.
+
+`maxFields` defaults to 1000 (1?1000); `maxScanMilliseconds` defaults to 10 (1?100). Reaching either cap discards all partial entries, records an incomplete snapshot with its skip reason, and emits one structured `staticsWarning`. The time budget is cooperative: checks surround metadata discovery, field reads, bounded hashing and sorting. An individual Unity/reflection call cannot be interrupted, so the deadline is not a hard maximum pause. Invalid configuration fails closed without scanning.
+
+Entries contain assembly/type/field identities and either a fingerprint or an unreadable reason. Exact scalar primitives and strings of at most 4096 characters use a fixed cheap hash; null and array element count have explicit fingerprints. Array contents are not hashed, and hashes can collide. Non-null custom objects and collections are unreadable; no custom Count, property getter, ToString or GetHashCode is called. Types with a static initializer are unreadable except literal constants, because reflection value access could execute that initializer. Open generic and thread-static fields are also unreadable. This conservative limit can hide real stale state and does not establish that unreadable fields are safe.
+
+The internal next-step contract is a bounded snapshot with `complete`, `skippedReason`, `durationMs` and `fields`. Each field has `assembly`, `type`, `field`, `fingerprint` and `unreadableReason`. It carries no raw values and creates no disk storage. Transition diffs and report surfaces remain separate work.
+
+The [dated Unity 6000.3.9f1 proof](https://github.com/rankupgames/unity-cursor-toolkit/blob/release-0.7-unity-runtime-rework/experiments/coreclr-package-audit/results/statics-snapshot-2026-10-09T01-19-22-220Z/observation.json) passed snapshot correctness checks at the 100ms allowance on a disposable sample Assets copy with owner fixtures. Its ten default-10ms scans all returned incomplete `time_budget`; scan duration was 10.541?13.893ms (total Configure 10.652?14.010ms), so this does not prove a hard 10ms bound. The conservative capture sanitizer omitted five long public check names. No play transition, native CI or other Editor version was proved.
+
 ## Security Notes
 
 - The companion extension validates Unity/MCP/webview payloads before using them.

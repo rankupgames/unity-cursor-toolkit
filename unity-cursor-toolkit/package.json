@@ -72,6 +72,33 @@
             "maximum": 1000,
             "description": "Maximum console entries retained in the bounded ring buffer."
           },
+          "unityCursorToolkit.statics.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Opt in to allowlisted static field fingerprints. Disabling clears the in-memory snapshot; no play-mode hooks are installed yet."
+          },
+          "unityCursorToolkit.statics.assemblyAllowlist": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "maxItems": 128,
+            "uniqueItems": true,
+            "default": [],
+            "description": "Exact assembly names to scan, restricted to compilation sources wholly under this project's Assets. Engine, system and package assemblies are excluded."
+          },
+          "unityCursorToolkit.statics.maxFields": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 1000,
+            "description": "Field-count budget for a static scan. Reaching this cap discards the partial snapshot and emits one structured warning."
+          },
+          "unityCursorToolkit.statics.maxScanMilliseconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "description": "Cooperative scan budget in milliseconds. Metadata calls cannot be interrupted; checks occur before and after them. Reaching the budget discards the snapshot."
+          },
           "unityCursorToolkit.hotReload.preferILPatch": {
             "type": "boolean",
             "default": true,

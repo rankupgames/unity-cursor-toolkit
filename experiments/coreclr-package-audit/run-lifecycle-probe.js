@@ -14,6 +14,8 @@ async function main() {
 	if (!version || !/^(?:6000|7000)\.[0-9]+\.[0-9]+[abfp][0-9]+$/.test(version)) throw new Error('Pass an exact installed Unity 6 or Unity 7 Editor version with --version.');
 	const production = process.argv.includes('--production-package');
 	if (!production && !version.startsWith('7000.')) throw new Error('The standalone lifecycle attribute probe requires Unity 7. Use --production-package for Unity 6.');
+	const statics = process.argv.includes('--static-snapshot-proof');
+	if (statics && (!production || version !== '6000.3.9f1')) throw new Error('--static-snapshot-proof requires the exact sample Editor and --production-package.');
 	const consoleBaseline = process.argv.includes('--console-reset-baseline');
 	if (consoleBaseline && !production) throw new Error('--console-reset-baseline requires --production-package.');
 	const fixture = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-unity7-lifecycle-'));
@@ -25,6 +27,17 @@ async function main() {
 		fs.mkdirSync(path.join(fixture, 'Packages'));
 		fs.mkdirSync(path.join(fixture, 'ProjectSettings'));
 		fs.writeFileSync(path.join(fixture, 'Packages/manifest.json'), '{"dependencies":{}}');
+		if (statics) {
+			const sampleDependencies = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../CursorUnityTool/Packages/manifest.json'), 'utf8')).dependencies;
+			fs.writeFileSync(path.join(fixture, 'Packages/manifest.json'), JSON.stringify({ dependencies: Object.fromEntries(Object.entries(sampleDependencies).filter(([name]) => name.startsWith('com.unity.modules.'))) }));
+			fs.cpSync(path.resolve(__dirname, '../../CursorUnityTool/Assets'), path.join(fixture, 'Assets'), { recursive: true });
+			fs.mkdirSync(path.join(fixture, 'Assets/StaticsExact/Editor'), { recursive: true });
+			fs.writeFileSync(path.join(fixture, 'Assets/StaticsExact/Editor/UCT.StaticsExactProof.asmdef'), JSON.stringify({ name: 'UCT.StaticsExactProof', includePlatforms: ['Editor'] }));
+			fs.writeFileSync(path.join(fixture, 'Assets/StaticsExact/Editor/ExactField.cs'), 'public static class ExactField { public static int Value; }');
+			fs.mkdirSync(path.join(fixture, 'Assets/StaticsBudget/Editor'), { recursive: true });
+			fs.writeFileSync(path.join(fixture, 'Assets/StaticsBudget/Editor/UCT.StaticsBudgetProof.asmdef'), JSON.stringify({ name: 'UCT.StaticsBudgetProof', includePlatforms: ['Editor'] }));
+			fs.writeFileSync(path.join(fixture, 'Assets/StaticsBudget/Editor/FieldBudget.cs'), 'public static class FieldBudget {' + Array.from({ length: 10000 }, (_, i) => 'public static int Field' + i + ';').join('') + '}');
+		}
 		if (production) {
 			const source = path.resolve(__dirname, '../../Packages/com.rankupgames.unity-cursor-toolkit');
 			fs.cpSync(source, path.join(fixture, 'Packages/com.rankupgames.unity-cursor-toolkit'), { recursive: true });
@@ -37,12 +50,12 @@ async function main() {
 				fs.writeFileSync(consolePath, text.replace(current, '\t\t\tResetBuffer();'));
 			}
 			fs.mkdirSync(path.join(fixture, 'Assets/Reloadable/Editor'), { recursive: true });
-			fs.writeFileSync(path.join(fixture, 'Assets/Editor/UCT.CoordinatorProof.asmdef'), JSON.stringify({ name: 'UCT.CoordinatorProof', includePlatforms: ['Editor'] }));
+			if (!statics) fs.writeFileSync(path.join(fixture, 'Assets/Editor/UCT.CoordinatorProof.asmdef'), JSON.stringify({ name: 'UCT.CoordinatorProof', includePlatforms: ['Editor'] }));
 			fs.writeFileSync(path.join(fixture, 'Assets/Reloadable/Editor/UCT.ReloadableProof.asmdef'), JSON.stringify({ name: 'UCT.ReloadableProof', references: ['UnityCursorToolkit.Editor'], includePlatforms: ['Editor'] }));
 			fs.writeFileSync(path.join(fixture, 'Assets/Reloadable/Editor/ReloadableHandler.cs'), 'using System; using UnityCursorToolkit.Core; [MCPTool("uct_lifecycle_fixture")] public sealed class ReloadableHandler : IToolHandler { public const int Revision = 0; public readonly string InstanceId = Guid.NewGuid().ToString("N"); public string ToolName => "uct_lifecycle_fixture"; public string Description => "Disposable reload fixture"; public string HandleCommand(string json) { return "{\\"success\\":true,\\"revision\\":" + Revision + ",\\"instance\\":\\"" + InstanceId + "\\"}"; } }'.replace(/\\"/g, '\\"'));
 		}
 		fs.writeFileSync(path.join(fixture, 'ProjectSettings/ProjectVersion.txt'), 'm_EditorVersion: ' + version + '\n');
-		const probe = production ? 'ProductionLifecycleProbe' : 'LifecycleProbe';
+		const probe = statics ? 'StaticSnapshotProbe' : production ? 'ProductionLifecycleProbe' : 'LifecycleProbe';
 		fs.copyFileSync(path.join(__dirname, probe + '.cs'), path.join(fixture, 'Assets/Editor/' + probe + '.cs'));
 		if (!production) fs.writeFileSync(path.join(fixture, 'Assets/Editor/RecompiledMarker.cs'), 'public static class RecompiledMarker { public const int Revision = 0; }');
 		const child = spawn(unityPath, ['-batchmode', ...(production ? [] : ['-nographics']), '-projectPath', fixture,
@@ -94,7 +107,8 @@ async function main() {
 				? Object.fromEntries(Object.entries(value).map(([key, item]) => [key, cleanEvent(item)])) : value;
 		for (let index = 0; index < events.length; index++) events[index] = cleanEvent(events[index]);
 		const ownerEvents = events.filter(event => event.pid === child.pid);
-		const completed = ownerEvents.some(event => event.callback === 'complete')
+		const completed = statics ? ownerEvents.some(event => event.callback === 'complete' && event.passed === true)
+			&& ownerEvents.some(event => event.callback === 'snapshotMeasurement') : ownerEvents.some(event => event.callback === 'complete')
 			&& (production
 				? [0, 1, 2].every(revision => ownerEvents.some(event => event.callback === 'networkVerified' && event.revision === revision))
 					&& ownerEvents.some(event => event.callback === 'joinFailureVisible')
@@ -102,15 +116,15 @@ async function main() {
 				: [1, 2].every(revision => ownerEvents.some(event => event.callback === 'revisionObserved' + revision))
 					&& ownerEvents.some(event => event.callback === 'playMode:EnteredPlayMode' && event.domainReloadDisabled));
 		const report = {
-			observedAt: new Date().toISOString(), consoleResetBaseline: consoleBaseline, fixture: production ? 'canonical package snapshot, only separate Assets handler recompiled' : 'standalone, no toolkit package', pid: child.pid,
+			observedAt: new Date().toISOString(), consoleResetBaseline: consoleBaseline, fixture: statics ? 'canonical package and sample Assets copy with static owner fixtures; no play transitions' : production ? 'canonical package snapshot, only separate Assets handler recompiled' : 'standalone, no toolkit package', pid: child.pid,
 			outcome, completed, readinessClaim: false, events,
 			passed: completed && outcome.normalExit && outcome.code === 0,
 			deadlines: { startupSeconds: 180, executionSeconds: 90, normalExitGraceSeconds: 15 },
-			scope: 'Single installed Editor observation. Callback order is evidence, not a general lifecycle guarantee. Production frame delivery does not prove viewport pixel validity.'
+			scope: statics ? 'Exact sample Assets copy plus owner fixtures. Cooperative scan timing; no play-mode diff, native CI or other Editor guarantee.' : 'Single installed Editor observation. Callback order is evidence, not a general lifecycle guarantee. Production frame delivery does not prove viewport pixel validity.'
 		};
 		const stamp = report.observedAt.replace(/[:.]/g, '-');
 		const prefix = version.startsWith('7000.') ? 'unity7' : 'unity6';
-		const output = path.join(__dirname, 'results', (consoleBaseline ? prefix + '-console-reset-baseline-' : production ? prefix + '-package-lifecycle-' : prefix + '-lifecycle-') + stamp);
+		const output = path.join(__dirname, 'results', (statics ? 'statics-snapshot-' : consoleBaseline ? prefix + '-console-reset-baseline-' : production ? prefix + '-package-lifecycle-' : prefix + '-lifecycle-') + stamp);
 		fs.mkdirSync(output, { recursive: true });
 		fs.writeFileSync(path.join(output, 'observation.json'), JSON.stringify(report, null, 2) + '\n');
 		fs.writeFileSync(path.join(output, 'events.jsonl'), events.map(event => JSON.stringify(event)).join('\n') + '\n');
