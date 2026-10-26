@@ -6,29 +6,77 @@ using System.Diagnostics;
 using System.Reflection;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
+using UnityEditor;
 using UnityCursorToolkit.MCP;
 
 namespace UnityCursorToolkit.Core
 {
-	/// <summary>Opt-in value fingerprints. No play/reload hooks are registered here.</summary>
-	internal static class StaticSnapshotter
+	/// <summary>Opt-in fingerprints and latest-only transition diffs; no raw values or disk persistence.</summary>
+	[InitializeOnLoad]
+	internal static partial class StaticSnapshotter
 	{
-		private static bool enabled;
-		private static string[] assemblyAllowlist = new string[0];
-		private static int maxFields = 1000;
-		private static int maxScanMilliseconds = 10;
-		internal static Snapshot Latest { get; private set; }
-		internal static bool Enabled => enabled;
+		private static StaticSnapshotState State => StaticSnapshotState.instance;
+		private static string[] assemblyAllowlist => State.assemblyAllowlist;
+		private static int maxFields => State.maxFields;
+		private static int maxScanMilliseconds => State.maxScanMilliseconds;
+		internal static Snapshot Latest { get => State.latestSnapshot; private set => State.latestSnapshot = value; }
+		internal static Diff LatestDiff => State.latestDiff;
+		internal static bool Enabled => State.enabled;
+
+		static StaticSnapshotter()
+		{
+			#if !UNITY_7000_0_OR_NEWER
+			InitializeLifecycle();
+			#endif
+		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+		#endif
+		internal static void InitializeLifecycle()
+		{
+			#if UNITY_2020_2_OR_NEWER
+			if (AssetDatabase.IsAssetImportWorkerProcess()) return;
+			#endif
+			DetachHooks();
+			if (!Enabled) return;
+			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+			EditorApplication.quitting += OnEditorQuitting;
+		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+		#endif
+		internal static void DetachHooks()
+		{
+			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+			EditorApplication.quitting -= OnEditorQuitting;
+		}
+
+		private static void ClearState()
+		{
+			DetachHooks();
+			var state = State;
+			state.enabled = false;
+			state.assemblyAllowlist = new string[0];
+			state.latestSnapshot = state.previousSnapshot = null;
+			state.latestDiff = null;
+			state.previousTransition = "";
+		}
+
+		private static void OnEditorQuitting()
+		{
+			ClearState();
+			UnityEngine.Object.DestroyImmediate(State);
+		}
 
 		internal static void Configure(string json)
 		{
-			enabled = false;
-			Latest = null;
 			try
 			{
 				var input = JObject.Parse(json);
 				if (input["enabled"]?.Type != JTokenType.Boolean) throw new InvalidOperationException();
-				if (!(bool)input["enabled"]) { assemblyAllowlist = new string[0]; return; }
+				if (!(bool)input["enabled"]) { ClearState(); return; }
 				var names = input["assemblyAllowlist"] as JArray;
 				if (names == null || names.Count > 128 || input["maxFields"]?.Type != JTokenType.Integer
 					|| input["maxScanMilliseconds"]?.Type != JTokenType.Integer) throw new InvalidOperationException();
@@ -42,18 +90,35 @@ namespace UnityCursorToolkit.Core
 					if (string.IsNullOrWhiteSpace(text) || text.Length > 128 || text.IndexOfAny(new[] { '/', '\\', '\r', '\n', '\0' }) >= 0) throw new InvalidOperationException();
 					allowlist.Add(text);
 				}
-				assemblyAllowlist = new List<string>(allowlist).ToArray();
-				maxFields = fields;
-				maxScanMilliseconds = milliseconds;
-				enabled = true;
+				var sortedNames = new List<string>(allowlist); sortedNames.Sort(StringComparer.Ordinal);
+				var state = State;
+				bool unchanged = state.enabled && state.maxFields == fields && state.maxScanMilliseconds == milliseconds
+					&& new HashSet<string>(state.assemblyAllowlist, StringComparer.Ordinal).SetEquals(sortedNames);
+				if (!unchanged) ClearState();
+				state.assemblyAllowlist = sortedNames.ToArray();
+				state.maxFields = fields;
+				state.maxScanMilliseconds = milliseconds;
+				state.enabled = true;
+				InitializeLifecycle();
 				Capture();
 			}
-			catch { enabled = false; assemblyAllowlist = new string[0]; Publish(new Snapshot { skippedReason = "invalid_configuration" }); }
+			catch { ClearState(); Publish(new Snapshot { skippedReason = "invalid_configuration" }); }
+		}
+
+		private static void OnPlayModeStateChanged(PlayModeStateChange transition)
+		{
+			if (!Enabled) return;
+			var state = State;
+			var snapshot = Capture();
+			state.latestDiff = Compare(state.previousSnapshot, snapshot, state.previousTransition, transition.ToString());
+			state.previousSnapshot = snapshot;
+			state.previousTransition = transition.ToString();
+			HotReloadHandler.BroadcastToClients("{\"command\":\"staticsReport\",\"report\":" + JsonUtility.ToJson(state.latestDiff) + "}");
 		}
 
 		internal static Snapshot Capture()
 		{
-			if (!enabled) return null;
+			if (!Enabled) return null;
 			var result = new Snapshot();
 			var timer = Stopwatch.StartNew();
 			try
@@ -162,6 +227,70 @@ namespace UnityCursorToolkit.Core
 				entry.fingerprint = type.FullName + ":fnv64:" + hash.ToString("x16", System.Globalization.CultureInfo.InvariantCulture);
 			}
 			catch { entry.unreadableReason = "field_read_failed"; }
+		}
+
+		internal static Diff Compare(Snapshot before, Snapshot after, string beforeTransition, string transition)
+		{
+			var result = new Diff { beforeTransition = beforeTransition ?? "", transition = transition ?? "" };
+			if (before == null) { result.incompleteReason = "missing_before"; return result; }
+			if (after == null) { result.incompleteReason = "missing_after"; return result; }
+			bool consecutive = beforeTransition == "ExitingEditMode" && transition == "EnteredPlayMode"
+				|| beforeTransition == "EnteredPlayMode" && transition == "ExitingPlayMode"
+				|| beforeTransition == "ExitingPlayMode" && transition == "EnteredEditMode"
+				|| beforeTransition == "EnteredEditMode" && transition == "ExitingEditMode";
+			if (!consecutive) { result.incompleteReason = "transition_gap"; return result; }
+			if (!before.complete || !after.complete) { result.incompleteReason = "snapshot_skipped"; return result; }
+			if (before.fields == null || after.fields == null || before.fields.Count > 1000 || after.fields.Count > 1000)
+			{ result.incompleteReason = "invalid_snapshot"; return result; }
+			var left = new Dictionary<string, Entry>(StringComparer.Ordinal);
+			var right = new Dictionary<string, Entry>(StringComparer.Ordinal);
+			for (int side = 0; side < 2; side++)
+			{
+				var index = side == 0 ? left : right;
+				foreach (var entry in side == 0 ? before.fields : after.fields)
+				{
+					if (entry == null || string.IsNullOrEmpty(entry.assembly) || string.IsNullOrEmpty(entry.type) || string.IsNullOrEmpty(entry.field)
+						|| entry.assembly.Length > 128 || entry.type.Length > 512 || entry.field.Length > 512
+						|| string.IsNullOrEmpty(entry.fingerprint) && string.IsNullOrEmpty(entry.unreadableReason))
+					{ result.incompleteReason = "invalid_snapshot"; return result; }
+					string key = entry.assembly + "\0" + entry.type + "\0" + entry.field;
+					if (index.ContainsKey(key)) { result.incompleteReason = "invalid_snapshot"; return result; }
+					index.Add(key, entry);
+				}
+			}
+			var keys = new SortedSet<string>(left.Keys, StringComparer.Ordinal); keys.UnionWith(right.Keys);
+			foreach (var key in keys)
+			{
+				Entry previous, current; left.TryGetValue(key, out previous); right.TryGetValue(key, out current);
+				var identity = current ?? previous;
+				result.fields.Add(new Difference {
+					assembly = identity.assembly, type = identity.type, field = identity.field,
+					beforeFingerprint = previous?.fingerprint ?? "", afterFingerprint = current?.fingerprint ?? "",
+					beforeUnreadableReason = previous?.unreadableReason ?? "", afterUnreadableReason = current?.unreadableReason ?? "",
+					classification = !string.IsNullOrEmpty(previous?.unreadableReason) || !string.IsNullOrEmpty(current?.unreadableReason)
+						? "unreadable" : previous == null ? "added" : current == null ? "removed"
+						: previous.fingerprint == current.fingerprint ? "carried" : "reset"
+				});
+			}
+			result.complete = true;
+			return result;
+		}
+
+		[Serializable]
+		internal sealed class Diff
+		{
+			public bool complete;
+			public string incompleteReason = "";
+			public string beforeTransition = "";
+			public string transition = "";
+			public List<Difference> fields = new List<Difference>();
+		}
+
+		[Serializable]
+		internal sealed class Difference
+		{
+			public string assembly, type, field, classification;
+			public string beforeFingerprint, afterFingerprint, beforeUnreadableReason, afterUnreadableReason;
 		}
 
 		[Serializable]

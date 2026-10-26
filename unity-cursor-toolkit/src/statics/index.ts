@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import type { IModule, ModuleContext } from '../core/interfaces';
 import { ConnectionState } from '../core/types';
 
-/** Synchronizes opt-in snapshot settings; no transition hooks or report surfaces. */
+/** Synchronizes opt-in snapshot settings; Unity owns transition capture. */
 export class StaticsModule implements IModule {
 	public readonly id = 'statics';
 	private context: ModuleContext | undefined;

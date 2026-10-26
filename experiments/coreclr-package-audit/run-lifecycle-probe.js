@@ -14,7 +14,8 @@ async function main() {
 	if (!version || !/^(?:6000|7000)\.[0-9]+\.[0-9]+[abfp][0-9]+$/.test(version)) throw new Error('Pass an exact installed Unity 6 or Unity 7 Editor version with --version.');
 	const production = process.argv.includes('--production-package');
 	if (!production && !version.startsWith('7000.')) throw new Error('The standalone lifecycle attribute probe requires Unity 7. Use --production-package for Unity 6.');
-	const statics = process.argv.includes('--static-snapshot-proof');
+	const staticsTransitions = process.argv.includes('--static-transition-proof');
+	const statics = staticsTransitions || process.argv.includes('--static-snapshot-proof');
 	if (statics && (!production || version !== '6000.3.9f1')) throw new Error('--static-snapshot-proof requires the exact sample Editor and --production-package.');
 	const consoleBaseline = process.argv.includes('--console-reset-baseline');
 	if (consoleBaseline && !production) throw new Error('--console-reset-baseline requires --production-package.');
@@ -31,6 +32,7 @@ async function main() {
 			const sampleDependencies = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../CursorUnityTool/Packages/manifest.json'), 'utf8')).dependencies;
 			fs.writeFileSync(path.join(fixture, 'Packages/manifest.json'), JSON.stringify({ dependencies: Object.fromEntries(Object.entries(sampleDependencies).filter(([name]) => name.startsWith('com.unity.modules.'))) }));
 			fs.cpSync(path.resolve(__dirname, '../../CursorUnityTool/Assets'), path.join(fixture, 'Assets'), { recursive: true });
+			fs.writeFileSync(path.join(fixture, 'Assets/StaticTransitionValues.cs'), 'using UnityEngine; public static class StaticTransitionValues { public static int Bug; public static int Reset; [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] private static void ResetForPlay() { Reset = 0; } }');
 			fs.mkdirSync(path.join(fixture, 'Assets/StaticsExact/Editor'), { recursive: true });
 			fs.writeFileSync(path.join(fixture, 'Assets/StaticsExact/Editor/UCT.StaticsExactProof.asmdef'), JSON.stringify({ name: 'UCT.StaticsExactProof', includePlatforms: ['Editor'] }));
 			fs.writeFileSync(path.join(fixture, 'Assets/StaticsExact/Editor/ExactField.cs'), 'public static class ExactField { public static int Value; }');
@@ -60,7 +62,7 @@ async function main() {
 		if (!production) fs.writeFileSync(path.join(fixture, 'Assets/Editor/RecompiledMarker.cs'), 'public static class RecompiledMarker { public const int Revision = 0; }');
 		const child = spawn(unityPath, ['-batchmode', ...(production ? [] : ['-nographics']), '-projectPath', fixture,
 			'-executeMethod', probe + '.Run', '-logFile', logPath], {
-			env: { ...process.env, UCT_LIFECYCLE_EVIDENCE_PATH: eventsPath, UCT_LIFECYCLE_EDITOR_VERSION: version }, windowsHide: true, stdio: 'ignore'
+			env: { ...process.env, UCT_LIFECYCLE_EVIDENCE_PATH: eventsPath, UCT_LIFECYCLE_EDITOR_VERSION: version, UCT_STATICS_TRANSITION_PROOF: staticsTransitions ? '1' : '0' }, windowsHide: true, stdio: 'ignore'
 		});
 		fs.writeFileSync(eventsPath + '.owner', String(child.pid));
 		console.log(JSON.stringify({ pid: child.pid, projectPath: fixture, unityPath }));
@@ -91,6 +93,8 @@ async function main() {
 		});
 		const events = fs.existsSync(eventsPath) ? fs.readFileSync(eventsPath, 'utf8').trim().split(/\r?\n/).filter(Boolean).map(line => JSON.parse(line)) : [];
 		const log = fs.existsSync(logPath) ? fs.readFileSync(logPath, 'utf8') : '';
+		if (staticsTransitions) events.push({ callback: 'capWarningEvidence', pid: child.pid, testMethod: 'retained owned Editor log after exit',
+			count: log.split(/\r?\n/).filter(line => line.includes('\"command\":\"staticsWarning\"') && line.includes('\"code\":\"field_cap\"')).length, expected: 5 });
 		const sanitize = value => {
 			for (const [location, label] of [[fixture, '<disposable-project>'], [unityPath, '<unity-executable>'],
 				[path.dirname(unityPath), '<unity-install>'], [os.homedir(), '<user-home>'], [os.hostname(), '<host>'],
@@ -108,7 +112,8 @@ async function main() {
 		for (let index = 0; index < events.length; index++) events[index] = cleanEvent(events[index]);
 		const ownerEvents = events.filter(event => event.pid === child.pid);
 		const completed = statics ? ownerEvents.some(event => event.callback === 'complete' && event.passed === true)
-			&& ownerEvents.some(event => event.callback === 'snapshotMeasurement') : ownerEvents.some(event => event.callback === 'complete')
+			&& ownerEvents.some(event => event.callback === (staticsTransitions ? 'transitionMeasurement' : 'snapshotMeasurement'))
+			&& (!staticsTransitions || ownerEvents.some(event => event.callback === 'capWarningEvidence' && event.count === event.expected)) : ownerEvents.some(event => event.callback === 'complete')
 			&& (production
 				? [0, 1, 2].every(revision => ownerEvents.some(event => event.callback === 'networkVerified' && event.revision === revision))
 					&& ownerEvents.some(event => event.callback === 'joinFailureVisible')
@@ -116,15 +121,15 @@ async function main() {
 				: [1, 2].every(revision => ownerEvents.some(event => event.callback === 'revisionObserved' + revision))
 					&& ownerEvents.some(event => event.callback === 'playMode:EnteredPlayMode' && event.domainReloadDisabled));
 		const report = {
-			observedAt: new Date().toISOString(), consoleResetBaseline: consoleBaseline, fixture: statics ? 'canonical package and sample Assets copy with static owner fixtures; no play transitions' : production ? 'canonical package snapshot, only separate Assets handler recompiled' : 'standalone, no toolkit package', pid: child.pid,
+			observedAt: new Date().toISOString(), consoleResetBaseline: consoleBaseline, fixture: statics ? (staticsTransitions ? 'canonical package and sample Assets copy with owned fast/cap/Mono transition fixtures' : 'canonical package and sample Assets copy with static owner fixtures; no play transitions') : production ? 'canonical package snapshot, only separate Assets handler recompiled' : 'standalone, no toolkit package', pid: child.pid,
 			outcome, completed, readinessClaim: false, events,
 			passed: completed && outcome.normalExit && outcome.code === 0,
 			deadlines: { startupSeconds: 180, executionSeconds: 90, normalExitGraceSeconds: 15 },
-			scope: statics ? 'Exact sample Assets copy plus owner fixtures. Cooperative scan timing; no play-mode diff, native CI or other Editor guarantee.' : 'Single installed Editor observation. Callback order is evidence, not a general lifecycle guarantee. Production frame delivery does not prove viewport pixel validity.'
+			scope: statics ? (staticsTransitions ? 'Owned Unity6000.3.9f1 transition proof; no native CI, other Editor or reset-to-default guarantee.' : 'Exact sample Assets copy plus owner fixtures. Cooperative scan timing; no play-mode diff, native CI or other Editor guarantee.') : 'Single installed Editor observation. Callback order is evidence, not a general lifecycle guarantee. Production frame delivery does not prove viewport pixel validity.'
 		};
 		const stamp = report.observedAt.replace(/[:.]/g, '-');
 		const prefix = version.startsWith('7000.') ? 'unity7' : 'unity6';
-		const output = path.join(__dirname, 'results', (statics ? 'statics-snapshot-' : consoleBaseline ? prefix + '-console-reset-baseline-' : production ? prefix + '-package-lifecycle-' : prefix + '-lifecycle-') + stamp);
+		const output = path.join(__dirname, 'results', (statics ? (staticsTransitions ? 'statics-transitions-' : 'statics-snapshot-') : consoleBaseline ? prefix + '-console-reset-baseline-' : production ? prefix + '-package-lifecycle-' : prefix + '-lifecycle-') + stamp);
 		fs.mkdirSync(output, { recursive: true });
 		fs.writeFileSync(path.join(output, 'observation.json'), JSON.stringify(report, null, 2) + '\n');
 		fs.writeFileSync(path.join(output, 'events.jsonl'), events.map(event => JSON.stringify(event)).join('\n') + '\n');

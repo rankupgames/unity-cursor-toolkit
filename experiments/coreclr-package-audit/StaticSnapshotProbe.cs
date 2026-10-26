@@ -22,6 +22,7 @@ public sealed class SnapshotCustomCollection : ICollection
 	public override int GetHashCode() { SnapshotSentinel.GetterCalls++; throw new InvalidOperationException(); }
 }
 
+[InitializeOnLoad]
 public static class StaticSnapshotProbe
 {
 	private static readonly BindingFlags Flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
@@ -31,7 +32,20 @@ public static class StaticSnapshotProbe
 	private static readonly string Evidence = Environment.GetEnvironmentVariable("UCT_LIFECYCLE_EVIDENCE_PATH");
 	private static readonly int Pid = System.Diagnostics.Process.GetCurrentProcess().Id;
 
+	static StaticSnapshotProbe()
+	{
+		if (Environment.GetEnvironmentVariable("UCT_STATICS_TRANSITION_PROOF") != "1") return;
+		EditorApplication.update += PumpTransitions;
+		EditorApplication.playModeStateChanged += ObserveTransition;
+	}
+
 	public static void Run()
+	{
+		if (Environment.GetEnvironmentVariable("UCT_STATICS_TRANSITION_PROOF") == "1") { BeginTransitions(); return; }
+		RunSnapshot();
+	}
+
+	private static void RunSnapshot()
 	{
 		bool passed = false;
 
@@ -40,6 +54,7 @@ public static class StaticSnapshotProbe
 			Require(File.Exists(Evidence + ".owner") && File.ReadAllText(Evidence + ".owner") == Pid.ToString(), "owner");
 			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) if (assembly.GetName().Name == "UnityCursorToolkit.Editor") Collector = assembly.GetType("UnityCursorToolkit.Core.StaticSnapshotter", false);
 			Require(Collector != null, "snapshot_foundation");
+			CheckDifferences();
 			Configure("{\"enabled\":false}"); Require(Latest() == null && Capture() == null, "disabled_no_snapshot");
 			foreach (var invalid in new[] { "null", "1", "\"true\"", "[]", "{}" })
 			{
@@ -107,8 +122,181 @@ public static class StaticSnapshotProbe
 		}
 	}
 
+	[Serializable] private sealed class ProofEvent
+	{
+		public string callback, round, transition;
+		public int phase, pid, originalOptions;
+		public bool originalOptionsEnabled, complete;
+	}
+	private static void Record(string json) { File.AppendAllText(Evidence, json + "\n"); }
+	private static List<ProofEvent> ProofEvents()
+	{
+		var result = new List<ProofEvent>();
+		if (!File.Exists(Evidence)) return result;
+		foreach (var line in File.ReadAllLines(Evidence)) { var value = JsonUtility.FromJson<ProofEvent>(line); if (value != null && value.pid == Pid) result.Add(value); }
+		return result;
+	}
+	private static int Phase(List<ProofEvent> events) { int phase = -1; foreach (var item in events) if (item.callback == "transitionPhase") phase = item.phase; return phase; }
+	private static string Round(int phase) { return phase < 3 ? "fast" : phase < 6 ? "cap" : "mono"; }
+	private static void SetPhase(int phase) { Record("{\"callback\":\"transitionPhase\",\"pid\":" + Pid + ",\"phase\":" + phase + "}"); }
+	private static object Report() { return Collector.GetProperty("LatestDiff", Flags).GetValue(null, null); }
+	private static void FindCollector()
+	{
+		if (Collector != null) return;
+		foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) if (assembly.GetName().Name == "UnityCursorToolkit.Editor") Collector = assembly.GetType("UnityCursorToolkit.Core.StaticSnapshotter", false);
+		Require(Collector != null, "snapshot_foundation");
+	}
+	private static void BeginTransitions()
+	{
+		try
+		{
+			Require(File.Exists(Evidence + ".owner") && File.ReadAllText(Evidence + ".owner") == Pid.ToString(), "owner");
+			FindCollector(); CheckDifferences();
+			Record("{\"callback\":\"transitionStart\",\"pid\":" + Pid + ",\"originalOptionsEnabled\":" + (EditorSettings.enterPlayModeOptionsEnabled ? "true" : "false") + ",\"originalOptions\":" + (int)EditorSettings.enterPlayModeOptions + "}");
+			EditorSettings.enterPlayModeOptionsEnabled = true;
+			EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload | EnterPlayModeOptions.DisableSceneReload;
+			Configure(Settings("[\"Assembly-CSharp\"]", 1000, 100)); StaticTransitionValues.Bug = 31; StaticTransitionValues.Reset = 31;
+			EditorApplication.playModeStateChanged -= ObserveTransition; EditorApplication.playModeStateChanged += ObserveTransition;
+			SetPhase(0); EditorApplication.isPlaying = true;
+		}
+		catch { FinishTransitions(false); }
+	}
+	private static void ObserveTransition(PlayModeStateChange transition)
+	{
+		try
+		{
+			var events = ProofEvents(); int phase = Phase(events); if (phase < 0) return;
+			Record("{\"callback\":\"transitionObserved\",\"pid\":" + Pid + ",\"round\":\"" + Round(phase) + "\",\"transition\":\"" + transition + "\"}");
+			FindCollector(); RecordReport(events, phase, transition.ToString());
+		}
+		catch { FinishTransitions(false); }
+	}
+	private static void RecordReport(List<ProofEvent> events, int phase, string transition)
+	{
+		foreach (var item in events) if (item.callback == "transitionReport" && item.round == Round(phase) && item.transition == transition) return;
+		object report = Report(); if (report == null || (string)Read(report, "transition") != transition) return;
+		string extra = "";
+		if (Complete(report)) foreach (var name in new[] { "Bug", "Reset" })
+		{
+			var entry = Entry(report, "StaticTransitionValues", name);
+			extra += ",\"" + name.ToLowerInvariant() + "Classification\":\"" + (string)Read(entry, "classification") + "\"";
+		}
+		Record("{\"callback\":\"transitionReport\",\"pid\":" + Pid + ",\"round\":\"" + Round(phase) + "\",\"transition\":\"" + transition + "\",\"beforeTransition\":\"" + (string)Read(report, "beforeTransition")
+			+ "\",\"complete\":" + (Complete(report) ? "true" : "false") + ",\"incompleteReason\":\"" + (string)Read(report, "incompleteReason") + "\",\"fieldCount\":" + Fields(report).Count + extra + "}");
+	}
+	private static void CheckRound(List<ProofEvent> events, string round)
+	{
+		foreach (var transition in new[] { "ExitingEditMode", "EnteredPlayMode", "ExitingPlayMode", "EnteredEditMode" })
+		{
+			Require(events.Exists(x => x.callback == "transitionObserved" && x.round == round && x.transition == transition), "four_" + round + "_callbacks");
+			Require(events.Exists(x => x.callback == "transitionReport" && x.round == round && x.transition == transition), "four_" + round + "_reports");
+		}
+	}
+	private static void PumpTransitions()
+	{
+		if (!File.Exists(Evidence + ".owner") || File.ReadAllText(Evidence + ".owner") != Pid.ToString()) return;
+		try
+		{
+			var events = ProofEvents(); int phase = Phase(events); if (phase < 0) return;
+			if (File.Exists(Evidence + ".stop")) { if (EditorApplication.isPlaying) EditorApplication.isPlaying = false; else FinishTransitions(false); return; }
+			FindCollector();
+			if (phase == 0 || phase == 3 || phase == 6)
+			{
+				if (!EditorApplication.isPlaying || !events.Exists(x => x.callback == "transitionObserved" && x.round == Round(phase) && x.transition == "EnteredPlayMode")) return;
+				RecordReport(events, phase, "EnteredPlayMode"); object report = Report();
+				Require(report != null && (string)Read(report, "transition") == "EnteredPlayMode", "entered_report");
+				if (phase == 3) Require(!Complete(report) && Fields(report).Count == 0, "cap_report_incomplete");
+				else
+				{
+					Require(Complete(report), "entered_complete");
+					Require((string)Read(Entry(report, "StaticTransitionValues", "Bug"), "classification") == (phase == 0 ? "carried" : "reset"), phase == 0 ? "fast_bug_carried" : "mono_reset_observed");
+					Require((string)Read(report, "beforeTransition") == "ExitingEditMode", "before_survives_reload");
+					object previous = report; Configure(Settings("[\"Assembly-CSharp\"]", 1000, 100)); Require(ReferenceEquals(previous, Report()), "identical_config_preserves_diff");
+				}
+				SetPhase(phase + 1); EditorApplication.isPlaying = false;
+			}
+			else if (phase == 1 || phase == 4 || phase == 7)
+			{
+				if (EditorApplication.isPlayingOrWillChangePlaymode || !events.Exists(x => x.callback == "transitionObserved" && x.round == Round(phase) && x.transition == "EnteredEditMode")) return;
+				RecordReport(events, phase, "EnteredEditMode"); events = ProofEvents(); CheckRound(events, Round(phase));
+				if (phase == 1) { Configure(Settings("[\"Assembly-CSharp\"]", 1, 100)); SetPhase(3); EditorApplication.isPlaying = true; }
+				else if (phase == 4)
+				{
+					Require(events.FindAll(x => x.callback == "transitionReport" && x.round == "cap" && !x.complete).Count == 4, "cap_round_incomplete");
+					EditorSettings.enterPlayModeOptionsEnabled = false;
+					Configure(Settings("[\"Assembly-CSharp\"]", 1000, 100)); StaticTransitionValues.Bug = 31; StaticTransitionValues.Reset = 31;
+					SetPhase(6); EditorApplication.isPlaying = true;
+				}
+				else
+				{
+					Require(Complete(Report()), "mono_exit_complete");
+					Configure("{\"enabled\":false}"); Require(Latest() == null && Report() == null && Capture() == null, "disable_clears_reports"); FinishTransitions(true);
+				}
+			}
+		}
+		catch { FinishTransitions(false); }
+	}
+	private static void FinishTransitions(bool passed)
+	{
+		EditorApplication.update -= PumpTransitions; EditorApplication.playModeStateChanged -= ObserveTransition;
+		if (EditorApplication.isPlaying) { EditorApplication.isPlaying = false; EditorApplication.delayCall += () => FinishTransitions(false); return; }
+		var start = ProofEvents().Find(x => x.callback == "transitionStart");
+		if (start != null) { EditorSettings.enterPlayModeOptionsEnabled = start.originalOptionsEnabled; EditorSettings.enterPlayModeOptions = (EnterPlayModeOptions)start.originalOptions; }
+		if (Collector != null) Configure("{\"enabled\":false}");
+		Record("{\"callback\":\"transitionMeasurement\",\"pid\":" + Pid + ",\"passed\":" + (passed ? "true" : "false") + ",\"check\":\"" + (passed ? "all_rounds" : FailedCheck) + "\"}");
+		Record("{\"callback\":\"complete\",\"pid\":" + Pid + ",\"passed\":" + (passed ? "true" : "false") + "}"); EditorApplication.Exit(passed ? 0 : 1);
+	}
+
+	private static void CheckDifferences()
+	{
+		Require(Collector.GetMethod("Compare", Flags) != null, "diff_foundation");
+		var before = DiffSnapshot(new[] { "Carried:same", "Reset:before", "Removed:gone", "Unreadable:unreadable" });
+		var after = DiffSnapshot(new[] { "Carried:same", "Reset:after", "Added:new", "Unreadable:unreadable" });
+		var report = Compare(before, after, "ExitingEditMode", "EnteredPlayMode");
+		Require(Complete(report) && Fields(report).Count == 5, "diff_complete_union");
+		foreach (var pair in new[] { "Carried:carried", "Reset:reset", "Added:added", "Removed:removed", "Unreadable:unreadable" })
+		{
+			var parts = pair.Split(':'); object entry = Entry(report, "DiffFixture", parts[0]);
+			Require((string)Read(entry, "classification") == parts[1], "diff_" + parts[1]);
+		}
+		Require((string)Read(Entry(report, "DiffFixture", "Reset"), "beforeFingerprint") == "before"
+			&& (string)Read(Entry(report, "DiffFixture", "Reset"), "afterFingerprint") == "after", "diff_fingerprints");
+		Require(Complete(Compare(before, before, "EnteredPlayMode", "ExitingPlayMode")), "diff_same_snapshot");
+		Require(!Complete(Compare(null, after, "", "ExitingEditMode")), "diff_missing_before");
+		Require(!Complete(Compare(before, after, "EnteredPlayMode", "EnteredEditMode")), "diff_transition_gap");
+		before.GetType().GetField("complete").SetValue(before, false);
+		Require(!Complete(Compare(before, after, "ExitingEditMode", "EnteredPlayMode")), "diff_skipped_snapshot");
+	}
+
+	private static object DiffSnapshot(string[] entries)
+	{
+		var snapshot = Activator.CreateInstance(Collector.GetNestedType("Snapshot", BindingFlags.NonPublic));
+		snapshot.GetType().GetField("complete").SetValue(snapshot, true);
+		foreach (var encoded in entries)
+		{
+			var parts = encoded.Split(':');
+			var entry = Activator.CreateInstance(Collector.GetNestedType("Entry", BindingFlags.NonPublic));
+			foreach (var pair in new[] { "assembly:Fixture", "type:DiffFixture", "field:" + parts[0],
+				"fingerprint:" + (parts[1] == "unreadable" ? "" : parts[1]), "unreadableReason:" + (parts[1] == "unreadable" ? "unsupported_type" : "") })
+			{
+				int separator = pair.IndexOf(':'); entry.GetType().GetField(pair.Substring(0, separator)).SetValue(entry, pair.Substring(separator + 1));
+			}
+			Fields(snapshot).Add(entry);
+		}
+		return snapshot;
+	}
+
+	private static object Compare(object before, object after, string previous, string transition)
+	{ return Collector.GetMethod("Compare", Flags).Invoke(null, new[] { before, after, previous, transition }); }
+
 	private static void Require(bool condition, string id) { if (!condition) { FailedCheck = id; throw new InvalidOperationException(id); } if (!Checks.Contains(id)) Checks.Add(id); }
-	private static void Configure(string json) { Collector.GetMethod("Configure", Flags).Invoke(null, new object[] { json }); }
+	[UnityEditor.Callbacks.DidReloadScripts]
+	private static void OrderObserver()
+	{
+		if (Environment.GetEnvironmentVariable("UCT_STATICS_TRANSITION_PROOF") != "1") return;
+		EditorApplication.playModeStateChanged -= ObserveTransition; EditorApplication.playModeStateChanged += ObserveTransition;
+	}
+	private static void Configure(string json) { Collector.GetMethod("Configure", Flags).Invoke(null, new object[] { json }); OrderObserver(); }
 	private static object Capture() { return Collector.GetMethod("Capture", Flags).Invoke(null, null); }
 	private static object Latest() { return Collector.GetProperty("Latest", Flags).GetValue(null, null); }
 	private static object Read(object item, string name) { return item.GetType().GetField(name).GetValue(item); }
