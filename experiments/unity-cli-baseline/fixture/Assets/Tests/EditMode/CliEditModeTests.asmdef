@@ -1,0 +1,10 @@
+{
+  "name": "CliEditModeTests",
+  "references": [],
+  "includePlatforms": [
+    "Editor"
+  ],
+  "optionalUnityReferences": [
+    "TestAssemblies"
+  ]
+}

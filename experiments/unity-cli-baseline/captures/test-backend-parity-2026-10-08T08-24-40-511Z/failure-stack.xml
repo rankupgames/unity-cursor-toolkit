@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Failed(Child)" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-08 08:25:04Z" end-time="2026-10-08 08:25:04Z" duration="0.0414565">
+  <test-suite type="TestSuite" id="1000" name="uct-test-bridge-fcvDFe" fullname="uct-test-bridge-fcvDFe" runstate="Runnable" testcasecount="10" result="Failed" site="Child" start-time="2026-10-08 08:25:04Z" end-time="2026-10-08 08:25:04Z" duration="0.041457" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="EditMode" />
+    </properties>
+    <failure>
+      <message><![CDATA[One or more child tests had errors]]></message>
+    </failure>
+    <test-suite type="Assembly" id="1013" name="UCT.Proof.EditMode.dll" fullname="fixture/Library/ScriptAssemblies/UCT.Proof.EditMode.dll" runstate="Runnable" testcasecount="8" result="Failed" site="Child" start-time="2026-10-08 08:25:04Z" end-time="2026-10-08 08:25:04Z" duration="0.030100" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="62232" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="EditMode" />
+        <property name="EditorOnly" value="True" />
+      </properties>
+      <failure>
+        <message><![CDATA[One or more child tests had errors]]></message>
+      </failure>
+      <test-suite type="TestSuite" id="1014" name="BridgeProof" fullname="BridgeProof" runstate="Runnable" testcasecount="8" result="Failed" site="Child" start-time="2026-10-08 08:25:04Z" end-time="2026-10-08 08:25:04Z" duration="0.028915" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <failure>
+          <message><![CDATA[One or more child tests had errors]]></message>
+        </failure>
+        <test-suite type="TestSuite" id="1016" name="Scope" fullname="BridgeProof.Scope" runstate="Runnable" testcasecount="7" result="Failed" site="Child" start-time="2026-10-08 08:25:04Z" end-time="2026-10-08 08:25:04Z" duration="0.027996" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <failure>
+            <message><![CDATA[One or more child tests had errors]]></message>
+          </failure>
+          <test-suite type="TestFixture" id="1003" name="Arithmetic" fullname="BridgeProof.Scope.Arithmetic" classname="BridgeProof.Scope.Arithmetic" runstate="Runnable" testcasecount="6" result="Failed" site="Child" start-time="2026-10-08 08:25:04Z" end-time="2026-10-08 08:25:04Z" duration="0.026318" total="1" passed="0" failed="1" inconclusive="0" skipped="0" asserts="0">
+            <properties>
+              <property name="Category" value="scope" />
+            </properties>
+            <failure>
+              <message><![CDATA[One or more child tests had errors]]></message>
+            </failure>
+            <test-case id="1005" name="Failing" fullname="BridgeProof.Scope.Arithmetic.Failing" methodname="Failing" classname="BridgeProof.Scope.Arithmetic" runstate="Runnable" seed="1084663588" result="Failed" start-time="2026-10-08 08:25:04Z" end-time="2026-10-08 08:25:04Z" duration="0.009029" asserts="0">
+              <properties>
+                <property name="Category" value="fail" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <failure>
+                <message><![CDATA[UCT_EXPECTED_FAILURE_STACK]]></message>
+                <stack-trace><![CDATA[at BridgeProof.Scope.Arithmetic.Failing () [0x00001] in fixture\Assets\EditCases\EditModeCases.cs:9
+]]></stack-trace>
+              </failure>
+              <output><![CDATA[Saving results to: temp-redacted\uct-cli-tests-Tts4lU\results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

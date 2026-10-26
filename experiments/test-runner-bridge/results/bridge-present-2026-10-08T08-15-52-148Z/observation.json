@@ -1,0 +1,1576 @@
+{
+  "case": "present",
+  "editorVersion": "6000.3.9f1",
+  "testFramework": "1.6.0",
+  "frameworkSourceHashes": [
+    {
+      "file": "UnityEditor.TestRunner/Api/TestRunnerApi.cs",
+      "sha256": "010c0755decca8de18c1356c1067b0e0ba8a2e1896524af18e1c82022b7089fd"
+    },
+    {
+      "file": "UnityEditor.TestRunner/TestRun/TestJobRunner.cs",
+      "sha256": "cca770ec53a40bc9bf373f35f0a49a4236a2621eb126d020101a49e8c30f54b1"
+    },
+    {
+      "file": "UnityEditor.TestRunner/TestRun/TestJobDataHolder.cs",
+      "sha256": "421bb3c4f03fa74b4e7258741b016bd1d201dff5fbc7578a8158c22fde9b81b7"
+    },
+    {
+      "file": "UnityEditor.TestRunner/TestRun/Tasks/Events/RunFinishedInvocationEvent.cs",
+      "sha256": "86753380c26f66e612731bdec591943a454f0ad69dc721601f133d16486dc7b9"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "file": "Editor/HotReloadHandler.cs",
+      "sha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6"
+    },
+    {
+      "file": "Editor/MCP/Tests/TestRunnerTool.cs",
+      "sha256": "cd4d33452e12452054fbc0bdefe2172eca1ac81a7a65dbd133859686f54b52c1"
+    },
+    {
+      "file": "Editor/TestRunnerIntegration/TestRunnerAdapter.cs",
+      "sha256": "9d915808136e576f4d575e3d8d833a5756dd57961c1267dc493b152087f5494f"
+    },
+    {
+      "file": "Editor/TestRunnerIntegration/UnityCursorToolkit.TestRunnerIntegration.Editor.asmdef",
+      "sha256": "2101ab9b22e43bb7fa3e44472f84e3379eb5a83c6342bba16395851b6ccd1dff"
+    }
+  ],
+  "passed": false,
+  "cases": [
+    {
+      "name": "list-without-execution",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "assembly": "UCT.Proof.EditMode",
+          "namespace": "BridgeProof.Scope"
+        }
+      },
+      "result": {
+        "success": true,
+        "backend": "bridge",
+        "runId": "b61e9204c5808e3071c449a5bbaba69d",
+        "status": "listed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Child.Descendant.Passing",
+          "BridgeProof.Scope.Arithmetic.Skipped",
+          "BridgeProof.Scope.Arithmetic.Passing",
+          "BridgeProof.Scope.Arithmetic.Oversize",
+          "BridgeProof.Scope.Arithmetic.Literal[1].*",
+          "BridgeProof.Scope.Arithmetic.Inconclusive",
+          "BridgeProof.Scope.Arithmetic.Failing"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Scope.Child.Descendant.Passing",
+            "status": "not_run",
+            "durationMs": 0,
+            "message": "",
+            "stackTrace": ""
+          },
+          {
+            "id": "1",
+            "fullName": "BridgeProof.Scope.Arithmetic.Skipped",
+            "status": "not_run",
+            "durationMs": 0,
+            "message": "",
+            "stackTrace": ""
+          },
+          {
+            "id": "2",
+            "fullName": "BridgeProof.Scope.Arithmetic.Passing",
+            "status": "not_run",
+            "durationMs": 0,
+            "message": "",
+            "stackTrace": ""
+          },
+          {
+            "id": "3",
+            "fullName": "BridgeProof.Scope.Arithmetic.Oversize",
+            "status": "not_run",
+            "durationMs": 0,
+            "message": "",
+            "stackTrace": ""
+          },
+          {
+            "id": "4",
+            "fullName": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+            "status": "not_run",
+            "durationMs": 0,
+            "message": "",
+            "stackTrace": ""
+          },
+          {
+            "id": "5",
+            "fullName": "BridgeProof.Scope.Arithmetic.Inconclusive",
+            "status": "not_run",
+            "durationMs": 0,
+            "message": "",
+            "stackTrace": ""
+          },
+          {
+            "id": "6",
+            "fullName": "BridgeProof.Scope.Arithmetic.Failing",
+            "status": "not_run",
+            "durationMs": 0,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 7,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 7,
+          "durationMs": 0
+        }
+      }
+    },
+    {
+      "name": "literal-metacharacter-name",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "assembly": "UCT.Proof.EditMode",
+          "test": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+          "category": "literal"
+        }
+      },
+      "result": {
+        "success": true,
+        "backend": "bridge",
+        "runId": "44f6a55b648310b0c865dfb117f0fc52",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Literal[1].*"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+            "status": "passed",
+            "durationMs": 20.3893,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 20.3893
+        }
+      }
+    },
+    {
+      "name": "and-namespace-descendants",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "assembly": "UCT.Proof.EditMode",
+          "namespace": "BridgeProof.Scope",
+          "category": "pass"
+        }
+      },
+      "result": {
+        "success": true,
+        "backend": "bridge",
+        "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Child.Descendant.Passing",
+          "BridgeProof.Scope.Arithmetic.Passing"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Scope.Child.Descendant.Passing",
+            "status": "passed",
+            "durationMs": 0.6742,
+            "message": "",
+            "stackTrace": ""
+          },
+          {
+            "id": "1",
+            "fullName": "BridgeProof.Scope.Arithmetic.Passing",
+            "status": "passed",
+            "durationMs": 0.30929999999999996,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 2,
+          "passed": 2,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0.9835
+        }
+      }
+    },
+    {
+      "name": "cartesian-scope-refused",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "namespace": "BridgeProof.Scope",
+          "category": "pass"
+        }
+      },
+      "result": {
+        "success": false,
+        "backend": "bridge",
+        "runId": "0a5c6dfcf2ba8e9b7bde32b7b71dab48",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "test_selection_ambiguous",
+          "message": "The framework fullname and assembly filters would execute an unselected or duplicate test.",
+          "recovery": "Inspect the owned job and select a supported explicit backend."
+        }
+      }
+    },
+    {
+      "name": "failure-stack",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "assembly": "UCT.Proof.EditMode",
+          "test": "BridgeProof.Scope.Arithmetic.Failing"
+        }
+      },
+      "result": {
+        "success": false,
+        "backend": "bridge",
+        "runId": "2967c6b8699bd9fecf142cf0771ec16b",
+        "status": "failed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Failing"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Scope.Arithmetic.Failing",
+            "status": "failed",
+            "durationMs": 3.6137,
+            "message": "UCT_EXPECTED_FAILURE_STACK",
+            "stackTrace": "at BridgeProof.Scope.Arithmetic.Failing () [0x00001] in <project>\\Assets\\EditCases\\EditModeCases.cs:9"
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 3.6137
+        },
+        "error": {
+          "code": "test_runner_failed",
+          "message": "One or more selected tests failed.",
+          "recovery": "Inspect the owned job and select a supported explicit backend."
+        }
+      }
+    },
+    {
+      "name": "skipped-mapping",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "assembly": "UCT.Proof.EditMode",
+          "test": "BridgeProof.Scope.Arithmetic.Skipped"
+        }
+      },
+      "result": {
+        "success": true,
+        "backend": "bridge",
+        "runId": "a8537462c86c6e55b5c49442920a82a6",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Skipped"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Scope.Arithmetic.Skipped",
+            "status": "skipped",
+            "durationMs": 0.3467,
+            "message": "UCT_EXPECTED_SKIP",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 1,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0.3467
+        }
+      }
+    },
+    {
+      "name": "inconclusive-mapping",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "assembly": "UCT.Proof.EditMode",
+          "test": "BridgeProof.Scope.Arithmetic.Inconclusive"
+        }
+      },
+      "result": {
+        "success": true,
+        "backend": "bridge",
+        "runId": "31e95ae8fd5809140984690438780275",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Inconclusive"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Scope.Arithmetic.Inconclusive",
+            "status": "inconclusive",
+            "durationMs": 0.5787,
+            "message": "UCT_EXPECTED_INCONCLUSIVE",
+            "stackTrace": "at BridgeProof.Scope.Arithmetic.Inconclusive () [0x00001] in <project>\\Assets\\EditCases\\EditModeCases.cs:11"
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 1,
+          "notRun": 0,
+          "durationMs": 0.5787
+        }
+      }
+    },
+    {
+      "name": "oversize-explicit-error",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "assembly": "UCT.Proof.EditMode",
+          "test": "BridgeProof.Scope.Arithmetic.Oversize"
+        }
+      },
+      "result": {
+        "success": false,
+        "backend": "bridge",
+        "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "result_too_large",
+          "message": "The complete test result exceeds the 1MiB state bound.",
+          "recovery": "Inspect the owned job and select a supported explicit backend."
+        }
+      }
+    },
+    {
+      "name": "play-reload-and-heartbeat",
+      "args": {
+        "mode": "PlayMode",
+        "filter": {
+          "test": "BridgeProof.Play.Waiting.Heartbeats"
+        }
+      },
+      "result": {
+        "success": true,
+        "backend": "bridge",
+        "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "PlayMode",
+        "selection": [
+          "BridgeProof.Play.Waiting.Heartbeats"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Play.Waiting.Heartbeats",
+            "status": "passed",
+            "durationMs": 4019.6567999999997,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 4019.6567999999997
+        }
+      }
+    },
+    {
+      "name": "mismatched-owner-refused",
+      "result": {
+        "success": false,
+        "workStopped": false,
+        "backend": "bridge",
+        "runId": "abc7666c22536657cd1c55171992a25f",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "PlayMode",
+        "editorPid": 32632,
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "test_job_owner_mismatch",
+          "message": "The request belongs to another connection generation or mode.",
+          "recovery": "Check the project, connection ownership, selection and explicit backend."
+        }
+      }
+    },
+    {
+      "name": "mismatched-owner-refused",
+      "result": {
+        "success": false,
+        "workStopped": false,
+        "backend": "bridge",
+        "runId": "abc7666c22536657cd1c55171992a25f",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "PlayMode",
+        "editorPid": 32632,
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "test_job_owner_mismatch",
+          "message": "The request targets another project or Editor.",
+          "recovery": "Check the project, connection ownership, selection and explicit backend."
+        }
+      }
+    },
+    {
+      "name": "mismatched-owner-refused",
+      "result": {
+        "success": false,
+        "workStopped": false,
+        "backend": "bridge",
+        "runId": "abc7666c22536657cd1c55171992a25f",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "PlayMode",
+        "editorPid": 32632,
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "test_job_owner_mismatch",
+          "message": "The request targets another project or Editor.",
+          "recovery": "Check the project, connection ownership, selection and explicit backend."
+        }
+      }
+    },
+    {
+      "name": "owned-native-cancellation",
+      "args": {
+        "mode": "PlayMode",
+        "filter": {
+          "test": "BridgeProof.Play.Waiting.CancelOwned"
+        }
+      },
+      "result": {
+        "success": false,
+        "backend": "bridge",
+        "runId": "abc7666c22536657cd1c55171992a25f",
+        "status": "cancelled",
+        "editorVersion": "6000.3.9f1",
+        "mode": "PlayMode",
+        "selection": [
+          "BridgeProof.Play.Waiting.CancelOwned"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Play.Waiting.CancelOwned",
+            "status": "not_run",
+            "durationMs": 0,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 1,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "cancelled",
+          "message": "The owned test request was stopped.",
+          "recovery": "Check the selected backend and project before retrying."
+        }
+      }
+    },
+    {
+      "name": "native-cancellation-confirmed",
+      "result": {
+        "success": false,
+        "workStopped": true,
+        "backend": "bridge",
+        "runId": "abc7666c22536657cd1c55171992a25f",
+        "status": "cancelled",
+        "editorVersion": "6000.3.9f1",
+        "mode": "PlayMode",
+        "editorPid": 32632,
+        "selection": [
+          "BridgeProof.Play.Waiting.CancelOwned"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Play.Waiting.CancelOwned",
+            "status": "not_run",
+            "message": "",
+            "stackTrace": "",
+            "durationMs": 0
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 1,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "cancelled",
+          "message": "The owned test job was cancelled.",
+          "recovery": "Inspect the owned job and select a supported explicit backend."
+        }
+      }
+    },
+    {
+      "name": "next-run-after-confirmed-cancellation",
+      "args": {
+        "mode": "EditMode",
+        "filter": {
+          "assembly": "UCT.Proof.EditMode",
+          "test": "BridgeProof.Scope.Arithmetic.Literal[1].*"
+        }
+      },
+      "result": {
+        "success": true,
+        "backend": "bridge",
+        "runId": "f48e4687ce29d91d52bb0750b83ed6cd",
+        "status": "completed",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Literal[1].*"
+        ],
+        "tests": [
+          {
+            "id": "0",
+            "fullName": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+            "status": "passed",
+            "durationMs": 14.0342,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 14.0342
+        }
+      }
+    }
+  ],
+  "debugLogsEnabled": true,
+  "ready": {
+    "pid": 32632,
+    "port": 53747,
+    "version": "6000.3.9f1",
+    "coreLibrary": "mscorlib",
+    "isMono": true
+  },
+  "capabilities": {
+    "success": true,
+    "available": true,
+    "supportsCancellation": true,
+    "backend": "bridge",
+    "editorVersion": "6000.3.9f1",
+    "projectPath": "<fixture>",
+    "editorPid": 32632,
+    "modes": [
+      "EditMode",
+      "PlayMode"
+    ]
+  },
+  "error": {
+    "message": "Native timeout target actually started exceeded 8000ms.",
+    "stack": "Error: Native timeout target actually started exceeded 8000ms.\n    at wait (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:61:8)\n    at async run (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:190:4)\n    at async main (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:238:89)"
+  },
+  "progress": [
+    {
+      "at": 1791447391353,
+      "runId": "b61e9204c5808e3071c449a5bbaba69d",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447391631,
+      "runId": "b61e9204c5808e3071c449a5bbaba69d",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 7
+    },
+    {
+      "at": 1791447392636,
+      "runId": "44f6a55b648310b0c865dfb117f0fc52",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447392682,
+      "runId": "44f6a55b648310b0c865dfb117f0fc52",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447392684,
+      "runId": "44f6a55b648310b0c865dfb117f0fc52",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447392781,
+      "runId": "44f6a55b648310b0c865dfb117f0fc52",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447392824,
+      "runId": "44f6a55b648310b0c865dfb117f0fc52",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447392850,
+      "runId": "44f6a55b648310b0c865dfb117f0fc52",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447392888,
+      "runId": "44f6a55b648310b0c865dfb117f0fc52",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 7,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447393812,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447393847,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 2
+    },
+    {
+      "at": 1791447393848,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 2
+    },
+    {
+      "at": 1791447393903,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 2
+    },
+    {
+      "at": 1791447393911,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Passing",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 0,
+      "total": 2
+    },
+    {
+      "at": 1791447393912,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Passing",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 1,
+      "total": 2
+    },
+    {
+      "at": 1791447393915,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Scope.Child.Descendant.Passing",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 7,
+      "completed": 1,
+      "total": 2
+    },
+    {
+      "at": 1791447393916,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Scope.Child.Descendant.Passing",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 8,
+      "completed": 2,
+      "total": 2
+    },
+    {
+      "at": 1791447393942,
+      "runId": "a96dfe5268ff8bdcb9f911c92069b7c3",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 9,
+      "completed": 2,
+      "total": 2
+    },
+    {
+      "at": 1791447394958,
+      "runId": "0a5c6dfcf2ba8e9b7bde32b7b71dab48",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447394980,
+      "runId": "0a5c6dfcf2ba8e9b7bde32b7b71dab48",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447396169,
+      "runId": "2967c6b8699bd9fecf142cf0771ec16b",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447396203,
+      "runId": "2967c6b8699bd9fecf142cf0771ec16b",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447396203,
+      "runId": "2967c6b8699bd9fecf142cf0771ec16b",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447396253,
+      "runId": "2967c6b8699bd9fecf142cf0771ec16b",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447396259,
+      "runId": "2967c6b8699bd9fecf142cf0771ec16b",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Failing",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447396264,
+      "runId": "2967c6b8699bd9fecf142cf0771ec16b",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Failing",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447396291,
+      "runId": "2967c6b8699bd9fecf142cf0771ec16b",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 7,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447397373,
+      "runId": "a8537462c86c6e55b5c49442920a82a6",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447397403,
+      "runId": "a8537462c86c6e55b5c49442920a82a6",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447397403,
+      "runId": "a8537462c86c6e55b5c49442920a82a6",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447397457,
+      "runId": "a8537462c86c6e55b5c49442920a82a6",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447397464,
+      "runId": "a8537462c86c6e55b5c49442920a82a6",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Skipped",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447397465,
+      "runId": "a8537462c86c6e55b5c49442920a82a6",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Skipped",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447397485,
+      "runId": "a8537462c86c6e55b5c49442920a82a6",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 7,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447398545,
+      "runId": "31e95ae8fd5809140984690438780275",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447398578,
+      "runId": "31e95ae8fd5809140984690438780275",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447398578,
+      "runId": "31e95ae8fd5809140984690438780275",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447398625,
+      "runId": "31e95ae8fd5809140984690438780275",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447398632,
+      "runId": "31e95ae8fd5809140984690438780275",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Inconclusive",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447398633,
+      "runId": "31e95ae8fd5809140984690438780275",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Inconclusive",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447398656,
+      "runId": "31e95ae8fd5809140984690438780275",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 7,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447399759,
+      "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447399793,
+      "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447399794,
+      "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447399854,
+      "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447399864,
+      "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Oversize",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447401045,
+      "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Oversize",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447401053,
+      "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 7,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447401065,
+      "runId": "378b1bb0ae564e7ff6730637f8e2e668",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 8,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447402223,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447402306,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447402307,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447405398,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447405625,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447405675,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Play.Waiting.Heartbeats",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447406397,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 7,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447407397,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 8,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447408398,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 9,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447409398,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 10,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447409701,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Play.Waiting.Heartbeats",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 11,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447410333,
+      "runId": "a8c2bff73b666524836ad2e4a7b21c78",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 12,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447410764,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447410833,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447410833,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447413698,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447413923,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447413980,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Play.Waiting.CancelOwned",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447414187,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "cancel_requested",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 7,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447414796,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 8,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447414901,
+      "runId": "abc7666c22536657cd1c55171992a25f",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 9,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447415246,
+      "runId": "f48e4687ce29d91d52bb0750b83ed6cd",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447415405,
+      "runId": "f48e4687ce29d91d52bb0750b83ed6cd",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447415466,
+      "runId": "f48e4687ce29d91d52bb0750b83ed6cd",
+      "phase": "started",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447415481,
+      "runId": "f48e4687ce29d91d52bb0750b83ed6cd",
+      "phase": "test_started",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 4,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447415500,
+      "runId": "f48e4687ce29d91d52bb0750b83ed6cd",
+      "phase": "test_finished",
+      "currentTest": "BridgeProof.Scope.Arithmetic.Literal[1].*",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 5,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447415531,
+      "runId": "f48e4687ce29d91d52bb0750b83ed6cd",
+      "phase": "finished",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 6,
+      "completed": 1,
+      "total": 1
+    },
+    {
+      "at": 1791447416359,
+      "runId": "deadline-d52f64211821298185eb27042976b4df",
+      "phase": "discovering",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 1,
+      "completed": 0,
+      "total": 0
+    },
+    {
+      "at": 1791447416414,
+      "runId": "deadline-d52f64211821298185eb27042976b4df",
+      "phase": "running",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 2,
+      "completed": 0,
+      "total": 1
+    },
+    {
+      "at": 1791447416415,
+      "runId": "deadline-d52f64211821298185eb27042976b4df",
+      "phase": "heartbeat",
+      "currentTest": "",
+      "editorVersion": "6000.3.9f1",
+      "backend": "bridge",
+      "sequence": 3,
+      "completed": 0,
+      "total": 1
+    }
+  ],
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "rawOwnerTokenValueCount": 0,
+  "rawOwnerTokenLoggingObserved": false,
+  "remainingOwnedProcesses": [],
+  "normalEditorExit": true
+}

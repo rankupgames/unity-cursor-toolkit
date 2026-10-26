@@ -13,7 +13,6 @@ using System;
 using System.Globalization;
 using System.IO;
 using System.Reflection;
-using SystemAssembly = System.Reflection.Assembly;
 using UnityEditor;
 using UnityEditor.Compilation;
 using UnityEngine;
@@ -605,8 +604,8 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>Matching type or null.</returns>
 		private static Type FindType(string typeName)
 		{
-			SystemAssembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
-			for (int index = 0; index < assemblies.Length; index++)
+			var assemblies = UnityCursorToolkit.Core.AssemblyEnumerator.GetLoaded();
+			for (int index = 0; index < assemblies.Count; index++)
 			{
 				Type type = assemblies[index].GetType(typeName);
 				if (type != null)

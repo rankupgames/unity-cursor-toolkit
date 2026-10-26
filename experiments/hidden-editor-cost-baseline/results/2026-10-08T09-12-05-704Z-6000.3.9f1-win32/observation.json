@@ -1,0 +1,288 @@
+{
+  "observedAt": "2026-10-08T09:14:23.939Z",
+  "editorVersion": "6000.3.9f1",
+  "revision": "7a9955a4f2fa",
+  "platform": "win32",
+  "architecture": "x64",
+  "fixture": true,
+  "template": {
+    "name": "com.unity.template.3d-cross-platform-17.0.14.tgz",
+    "sha256": "b78fb4cd033d264b842f7f8b10c3e613f0dfc9a825c03cd7e91919521d8ae27e",
+    "templateUrp": "17.0.1",
+    "installedUrp": "17.3.0",
+    "preferenceIsolation": {
+      "changes": [
+        {
+          "original": "UnityHotReloadHandler_ShowDebugLogs",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_ShowDebugLogs"
+        },
+        {
+          "original": "UnityHotReloadHandler_LastPort",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_LastPort"
+        }
+      ],
+      "originalSha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6",
+      "isolatedSha256": "3c153f40402bdfdfff1e88626a1885c0c0a9d8ad541aec1d84432a335a2c8f19",
+      "defaultInstallProof": false
+    }
+  },
+  "sourceHashes": {
+    "spike": "dee6174e2b65e456ea653f3c5339ad6928f7d85692ce975cda8dbf1876723e63",
+    "capture": "a2ae99f511a5e787f98894be3e021eb545c9a274e70f91b2f2a064f8afc96f6a",
+    "stream": "a9cf7168f81b14590942d735ef50f1fecdc1f699f8f2e8ff59c80631fa081752"
+  },
+  "runs": [
+    {
+      "index": 0,
+      "phase": "functional",
+      "pid": 12408,
+      "port": 59738,
+      "startedAt": "2026-10-08T09:12:05.719Z",
+      "samples": [
+        {
+          "at": "2026-10-08T09:12:06.531Z",
+          "rssMb": 86.52734375,
+          "cpuSeconds": 0.75
+        },
+        {
+          "at": "2026-10-08T09:12:10.981Z",
+          "rssMb": 532.40234375,
+          "cpuSeconds": 2.84375,
+          "cpuPercent": 47.1
+        },
+        {
+          "at": "2026-10-08T09:12:15.969Z",
+          "rssMb": 532.375,
+          "cpuSeconds": 2.84375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:12:20.972Z",
+          "rssMb": 532.375,
+          "cpuSeconds": 2.875,
+          "cpuPercent": 0.6
+        },
+        {
+          "at": "2026-10-08T09:12:25.983Z",
+          "rssMb": 532.375,
+          "cpuSeconds": 2.90625,
+          "cpuPercent": 0.6
+        },
+        {
+          "at": "2026-10-08T09:12:31.008Z",
+          "rssMb": 532.375,
+          "cpuSeconds": 2.953125,
+          "cpuPercent": 0.9
+        },
+        {
+          "at": "2026-10-08T09:12:35.988Z",
+          "rssMb": 532.33203125,
+          "cpuSeconds": 2.984375,
+          "cpuPercent": 0.6
+        },
+        {
+          "at": "2026-10-08T09:12:41.091Z",
+          "rssMb": 532.33203125,
+          "cpuSeconds": 3.015625,
+          "cpuPercent": 0.6
+        },
+        {
+          "at": "2026-10-08T09:12:46.011Z",
+          "rssMb": 531.390625,
+          "cpuSeconds": 3.0625,
+          "cpuPercent": 1
+        },
+        {
+          "at": "2026-10-08T09:12:51.014Z",
+          "rssMb": 531.390625,
+          "cpuSeconds": 3.078125,
+          "cpuPercent": 0.3
+        },
+        {
+          "at": "2026-10-08T09:12:55.995Z",
+          "rssMb": 531.390625,
+          "cpuSeconds": 3.125,
+          "cpuPercent": 0.9
+        },
+        {
+          "at": "2026-10-08T09:13:01.027Z",
+          "rssMb": 531.390625,
+          "cpuSeconds": 3.1875,
+          "cpuPercent": 1.2
+        },
+        {
+          "at": "2026-10-08T09:13:06.187Z",
+          "rssMb": 564.51953125,
+          "cpuSeconds": 3.765625,
+          "cpuPercent": 11.2
+        },
+        {
+          "at": "2026-10-08T09:13:11.086Z",
+          "rssMb": 564.83203125,
+          "cpuSeconds": 4.859375,
+          "cpuPercent": 22.3
+        },
+        {
+          "at": "2026-10-08T09:13:16.413Z",
+          "rssMb": 617.71484375,
+          "cpuSeconds": 5.984375,
+          "cpuPercent": 21.1
+        },
+        {
+          "at": "2026-10-08T09:13:21.299Z",
+          "rssMb": 617.83203125,
+          "cpuSeconds": 6.125,
+          "cpuPercent": 2.9
+        },
+        {
+          "at": "2026-10-08T09:13:26.030Z",
+          "rssMb": 607.25,
+          "cpuSeconds": 6.734375,
+          "cpuPercent": 12.9
+        },
+        {
+          "at": "2026-10-08T09:13:31.048Z",
+          "rssMb": 793.9765625,
+          "cpuSeconds": 8.359375,
+          "cpuPercent": 32.4
+        },
+        {
+          "at": "2026-10-08T09:13:37.087Z",
+          "rssMb": 1141.62890625,
+          "cpuSeconds": 24.578125,
+          "cpuPercent": 268.6
+        },
+        {
+          "at": "2026-10-08T09:13:41.167Z",
+          "rssMb": 1217.09375,
+          "cpuSeconds": 38.25,
+          "cpuPercent": 335.1
+        },
+        {
+          "at": "2026-10-08T09:13:46.146Z",
+          "rssMb": 1346.28125,
+          "cpuSeconds": 47.1875,
+          "cpuPercent": 179.5
+        },
+        {
+          "at": "2026-10-08T09:13:51.161Z",
+          "rssMb": 1496.9765625,
+          "cpuSeconds": 57.15625,
+          "cpuPercent": 198.8
+        },
+        {
+          "at": "2026-10-08T09:13:57.165Z",
+          "rssMb": 1798.55859375,
+          "cpuSeconds": 70.734375,
+          "cpuPercent": 226.2
+        },
+        {
+          "at": "2026-10-08T09:14:04.673Z",
+          "rssMb": 2154.9140625,
+          "cpuSeconds": 89.65625,
+          "cpuPercent": 252
+        },
+        {
+          "at": "2026-10-08T09:14:06.247Z",
+          "rssMb": 2180.91796875,
+          "cpuSeconds": 91.59375,
+          "cpuPercent": 123.1
+        },
+        {
+          "at": "2026-10-08T09:14:11.274Z",
+          "rssMb": 2721.0234375,
+          "cpuSeconds": 97.6875,
+          "cpuPercent": 121.2
+        },
+        {
+          "at": "2026-10-08T09:14:16.244Z",
+          "rssMb": 2726.45703125,
+          "cpuSeconds": 99.71875,
+          "cpuPercent": 40.9
+        }
+      ],
+      "hidden": [],
+      "result": {
+        "success": false,
+        "editorVersion": "6000.3.9f1",
+        "platform": "Windows 10  (10.0.19045) 64bit",
+        "coreLibrary": "mscorlib",
+        "editorPid": 12408,
+        "firstFrameAt": "2026-10-08T09:14:19.3872728Z",
+        "pixelsPerPoint": 1,
+        "visibilityEvidence": [],
+        "allCapturesSucceeded": false,
+        "captures": [
+          {
+            "window": "sceneView",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\sceneView.jpg",
+            "width": 800,
+            "height": 520,
+            "distinctColors": 297,
+            "error": ""
+          },
+          {
+            "window": "gameView",
+            "success": false,
+            "path": "<owned-project>\\run-0\\frames\\gameView.jpg",
+            "width": 813,
+            "height": 915,
+            "distinctColors": 20,
+            "error": "blank_frame_or_scene_missing: Capture must contain expected red cube and green sphere."
+          },
+          {
+            "window": "inspector",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\inspector.jpg",
+            "width": 775,
+            "height": 915,
+            "distinctColors": 63,
+            "error": ""
+          },
+          {
+            "window": "packageManager",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\packageManager.jpg",
+            "width": 1066,
+            "height": 737,
+            "distinctColors": 23,
+            "error": ""
+          },
+          {
+            "window": "customProbe",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\customProbe.jpg",
+            "width": 420,
+            "height": 280,
+            "distinctColors": 109,
+            "error": ""
+          }
+        ],
+        "inputTest": {
+          "attempted": true,
+          "rotationAngle": 13.275,
+          "changed": true,
+          "error": ""
+        }
+      },
+      "errors": [
+        "capture_smoke_failed: all five nonblank captures and changed SceneView required"
+      ],
+      "passed": false,
+      "timeToResultSeconds": 134.346,
+      "timeToFirstFrameSeconds": 133.668,
+      "outcome": {
+        "code": 3,
+        "signal": null
+      },
+      "quittingObserved": true,
+      "ownedPidsRemaining": [],
+      "editorBuild": "6000.3.9f1 (7a9955a4f2fa)",
+      "compileErrors": []
+    }
+  ],
+  "passed": false,
+  "readinessClaim": false,
+  "limits": "Windows interval CPU vs macOS decaying ps CPU; different platform/GPU/SRP/resolution. Mac raw baseline unavailable. No causal CoreCLR-only claim."
+}

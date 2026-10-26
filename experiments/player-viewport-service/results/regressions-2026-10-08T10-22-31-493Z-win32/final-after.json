@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-08T10:44:31.807Z",
+  "passed": 9,
+  "total": 9,
+  "scope": "2 full-sampler VM + 7 subprocess TCP cases; no native Unity",
+  "sourceHashes": {
+    "probe": "f15d0d3b27e5ecb6b13e1ae00c9553b5e30a8fe1dc4ca389a53f65487cab3829",
+    "sampler": "7b0dfc7e2fbc560757582659edd616ae7a41b946e1084ca2c7a5e6948fa64022",
+    "test": "81181d138045e07b609198c409c715477064d35c2d839415801c716d44113f9e"
+  }
+}

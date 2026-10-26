@@ -10,6 +10,7 @@
 import type { IToolProvider, ICommandSender, ToolDefinition, ToolResult } from '../core/interfaces';
 import { buildBatchmodeCommandPlan, runBatchmodeGameCommand, shouldUseEditorBatchmode } from './gameCommandBatchmode';
 import { getToolAnnotations, isDryRun, isMutatingToolCall, withDryRunProperty } from './toolMetadata';
+import { resolveProjectRoot } from './standaloneProjectTools';
 
 export class UnityMcpTools implements IToolProvider {
 
@@ -17,12 +18,26 @@ export class UnityMcpTools implements IToolProvider {
 
 	private readonly commandSender: ICommandSender;
 
-	constructor(commandSender: ICommandSender) {
+	constructor(commandSender: ICommandSender, private readonly projectRoot: () => string | undefined = resolveProjectRoot) {
 		this.commandSender = commandSender;
 	}
 
 	public getTools(): ToolDefinition[] {
 		return [
+			{
+				name: 'coreclr_migration',
+				title: 'CoreCLR Migration',
+				description: 'Read-only source scan, Markdown report, or migration rules. Optionally inspect loaded user static field metadata through Unity.',
+				inputSchema: {
+					type: 'object',
+					properties: {
+						action: { type: 'string', enum: ['scan', 'report', 'rules'] },
+						includeStatics: { type: 'boolean', description: 'For scan/report, include loaded user static field metadata. Requires a matching connected Unity project. Defaults to false.' }
+					},
+					required: ['action']
+				},
+				annotations: getToolAnnotations('coreclr_migration')
+			},
 			{
 				name: 'manage_scene',
 				title: 'Manage Scene',
@@ -47,12 +62,14 @@ export class UnityMcpTools implements IToolProvider {
 					properties: withDryRunProperty({
 						action: { type: 'string', enum: ['create', 'find', 'destroy', 'setTransform', 'setParent'] },
 						name: { type: 'string' },
-						instanceId: { type: 'number' },
+						instanceId: { type: 'number', description: 'Object ID for Editors before Unity 7.' },
+						entityId: { type: 'string', description: 'Opaque object ID returned by Unity 7 or newer. Takes precedence over instanceId.' },
 						position: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } } },
 						rotation: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' }, w: { type: 'number' } } },
 						scale: { type: 'object', properties: { x: { type: 'number' }, y: { type: 'number' }, z: { type: 'number' } } },
 						parentName: { type: 'string' },
-						parentInstanceId: { type: 'number' }
+						parentInstanceId: { type: 'number', description: 'Parent ID for Editors before Unity 7.' },
+						parentEntityId: { type: 'string', description: 'Opaque parent object ID returned by Unity 7 or newer.' }
 					}),
 					required: ['action']
 				},
@@ -67,12 +84,13 @@ export class UnityMcpTools implements IToolProvider {
 					properties: withDryRunProperty({
 						action: { type: 'string', enum: ['add', 'remove', 'getProperties', 'setProperty'] },
 						gameObjectName: { type: 'string' },
-						instanceId: { type: 'number' },
+						instanceId: { type: 'number', description: 'Object ID for Editors before Unity 7.' },
+						entityId: { type: 'string', description: 'Opaque object ID returned by Unity 7 or newer. Takes precedence over instanceId.' },
 						componentType: { type: 'string' },
 						propertyName: { type: 'string' },
 						propertyValue: { type: 'string' }
 					}),
-					required: ['action', 'gameObjectName']
+					required: ['action']
 				},
 				annotations: getToolAnnotations('manage_component')
 			},
@@ -271,10 +289,34 @@ export class UnityMcpTools implements IToolProvider {
 	}
 
 	public async handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {
+		if (name.startsWith('toolkit.')) { name = name.slice('toolkit.'.length); }
+		if (['test_runner', 'list_tests', 'run_tests'].includes(name)) {
+			return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
+				code: 'capability_unavailable', message: 'Test tools require a direct call through the shared test provider.',
+				recovery: 'Call list_tests or run_tests directly; they cannot be nested in batch_execute.'
+			} }) }], isError: true };
+		}
+		if (name === 'coreclr_migration') {
+			try {
+				const { handleMigrationTool } = await import('../migration/tools');
+				return await handleMigrationTool(args, this.projectRoot(), this.commandSender);
+			} catch (error) {
+				return { content: [{ type: 'text', text: JSON.stringify({
+					errorCode: (error as { code?: string })?.code ?? 'SCAN_FAILED',
+					error: error instanceof Error ? error.message : String(error)
+				}) }], isError: true };
+			}
+		}
+
 		if (name === 'batch_execute') {
 			return this.handleBatchExecute(args);
 		}
 
+		if (!this.getTools().some(tool => tool.name === name)) {
+			return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
+				code: 'unknown_tool', message: 'Unknown toolkit batch tool: ' + name
+			} }) }], isError: true };
+		}
 		const unityArgs = UnityMcpTools.normalizeToolArgs(name, args);
 		if (name === 'game_command' && shouldUseEditorBatchmode(unityArgs)) {
 			return this.handleEditorBatchmodeGameCommand(args, unityArgs);
@@ -498,15 +540,30 @@ export class UnityMcpTools implements IToolProvider {
 
 	private async handleBatchExecute(args: Record<string, unknown>): Promise<ToolResult> {
 		const operations = args.operations as Array<{ tool: string; args: Record<string, unknown> }>;
-		if (operations == null || operations.length === 0) {
+		if (!Array.isArray(operations) || operations.length === 0) {
 			return { content: [{ type: 'text', text: 'No operations provided.' }], isError: true };
 		}
 
+		// Validate every operation before a dry-run plan or any Unity forwarding.
+		const pendingOperations = [...operations];
+		for (const op of pendingOperations) {
+			const name = typeof op?.tool === 'string' ? op.tool.replace(/^toolkit\./, '') : '';
+			if (!op || typeof op.args !== 'object' || op.args == null || Array.isArray(op.args)
+				|| !this.getTools().some(tool => tool.name === name) || ['list_tests', 'run_tests', 'test_runner'].includes(name)
+				|| (name === 'batch_execute' && (!Array.isArray(op.args.operations) || op.args.operations.length === 0))) {
+				return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
+					code: 'capability_unavailable', message: 'Batch operations require toolkit tools; test tools must be called directly.'
+				} }) }], isError: true };
+			}
+			if (name === 'batch_execute') {
+				pendingOperations.push(...op.args.operations as Array<{ tool: string; args: Record<string, unknown> }>);
+			}
+		}
 		if (isDryRun(args) && isMutatingToolCall('batch_execute', args)) {
 			return UnityMcpTools.buildDryRunResult('batch_execute', {
 				operations: operations.map((op) => ({
 					tool: op.tool,
-					args: UnityMcpTools.normalizeToolArgs(op.tool, op.args)
+					args: UnityMcpTools.normalizeToolArgs(op.tool.replace(/^toolkit\./, ''), op.args)
 				}))
 			});
 		}

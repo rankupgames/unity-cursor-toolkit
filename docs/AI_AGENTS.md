@@ -1,25 +1,141 @@
 # AI Agent Guide
 
-Unity Cursor Toolkit is designed to give agents direct Unity Editor context without requiring users to paste console logs, scene state, or `.meta` files manually.
+Unity Cursor Toolkit targets Unity 2019.4+ and gives agents Unity console,
+profiler, project, and runtime context in local, remote, or virtual desktop
+workflows. Use the enforced MCP read-only and dry-run policy, select a backend
+explicitly, and compose Unity's first-party tools only where capabilities are
+proved. Remote streaming is experimental.
+
+Use canonical `toolkit.<tool>` names from `tools/list`; bare toolkit aliases
+preserve existing calls, and catalog/result `_meta` identifies the selected origin.
 
 ## Unity Version and Backend Status
 
-The core package declares Unity 2019.4 or later. Current operations use the
-toolkit bridge or an explicitly requested batchmode Editor. Standalone Unity
-CLI, Pipeline, CoreCLR-specific behavior, and Unity 7 support are planned or
-evidence-gated backends; agents must not claim they are shipped until the
-capability response and recorded matrix prove them.
+The recorded Windows baseline is exact 6000.3.9f1: isolated package activation,
+TCP handshake, console, and standalone MCP checks passed. The fixture uses an
+available port and isolated preferences, so it does not prove default-install
+listener activation. Unity 2019.4 parity is user-blocked; no exact legacy LTS
+candidate is configured. Unrun versions and platforms remain untested.
 
-Never silently switch to another Editor version or backend. Report the selected
-Editor, backend, and capability set in plans and results. See
-`docs/ROADMAP.md`.
+Exact 7000.0.0a7/CoreCLR observations are readiness preparation, not general
+shipped Unity 7 support. Read the [capability matrix](CAPABILITY_MATRIX.md),
+[compatibility proof limits](UNITY_COMPATIBILITY.md), and
+[Unity 7 delta watch](UNITY7_DELTA_WATCH.md).
+
+The current source includes the toolkit bridge, explicit batchmode execution,
+a Unity CLI diagnostic adapter and selected test backend, and a CoreCLR
+migration assistant. Unity owns CLI build/test execution. Pipeline eligibility
+and disposable composition proofs exist; production Pipeline execution is
+blocked by unverified handler provenance. `pipeline.commands` provides audited
+discovery and local plans only; see [setup and limits](MCP_CLIENTS.md#pipeline-discovery-and-local-plans). Source-stack status does not imply availability in an older published
+extension.
+
+| Runtime | Debugger status |
+| --- | --- |
+| Mono | Existing Editor/Development Player soft-debugger attach path |
+| CoreCLR, exact 7000.0.0a7 | Feasibility failed; no verified breakpoint, step, or locals flow, and shipping is blocked |
+
+See the [debugger evidence](../experiments/coreclr-debug-probe/README.md).
+Never silently switch Editor version or backend. Report the selected Editor,
+backend, and capability set in plans and results. See the
+[roadmap](ROADMAP.md).
+
+## Unity CLI Diagnostic Backend
+
+The extension composes the first-party standalone CLI through the pure Node
+`UnityCliAdapter`. **Unity Toolkit: Unity CLI Doctor** probes the configured,
+environment-selected, or PATH binary and compares its version with the recorded
+`1.0.0-beta.12` pin. The CLI status is independent of the toolkit bridge.
+A version mismatch is a warning with expected and found values; no install,
+upgrade, Editor substitution, or automatic backend fallback occurs.
+
+Current source callers include version, doctor, Pipeline discovery, and explicitly selected test execution. The status bar shows CLI version availability.
+The local read-only guard permits version, doctor, project-scoped status, and exact project-scoped list calls. Other invocations
+require an explicit mutating caller; the guard refuses before spawning. Existing
+game_command batchmode execution retains its existing path. Test execution applies the shared test policy described below.
+
+Every call passes arguments directly with JSON and non-interactive flags, keeps
+stdout and stderr separate, and requires one complete result envelope. Mixed,
+truncated, contradictory, or oversized output returns `invalid_output`, with
+an excerpt limited to 500 characters. Do not recover a success object from the
+middle of logs. The captured build output does not satisfy this parser.
+
+Typed failures retain the native CLI code and exit value. In particular,
+`COMMAND_FAILED` is generic; it does not prove authentication, locking,
+compilation, or module failure. The exact captured missing-Editor message has a
+local `missing_editor` diagnosis without changing its native code. See the
+[failure matrix](UNITY_LANDSCAPE.md#adapter-failure-matrix) for pending cases.
+
+Caller timeout and cancellation have separate codes. Windows cleanup uses the
+spawned CLI PID and its child tree; POSIX cleanup uses its own process group.
+Failure to confirm cleanup returns `cleanup_failed` and a typed
+`terminationReason`. Never target a user Editor or process name. Interrupted
+operations can leave partial artifacts; inspect them before retrying.
+
+## Runtime Capability Handshake
+
+`project_info` adds `runtime: { isCoreCLR: boolean, hasDomainReload: boolean }`.
+The fields describe the running Editor, not its Player scripting backend.
+`hasDomainReload` reports runtime support, not the Enter Play Mode option.
+
+The extension reads these fields through `connectionManager.getRuntimeCapabilities()`.
+Mono with domain reload support enables the existing IL refresh and Mono debug paths.
+CoreCLR leaves script compilation and code reload to Unity and blocks the Mono debug adapter.
+This does not enable instant hot reload or add a CoreCLR debugger.
+
+A missing entire runtime block preserves shipped legacy Mono behavior.
+A present invalid block or unknown runtime returns `capability_unavailable` and disables runtime features.
+Capability refusals never trigger a full-refresh fallback.
+See the generated [capability matrix](CAPABILITY_MATRIX.md) for recorded version evidence.
+
+## CoreCLR Migration Inspection
+
+Run **Unity Toolkit: CoreCLR Migration Scan** (`unity-cursor-toolkit.migration.scan`)
+in the extension to scan the linked Unity project. It writes
+`CoreCLR-Migration-Report.md` at the project root and opens it. The report groups
+findings by severity with file, line, source snippet, explanation, replacement,
+and a Unity documentation link. It includes counts, scan date, rule version, and
+an explicit result when no findings are found. Errors appear in the extension.
+This command writes the report only; it does not fix user scripts.
+
+The `coreclr_migration` MCP tool uses the same scanner and rules:
+
+- `action: "scan"` returns structured JSON findings.
+- `action: "report"` returns Markdown text without saving a file.
+- `action: "rules"` returns the loaded rule set and version.
+
+All three actions are read-only and are allowed with
+`UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1`. Standalone scans use
+`UNITY_CURSOR_TOOLKIT_PROJECT_PATH`; extension scans use the linked project.
+The source scanner reads C# under `Assets` and `Packages`, excludes generated
+files and build output, and reports review candidates rather than proving that
+each match is incompatible.
+
+For `scan` or `report`, pass `includeStatics: true` to add
+`staticsInventory` from the connected matching Unity project. This option
+fails with `INVENTORY_UNAVAILABLE` if the bridge is unavailable or belongs to
+another project. It inspects loaded assemblies whose compilation sources are
+all under `Assets`; Unity, UPM package, mixed-source, and precompiled assemblies
+are excluded. Each field records assembly, type, field name, field type, and
+`hasCleanupAttribute`. The flag recognizes Unity's
+`Unity.Scripting.LifecycleManagement.AutoStaticsCleanupAttribute` and
+`AutoStaticsCleanupOnCodeReloadAttribute` on fields or their declaring types,
+with `NoAutoStaticsCleanupAttribute` field exclusions. It does not prove that
+custom cleanup methods are correct. No field values, property getters, user
+static constructors, or attribute constructors are executed.
+
+Inventory work stops at 128 assemblies, 2048 types, 4096 fields, or a cooperative
+500 ms budget (individual Unity metadata calls cannot be preempted). The payload includes the limits, counts, duration, `truncated`,
+and reflection `errors`. Individual reflection calls cannot be interrupted;
+a partial inventory must not be treated as a complete audit. The collector uses
+APIs present in Unity 2019.4. Actual 2019.4 runtime proof remains pending.
 
 ## What Agents Can Do
 
 - Read recent Unity console output with `read_console`.
 - Capture current console/profiler context with `profiler_snapshot`.
 - Use the Unity toolbar copy action when a human wants clipboard context plus a
-  current main-camera application screenshot path. Each click overwrites the
+  current visible main Unity Editor window screenshot path. Each click overwrites the
   same temporary PNG.
 - Read compact whole-console session transcripts with `profiler_snapshot` using `action: "readConsoleTranscript"` after capturing or listing a session id.
 - Scan, summarize, query, and read the local Unity asset/object/reference graph with `unity_context`.
@@ -110,8 +226,21 @@ These prompts are intentionally conservative: inspect first, summarize state, th
 ## Useful Feature Ideas
 
 - Prefab workflow tools: unpack/apply variants, inspect overrides, and instantiate prefabs safely.
-- Unity Test Runner tools: list tests, run EditMode/PlayMode tests, and return structured failures.
 - Build report tools: parse build output, surface warnings/errors, and compare artifact sizes.
 - Package Manager tools: list packages, inspect versions, and propose dependency changes with dry-run output.
 - CoreCLR and Unity 7 work is tracked in `docs/ROADMAP.md` and GitHub issues; do not
   present open issues as available tools.
+
+### Scene object IDs
+
+The current Unity 7 readiness source returns opaque `entityId` strings from scene hierarchy and GameObject create/find calls, and `componentEntityId` from component creation. Pass `entityId` to GameObject/component actions and `parentEntityId` to setParent. Keep these strings unchanged; do not convert them to JavaScript numbers.
+
+Editors before Unity 7 retain integer `instanceId`, `parentInstanceId`, and `componentInstanceId`. Version guards select the supported Unity API at compile time. A supplied string ID takes precedence; unsupported or malformed IDs fail before mutation. Names remain available when no ID is supplied. An unresolved parent is an error; omit all parent identifiers to detach.
+
+## Test execution
+
+After an edit, run the smallest relevant filtered selection, inspect structured failures, fix the cause, and repeat that selection before broadening the run.
+
+Use `list_tests` or `run_tests` with `dryRun: true` to inspect a bridge selection. Read-only mode blocks execution in both EditMode and PlayMode. Select a backend before running and report its exact Editor version. The CLI cannot list tests; do not describe an explicit CLI refusal as an empty selection. An unavailable or failed selected backend never triggers an automatic retry.
+
+Use the structured per-test results and typed errors. Do not expose raw CLI output, owner tokens, or machine paths. Cancellation requires a terminal owned-run response; `cancellation_unconfirmed` requires inspection of the same Editor. The legacy package remains loadable without Test Framework through a separate optional assembly. Actual Editor coverage is limited to the recorded proof versions, not every version accepted by the package manifest. See [client inputs and results](MCP_CLIENTS.md#unity-tests).

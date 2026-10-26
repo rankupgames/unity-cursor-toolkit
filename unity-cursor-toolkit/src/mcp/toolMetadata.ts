@@ -8,6 +8,7 @@
 import type { ToolAnnotations } from '../core/interfaces';
 
 const MUTATING_TOOLS = {
+	run_tests: true,
 	manage_asset: true,
 	manage_component: true,
 	manage_gameobject: true,
@@ -25,7 +26,11 @@ const MUTATING_TOOLS = {
 } as const;
 
 const READ_ONLY_TOOLS = {
+	// This milestone only discovers, plans and refuses; command dispatch is disabled.
+	'pipeline.commands': true,
+	list_tests: true,
 	project_info: true,
+	coreclr_migration: true,
 	screenshot: true,
 	read_console: true,
 	resolve_meta: true
@@ -69,7 +74,28 @@ export function withDryRunProperty(properties: Record<string, unknown>): Record<
 	};
 }
 
+export function isToolCallClassified(toolName: string, args: Record<string, unknown>): boolean {
+	toolName = toolkitLocalName(toolName);
+	if (toolName === 'batch_execute') {
+		return Array.isArray(args.operations) && args.operations.every((operation: unknown) => {
+			if (typeof operation !== 'object' || operation == null) { return false; }
+			const op = operation as { tool?: unknown; args?: unknown };
+			return typeof op.tool === 'string' && typeof op.args === 'object' && op.args != null
+				&& !Array.isArray(op.args) && isToolCallClassified(op.tool, op.args as Record<string, unknown>);
+		});
+	}
+	return Object.prototype.hasOwnProperty.call(MUTATING_TOOLS, toolName)
+		|| Object.prototype.hasOwnProperty.call(READ_ONLY_TOOLS, toolName)
+		|| Object.prototype.hasOwnProperty.call(READ_ONLY_ACTIONS, toolName);
+}
+
+// Only toolkit-qualified names share the legacy toolkit policy tables.
+function toolkitLocalName(toolName: string): string {
+	return toolName.startsWith('toolkit.') ? toolName.slice('toolkit.'.length) : toolName;
+}
+
 export function getToolAnnotations(toolName: string): ToolAnnotations {
+	toolName = toolkitLocalName(toolName);
 	return {
 		title: toToolTitle(toolName),
 		readOnlyHint: isAlwaysReadOnlyTool(toolName),
@@ -84,6 +110,7 @@ export function isDryRun(args: Record<string, unknown>): boolean {
 }
 
 export function isMutatingToolCall(toolName: string, args: Record<string, unknown>): boolean {
+	toolName = toolkitLocalName(toolName);
 	if (toolName === 'batch_execute') {
 		const operations = args.operations;
 		if (Array.isArray(operations)) {
@@ -106,15 +133,16 @@ export function isMutatingToolCall(toolName: string, args: Record<string, unknow
 	}
 
 	const readOnlyActions = READ_ONLY_ACTIONS[toolName];
-	if (readOnlyActions) {
+	if (Array.isArray(readOnlyActions)) {
 		const action = typeof args.action === 'string' ? args.action : DEFAULT_ACTIONS[toolName] ?? '';
 		return readOnlyActions.includes(action) === false;
 	}
 
-	return (MUTATING_TOOLS as Record<string, boolean>)[toolName] === true;
+	return !isToolCallClassified(toolName, args) || (MUTATING_TOOLS as Record<string, boolean>)[toolName] === true;
 }
 
 export function isDestructiveToolCall(toolName: string, args: Record<string, unknown>): boolean {
+	toolName = toolkitLocalName(toolName);
 	if (toolName === 'batch_execute') {
 		const operations = args.operations;
 		return Array.isArray(operations) && operations.some((operation: unknown) => {
@@ -130,7 +158,7 @@ export function isDestructiveToolCall(toolName: string, args: Record<string, unk
 	}
 
 	const destructiveActions = DESTRUCTIVE_ACTIONS[toolName];
-	if (destructiveActions == null) {
+	if (!Array.isArray(destructiveActions)) {
 		return false;
 	}
 
@@ -164,4 +192,9 @@ function toToolTitle(toolName: string): string {
 		.split('_')
 		.map((part) => part.length === 0 ? part : part[0].toUpperCase() + part.slice(1))
 		.join(' ');
+}
+
+export function isMcpReadOnlyMode(): boolean {
+	const value = process.env.UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY;
+	return value === '1' || value === 'true';
 }

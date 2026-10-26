@@ -1,0 +1,64 @@
+{
+  "success": false,
+  "editorVersion": "7000.0.0a7",
+  "platform": "Windows 10  (10.0.19045) 64bit",
+  "coreLibrary": "System.Private.CoreLib",
+  "editorPid": 7576,
+  "firstFrameAt": "2026-10-08T17:10:55.7322983Z",
+  "pixelsPerPoint": 1,
+  "visibilityEvidence": [],
+  "allCapturesSucceeded": false,
+  "captures": [
+    {
+      "window": "sceneView",
+      "success": true,
+      "path": "<owned-project>\\run-0\\frames\\sceneView.jpg",
+      "width": 800,
+      "height": 520,
+      "distinctColors": 303,
+      "error": ""
+    },
+    {
+      "window": "gameView",
+      "success": true,
+      "path": "<owned-project>\\run-0\\frames\\gameView.jpg",
+      "width": 813,
+      "height": 915,
+      "distinctColors": 28,
+      "error": ""
+    },
+    {
+      "window": "inspector",
+      "success": true,
+      "path": "<owned-project>\\run-0\\frames\\inspector.jpg",
+      "width": 775,
+      "height": 915,
+      "distinctColors": 71,
+      "error": ""
+    },
+    {
+      "window": "packageManager",
+      "success": false,
+      "path": "",
+      "width": 0,
+      "height": 0,
+      "distinctColors": 0,
+      "error": "InvalidOperationException: window_unavailable: packageManager"
+    },
+    {
+      "window": "customProbe",
+      "success": true,
+      "path": "<owned-project>\\run-0\\frames\\customProbe.jpg",
+      "width": 420,
+      "height": 280,
+      "distinctColors": 108,
+      "error": ""
+    }
+  ],
+  "inputTest": {
+    "attempted": true,
+    "rotationAngle": 13.275,
+    "changed": true,
+    "error": ""
+  }
+}

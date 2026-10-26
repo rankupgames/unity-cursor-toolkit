@@ -1,0 +1,11 @@
+{
+  "observedAt": "2026-10-08T05:34:15.191Z",
+  "unityVersion": "6000.3.9f1",
+  "platform": "win32",
+  "architecture": "x64",
+  "exitCode": 0,
+  "success": true,
+  "message": "Internal smoke passed.",
+  "viewportFrameBytes": 1187,
+  "scope": "Bundled sample smoke: legacy callback simulation and state reset, bridge ping/restart/manual Stop, scene object IDs, static inventory, game commands and viewport contrast. Does not prove real Mono recompilation."
+}

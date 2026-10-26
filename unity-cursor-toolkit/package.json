@@ -1,8 +1,8 @@
 {
   "name": "unity-cursor-toolkit",
   "displayName": "Unity Cursor Toolkit",
-  "description": "Enhanced Unity development tools for VS Code/Cursor, including hot reload functionality",
-  "version": "0.6.1052826",
+  "description": "Unity 2019.4+ target, remote and virtual desktop workflows, enforced MCP safety, first-party Unity CLI composition, migration and Mono debugging.",
+  "version": "0.7.1052826",
   "packageManager": "npm@11.16.0",
   "publisher": "rankupgames",
   "icon": "TempIcon.png",
@@ -40,7 +40,11 @@
     "onCommand:unity-cursor-toolkit.hierarchy.focus",
     "onCommand:unity-cursor-toolkit.remoteShell.launch",
     "onCommand:unity-cursor-toolkit.remoteShell.stop",
-    "onCommand:unity-cursor-toolkit.remoteShell.status"
+    "onCommand:unity-cursor-toolkit.remoteShell.status",
+    "onCommand:unity-cursor-toolkit.migration.scan",
+    "onCommand:unity-cursor-toolkit.doctor",
+    "onCommand:unity-cursor-toolkit.tests.list",
+    "onCommand:unity-cursor-toolkit.tests.run"
   ],
   "main": "./out/extension.js",
   "extensionKind": [
@@ -83,6 +87,11 @@
             "default": true,
             "description": "Automatically launch the installed Unity Editor for the linked project when attaching or opening viewport panels."
           },
+          "unityCursorToolkit.unityCli.path": {
+            "type": "string",
+            "default": "",
+            "description": "Optional native Unity CLI executable path. Leave empty to resolve UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH or PATH. Expected version: 1.0.0-beta.12; no automatic install or upgrade."
+          },
           "unityCursorToolkit.unityEditorPath": {
             "type": "string",
             "default": "",
@@ -115,6 +124,16 @@
       }
     ],
     "commands": [
+      { "command": "unity-cursor-toolkit.tests.list", "title": "Unity Toolkit: List Tests" },
+      { "command": "unity-cursor-toolkit.tests.run", "title": "Unity Toolkit: Run Tests" },
+      {
+        "command": "unity-cursor-toolkit.doctor",
+        "title": "Unity Toolkit: Unity CLI Doctor"
+      },
+      {
+        "command": "unity-cursor-toolkit.migration.scan",
+        "title": "Unity Toolkit: CoreCLR Migration Scan"
+      },
       {
         "command": "unity-cursor-toolkit.startConnection",
         "title": "Unity Toolkit: Start/Attach to Project"
@@ -357,11 +376,11 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
+    "compile": "tsc -p ./ && node scripts/esbuild-bundle.js --test-adapter",
     "watch": "tsc -watch -p ./",
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
-    "test": "node test/run-all-tests.js",
+    "test": "node test/run-all-tests.js && node test/viewport-measurement-tests.js && node test/player-viewport-proof-tests.js",
     "test:unity-internal": "node scripts/run-internal-unity-smoke.js",
     "dev:unity-viewport": "node scripts/run-internal-viewport-stream.js",
     "spike:editor-windows": "node scripts/run-editor-window-capture-spike.js",
@@ -390,7 +409,7 @@
     "check:unused": "tsc -p ./ --noEmit --noUnusedLocals --noUnusedParameters",
     "validate:vendor": "node scripts/validate-vendored-unterm.js",
     "sync:package": "node scripts/sync-package.js",
-    "validate": "npm run compile && npm run check:unused && npm test && npm run validate:vendor && npm run audit",
+    "validate": "npm run compile && node scripts/generate-capability-matrix.js --check && npm run check:unused && npm test && npm run validate:vendor && npm run audit",
     "dev": "npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
     "bump": "node scripts/bump-version.js && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
     "bump:minor": "npm version minor && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix 2>/dev/null || code --install-extension *.vsix)",
@@ -415,12 +434,12 @@
   "keywords": [
     "unity",
     "cursor",
-    "toolkit",
-    "hot reload",
-    "live reload",
-    "csharp",
-    "unity3d",
-    "vs-code"
+    "mcp",
+    "remote development",
+    "virtual desktop",
+    "unity cli",
+    "migration",
+    "debugger"
   ],
   "author": {
     "name": "Rank Up Games LLC",

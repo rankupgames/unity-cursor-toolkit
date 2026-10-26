@@ -26,11 +26,13 @@ import {
 import { ConsoleModule } from './console/index';
 import { HotReloadModule } from './hot-reload/index';
 import { McpModule } from './mcp/index';
+import { MigrationModule } from './migration/module';
 import { createCombinedMcpConfigText, getMcpServerPath } from './mcp/clientConfig';
 import { DebugModule } from './debug/index';
 import { ProjectModule, hasLinkedUnityProject, getLinkedProjectPath, isScriptInstalledInLinkedProject, handleUnityProjectSetup } from './project/index';
 import { RemoteShellModule } from './remote-shell/index';
 import { ViewportPrototypeModule } from './viewport/index';
+import { UnityCliModule } from './unity-cli/index';
 
 let connection: ConnectionManager;
 let commandSender: CommandSender;
@@ -96,9 +98,11 @@ export function activate(context: vscode.ExtensionContext): void {
 	moduleLoader.register(new ConsoleModule());
 	moduleLoader.register(new HotReloadModule());
 	moduleLoader.register(new McpModule());
+	moduleLoader.register(new MigrationModule());
 	moduleLoader.register(new DebugModule());
 	moduleLoader.register(new RemoteShellModule());
 	moduleLoader.register(new ViewportPrototypeModule());
+	moduleLoader.register(new UnityCliModule(result => statusBar.setUnityCliStatus(result)));
 
 	context.subscriptions.push(connection, moduleLoader);
 
@@ -375,6 +379,8 @@ async function connectToLinkedUnityProjectOnce(projectPath: string, generation: 
 			return null;
 		}
 		if (matchesUnityProjectInfo(projectPath, expectedVersion, response)) {
+			const projectInfo = typeof response?.result === 'string' ? JSON.parse(response.result) : response?.result;
+			connection.acceptProjectInfo(projectInfo);
 			return port;
 		}
 

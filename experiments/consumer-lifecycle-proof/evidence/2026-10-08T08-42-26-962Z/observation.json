@@ -1,0 +1,92 @@
+{
+  "checkedAt": "2026-10-08T08:42:26.962Z",
+  "editorVersion": "7000.0.0a7",
+  "editorRevision": "581996e1a8f7",
+  "platform": "win32",
+  "passed": false,
+  "source": {
+    "runner": "1d20312eb0964da49a5caa046e455131d02042fc966b886410ac69272cf5f75b",
+    "consumer": "21f1e6a2fe37ee33c366d99fcb213a36b3a101cbed806b49edf46ee86647c460",
+    "coordinator": "6e2614569320ed5e5ccd6dfba26dd7a86986c014caf775ea4d9495bc5eb05e4c"
+  },
+  "baseline": {
+    "variant": "baseline",
+    "exitCode": 3221226505,
+    "spawnError": "",
+    "forcedCleanup": false,
+    "normalExitConfirmed": false,
+    "remainingOwnedPids": [],
+    "observation": {
+      "variant": "baseline",
+      "phase": "exit",
+      "editorVersion": "7000.0.0a7",
+      "failure": "",
+      "ownerRun": "",
+      "pid": 64848,
+      "originalOptions": 0,
+      "deadline": 639270458857383700,
+      "collectAfter": 639270457372350000,
+      "originalEnabled": false,
+      "terminalHandlersCollected": false,
+      "passed": false,
+      "beforePlay": {
+        "generation": "3b99079cb62645869ea8a862632148ec",
+        "runtimeMvid": "37f4d308-73d3-41b7-9b82-6bc81c8b9760",
+        "editorMvid": "9f6e7799-348f-4a2a-b4be-580abaff69bf",
+        "coordinatorMvid": "1fd3e843-1c62-41e1-bd3f-d8ee2755be7f",
+        "consumerMvid": "d25b7cad-a3bb-401d-aa30-84db806c860d",
+        "registry": 51461878
+      },
+      "afterPlay": {
+        "generation": "3b99079cb62645869ea8a862632148ec",
+        "runtimeMvid": "37f4d308-73d3-41b7-9b82-6bc81c8b9760",
+        "editorMvid": "9f6e7799-348f-4a2a-b4be-580abaff69bf",
+        "coordinatorMvid": "1fd3e843-1c62-41e1-bd3f-d8ee2755be7f",
+        "consumerMvid": "d25b7cad-a3bb-401d-aa30-84db806c860d",
+        "registry": 51461878
+      },
+      "cases": [
+        {
+          "mode": "success",
+          "runId": "proof_transient_success_1_639270457362251678",
+          "snapshot": "{\"success\":true,\"runId\":\"proof_transient_success_1_639270457362251678\",\"commandName\":\"proof.transient.success\",\"status\":\"Succeeded\",\"result\":{\"success\":true,\"message\":\"transient success\",\"data\":{\"marker\":\"success\"}}}",
+          "collected": false
+        },
+        {
+          "mode": "failure",
+          "runId": "proof_transient_failure_2_639270457362320084",
+          "snapshot": "{\"success\":false,\"runId\":\"proof_transient_failure_2_639270457362320084\",\"commandName\":\"proof.transient.failure\",\"status\":\"Failed\",\"result\":{\"success\":false,\"message\":\"transient failure\",\"data\":null}}",
+          "collected": false
+        },
+        {
+          "mode": "cancel",
+          "runId": "proof_transient_cancel_3_639270457362332681",
+          "snapshot": "{\"success\":false,\"runId\":\"proof_transient_cancel_3_639270457362332681\",\"commandName\":\"proof.transient.cancel\",\"status\":\"Canceled\",\"result\":{\"success\":false,\"message\":\"Command run canceled.\",\"data\":null}}",
+          "collected": false
+        }
+      ],
+      "reloads": []
+    },
+    "events": [
+      {
+        "phase": "initializing",
+        "version": "v1",
+        "removed": false,
+        "pid": 64848
+      },
+      {
+        "phase": "unloading",
+        "version": "v1",
+        "removed": true,
+        "pid": 64848
+      },
+      {
+        "phase": "initializing",
+        "version": "v1",
+        "removed": false,
+        "pid": 23144
+      }
+    ]
+  },
+  "fixed": null
+}

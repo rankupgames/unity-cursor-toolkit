@@ -1,0 +1,258 @@
+{
+  "checkedAt": "2026-10-08T08:46:00.868Z",
+  "editorVersion": "7000.0.0a7",
+  "editorRevision": "581996e1a8f7",
+  "platform": "win32",
+  "passed": true,
+  "source": {
+    "runner": "1d20312eb0964da49a5caa046e455131d02042fc966b886410ac69272cf5f75b",
+    "consumer": "3f8b4625e04cce50266047e0c008aaeb8c9b25bc1815cc94a297bb174c16e6c1",
+    "coordinator": "269e70300d7870bf8a32ddd23e164985bd32b07192e29dad6f9b979b2d21a50b"
+  },
+  "baseline": {
+    "foreignEventCount": 0,
+    "variant": "baseline",
+    "exitCode": 0,
+    "spawnError": "",
+    "forcedCleanup": false,
+    "normalExitConfirmed": true,
+    "remainingOwnedPids": [],
+    "observation": {
+      "variant": "baseline",
+      "phase": "exit",
+      "editorVersion": "7000.0.0a7",
+      "failure": "",
+      "ownerRun": "",
+      "pid": 31072,
+      "originalOptions": 0,
+      "deadline": 639270460722157000,
+      "collectAfter": 639270459237236400,
+      "originalEnabled": false,
+      "terminalHandlersCollected": false,
+      "passed": false,
+      "beforePlay": {
+        "generation": "5519b56f51cd4aadbed119c62a39ea2f",
+        "runtimeMvid": "37f4d308-73d3-41b7-9b82-6bc81c8b9760",
+        "editorMvid": "9f6e7799-348f-4a2a-b4be-580abaff69bf",
+        "coordinatorMvid": "17ff13ea-5f17-4c1b-9d20-f058ccf14c30",
+        "consumerMvid": "9ecbb6af-4b1d-433b-b3da-7f378f8d55cd",
+        "registry": 51461878
+      },
+      "afterPlay": {
+        "generation": "5519b56f51cd4aadbed119c62a39ea2f",
+        "runtimeMvid": "37f4d308-73d3-41b7-9b82-6bc81c8b9760",
+        "editorMvid": "9f6e7799-348f-4a2a-b4be-580abaff69bf",
+        "coordinatorMvid": "17ff13ea-5f17-4c1b-9d20-f058ccf14c30",
+        "consumerMvid": "9ecbb6af-4b1d-433b-b3da-7f378f8d55cd",
+        "registry": 51461878
+      },
+      "cases": [
+        {
+          "mode": "success",
+          "runId": "proof_transient_success_1_639270459227135258",
+          "snapshot": "{\"success\":true,\"runId\":\"proof_transient_success_1_639270459227135258\",\"commandName\":\"proof.transient.success\",\"status\":\"Succeeded\",\"result\":{\"success\":true,\"message\":\"transient success\",\"data\":{\"marker\":\"success\"}}}",
+          "collected": false
+        },
+        {
+          "mode": "failure",
+          "runId": "proof_transient_failure_2_639270459227198591",
+          "snapshot": "{\"success\":false,\"runId\":\"proof_transient_failure_2_639270459227198591\",\"commandName\":\"proof.transient.failure\",\"status\":\"Failed\",\"result\":{\"success\":false,\"message\":\"transient failure\",\"data\":null}}",
+          "collected": false
+        },
+        {
+          "mode": "cancel",
+          "runId": "proof_transient_cancel_3_639270459227205523",
+          "snapshot": "{\"success\":false,\"runId\":\"proof_transient_cancel_3_639270459227205523\",\"commandName\":\"proof.transient.cancel\",\"status\":\"Canceled\",\"result\":{\"success\":false,\"message\":\"Command run canceled.\",\"data\":null}}",
+          "collected": false
+        }
+      ],
+      "reloads": []
+    },
+    "events": [
+      {
+        "phase": "initializing",
+        "version": "v1",
+        "removed": false,
+        "pid": 31072
+      },
+      {
+        "phase": "unloading",
+        "version": "v1",
+        "removed": true,
+        "pid": 31072
+      }
+    ],
+    "expectedOldFailure": true
+  },
+  "fixed": {
+    "foreignEventCount": 0,
+    "variant": "fixed",
+    "exitCode": 0,
+    "spawnError": "",
+    "forcedCleanup": false,
+    "normalExitConfirmed": true,
+    "remainingOwnedPids": [],
+    "observation": {
+      "variant": "fixed",
+      "phase": "exit",
+      "editorVersion": "7000.0.0a7",
+      "failure": "",
+      "ownerRun": "proof_consumer_version_1_639270459574701819",
+      "pid": 25048,
+      "originalOptions": 0,
+      "deadline": 639270460955894700,
+      "collectAfter": 639270459471223900,
+      "originalEnabled": false,
+      "terminalHandlersCollected": true,
+      "passed": true,
+      "beforePlay": {
+        "generation": "2c48c74fed544d3cafbd7ee74fd55389",
+        "runtimeMvid": "d617f956-1ece-4630-93ec-67cad3d817e0",
+        "editorMvid": "9f6e7799-348f-4a2a-b4be-580abaff69bf",
+        "coordinatorMvid": "4c53f37b-e814-4fe2-89a1-89e2fb750152",
+        "consumerMvid": "1a79decc-21e9-4f82-a25c-fa8fa30a15ac",
+        "registry": 51461878
+      },
+      "afterPlay": {
+        "generation": "2c48c74fed544d3cafbd7ee74fd55389",
+        "runtimeMvid": "d617f956-1ece-4630-93ec-67cad3d817e0",
+        "editorMvid": "9f6e7799-348f-4a2a-b4be-580abaff69bf",
+        "coordinatorMvid": "4c53f37b-e814-4fe2-89a1-89e2fb750152",
+        "consumerMvid": "1a79decc-21e9-4f82-a25c-fa8fa30a15ac",
+        "registry": 51461878
+      },
+      "cases": [
+        {
+          "mode": "success",
+          "runId": "proof_transient_success_1_639270459461139628",
+          "snapshot": "{\"success\":true,\"runId\":\"proof_transient_success_1_639270459461139628\",\"commandName\":\"proof.transient.success\",\"status\":\"Succeeded\",\"result\":{\"success\":true,\"message\":\"transient success\",\"data\":{\"marker\":\"success\"}}}",
+          "collected": true
+        },
+        {
+          "mode": "failure",
+          "runId": "proof_transient_failure_2_639270459461203619",
+          "snapshot": "{\"success\":false,\"runId\":\"proof_transient_failure_2_639270459461203619\",\"commandName\":\"proof.transient.failure\",\"status\":\"Failed\",\"result\":{\"success\":false,\"message\":\"transient failure\",\"data\":null}}",
+          "collected": true
+        },
+        {
+          "mode": "cancel",
+          "runId": "proof_transient_cancel_3_639270459461210631",
+          "snapshot": "{\"success\":false,\"runId\":\"proof_transient_cancel_3_639270459461210631\",\"commandName\":\"proof.transient.cancel\",\"status\":\"Canceled\",\"result\":{\"success\":false,\"message\":\"Command run canceled.\",\"data\":null}}",
+          "collected": true
+        }
+      ],
+      "reloads": [
+        {
+          "expected": "v2",
+          "before": {
+            "generation": "2c48c74fed544d3cafbd7ee74fd55389",
+            "runtimeMvid": "d617f956-1ece-4630-93ec-67cad3d817e0",
+            "editorMvid": "9f6e7799-348f-4a2a-b4be-580abaff69bf",
+            "coordinatorMvid": "4c53f37b-e814-4fe2-89a1-89e2fb750152",
+            "consumerMvid": "1a79decc-21e9-4f82-a25c-fa8fa30a15ac",
+            "registry": 51461878
+          },
+          "after": {
+            "generation": "f32c96393c764cbcb9020f0f166e81c7",
+            "runtimeMvid": "3c4104f0-a04d-47f0-b5f0-f1d118613df8",
+            "editorMvid": "b63db366-3be0-4483-b799-5c1cc282be74",
+            "coordinatorMvid": "b12b15d6-9615-4144-a06e-13d60fefac79",
+            "consumerMvid": "30faad97-0a9a-4309-82f2-e22197e12488",
+            "registry": 7633730
+          },
+          "retained": false
+        },
+        {
+          "expected": "v3",
+          "before": {
+            "generation": "f32c96393c764cbcb9020f0f166e81c7",
+            "runtimeMvid": "3c4104f0-a04d-47f0-b5f0-f1d118613df8",
+            "editorMvid": "b63db366-3be0-4483-b799-5c1cc282be74",
+            "coordinatorMvid": "b12b15d6-9615-4144-a06e-13d60fefac79",
+            "consumerMvid": "30faad97-0a9a-4309-82f2-e22197e12488",
+            "registry": 7633730
+          },
+          "after": {
+            "generation": "d6fcbbf170da41a5a91904d666452f96",
+            "runtimeMvid": "3c4104f0-a04d-47f0-b5f0-f1d118613df8",
+            "editorMvid": "b63db366-3be0-4483-b799-5c1cc282be74",
+            "coordinatorMvid": "b12b15d6-9615-4144-a06e-13d60fefac79",
+            "consumerMvid": "bfe457e9-7a3c-4ff0-bef4-b7472ef1cb01",
+            "registry": 24840286
+          },
+          "retained": false
+        }
+      ]
+    },
+    "events": [
+      {
+        "phase": "initializing",
+        "version": "v1",
+        "removed": false,
+        "pid": 25048
+      },
+      {
+        "phase": "patch_request",
+        "version": "v1"
+      },
+      {
+        "phase": "patch",
+        "version": "v1",
+        "removed": false,
+        "pid": 25048
+      },
+      {
+        "phase": "unloading",
+        "version": "v1",
+        "removed": true,
+        "pid": 25048
+      },
+      {
+        "phase": "initializing",
+        "version": "v2",
+        "removed": false,
+        "pid": 25048
+      },
+      {
+        "phase": "patch_request",
+        "version": "v2"
+      },
+      {
+        "phase": "patch",
+        "version": "v2",
+        "removed": false,
+        "pid": 25048
+      },
+      {
+        "phase": "unloading",
+        "version": "v2",
+        "removed": true,
+        "pid": 25048
+      },
+      {
+        "phase": "initializing",
+        "version": "v3",
+        "removed": false,
+        "pid": 25048
+      },
+      {
+        "phase": "patch_request",
+        "version": "v3"
+      },
+      {
+        "phase": "patch",
+        "version": "v3",
+        "removed": false,
+        "pid": 25048
+      },
+      {
+        "phase": "unloading",
+        "version": "v3",
+        "removed": true,
+        "pid": 25048
+      }
+    ],
+    "ownerHooksPassed": true,
+    "selectiveRetentionObserved": false
+  }
+}

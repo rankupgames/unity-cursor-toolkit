@@ -1,0 +1,76 @@
+{
+  "observedAt": "2026-10-08T10:25:12.433Z",
+  "candidateId": "unity-7000-windows-local",
+  "band": "Unity 7",
+  "editorVersion": "7000.0.0a7",
+  "platform": "Windows",
+  "architecture": "x64",
+  "requestedEditorVersion": "7000.0.0a7",
+  "observedEditorVersion": "7000.0.0a7",
+  "launched": true,
+  "passed": false,
+  "outcome": "failed",
+  "normalExitConfirmed": false,
+  "remainingOwnedPids": [],
+  "checks": [
+    {
+      "name": "activation",
+      "status": "pass"
+    },
+    {
+      "name": "handshake",
+      "status": "pass"
+    },
+    {
+      "name": "console",
+      "status": "pass"
+    },
+    {
+      "name": "mcp",
+      "status": "pass"
+    }
+  ],
+  "isolation": {
+    "disposableProject": true,
+    "defaultInstallActivationProven": false,
+    "port": "OS-selected fixture port",
+    "preferenceKeys": "two unique fixture-only keys before first import",
+    "handlerSource": {
+      "originalSha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6",
+      "fixtureSha256": "b13508a8be64820ede0447b7cee04e72d0c0c9ccbec5ecec72d226be1843b157",
+      "delta": "two preference key literals only"
+    }
+  },
+  "dependencies": {
+    "newtonsoft": "3.2.2 existing project cache, explicit fixture override of declared 3.2.1; no registry install",
+    "modules": "selected Editor built-in modules"
+  },
+  "pid": 28960,
+  "identityConfirmed": true,
+  "runtime": {
+    "isCoreCLR": true,
+    "hasDomainReload": false
+  },
+  "activation": {
+    "assembly": "UnityCursorToolkit.Editor",
+    "assemblyMvid": "eed9e2d6-86df-4b6f-8795-6358508b294d",
+    "handlerCount": 17,
+    "automaticListenerObserved": false,
+    "runtime": {
+      "isCoreCLR": true,
+      "hasDomainReload": false
+    }
+  },
+  "listenerOwnerConfirmed": true,
+  "mcpExit": {
+    "code": 0,
+    "signal": null,
+    "spawnError": false
+  },
+  "editorExit": {
+    "code": 1,
+    "signal": null,
+    "spawnError": false
+  },
+  "ownedPreferencesAbsent": true
+}

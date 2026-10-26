@@ -1,0 +1,2703 @@
+{
+  "observedAt": "2026-10-08T17:10:59.251Z",
+  "editorVersion": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "platform": "win32",
+  "architecture": "x64",
+  "fixture": true,
+  "template": {
+    "name": "com.unity.template.urp-blank-17.3.0.tgz",
+    "sha256": "0fc1fe28d6077b020a550021aa74feeef922d89d9c0ad8954cd245bd5ed0f909",
+    "templateUrp": "17.7.0",
+    "installedUrp": "17.7.0",
+    "preferenceIsolation": {
+      "changes": [
+        {
+          "original": "UnityHotReloadHandler_ShowDebugLogs",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_ShowDebugLogs"
+        },
+        {
+          "original": "UnityHotReloadHandler_LastPort",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_LastPort"
+        }
+      ],
+      "originalSha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6",
+      "isolatedSha256": "579fc5b452af0f4c0142fcb29c6c24e4800b1856b8cfed59477fd85c3ed71f8d",
+      "defaultInstallProof": false
+    }
+  },
+  "sourceHashes": {
+    "runner": "3be6d6e81cd04d5e5e68b7df6ce51c87d7368727370731f7e4831556dfaf5bf6",
+    "sampler": "3d69af484dbcd5b43753f6cb15564c5673a49983bb4c4cb12fbd0125d83d18d5",
+    "spike": "2046498fab0d44cfba41cda254d0e682bf4e8ac81a760e460bd79081063dd7ba",
+    "capture": "a2ae99f511a5e787f98894be3e021eb545c9a274e70f91b2f2a064f8afc96f6a",
+    "stream": "a9cf7168f81b14590942d735ef50f1fecdc1f699f8f2e8ff59c80631fa081752"
+  },
+  "runs": [
+    {
+      "index": 0,
+      "phase": "functional",
+      "pid": 7576,
+      "port": 61051,
+      "startedAt": "2026-10-08T17:07:35.508Z",
+      "samples": [
+        {
+          "at": "2026-10-08T17:07:36.464Z",
+          "rssMb": 6.05078125,
+          "cpuSeconds": 0.078125
+        },
+        {
+          "at": "2026-10-08T17:07:40.817Z",
+          "rssMb": 488.30078125,
+          "cpuSeconds": 1.296875,
+          "cpuPercent": 28
+        },
+        {
+          "at": "2026-10-08T17:07:45.829Z",
+          "rssMb": 673.72265625,
+          "cpuSeconds": 1.640625,
+          "cpuPercent": 6.9
+        },
+        {
+          "at": "2026-10-08T17:07:50.853Z",
+          "rssMb": 683.75390625,
+          "cpuSeconds": 1.71875,
+          "cpuPercent": 1.6
+        },
+        {
+          "at": "2026-10-08T17:07:55.815Z",
+          "rssMb": 694.98046875,
+          "cpuSeconds": 1.90625,
+          "cpuPercent": 3.8
+        },
+        {
+          "at": "2026-10-08T17:08:00.761Z",
+          "rssMb": 734.99609375,
+          "cpuSeconds": 1.90625,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T17:08:06.434Z",
+          "rssMb": 755.84765625,
+          "cpuSeconds": 2.015625,
+          "cpuPercent": 1.9
+        },
+        {
+          "at": "2026-10-08T17:08:10.875Z",
+          "rssMb": 882.953125,
+          "cpuSeconds": 5.328125,
+          "cpuPercent": 74.6
+        },
+        {
+          "at": "2026-10-08T17:08:15.942Z",
+          "rssMb": 911.58984375,
+          "cpuSeconds": 6.140625,
+          "cpuPercent": 16
+        },
+        {
+          "at": "2026-10-08T17:08:20.823Z",
+          "rssMb": 911.578125,
+          "cpuSeconds": 6.203125,
+          "cpuPercent": 1.3
+        },
+        {
+          "at": "2026-10-08T17:08:25.808Z",
+          "rssMb": 911.1171875,
+          "cpuSeconds": 6.296875,
+          "cpuPercent": 1.9
+        },
+        {
+          "at": "2026-10-08T17:08:30.815Z",
+          "rssMb": 913.02734375,
+          "cpuSeconds": 6.375,
+          "cpuPercent": 1.6
+        },
+        {
+          "at": "2026-10-08T17:08:35.840Z",
+          "rssMb": 912.95703125,
+          "cpuSeconds": 6.421875,
+          "cpuPercent": 0.9
+        },
+        {
+          "at": "2026-10-08T17:08:41.304Z",
+          "rssMb": 942.08984375,
+          "cpuSeconds": 7.28125,
+          "cpuPercent": 15.7
+        },
+        {
+          "at": "2026-10-08T17:08:45.906Z",
+          "rssMb": 942.23046875,
+          "cpuSeconds": 7.6875,
+          "cpuPercent": 8.8
+        },
+        {
+          "at": "2026-10-08T17:08:50.884Z",
+          "rssMb": 942.1796875,
+          "cpuSeconds": 8.03125,
+          "cpuPercent": 6.9
+        },
+        {
+          "at": "2026-10-08T17:08:55.842Z",
+          "rssMb": 942.2734375,
+          "cpuSeconds": 8.3125,
+          "cpuPercent": 5.7
+        },
+        {
+          "at": "2026-10-08T17:09:00.871Z",
+          "rssMb": 942.70703125,
+          "cpuSeconds": 8.734375,
+          "cpuPercent": 8.4
+        },
+        {
+          "at": "2026-10-08T17:09:05.887Z",
+          "rssMb": 942.48046875,
+          "cpuSeconds": 9.09375,
+          "cpuPercent": 7.2
+        },
+        {
+          "at": "2026-10-08T17:09:10.867Z",
+          "rssMb": 942.5234375,
+          "cpuSeconds": 9.578125,
+          "cpuPercent": 9.7
+        },
+        {
+          "at": "2026-10-08T17:09:15.841Z",
+          "rssMb": 980.8359375,
+          "cpuSeconds": 10.359375,
+          "cpuPercent": 15.7
+        },
+        {
+          "at": "2026-10-08T17:09:21.127Z",
+          "rssMb": 988.99609375,
+          "cpuSeconds": 10.640625,
+          "cpuPercent": 5.3
+        },
+        {
+          "at": "2026-10-08T17:09:25.907Z",
+          "rssMb": 989.33984375,
+          "cpuSeconds": 10.71875,
+          "cpuPercent": 1.6
+        },
+        {
+          "at": "2026-10-08T17:09:30.887Z",
+          "rssMb": 989.421875,
+          "cpuSeconds": 10.8125,
+          "cpuPercent": 1.9
+        },
+        {
+          "at": "2026-10-08T17:09:36.334Z",
+          "rssMb": 989.421875,
+          "cpuSeconds": 10.90625,
+          "cpuPercent": 1.7
+        },
+        {
+          "at": "2026-10-08T17:09:41.902Z",
+          "rssMb": 989.4453125,
+          "cpuSeconds": 11.03125,
+          "cpuPercent": 2.2
+        },
+        {
+          "at": "2026-10-08T17:09:45.996Z",
+          "rssMb": 989.4453125,
+          "cpuSeconds": 11.09375,
+          "cpuPercent": 1.5
+        },
+        {
+          "at": "2026-10-08T17:09:50.905Z",
+          "rssMb": 998.01953125,
+          "cpuSeconds": 11.921875,
+          "cpuPercent": 16.9
+        },
+        {
+          "at": "2026-10-08T17:09:56.730Z",
+          "rssMb": 1125.80859375,
+          "cpuSeconds": 13.921875,
+          "cpuPercent": 34.3
+        },
+        {
+          "at": "2026-10-08T17:10:00.979Z",
+          "rssMb": 1244.12109375,
+          "cpuSeconds": 18.046875,
+          "cpuPercent": 97.1
+        },
+        {
+          "at": "2026-10-08T17:10:06.023Z",
+          "rssMb": 1320.1484375,
+          "cpuSeconds": 23.859375,
+          "cpuPercent": 115.2
+        },
+        {
+          "at": "2026-10-08T17:10:10.942Z",
+          "rssMb": 1366.9765625,
+          "cpuSeconds": 26.40625,
+          "cpuPercent": 51.8
+        },
+        {
+          "at": "2026-10-08T17:10:15.946Z",
+          "rssMb": 1423.28125,
+          "cpuSeconds": 27.71875,
+          "cpuPercent": 26.2
+        },
+        {
+          "at": "2026-10-08T17:10:20.934Z",
+          "rssMb": 1405.2734375,
+          "cpuSeconds": 28.9375,
+          "cpuPercent": 24.4
+        },
+        {
+          "at": "2026-10-08T17:10:26.863Z",
+          "rssMb": 1491.15625,
+          "cpuSeconds": 30.53125,
+          "cpuPercent": 26.9
+        },
+        {
+          "at": "2026-10-08T17:10:32.321Z",
+          "rssMb": 1458.4921875,
+          "cpuSeconds": 31.078125,
+          "cpuPercent": 10
+        },
+        {
+          "at": "2026-10-08T17:10:36.284Z",
+          "rssMb": 1419.53125,
+          "cpuSeconds": 31.40625,
+          "cpuPercent": 8.3
+        },
+        {
+          "at": "2026-10-08T17:10:41.028Z",
+          "rssMb": 1481.34765625,
+          "cpuSeconds": 34.40625,
+          "cpuPercent": 63.2
+        },
+        {
+          "at": "2026-10-08T17:10:46.033Z",
+          "rssMb": 1569.078125,
+          "cpuSeconds": 37.296875,
+          "cpuPercent": 57.8
+        },
+        {
+          "at": "2026-10-08T17:10:51.231Z",
+          "rssMb": 1631.03125,
+          "cpuSeconds": 43.734375,
+          "cpuPercent": 123.8
+        },
+        {
+          "at": "2026-10-08T17:10:56.214Z",
+          "rssMb": 1603.83203125,
+          "cpuSeconds": 49.96875,
+          "cpuPercent": 125.1
+        }
+      ],
+      "hidden": [],
+      "result": {
+        "success": false,
+        "editorVersion": "7000.0.0a7",
+        "platform": "Windows 10  (10.0.19045) 64bit",
+        "coreLibrary": "System.Private.CoreLib",
+        "editorPid": 7576,
+        "firstFrameAt": "2026-10-08T17:10:55.7322983Z",
+        "pixelsPerPoint": 1,
+        "visibilityEvidence": [],
+        "allCapturesSucceeded": false,
+        "captures": [
+          {
+            "window": "sceneView",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\sceneView.jpg",
+            "width": 800,
+            "height": 520,
+            "distinctColors": 303,
+            "error": ""
+          },
+          {
+            "window": "gameView",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\gameView.jpg",
+            "width": 813,
+            "height": 915,
+            "distinctColors": 28,
+            "error": ""
+          },
+          {
+            "window": "inspector",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\inspector.jpg",
+            "width": 775,
+            "height": 915,
+            "distinctColors": 71,
+            "error": ""
+          },
+          {
+            "window": "packageManager",
+            "success": false,
+            "path": "",
+            "width": 0,
+            "height": 0,
+            "distinctColors": 0,
+            "error": "InvalidOperationException: window_unavailable: packageManager"
+          },
+          {
+            "window": "customProbe",
+            "success": true,
+            "path": "<owned-project>\\run-0\\frames\\customProbe.jpg",
+            "width": 420,
+            "height": 280,
+            "distinctColors": 108,
+            "error": ""
+          }
+        ],
+        "inputTest": {
+          "attempted": true,
+          "rotationAngle": 13.275,
+          "changed": true,
+          "error": ""
+        }
+      },
+      "errors": [
+        "capture_smoke_failed: all five nonblank captures and changed SceneView required"
+      ],
+      "passed": false,
+      "startupWindows": [
+        {
+          "at": "2026-10-08T17:07:41.268Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:07:46.151Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:07:51.368Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:07:56.100Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:00.964Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:06.457Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:11.432Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:16.255Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:21.131Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:26.096Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:31.097Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:36.077Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:41.770Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:46.232Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:51.168Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:08:56.144Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:01.136Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:06.154Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:11.132Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:16.035Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:21.525Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:26.115Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:31.219Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:36.849Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:42.604Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:46.187Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:51.131Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:09:57.001Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:01.204Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:06.232Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:11.142Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:16.146Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:21.131Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:27.509Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:32.940Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:37.034Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnitySplashWindow",
+              "visible": true,
+              "textCategories": [
+                "project"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:41.256Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnityContainerWndClass",
+              "visible": true,
+              "textCategories": [
+                "alpha",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "project",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:46.260Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "#32770",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "msctls_progress32",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": false,
+              "textCategories": [],
+              "button": "Cancel",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityContainerWndClass",
+              "visible": true,
+              "textCategories": [
+                "alpha",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "project",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:51.648Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "UnityContainerWndClass",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityContainerWndClass",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityContainerWndClass",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityContainerWndClass",
+              "visible": true,
+              "textCategories": [
+                "alpha",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "project",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "UnityGUIViewWndClass",
+              "visible": true,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T17:10:56.584Z",
+          "pid": 7576,
+          "windows": [
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            }
+          ],
+          "rawAccountTextCaptured": false
+        }
+      ],
+      "timeToResultSeconds": 200.901,
+      "timeToFirstFrameSeconds": 200.224,
+      "outcome": {
+        "code": 3,
+        "signal": null
+      },
+      "ownedPreferenceKeysRemaining": 0,
+      "quittingObserved": true,
+      "ownedPidsRemaining": [],
+      "editorBuild": "7000.0.0a7 (581996e1a8f7)",
+      "compileErrors": []
+    }
+  ],
+  "passed": false,
+  "readinessClaim": false,
+  "limits": "Windows interval CPU vs macOS decaying ps CPU; different platform/GPU/SRP/resolution. Mac raw baseline unavailable. No causal CoreCLR-only claim."
+}

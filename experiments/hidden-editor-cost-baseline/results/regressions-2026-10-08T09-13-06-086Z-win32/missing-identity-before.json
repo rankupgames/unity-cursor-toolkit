@@ -1,0 +1,8 @@
+{
+  "observedAt": "2026-10-08T09:41:20.996Z",
+  "scope": "Immediate pre-fix identity validation; same other five hardened behaviors",
+  "sourceSha256": "992f91b79f130685f93901f35a4ba17dc7edc34addb261b01d393b38336f5d88",
+  "exitCode": 1,
+  "stdout": "PASS wrong-project\nPASS no-frames\nPASS no-stop-ack\nPASS missing-metrics\nPASS drains-last-sample\nMeasurement regressions: 5/6 passed\n",
+  "stderr": "FAIL missing-identity: The expression evaluated to a falsy value:\n\n  assert(result.errors.some(item => /target_mismatch/.test(item.message)))\n\n"
+}

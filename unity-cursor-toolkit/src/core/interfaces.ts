@@ -8,6 +8,7 @@
 
 import * as vscode from 'vscode';
 import type { ConnectionInfo, IncomingMessage } from './types';
+import type { RuntimeCapabilities } from './runtimeCapabilities';
 
 export interface IModule {
 	readonly id: string;
@@ -29,6 +30,8 @@ export interface IConnectionManager {
 	readonly onStateChanged: vscode.Event<ConnectionInfo>;
 	readonly onMessage: vscode.Event<IncomingMessage>;
 	readonly info: ConnectionInfo;
+	readonly onRuntimeCapabilitiesChanged: vscode.Event<void>;
+	getRuntimeCapabilities(): RuntimeCapabilities;
 	connect(): Promise<number | null>;
 	disconnect(): void;
 	send(command: string, payload?: Record<string, unknown>): void;
@@ -46,10 +49,15 @@ export interface IMessageHandler {
 	handle(payload: Record<string, unknown>): void;
 }
 
+export interface ToolCallContext {
+	readonly signal?: AbortSignal;
+	readonly reportProgress?: (progress: number, total: number, message?: string) => void;
+}
+
 export interface IToolProvider {
 	readonly toolGroupName: string;
 	getTools(): ToolDefinition[];
-	handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult>;
+	handleToolCall(name: string, args: Record<string, unknown>, context?: ToolCallContext): Promise<ToolResult>;
 }
 
 export interface ToolDefinition {
@@ -76,6 +84,7 @@ export interface ToolResultContent {
 }
 
 export interface ToolResult {
+	_meta?: Record<string, unknown>;
 	content: ToolResultContent[];
 	isError?: boolean;
 }

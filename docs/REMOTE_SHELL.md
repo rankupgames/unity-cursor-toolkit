@@ -1,8 +1,8 @@
 # Remote Unity Shell: Streaming, Editor Windows, And No-Editor Rendering
 
-Status: **experimental**. Every measured result below is historical evidence tied to its recorded date, Editor version, and platform. Nothing here proves Unity 7 or Windows support.
+Status: **experimental**. Every measured result below is historical evidence tied to its recorded date, Editor version, and platform. Exact Windows fixture results below do not establish general Unity 7 or Windows support.
 
-Last reviewed: 2026-08-26.
+Last reviewed: 2026-10-09.
 
 Remaining work and open gates are tracked as GitHub issues: https://github.com/rankupgames/unity-cursor-toolkit/issues
 
@@ -225,6 +225,36 @@ From VS Code or Cursor, use the tasks `Unity Shell: Init Manifest`, `Unity Shell
 
 The local sidecar reads the manifest, opens SSH tunnels, starts the remote PowerShell sidecar, and launches the bundled SwiftUI shell. The Windows sidecar launches a Unity Player build on the configured virtual-display monitor, captures the Unity window with FFmpeg `gdigrab`, serves `/viewport.mjpg`, and accepts `/input`, `/status.json`, and `/stop` on the control port. The real manifest is gitignored because it holds machine-specific hostnames and Windows paths; `remote_workspace/unity-shell.example.json` is the shareable template.
 
+### Remote-shell doctor
+
+Run `npm --prefix unity-cursor-toolkit run remote-shell -- doctor --manifest <path> --format human`
+before launch. Use `--format json` for `success`, `checks`, `sidecarVersion`,
+and `licenseState`. Check identifiers are `manifest`, `localpaths`, `ssh`,
+`remotepaths`, `sidecarversion`, and `license`; each has `state` (`pass` or
+`fail`), `code`, `message`, and `remediation`. Output omits configured host,
+user, path, key, and credential values.
+
+Doctor checks local paths before network access, then uses bounded,
+non-interactive SSH probes. It neither trusts new host keys nor updates known
+keys, opens forwards, reuses control masters, or runs `LocalCommand`.
+Existing alias, authentication, and proxy configuration still select the host.
+Use trusted SSH configuration: hooks such as `Match exec` and `ProxyCommand`
+can still run local commands, as described in the [OpenSSH manual](https://man.openbsd.org/ssh_config).
+The configured remote sidecar must be a trusted toolkit PowerShell script;
+`-VersionOnly` returns its contract version before launch setup. Doctor does
+not bypass the remote PowerShell execution policy. A replacement script is
+outside this read-only guarantee. The remote sidecar need not exist locally
+when an installed shell app is selected.
+
+License health remains unproved: `licenseState` is `unknown`, the license
+check fails with `license_probe_unavailable`, and doctor exits with code 1.
+The official CLI status path can install or replace its licensing client;
+doctor does not invoke it, activate or return a seat, or sign out. Verify the
+license separately with official tools. This limitation prevents an overall
+healthy result even when the other five checks pass. Detected launch manifest
+and process-spawn failures reference the corresponding doctor check identifiers;
+launch still uses its existing asynchronous process behavior.
+
 ### Windows proof runner
 
 ```bash
@@ -291,7 +321,42 @@ Installed-Cursor evidence in `../experiments/installed-cursor-smoke/results/`:
 - `2026-06-10-cursor372-smoke.json` and `2026-06-10-cursor372-proof.json` with screenshot `../experiments/installed-cursor-smoke/screenshots/2026-06-10-cursor372-clean-scene-game.png`: Cursor CLI `3.7.27`, commit `e48ee6102a199492b0c9964699bf011886708ba0`, `arm64`. Scene `Live frame 3`, `1108x720`, `41755` bytes, SHA-256 `ac56fbf826315ffb3681e1ca327f84c9814a238c522fbbfd68f705ff4df08b03`. Game `Live frame 3`, `1279x704`, `32166` bytes, SHA-256 `e93413f552633f96726fb27f0bc15bceace0f0ab2141825b98172c19ba96f80c`. This is the strongest macOS proof for the product goal.
 - Failed attempts kept as evidence: `2026-06-10-live-rerun-smoke.json` (`cursor --version` returned no stdout, so the runner failed before install), and `2026-06-10-live-rerun2-smoke.json` with `2026-06-10-live-rerun2-proof.json` (Cursor `3.7.21` opened the workspace, then the proof timed out after `180000ms` with both panels in `connection.state:"connecting"` and no port). The fix pinned `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` for isolated proof workspaces and retried auto-start when the webview signaled `ready`.
 
-Open E2 work: an opt-in cold run needs operator approval to wipe `CursorUnityTool/Library`; sustained multi-window soak is unmeasured; the Windows hidden `GrabPixels` spike must record whether PowerShell/user32 hiding changes repaint or input behavior.
+Open E2 work: an opt-in cold run needs operator approval to wipe `CursorUnityTool/Library`; sustained multi-window soak is unmeasured; the exact Windows hidden capture/input replay is recorded below.
+
+### E2a -- Windows version matrix (2026-10-08)
+
+The standalone spike calls the production capture and input helpers by reflection. It records the exact Editor version, revision, core library, five JPEGs, and Scene View rotation change. Missing methods fail with `capture_api_missing` or `input_api_missing` and include available signatures. The disposable fixture uses installed URP, a red cube and green sphere, isolated preference keys, and one explicit owned bridge port. This configuration does not prove default-install behavior.
+
+| Exact Editor | Runtime / platform | Five surfaces | Scene drag | Exit |
+| --- | --- | --- | ---: | --- |
+| `6000.3.9f1 (7a9955a4f2fa)` | `mscorlib`, Windows x64 | Passed; red/green Game content checked | `13.275` degrees | Normal `0`; no owned processes or preference keys remained |
+| `7000.0.0a7 (581996e1a8f7)` | CoreCLR / Windows x64 | Passed visible and in all three hidden runs | `13.275` degrees | All four accepted processes exited normally with code `0` |
+
+The accepted Unity 6.3 result is [the dated Windows observation](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-16-28-266Z-6000.3.9f1-win32/observation.json). Scene, Game, Inspector, Package Manager, and custom frames measured `800x520`, `813x915`, `775x915`, `1066x737`, and `420x280`, with `pixelsPerPoint=1`. Earlier cyan shader-placeholder frames were rejected as semantic evidence. The final probe waits for shader compilation and requires red and green Game pixels. Failed attempts remain in the result directory.
+
+The [first Unity 7 GUI attempt](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-20-29-542Z-7000.0.0a7-win32/observation.json) timed out after 300s, followed by a bounded normal-stop attempt. The owned Editor was then terminated under the disposable-proof exception; no user Editor or shared licensing process was changed. Protocol `505` preceded client startup and license assignment, so it does not establish the cause. Earlier Unity 7 URP batch-mode smoke passed; it does not prove GUI or hidden startup. A [bounded 60s read-only diagnostic](../experiments/hidden-editor-cost-baseline/results/2026-10-08T09-45-50-963Z-7000.0.0a7-win32/startup-diagnosis.json) then observed a visible `EditorSoftwareTermsWindowClass` dialog with terms/Unity text categories in every sample. No button matched the safe standard-label allowlist. No consent was submitted; the failed owned run required forced cleanup after the normal-stop wait. The operator later accepted the terms directly. Those earlier failures remain historical evidence.
+
+The [accepted CoreCLR observation](../experiments/hidden-editor-cost-baseline/results/2026-10-08T17-21-13-343Z-7000.0.0a7-win32/observation.json) now passes the visible functional run and three warm hidden runs. The [field-by-field comparison](../experiments/hidden-editor-cost-baseline/results/2026-10-08T17-21-13-343Z-7000.0.0a7-win32/comparison.json) retains every run. An initial post-consent run failed because the fixture cached Package Manager before Unity's delayed window creation; a second cost attempt refused Unity's native Player Connection listener on 55504. Both failed observations are retained. The fixture now resolves the window after its existing wait, and the sampler still verifies the selected toolkit listener PID, project, version, and runtime. No production capture change was needed.
+
+| Cost field | Historical macOS 26.5 / Unity 6.3 | Windows Unity 7 run 1 | Run 2 | Run 3 |
+| --- | ---: | ---: | ---: | ---: |
+| Launch to result (s) | 28.478 / 20.061 / 22.173; median 22.173 | 17.552 | 15.796 | 18.524 |
+| Launch to first frame (s) | Unavailable | 17.081 | 15.440 | 18.012 |
+| Sampled startup peak RSS (MiB) | 918.2 / 1168.6 / 667.3 | 1702.47 | 1715.56 | 1663.25 |
+| Startup peak CPU (%) | 117.7 / 266.2 / 215.1 | 194.7 | 176.4 | 187.2 |
+| Idle RSS average / maximum (MiB) | 1077.5 / 1199.7 | 1701.23 / 1706.6 | 1733.93 / 1740.2 | 1699.80 / 1699.9 |
+| Streaming RSS average / maximum (MiB) | 1294.0 / 1882.0 | 1765.46 / 1790.1 | 1715.78 / 1724.9 | 1703.28 / 1705.8 |
+| Idle / streaming CPU average (%) | 191.0 / 242.2 | 133.25 / 150.15 | 136.10 / 128.50 | 133.25 / 139.06 |
+| Frames / full-window FPS | 717 / 11.95 | 709 / 11.80 | 716 / 11.92 | 719 / 11.97 |
+| Measured stream window (s) | Nominal 60 | 60.073181 | 60.075572 | 60.079377 |
+
+The Windows launch-to-result median is 17.552s, 4.621s below the historical median. Average idle RSS is 622.30 to 656.43MiB higher; average streaming RSS is 409.28 to 471.46MiB higher. Sampled startup peak RSS is also higher, while streaming maxima are lower than the historical 1882MiB maximum. These observed memory regressions are retained without pooling runs. FPS deltas are -0.15, -0.03, and +0.02. No historical first-frame timestamp is available.
+
+Windows CPU uses interval process CPU-seconds divided by wall time in one-core units; values can exceed 100%. macOS `ps` reports a decaying average covering up to a minute, according to [Apple primary source](https://raw.githubusercontent.com/apple-oss-distributions/adv_cmds/main/ps/ps.1). A CPU delta would be misleading. Historical text labels RSS as MB; this comparison follows the runner's KiB/1024 convention (MiB). Raw macOS artifacts are unavailable. Host, GPU, graphics API, SRP, DPI, resolution, and cache state differ: the new stream is 554x360 versus the historical 1600x1040. These are cross-host observations, with no causal CoreCLR performance claim.
+
+All five JPEG surfaces and Scene View input passed in each accepted run; the Package Manager image shows its real chrome and a refreshing-list state, not a completed inventory. Eleven in-Editor visibility checks per warm run and 17 external visibility samples per run confirmed zero visible owned windows. Stream stop acknowledgement, session absence, normal Editor exit, quitting marker, empty owned-process checks, and zero owned preference keys all passed. The disposable fixture was removed. The first import took 128.276s to first frame and 129.221s to result and is excluded from warm timing.
+
+Repeat with `--fixture --unity <Editor.exe> --version <exact-version> --revision <exact-revision> --template <bundled-URP-template.tgz> --hide --warm-runs 3`. The unmeasured first launch warms the fixture; subsequent launches use 15s idle and 60s Scene streaming at 12fps, quality 55. Status and start remain separate requests: use the owned Editor exclusively during measurement. Cleanup targets only the measured session ID. This exact fixture proof does not establish default-install, multi-window soak, or general Unity 7 support.
 
 ### E3 -- Player Viewport Service
 
@@ -305,7 +370,32 @@ Perf at `--view game --width 1280 --height 720 --fps 30 --quality 72 --idle-seco
 - Stream RSS average `199.5 MB`, max `287.5 MB`; stream CPU average `40.3%`, max `49.7%`.
 - Errors: none. No `55501` listener or Viewport Service process remained.
 
-Verdict: the macOS player lane sustains near-target `1280x720@30` in-band streaming with low memory compared with the hidden editor lane. Cold port-ready startup missed the aspirational under-5s target, but the first frame lands quickly once the stream starts. It is not real editor UI and claims no SceneView or Inspector parity. Windows build, run, probe, and perf remain pending.
+Verdict: the macOS player lane sustains near-target `1280x720@30` in-band streaming with low memory compared with the hidden editor lane. Cold port-ready startup missed the aspirational under-5s target, but the first frame lands quickly once the stream starts. It is not real editor UI and claims no SceneView or Inspector parity. The later Windows proof is recorded below.
+
+### E3a -- CoreCLR Windows player proof (2026-10-08)
+
+The [player proof](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/comparison.json) passed on exact Unity `7000.0.0a7 (581996e1a8f7)`, Windows x64, `System.Private.CoreLib`, and URP `17.7.0`. The disposable fixture used the unchanged production builder/server and a fixture-only identity and normal-stop helper. The build explicitly selected CoreCLR and `BuildOptions.None`.
+
+The replay used the documented `game 1280x720@30`, quality `72`, idle `5s`, and stream `30s`. The [raw measurement](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/2026-10-08-7000.0.0a7-win32-game-1280x720-30fps.json) records:
+
+| Field | Documented macOS baseline | Windows CoreCLR observation |
+| --- | ---: | ---: |
+| Port-ready startup | 6572ms | 3088ms |
+| First frame from launch | 11692ms | 10011ms |
+| First frame after stream start | 87ms | 321ms |
+| Frames | 866 | 889 |
+| First-to-last effective FPS | 28.89 | 29.92 |
+| Frame data bytes | 84328 | 85400 |
+| Idle RSS average / maximum | 272.5 / 284.5 MB | 398.9 / 399.0 MiB |
+| Stream RSS average / maximum | 199.5 / 287.5 MB | 488.8 / 503.3 MiB |
+| Idle CPU average / maximum | 25.5% / 64.0% | 1.2% / 3.09% |
+| Stream CPU average / maximum | 40.3% / 49.7% | 52.1% / 115.57% |
+
+The full stream window was `30.020783s`, or `29.61fps`; frames during sample drain and stop acknowledgment were excluded. PID/runtime checks added `836ms` after port readiness. This fresh process followed a functional launch of the same build, whose startup was `13828ms`; OS/GPU caches were uncontrolled. Historical raw JSON is absent, so the comparison uses document aggregates and retains their RSS unit label. Windows interval CPU-seconds/wall-time in one-core units differs from the historical macOS `ps` decaying average. Platform, GPU, graphics API, URP and cache differences prevent a cold-start or CLR performance claim. The requested best-effort hide did not verify sustained hidden visibility.
+
+The [Scene](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/probe-frames/scene.jpg), [Game](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/probe-frames/game.jpg), and [measured frame](../experiments/player-viewport-service/results/2026-10-08T10-43-11-217Z-7000.0.0a7-win32/game-first-frame.jpg) show a shaded cube, grid and horizon. Runtime `sceneDrag` was acknowledged; the byte-identical first frames predate input and do not prove a visual response. The build Editor and both players exited normally with code `0`; owned process/descendant and listener checks were empty, and both disposable projects were removed.
+
+The [failed first build](../experiments/player-viewport-service/results/2026-10-08T10-40-11-016Z-7000.0.0a7-win32/build.json) records a fixture-only assembly reference error; the corrected helper calls the existing Editor build method by reflection. [Nine regressions](../experiments/player-viewport-service/results/regressions-2026-10-08T10-22-31-493Z-win32/final-after.json) passed with fail-before evidence retained. Observation hashes remain unchanged; `comparison.json` records the subsequent redaction-only `ContinuationId` addition and its original/final hashes. This proof does not establish general Unity 7 readiness.
 
 ### E4 -- UaaL desktop embed desk check
 

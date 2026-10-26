@@ -1,0 +1,21 @@
+{
+  "packageVersion": "2.20.0-pre.1",
+  "minimumEditorVersion": "6000.0.60f1",
+  "tools": [
+    {
+      "name": "Unity_ReadConsole",
+      "category": "mutating",
+      "actions": {
+        "Get": "read-only",
+        "Clear": "mutating"
+      },
+      "reason": "Pinned ReadConsole.cs handles both console reads and clearing."
+    },
+    {
+      "name": "Unity_RunCommand",
+      "category": "policy-escape",
+      "reason": "Pinned RunCommand.cs compiles and executes arbitrary C#; dryRun is not a supported safety guarantee."
+    }
+  ],
+  "unknown": "deny"
+}

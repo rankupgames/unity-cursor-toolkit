@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-08T09:57:12.953Z",
+  "sourceSha256": "57979e31b4f56a7e371a42573d5b9504494225fa85026b9488a00dd358a577d7",
+  "total": 9,
+  "passed": 6,
+  "failed": [
+    "foreign-same-view: exited0 and replaced foreign stream",
+    "foreign-cleanup: same-view OR stop removed foreign late session",
+    "malformed-status: success-only status accepted as absence"
+  ],
+  "scope": "Current sampler before owner fix; real TCP fixture models Start/Stop ORmatching"
+}

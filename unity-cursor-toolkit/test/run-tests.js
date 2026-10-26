@@ -368,6 +368,298 @@ const outDir = path.join(__dirname, '..', 'out');
 // core/types.ts
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+function testRuntimeCapabilities() {
+	const { parseRuntimeCapabilities, getHotReloadMode, getDebuggerType, getReloadSemantics, RuntimeCapabilityError } = require(path.join(outDir, 'core/runtimeCapabilities'));
+	const fixtures = [
+		[{ unityVersion: '2019.4.40f1' }, 'legacy', 'il-patch', 'domain-reload', 'unityCursorToolkit.debug'],
+		[{ unityVersion: '7000.0.0a7', runtime: { isCoreCLR: false, hasDomainReload: true } }, 'handshake', 'il-patch', 'domain-reload', 'unityCursorToolkit.debug'],
+		[{ unityVersion: '6000.3.9f1', runtime: { isCoreCLR: true, hasDomainReload: false } }, 'handshake', 'unity-reload', 'explicit-cleanup', null]
+	];
+	test('runtime handshake selects reload and debug behavior independently of version strings', () => {
+		for (const [payload, source, reload, semantics, debuggerType] of fixtures) {
+			const runtime = parseRuntimeCapabilities(payload);
+			assert.strictEqual(runtime.source, source);
+			assert.strictEqual(getHotReloadMode(runtime), reload);
+			assert.strictEqual(getReloadSemantics(runtime), semantics);
+			if (debuggerType) assert.strictEqual(getDebuggerType(runtime), debuggerType);
+			else assert.throws(() => getDebuggerType(runtime), error => error instanceof RuntimeCapabilityError && error.capability === 'monoDebugger');
+		}
+		assert.deepStrictEqual(parseRuntimeCapabilities({}), { isCoreCLR: false, hasDomainReload: true, source: 'legacy' });
+	});
+	test('present invalid runtime capabilities and unknown runtimes cannot select legacy features', () => {
+		for (const runtime of [null, undefined, [], {}, { isCoreCLR: false }, { isCoreCLR: 'false', hasDomainReload: true }, { isCoreCLR: true, hasDomainReload: true }]) {
+			assert.throws(() => parseRuntimeCapabilities({ runtime }), error => error instanceof RuntimeCapabilityError && error.code === 'capability_unavailable');
+		}
+		const unknown = parseRuntimeCapabilities({ runtime: { isCoreCLR: false, hasDomainReload: false } });
+		for (const select of [getHotReloadMode, getReloadSemantics, getDebuggerType]) {
+			assert.throws(() => select(unknown), error => error instanceof RuntimeCapabilityError);
+		}
+	});
+	test('connection caches runtime capabilities and logs once until disconnect', () => {
+		const { ConnectionManager } = require(path.join(outDir, 'core/connection'));
+		const conn = new ConnectionManager();
+		const oldInfo = console.info;
+		const logs = [];
+		console.info = (...args) => logs.push(args);
+		try {
+			assert.throws(() => conn.getRuntimeCapabilities(), RuntimeCapabilityError);
+			conn.acceptProjectInfo(fixtures[0][0]);
+			conn.acceptProjectInfo(fixtures[2][0]);
+			assert.strictEqual(conn.getRuntimeCapabilities().source, 'legacy');
+			assert.strictEqual(logs.length, 1);
+			conn.disconnect();
+			assert.throws(() => conn.getRuntimeCapabilities(), RuntimeCapabilityError);
+			conn.acceptProjectInfo(fixtures[2][0]);
+			assert.strictEqual(conn.getRuntimeCapabilities().isCoreCLR, true);
+			assert.strictEqual(logs.length, 2);
+		} finally { console.info = oldInfo; conn.dispose(); }
+	});
+}
+
+async function testRuntimeConsumers() {
+	const { ConnectionManager } = require(path.join(outDir, 'core/connection'));
+	const { ConnectionState } = require(path.join(outDir, 'core/types'));
+	const { HotReloadModule } = require(path.join(outDir, 'hot-reload/index'));
+	const { UnityDebugAdapterDescriptorFactory } = require(path.join(outDir, 'debug/debugAdapter'));
+	const { RuntimeCapabilityError } = require(path.join(outDir, 'core/runtimeCapabilities'));
+	await testAsync('hot reload waits for capabilities, preserves Mono, and disables IL refresh for CoreCLR or invalid payloads', async () => {
+		const conn = new ConnectionManager();
+		const module = new HotReloadModule();
+		_allCreatedWatchers = [];
+		await module.activate({ connectionManager: conn, registerStatusBarContributor() {} });
+		const factory = new UnityDebugAdapterDescriptorFactory(() => conn.getRuntimeCapabilities());
+		try {
+			conn.setState(ConnectionState.Connected);
+			assert.strictEqual(_allCreatedWatchers.length, 0);
+			conn.acceptProjectInfo({});
+			assert.strictEqual(_allCreatedWatchers.length, 1);
+			assert.ok(factory.createDebugAdapterDescriptor({ configuration: {} }, undefined) instanceof vscode.DebugAdapterInlineImplementation);
+			conn.disconnect();
+			conn.setState(ConnectionState.Connected);
+			conn.acceptProjectInfo({ runtime: { isCoreCLR: true, hasDomainReload: false } });
+			assert.strictEqual(_allCreatedWatchers.length, 1);
+			assert.throws(() => factory.createDebugAdapterDescriptor({ configuration: {} }, undefined), RuntimeCapabilityError);
+			conn.disconnect();
+			conn.setState(ConnectionState.Connected);
+			conn.acceptProjectInfo({ runtime: {} });
+			assert.strictEqual(_allCreatedWatchers.length, 1);
+			assert.throws(() => conn.getRuntimeCapabilities(), RuntimeCapabilityError);
+		} finally { await module.deactivate(); conn.dispose(); }
+	});
+	await testAsync('typed IL refusal is surfaced without a refresh fallback', async () => {
+		const conn = new ConnectionManager();
+		const module = new HotReloadModule();
+		const oldWarning = vscode.window.showWarningMessage;
+		const messages = [];
+		const sent = [];
+		vscode.window.showWarningMessage = async message => messages.push(message);
+		conn.send = (...args) => sent.push(args);
+		await module.activate({ connectionManager: conn, registerStatusBarContributor() {} });
+		try {
+			conn._onMessage.fire({ command: 'compilationResult', payload: { success: false, errorCode: 'capability_unavailable', capability: 'ilPatching', error: 'IL patching is unavailable.' } });
+			assert.deepStrictEqual(messages, ['capability_unavailable: IL patching is unavailable.']);
+			assert.deepStrictEqual(sent, []);
+		} finally { await module.deactivate(); conn.dispose(); vscode.window.showWarningMessage = oldWarning; }
+	});
+	await testAsync('debug capability callback reports launch configuration filesystem failures without unhandled rejections', async () => {
+		const { DebugModule } = require(path.join(outDir, 'debug/index'));
+		const project = require(path.join(outDir, 'project/projectHandler'));
+		const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-debug-config-error-'));
+		const conn = new ConnectionManager();
+		const module = new DebugModule();
+		const oldProjectPath = project.getLinkedProjectPath;
+		const oldMkdir = fs.promises.mkdir;
+		const oldWrite = fs.promises.writeFile;
+		const oldError = vscode.window.showErrorMessage;
+		const messages = [];
+		const unhandled = [];
+		const captureRejection = error => unhandled.push(error);
+		project.getLinkedProjectPath = () => tmpDir;
+		vscode.window.showErrorMessage = async message => messages.push(message);
+		process.on('unhandledRejection', captureRejection);
+		try {
+			await module.activate({ connectionManager: conn, registerCommand() {}, registerStatusBarContributor() {} });
+			for (const stage of ['mkdir', 'writeFile']) {
+				const error = Object.assign(new Error(stage + ' denied'), { code: 'EACCES' });
+				const failureStarted = createDeferred();
+				fs.promises.mkdir = stage === 'mkdir' ? async () => { failureStarted.resolve(); throw error; } : oldMkdir;
+				fs.promises.writeFile = stage === 'writeFile' ? async () => { failureStarted.resolve(); throw error; } : oldWrite;
+				conn.disconnect();
+				conn.acceptProjectInfo({});
+				await failureStarted.promise;
+				await new Promise(resolve => setImmediate(resolve));
+				assert.ok(messages.at(-1)?.includes(error.message), 'The filesystem failure must be reported');
+				assert.ok(messages.at(-1).includes(tmpDir));
+				assert.ok(messages.at(-1).includes('.vscode/launch.json'));
+				assert.deepStrictEqual(unhandled, []);
+			}
+			assert.strictEqual(messages.length, 2);
+		} finally {
+			await module.deactivate();
+			conn.dispose();
+			project.getLinkedProjectPath = oldProjectPath;
+			fs.promises.mkdir = oldMkdir;
+			fs.promises.writeFile = oldWrite;
+			vscode.window.showErrorMessage = oldError;
+			process.removeListener('unhandledRejection', captureRejection);
+			fs.rmSync(tmpDir, { recursive: true, force: true });
+		}
+	});
+}
+
+function testCapabilityMatrix() {
+	const { advertisedCapabilities, generateMatrix, renderMarkdown, validateCompatibilityReport } = require('../scripts/generate-capability-matrix');
+	const input = { bands: ['old', 'new'], ci: { include: [] }, observations: [{ capability: 'isCoreCLR', band: 'new', state: 'verified', evidence: 'fixture run' }] };
+	test('matrix rows track advertised capability additions and removals with untested defaults', () => {
+		const source = String.raw`sb.Append("\"runtime\":{");
+			sb.Append("\"isCoreCLR\":").Append("false,");
+			sb.Append("\"newCapability\":").Append("true").Append("},");`;
+		const names = advertisedCapabilities(source);
+		assert.deepStrictEqual(names, ['isCoreCLR', 'newCapability']);
+		const matrix = generateMatrix(names, input);
+		assert.strictEqual(matrix.rows[0].cells.new.state, 'verified');
+		assert.strictEqual(matrix.rows[0].cells.old.state, 'untested');
+		assert.deepStrictEqual(matrix.rows[1].cells, { old: { state: 'untested' }, new: { state: 'untested' } });
+		assert.deepStrictEqual(generateMatrix(['newCapability'], input).rows.map(row => row.capability), ['newCapability']);
+		assert.strictEqual(JSON.stringify(matrix), JSON.stringify(generateMatrix([...names].reverse(), input)));
+		assert.strictEqual(renderMarkdown(matrix), renderMarkdown(generateMatrix(names, input)));
+		assert.throws(() => generateMatrix(names, { ...input, observations: [{ capability: 'isCoreCLR', band: 'new', state: 'verified' }] }));
+	});
+	test('committed matrix matches the current project_info payload and generation is deterministic', () => {
+		const root = path.resolve(__dirname, '../..');
+		const source = fs.readFileSync(path.join(root, 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs'), 'utf8');
+		const config = JSON.parse(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix-input.json'), 'utf8'));
+		const matrix = generateMatrix(advertisedCapabilities(source), config);
+		assert.strictEqual(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix.json'), 'utf8').replace(/\r\n/g, '\n'), JSON.stringify(matrix, null, 2) + '\n');
+		assert.strictEqual(fs.readFileSync(path.join(root, 'docs/CAPABILITY_MATRIX.md'), 'utf8').replace(/\r\n/g, '\n'), renderMarkdown(matrix));
+	});
+	test('local compatibility import requires exact identity, all checks, runtime and normal owned exits', () => {
+		const config = { bands: ['Mono', 'Core'], ci: { include: [
+			{ id: 'mono-windows', band: 'Mono', editorVersion: '6000.3.9f1', platform: 'Windows' },
+			{ id: 'core-windows', band: 'Core', editorVersion: '7000.0.0a7', platform: 'Windows' }
+		] }, observations: [] };
+		const valid = {
+			observedAt: '2026-10-08T00:00:00.000Z', candidateId: 'mono-windows', band: 'Mono', editorVersion: '6000.3.9f1', platform: 'Windows', architecture: 'x64', pid: 123,
+			requestedEditorVersion: '6000.3.9f1', observedEditorVersion: '6000.3.9f1', launched: true, listenerOwnerConfirmed: true, ownedPreferencesAbsent: true, ownedPreferenceQueryConfirmed: true,
+			passed: true, outcome: 'passed', identityConfirmed: true, normalExitConfirmed: true, remainingOwnedPids: [],
+			editorExit: { code: 0, signal: null, spawnError: false }, mcpExit: { code: 0, signal: null, spawnError: false },
+			checks: ['activation', 'handshake', 'console', 'mcp'].map(name => ({ name, status: 'pass' })),
+			runtime: { isCoreCLR: false, hasDomainReload: true },
+			activation: { assembly: 'UnityCursorToolkit.Editor', assemblyMvid: '00000000-0000-0000-0000-000000000001', handlerCount: 2, automaticListenerObserved: false, runtime: { isCoreCLR: false, hasDomainReload: true } },
+			isolation: { disposableProject: true, defaultInstallActivationProven: false, handlerSource: { originalSha256: 'a'.repeat(64), fixtureSha256: 'b'.repeat(64), delta: 'two preference key literals only' } }
+		};
+		const matrix = generateMatrix(['isCoreCLR', 'hasDomainReload'], config);
+		assert.strictEqual(validateCompatibilityReport(valid, matrix).id, 'mono-windows');
+		for (const mutate of [
+			r => { r.editorVersion = '6000.3.25f1'; }, r => { r.platform = 'macOS'; }, r => { r.band = 'Core'; },
+			r => { r.runtime.isCoreCLR = 'false'; }, r => { delete r.runtime.hasDomainReload; },
+			r => { r.activation.runtime.isCoreCLR = true; }, r => { r.checks.pop(); },
+			r => { r.checks[3] = r.checks[2]; }, r => { r.checks[0].status = true; }, r => { r.passed = 'true'; },
+			r => { r.listenerOwnerConfirmed = 'true'; }, r => { delete r.ownedPreferencesAbsent; }, r => { delete r.ownedPreferenceQueryConfirmed; }, r => { r.observedEditorVersion = ''; },
+			r => { r.identityConfirmed = 1; }, r => { r.normalExitConfirmed = 'true'; }, r => { r.editorExit.signal = 'SIGKILL'; },
+			r => { r.mcpExit.code = 1; }, r => { r.forcedEditorStop = true; }, r => { r.forcedMcpStop = 0; }, r => { r.error = null; }, r => { r.cleanupError = null; }, r => { r.remainingOwnedPids = [123]; },
+			r => { r.isolation.defaultInstallActivationProven = true; }, r => { r.isolation.handlerSource.fixtureSha256 = r.isolation.handlerSource.originalSha256; }
+		]) {
+			const invalid = JSON.parse(JSON.stringify(valid)); mutate(invalid);
+			assert.throws(() => validateCompatibilityReport(invalid, matrix));
+		}
+		const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-compatibility-import-test-'));
+		const script = path.join(temp, 'unity-cursor-toolkit/scripts/generate-capability-matrix.js');
+		const configFile = path.join(temp, 'unity-cursor-toolkit/capability-matrix-input.json');
+		const sourceFile = path.join(temp, 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs');
+		const reportFile = path.join(temp, 'report.json');
+		try {
+			fs.mkdirSync(path.dirname(script), { recursive: true });
+			fs.mkdirSync(path.dirname(sourceFile), { recursive: true });
+			fs.mkdirSync(path.join(temp, 'docs'));
+			fs.copyFileSync(path.resolve(__dirname, '../scripts/generate-capability-matrix.js'), script);
+			fs.copyFileSync(path.resolve(__dirname, '../../Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs'), sourceFile);
+			const runImports = reports => {
+				fs.writeFileSync(configFile, JSON.stringify(config));
+				for (const report of reports) {
+					fs.writeFileSync(reportFile, JSON.stringify(report));
+					const result = require('child_process').spawnSync(process.execPath, [script, '--import-results', reportFile], { encoding: 'utf8', timeout: 10000 });
+					assert.strictEqual(result.status, 0, result.stderr);
+				}
+				return JSON.parse(fs.readFileSync(configFile, 'utf8'));
+			};
+			const imported = runImports([valid]);
+			assert.strictEqual(config.observations.length, 0, 'import never mutates its caller input');
+			assert.strictEqual(generateMatrix(['isCoreCLR'], imported).rows[0].cells.Core.state, 'untested');
+			assert.ok(imported.observations.every(o => o.evidence.includes('default-install activation') && o.evidence.includes('6000.3.9f1')));
+			assert.deepStrictEqual(runImports([valid, valid]), imported, 'repeat CLI imports are idempotent');
+			const second = JSON.parse(JSON.stringify(valid)); second.observedAt = '2026-10-09T00:00:00.000Z';
+			assert.deepStrictEqual(runImports([valid, second]), runImports([second, valid]));
+			const before = fs.readFileSync(configFile, 'utf8');
+			const invalid = JSON.parse(JSON.stringify(valid)); invalid.checks.pop();
+			fs.writeFileSync(reportFile, JSON.stringify(invalid));
+			assert.strictEqual(require('child_process').spawnSync(process.execPath, [script, '--import-results', reportFile], { encoding: 'utf8', timeout: 10000 }).status, 1);
+			assert.strictEqual(fs.readFileSync(configFile, 'utf8'), before, 'refused import must not write input');
+		} finally { fs.rmSync(temp, { recursive: true, force: true }); }
+
+	});
+	test('compatibility preflight emits an untested machine report without launching a missing or unknown candidate', () => {
+		const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-compatibility-preflight-test-'));
+		try {
+			const config = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../capability-matrix.json'), 'utf8'));
+			const platform = process.platform === 'win32' ? 'Windows' : process.platform === 'darwin' ? 'macOS' : 'Linux';
+			const candidate = config.ci.include.find(c => c.platform === platform);
+			for (const id of ['not-configured', ...(candidate ? [candidate.id] : [])]) {
+				const output = path.join(temp, id + '.json');
+				const result = require('child_process').spawnSync(process.execPath, [path.resolve(__dirname, '../scripts/run-unity-compatibility.js'), '--candidate', id,
+					'--unity', path.join(temp, 'missing-editor'), '--output', output], { encoding: 'utf8', timeout: 15000 });
+				assert.strictEqual(result.status, 1);
+				const report = JSON.parse(fs.readFileSync(output, 'utf8'));
+				assert.strictEqual(report.launched, false);
+				assert.strictEqual(report.observedEditorVersion, '');
+				assert.strictEqual(report.outcome, 'untested');
+				assert.strictEqual(report.passed, false);
+				assert.ok(report.checks.every(c => c.status === 'untested'));
+				assert.strictEqual(report.error.code, id === 'not-configured' ? 'configured_candidate_required' : process.platform === 'win32' ? 'installed_editor_required' : 'owned_process_enumeration_unavailable');
+			}
+		} finally { fs.rmSync(temp, { recursive: true, force: true }); }
+	});
+
+	if (process.platform === 'win32') test('compatibility cleanup CLI detects a real owned registry sentinel before confirming absence', () => {
+		const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-compatibility-cleanup-test-'));
+		const prefix = 'UCT_Compatibility_' + require('crypto').randomUUID();
+		const keyName = prefix + '_Sentinel';
+		const reportFile = path.join(temp, 'historical.json'), output = path.join(temp, 'reassessment.json');
+		const closed = require('child_process').spawnSync(process.execPath, ['-e', ''], { timeout: 10000 });
+		assert.strictEqual(closed.status, 0);
+		fs.writeFileSync(reportFile, JSON.stringify({ observedAt: '2026-10-08T00:00:00.000Z', editorVersion: '6000.3.9f1', platform: 'Windows', pid: closed.pid, isolation: { disposableProject: true } }));
+		const registry = remove => {
+			const key = 'HKCU:\\Software\\Unity Technologies\\Unity Editor 5.x';
+			const script = '$ErrorActionPreference="Stop";$key=$env:UCT_COMPAT_TEST_REGISTRY;' + (remove
+				? 'Remove-ItemProperty -LiteralPath $key -Name $env:UCT_COMPAT_TEST_KEY -ErrorAction Stop'
+				: 'New-ItemProperty -LiteralPath $key -Name $env:UCT_COMPAT_TEST_KEY -Value "owned regression sentinel" -PropertyType String -Force -ErrorAction Stop | Out-Null');
+			const r = require('child_process').spawnSync('powershell.exe', ['-NoProfile', '-Command', script], { env: { ...process.env, UCT_COMPAT_TEST_REGISTRY: key, UCT_COMPAT_TEST_KEY: keyName }, encoding: 'utf8', timeout: 10000, windowsHide: true });
+			assert.strictEqual(r.status, 0, r.stderr);
+		};
+		let created = false;
+		try {
+			registry(false); created = true;
+			const args = [path.resolve(__dirname, '../scripts/run-unity-compatibility.js'), '--verify-cleanup', reportFile, '--project', temp, '--preference-prefix', prefix, '--output', output];
+			const blocked = require('child_process').spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 20000 });
+			assert.strictEqual(blocked.status, 1);
+			const refusal = JSON.parse(fs.readFileSync(output, 'utf8'));
+			assert.strictEqual(refusal.error.code, 'owned_preferences_remain');
+			assert.strictEqual(refusal.remainingPreferenceCount, 1);
+			assert.strictEqual(refusal.passed, false);
+			registry(true); created = false;
+			const confirmed = require('child_process').spawnSync(process.execPath, args, { encoding: 'utf8', timeout: 20000 });
+			assert.strictEqual(confirmed.status, 0, confirmed.stderr);
+			const result = JSON.parse(fs.readFileSync(output, 'utf8'));
+			assert.strictEqual(result.passed, true);
+			assert.strictEqual(result.remainingPreferenceCount, 0);
+			assert.deepStrictEqual(result.remainingOwnedPids, []);
+			assert.strictEqual(result.historicalOverallResultUnchanged, true);
+			assert.strictEqual(result.mustRerunForMatrixImport, true);
+		} finally { if (created) registry(true); fs.rmSync(temp, { recursive: true, force: true }); }
+	});
+
+}
+
 function testTypes() {
 	console.log('\n── core/types.ts ──');
 	const { safeJsonParse } = require(path.join(outDir, 'core', 'types'));
@@ -2435,9 +2727,9 @@ async function testToolRouter() {
 		const defs = router.getToolDefinitions();
 		assert.strictEqual(defs.length, 3);
 		const names = defs.map(d => d.name);
-		assert.ok(names.includes('tool_a'));
-		assert.ok(names.includes('tool_b'));
-		assert.ok(names.includes('tool_c'));
+		assert.ok(names.includes('toolkit.tool_a'));
+		assert.ok(names.includes('toolkit.tool_b'));
+		assert.ok(names.includes('toolkit.tool_c'));
 	});
 
 	await testAsync('routeToolCall dispatches to correct provider (A)', async () => {
@@ -2487,13 +2779,13 @@ async function testUnityMcpTools() {
 	const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
 	const { isDestructiveToolCall, isMutatingToolCall } = require(path.join(outDir, 'mcp', 'toolMetadata'));
 
-	test('getTools returns all 15 tool definitions with correct names', () => {
+	test('getTools returns all tool definitions with correct names', () => {
 		const tools = new UnityMcpTools({ send() {}, request: async () => null });
 		const defs = tools.getTools();
-		assert.strictEqual(defs.length, 15);
+		assert.strictEqual(defs.length, 16);
 		const names = defs.map(d => d.name).sort();
 		assert.deepStrictEqual(names, [
-			'batch_execute', 'build_trigger', 'editor_lifecycle', 'editor_validation',
+			'batch_execute', 'build_trigger', 'coreclr_migration', 'editor_lifecycle', 'editor_validation',
 			'execute_menu_item', 'game_command',
 			'manage_asset', 'manage_component', 'manage_gameobject',
 			'manage_material', 'manage_scene', 'play_mode',
@@ -2691,6 +2983,8 @@ async function testUnityMcpTools() {
 		const result = await tools.handleToolCall('manage_gameobject', {
 			action: 'setTransform',
 			name: 'Probe',
+			entityId: '18446744073709551615',
+			parentEntityId: '18446744073709551614',
 			scale: { x: 2, y: 3, z: 4 },
 			dryRun: true
 		});
@@ -2699,7 +2993,7 @@ async function testUnityMcpTools() {
 		assert.strictEqual(requestCount, 0);
 		assert.strictEqual(payload.dryRun, true);
 		assert.strictEqual(payload.toolName, 'manage_gameobject');
-		assert.deepStrictEqual(payload.args, { action: 'setTransform', name: 'Probe', localScale: [2, 3, 4] });
+		assert.deepStrictEqual(payload.args, { action: 'setTransform', name: 'Probe', entityId: '18446744073709551615', parentEntityId: '18446744073709551614', localScale: [2, 3, 4] });
 	});
 
 	await testAsync('editor_validation dryRun blocks compile actions but forwards status', async () => {
@@ -2888,13 +3182,13 @@ async function testStandaloneMcpServer() {
 
 			const tools = await server.request('tools/list', {});
 			const toolNames = tools.result.tools.map((tool) => tool.name);
-			assert.ok(toolNames.includes('project_info'));
-			assert.ok(toolNames.includes('read_console'));
-			assert.ok(toolNames.includes('profiler_snapshot'));
-			assert.ok(toolNames.includes('game_command'));
-			assert.ok(toolNames.includes('unity_context'));
-			assert.ok(toolNames.includes('viewport_stream'));
-			const projectInfo = tools.result.tools.find((tool) => tool.name === 'project_info');
+			assert.ok(toolNames.includes('toolkit.project_info'));
+			assert.ok(toolNames.includes('toolkit.read_console'));
+			assert.ok(toolNames.includes('toolkit.profiler_snapshot'));
+			assert.ok(toolNames.includes('toolkit.game_command'));
+			assert.ok(toolNames.includes('toolkit.unity_context'));
+			assert.ok(toolNames.includes('toolkit.viewport_stream'));
+			const projectInfo = tools.result.tools.find((tool) => tool.name === 'toolkit.project_info');
 			assert.strictEqual(projectInfo.annotations.readOnlyHint, true);
 
 			const resources = await server.request('resources/list', {});
@@ -3323,7 +3617,7 @@ function testDebugAdapter() {
 	});
 
 	test('DescriptorFactory creates inline adapter with correct port', () => {
-		const factory = new UnityDebugAdapterDescriptorFactory();
+		const factory = new UnityDebugAdapterDescriptorFactory(() => ({ isCoreCLR: false, hasDomainReload: true, source: 'legacy' }));
 		const descriptor = factory.createDebugAdapterDescriptor(
 			{ configuration: { type: 'unityCursorToolkit.debug', request: 'attach', debugPort: 99999, name: 'test' } },
 			undefined
@@ -3517,7 +3811,7 @@ function testStatusBarController() {
 		const ctrl = new StatusBarController(ctx);
 		const connectItem = ctx.subscriptions[0];
 		const quickAccessItem = ctx.subscriptions[1];
-		return { ctrl, connectItem, quickAccessItem };
+		return { ctrl, connectItem, quickAccessItem, cliItem: ctx.subscriptions[2] };
 	}
 
 	test('Disconnected (no project): shows "Unity Attach" with plug icon', () => {
@@ -3568,6 +3862,26 @@ function testStatusBarController() {
 		assert.ok(connectItem.tooltip.includes('Reconnecting'));
 		ctrl.dispose();
 	});
+
+
+	for (const [name, result, text] of [
+		['found', { ok: true, data: { version: '1.0.0-beta.12', expectedVersion: '1.0.0-beta.12' }, binaryPath: '/fixture/unity' }, 'CLI 1.0.0-beta.12'],
+		['missing', { ok: false, error: { code: 'cli_not_found', message: 'Not found', recovery: 'Set path' } }, 'CLI not found'],
+		['mismatch', { ok: false, binaryPath: '/fixture/unity', error: { code: 'version_mismatch', foundVersion: '1.0.0-beta.11', message: 'Expected pinned version', recovery: 'Select pinned binary' } }, 'CLI 1.0.0-beta.11']
+	]) {
+		test('CLI status ' + name + ' remains distinct from bridge and compilation state', () => {
+			const { ctrl, cliItem, connectItem } = makeController();
+			ctrl.setUnityCliStatus(result);
+			assert.ok(cliItem.text.includes(text));
+			assert.strictEqual(cliItem.command, 'unity-cursor-toolkit.doctor');
+			ctrl.update(ConnectionState.Connected, 55500);
+			ctrl.showCompilationResult(true, 0, 0);
+			assert.ok(cliItem.text.includes(text));
+			assert.ok(connectItem.text.includes('Unity'));
+			if (result.binaryPath) { assert.ok(cliItem.tooltip.includes(result.binaryPath)); }
+			ctrl.dispose();
+		});
+	}
 
 	test('showCompilationResult success: check icon, green', () => {
 		const { ctrl, connectItem } = makeController();
@@ -4318,6 +4632,137 @@ async function testMigrationScanner() {
 	const { loadRuleSet, migrationRules, MigrationError } = require(path.join(outDir, 'migration', 'rules'));
 	const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-migration-'));
 	try {
+		const { formatReport, migrationReportFileName } = require(path.join(outDir, 'migration', 'report'));
+		await testAsync('migration report groups source findings with rule guidance and describes an empty scan', async () => {
+			const root = path.join(tmpDir, 'report');
+			fs.mkdirSync(path.join(root, 'Assets'), { recursive: true });
+			fs.writeFileSync(path.join(root, 'Assets/Risk.cs'), 'public static int counter;\nAssembly.Load(bytes);\nAppDomain.CurrentDomain.GetAssemblies();');
+			const result = await scan(root);
+			const report = formatReport(result);
+			assert.ok(report.includes(result.scannedAt));
+			assert.ok(report.includes(result.ruleSetVersion));
+			assert.ok(report.includes('breaks: 1, behavior-change: 1, deprecated: 1'));
+			for (const finding of result.findings) {
+				const rule = migrationRules.rules.find(rule => rule.id === finding.ruleId);
+				for (const text of [`${finding.file}:${finding.line}`, finding.snippet, rule.explanation, rule.replacement, rule.docsUrl]) {
+					assert.ok(report.includes(text), text);
+				}
+			}
+			assert.ok(report.indexOf('## breaks') < report.indexOf('## behavior-change'));
+			assert.ok(report.indexOf('## behavior-change') < report.indexOf('## deprecated'));
+			fs.writeFileSync(path.join(root, 'Assets/Risk.cs'), 'public class Clean {}');
+			assert.ok(formatReport(await scan(root)).includes('No findings.'));
+		});
+
+		await testAsync('migration command saves and opens the report and reports missing-project and write errors', async () => {
+			const project = require(path.join(outDir, 'project', 'projectHandler'));
+			const { MigrationModule } = require(path.join(outDir, 'migration', 'module'));
+			const promises = require('fs/promises');
+			const originals = [project.getLinkedProjectPath, promises.writeFile, vscode.workspace.openTextDocument,
+				vscode.window.showTextDocument, vscode.window.showInformationMessage, vscode.window.showErrorMessage];
+			const root = path.join(tmpDir, 'command');
+			fs.mkdirSync(path.join(root, 'Assets'), { recursive: true });
+			const source = 'public static int counter;';
+			fs.writeFileSync(path.join(root, 'Assets/Risk.cs'), source);
+			let activeRoot = root, callback, opened, shown;
+			const information = [], errors = [];
+			project.getLinkedProjectPath = () => activeRoot;
+			vscode.workspace.openTextDocument = async uri => { opened = uri.fsPath; return { uri }; };
+			vscode.window.showTextDocument = async document => { shown = document.uri.fsPath; };
+			vscode.window.showInformationMessage = async text => information.push(text);
+			vscode.window.showErrorMessage = async text => errors.push(text);
+			const module = new MigrationModule();
+			try {
+				await module.activate({ registerCommand: (id, action) => {
+					assert.strictEqual(id, 'unity-cursor-toolkit.migration.scan'); callback = action;
+				} });
+				await callback();
+				const reportPath = path.join(root, migrationReportFileName);
+				assert.strictEqual(opened, reportPath);
+				assert.strictEqual(shown, reportPath);
+				assert.ok(fs.readFileSync(reportPath, 'utf8').includes('Assets/Risk.cs:1'));
+				assert.ok(information[0].includes('1 files scanned, 1 findings'));
+				assert.strictEqual(fs.readFileSync(path.join(root, 'Assets/Risk.cs'), 'utf8'), source);
+				activeRoot = undefined;
+				await callback();
+				assert.ok(errors[0].includes('project path is missing'));
+				activeRoot = root;
+				promises.writeFile = async () => { throw new Error('EACCES report write'); };
+				await callback();
+				assert.ok(errors[1].includes('EACCES report write'));
+				assert.strictEqual(information.length, 1);
+			} finally {
+				[project.getLinkedProjectPath, promises.writeFile, vscode.workspace.openTextDocument,
+					vscode.window.showTextDocument, vscode.window.showInformationMessage, vscode.window.showErrorMessage] = originals;
+				await module.deactivate();
+			}
+		});
+
+		await testAsync('migration MCP includes explicitly requested metadata or returns a typed inventory error', async () => {
+			const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
+			const root = path.join(tmpDir, 'inventory');
+			fs.mkdirSync(path.join(root, 'Assets'), { recursive: true });
+			fs.writeFileSync(path.join(root, 'Assets/Clean.cs'), 'class Clean {}');
+			const inventory = { fields: [{ assembly: 'User', type: 'Clean', field: 'counter', fieldType: 'System.Int32', hasCleanupAttribute: false }] };
+			let calls = 0, response = { result: { projectPath: root, staticsInventory: inventory } };
+			const tools = new UnityMcpTools({ send() {}, request: async (command, payload) => {
+				calls++; assert.strictEqual(command, 'mcpToolCall');
+				assert.deepStrictEqual(payload, { toolName: 'coreclr_migration', args: { action: 'scan' } });
+				if (response instanceof Error) throw response;
+				return response;
+			} }, () => root);
+			const scanResult = await tools.handleToolCall('coreclr_migration', { action: 'scan' });
+			assert.deepStrictEqual(JSON.parse(scanResult.content[0].text).findings, []);
+			assert.strictEqual(calls, 0, 'source-only scans need no Unity bridge');
+			for (const action of ['scan', 'report']) {
+				const result = await tools.handleToolCall('coreclr_migration', { action, includeStatics: true });
+				assert.ok(!result.isError);
+				if (action === 'scan') assert.deepStrictEqual(JSON.parse(result.content[0].text).staticsInventory, inventory);
+				else assert.ok(result.content[0].text.includes('Loaded user static fields'));
+			}
+			for (const value of [new Error('bridge request timed out'), null, { result: {} }, { result: { success: false } },
+				{ result: { projectPath: root, staticsInventory: null } },
+				{ result: { projectPath: root, staticsInventory: {} } },
+				{ result: { projectPath: path.join(root, 'other'), staticsInventory: inventory } }]) {
+				response = value;
+				const result = await tools.handleToolCall('coreclr_migration', { action: 'scan', includeStatics: true });
+				assert.strictEqual(result.isError, true);
+				assert.strictEqual(JSON.parse(result.content[0].text).errorCode, 'INVENTORY_UNAVAILABLE');
+			}
+		});
+
+		await testAsync('standalone migration MCP actions are registered, read-only, and never write a report', async () => {
+			const root = path.join(tmpDir, 'mcp');
+			fs.mkdirSync(path.join(root, 'Assets'), { recursive: true });
+			const source = 'public static int counter;';
+			fs.writeFileSync(path.join(root, 'Assets/Risk.cs'), source);
+			const server = startMcpServer({
+				UNITY_CURSOR_TOOLKIT_PROJECT_PATH: root, UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY: '1',
+				UNITY_CURSOR_TOOLKIT_MCP_PORTS: String(await getUnusedPort())
+			});
+			try {
+				const listed = await server.request('tools/list', {});
+				const definition = listed.result.tools.find(tool => tool.name === 'toolkit.coreclr_migration');
+				assert.strictEqual(definition.annotations.readOnlyHint, true);
+				for (const action of ['scan', 'report', 'rules', 'invalid', ['scan'], ['report'], ['rules'], null, 1, {}]) {
+					const response = await server.request('tools/call', { name: 'coreclr_migration', arguments: { action } });
+					assert.ok(!response.error);
+					const result = response.result;
+					if (typeof action !== 'string' || action === 'invalid') {
+						assert.strictEqual(result.isError, true);
+						assert.strictEqual(JSON.parse(result.content[0].text).errorCode, 'INVALID_ACTION');
+					} else {
+						assert.ok(!result.isError);
+						if (action === 'scan') assert.strictEqual(JSON.parse(result.content[0].text).findings.length, 1);
+						if (action === 'report') assert.ok(result.content[0].text.includes('Assets/Risk.cs:1'));
+						if (action === 'rules') assert.deepStrictEqual(JSON.parse(result.content[0].text), migrationRules);
+					}
+				}
+				assert.deepStrictEqual(fs.readdirSync(root), ['Assets']);
+				assert.strictEqual(fs.readFileSync(path.join(root, 'Assets/Risk.cs'), 'utf8'), source);
+			} finally { server.stop(); }
+		});
+
 		test('migration rule data is emitted and covers each inventory API family', () => {
 			const source = fs.readFileSync(path.join(__dirname, '../src/migration/coreclr-migration-rules.json'), 'utf8');
 			assert.deepStrictEqual(JSON.parse(fs.readFileSync(path.join(outDir, 'migration/coreclr-migration-rules.json'), 'utf8')), JSON.parse(source));
@@ -4405,25 +4850,35 @@ async function testMigrationScanner() {
 				fs.mkdirSync(path.dirname(path.join(root, file)), { recursive: true });
 				fs.writeFileSync(path.join(root, file), source);
 			}
-			fs.symlinkSync(path.join(root, 'Library/Hidden.cs'), path.join(root, 'Assets/Linked.cs'));
-			fs.symlinkSync(path.join(root, 'Library'), path.join(root, 'Assets/LinkedDirectory'));
+			if (process.platform !== 'win32') fs.symlinkSync(path.join(root, 'Library/Hidden.cs'), path.join(root, 'Assets/Linked.cs'));
+			fs.symlinkSync(path.join(root, 'Library'), path.join(root, 'Assets/LinkedDirectory'), process.platform === 'win32' ? 'junction' : 'dir');
 			const result = await scan(root);
 			assert.deepStrictEqual(result.findings, []);
 			assert.strictEqual(result.scanned, 1);
-			assert.strictEqual(result.skipped, 5);
+			assert.strictEqual(result.skipped, process.platform === 'win32' ? 4 : 5);
 		});
 
 		await testAsync('migration scan fails with a typed error when project files cannot be read', async () => {
 			const broken = path.join(tmpDir, 'broken');
 			fs.mkdirSync(path.join(broken, 'Assets'), { recursive: true });
 			fs.writeFileSync(path.join(broken, 'Assets/Unreadable.cs'), 'public static int counter;');
-			fs.chmodSync(path.join(broken, 'Assets/Unreadable.cs'), 0);
+			const unreadable = path.join(broken, 'Assets/Unreadable.cs');
+			const promises = require('fs/promises');
+			const readFile = promises.readFile;
+			if (process.platform === 'win32') {
+				// Windows chmod does not deny reads. Inject the filesystem failure at the owner boundary.
+				promises.readFile = async (file, ...args) => {
+					if (file === unreadable) throw Object.assign(new Error('Permission denied'), { code: 'EACCES' });
+					return readFile(file, ...args);
+				};
+			} else fs.chmodSync(unreadable, 0);
 			try {
 				for (const root of [undefined, null, '', path.join(tmpDir, 'missing'), path.join(tmpDir, 'rules.json'), tmpDir, broken]) {
 					await assert.rejects(scan(root), error => error instanceof MigrationError && error.code === 'PROJECT_UNREADABLE');
 				}
 			} finally {
-				fs.chmodSync(path.join(broken, 'Assets/Unreadable.cs'), 0o600);
+				promises.readFile = readFile;
+				if (process.platform !== 'win32') fs.chmodSync(unreadable, 0o600);
 			}
 		});
 
@@ -4431,13 +4886,9 @@ async function testMigrationScanner() {
 			const result = await scan(path.join(__dirname, '../../CursorUnityTool'));
 			const base = 'Packages/com.rankupgames.unity-cursor-toolkit/Editor/';
 			const sites = [
-				['HotReload/ILPatcher.cs', 266, 'appdomain-assemblies'],
-				['HotReload/ILPatcher.cs', 428, 'appdomain-assemblies'],
-				['HotReload/ILPatcher.cs', 523, 'appdomain-assemblies'],
-				['HotReload/ILPatcher.cs', 381, 'assembly-load'],
-				['MCP/MCPBridge.cs', 44, 'appdomain-assemblies'],
-				['MCP/EditorWindowViewportCapture.cs', 432, 'appdomain-assemblies'],
-				['MCP/EditorWindowViewportCapture.cs', 29, 'assembly-reload-events'],
+				['Core/AssemblyEnumerator.cs', 16, 'appdomain-assemblies'],
+				['HotReload/ILPatcher.cs', 399, 'assembly-load'],
+				['MCP/EditorWindowViewportCapture.cs', 42, 'assembly-reload-events'],
 				['ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs', 75, 'assembly-load']
 			];
 			for (const [file, line, ruleId] of sites) {
@@ -4452,6 +4903,597 @@ async function testMigrationScanner() {
 
 // ── Main ─────────────────────────────────────────────────────────────────────
 
+
+async function testUnityCliAdapter() {
+	console.log('\ncore/unityCliAdapter.ts');
+	const cp = require('child_process');
+	const { UnityCliAdapter, UNITY_CLI_EXPECTED_VERSION } = require(path.join(outDir, 'core', 'unityCliAdapter'));
+	const captures = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
+	const baseline = JSON.parse(fs.readFileSync(path.join(captures, '2026-10-08-cli-1.0.0-beta.12-windows-x64.json'), 'utf8'));
+	const version = (baseline.captures || baseline.records).find(record => {
+		try { const data = JSON.parse(record.stdout); return data.command === 'version' && data.success; } catch { return false; }
+	});
+	const proof = name => JSON.parse(fs.readFileSync(path.join(captures,
+		'2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-' + name + '.json'), 'utf8'));
+	async function replay(record, command, args = [], inspect) {
+		const original = cp.spawn;
+		cp.spawn = (binary, argv, options) => {
+			inspect?.(binary, argv, options);
+			const child = new EventEmitter();
+			child.pid = 42;
+			child.stdout = new EventEmitter(); child.stdout.setEncoding = () => {};
+			child.stderr = new EventEmitter(); child.stderr.setEncoding = () => {};
+			process.nextTick(() => {
+				child.stdout.emit('data', record.stdout || '');
+				child.stderr.emit('data', record.stderr || '');
+				child.emit('exit', record.exitCode, null);
+				child.emit('close', record.exitCode, null);
+			});
+			return child;
+		};
+		try {
+			return await new UnityCliAdapter(process.execPath).invoke(command, args, { timeoutMs: 1000, readOnly: false });
+		} finally { cp.spawn = original; }
+	}
+	await testAsync('CLI direct argv preserves spaces, quotes and shell metacharacters; streams stay separate', async () => {
+		const literal = 'project with "quotes" & $(literal) | %value%;';
+		const record = { ...version, stderr: proof('edit-fail').stderr };
+		assert.ok(record.stderr.length > 0, 'Use nonempty recorded stderr to protect stream separation');
+		const result = await replay(record, 'version', [literal, '--', '--format', 'literal'], (binary, args, options) => {
+			assert.strictEqual(binary, process.execPath);
+			assert.deepStrictEqual(args, ['version', '--format', 'json', '--non-interactive', '--no-banner', '--no-log-proxy', literal, '--', '--format', 'literal']);
+			assert.strictEqual(options.shell, false);
+			assert.strictEqual(options.windowsHide, true);
+		});
+		assert.strictEqual(result.ok, true);
+		assert.strictEqual(result.stdout, version.stdout);
+		assert.strictEqual(result.stderr, record.stderr);
+	});
+	const missingEditor = JSON.parse(fs.readFileSync(path.join(captures, '2026-10-08-cli-1.0.0-beta.12-windows-x64-missing-editor.json'), 'utf8'));
+	for (const [name, record, command, code, nativeCode] of [
+		['missing exact Editor', missingEditor, 'open', 'missing_editor', 'COMMAND_FAILED'],
+		['compiler failure stays generic', proof('run-cached-framework-incompatible'), 'run', 'operation_failed', 'COMMAND_FAILED'],
+		['failing test', proof('edit-fail'), 'test', 'tests_failed', 'TESTS_FAILED'],
+		['CLI test deadline', proof('test-timeout'), 'test', 'timed_out', 'TEST_TIMED_OUT'],
+		['invalid test argument', proof('test-list'), 'test', 'invalid_arguments', 'INVALID_COMMAND_ARGS'],
+		['native Ctrl+C', proof('test-cancel'), 'test', 'cancelled', undefined],
+		['mixed build framing', proof('build-dirty-versioned'), 'build', 'invalid_output', undefined],
+		['mixed module failure framing', proof('missing-module'), 'build', 'invalid_output', undefined]
+	]) {
+		await testAsync('CLI recorded failure: ' + name, async () => {
+			const result = await replay(record, command);
+			assert.strictEqual(result.ok, false);
+			assert.strictEqual(result.error.code, code);
+			assert.strictEqual(result.error.nativeCode, nativeCode);
+			assert.strictEqual(result.exitCode, record.exitCode);
+			assert.ok(!result.error.outputExcerpt || result.error.outputExcerpt.length <= 500);
+			assert.strictEqual('data' in result, false);
+			if (code === 'missing_editor') { assert.strictEqual(result.error.editorVersion, '6000.6.999f1'); }
+		});
+	}
+	await testAsync('CLI rejects truncated, trailing and contradictory JSON instead of partial success', async () => {
+		for (const record of [
+			{ ...version, stdout: version.stdout.trim().slice(0, -1) },
+			{ ...version, stdout: version.stdout + '\n' + version.stdout },
+			{ ...version, exitCode: 6 },
+			{ ...version, stdout: version.stdout + 'x'.repeat(1024 * 1024) }
+		]) {
+			const result = await replay(record, 'version');
+			assert.strictEqual(result.ok, false);
+			assert.strictEqual(result.error.code, 'invalid_output');
+		}
+		const unknown = await replay({ ...proof('run-cached-framework-incompatible'), exitCode: 97 }, 'run');
+		assert.strictEqual(unknown.error.code, 'unknown_exit');
+		assert.strictEqual(unknown.error.nativeCode, 'COMMAND_FAILED');
+		assert.strictEqual(unknown.exitCode, 97);
+	});
+	await testAsync('CLI policy, invalid deadline and explicit missing override refuse before spawn', async () => {
+		const original = cp.spawn;
+		cp.spawn = () => { throw new Error('Must not spawn'); };
+		try {
+			const adapter = new UnityCliAdapter(path.join(os.tmpdir(), 'uct-no-such-cli'), { ...process.env, UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH: process.execPath });
+			assert.strictEqual((await adapter.invoke('build', [], { timeoutMs: 1000 })).error.code, 'policy_refused');
+			assert.strictEqual((await adapter.invoke('list', ['--project-path', 'owned project'], { timeoutMs: 1000 })).error.code, 'cli_not_found');
+			for (const args of [[], ['--project-path', ''], ['--project-path', 'owned', '--all'], ['--project', 'owned']]) {
+				assert.strictEqual((await adapter.invoke('list', args, { timeoutMs: 1000 })).error.code, 'policy_refused');
+			}
+			assert.strictEqual((await adapter.invoke('version', [], { timeoutMs: 0 })).error.code, 'invalid_arguments');
+			assert.strictEqual((await adapter.invoke('version', ['--format', 'human'], { timeoutMs: 1000 })).error.code, 'invalid_arguments');
+			assert.strictEqual((await adapter.probe({ timeoutMs: 1000 })).error.code, 'cli_not_found');
+			assert.strictEqual((await new UnityCliAdapter(undefined, { PATH: '' }).probe({ timeoutMs: 1000 })).error.code, 'cli_not_found');
+			const abort = new AbortController(); abort.abort();
+			assert.strictEqual((await adapter.probe({ timeoutMs: 1000, signal: abort.signal })).error.code, 'cancelled');
+		} finally { cp.spawn = original; }
+	});
+	await testAsync('CLI environment/PATH resolution and version mismatch retain found version and path', async () => {
+		const original = cp.spawn;
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-cli-path-'));
+		const binary = path.join(tmp, process.platform === 'win32' ? 'unity.exe' : 'unity');
+		fs.writeFileSync(binary, ''); if (process.platform !== 'win32') { fs.chmodSync(binary, 0o755); }
+		cp.spawn = () => {
+			const child = new EventEmitter();
+			child.stdout = new EventEmitter(); child.stdout.setEncoding = () => {};
+			child.stderr = new EventEmitter(); child.stderr.setEncoding = () => {};
+			process.nextTick(() => {
+				const data = JSON.parse(version.stdout); data.data.version = 'fixture-version-mismatch';
+				child.stdout.emit('data', JSON.stringify(data)); child.emit('close', 0, null);
+			});
+			return child;
+		};
+		try {
+			for (const env of [{ UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH: binary }, { PATH: tmp }]) {
+				const result = await new UnityCliAdapter(undefined, env).probe({ timeoutMs: 1000 });
+				assert.strictEqual(result.ok, false);
+				assert.strictEqual(result.error.code, 'version_mismatch');
+				assert.strictEqual(result.error.expectedVersion, UNITY_CLI_EXPECTED_VERSION);
+				assert.strictEqual(result.error.foundVersion, 'fixture-version-mismatch');
+				assert.strictEqual(result.binaryPath, binary);
+				assert.strictEqual('data' in result, false);
+			}
+			if (process.platform === 'win32') {
+				const wrapper = path.join(tmp, 'unity.cmd'); fs.writeFileSync(wrapper, '');
+				assert.strictEqual((await new UnityCliAdapter(wrapper).probe({ timeoutMs: 1000 })).error.code, 'unsupported_binary');
+			}
+		} finally { cp.spawn = original; fs.rmSync(tmp, { recursive: true, force: true }); }
+	});
+	await testAsync('CLI spawn exceptions and error events return typed failure', async () => {
+		const original = cp.spawn;
+		try {
+			cp.spawn = () => { throw new Error('fixture spawn refusal'); };
+			assert.strictEqual((await new UnityCliAdapter(process.execPath).probe({ timeoutMs: 1000 })).error.code, 'spawn_failed');
+			cp.spawn = () => {
+				const child = new EventEmitter();
+				process.nextTick(() => child.emit('error', new Error('fixture event refusal')));
+				return child;
+			};
+			assert.strictEqual((await new UnityCliAdapter(process.execPath).probe({ timeoutMs: 1000 })).error.code, 'spawn_failed');
+		} finally { cp.spawn = original; }
+	});
+	if (process.platform === 'win32') {
+		await testAsync('CLI teardown failure is not reported as confirmed cancellation', async () => {
+			const originalSpawn = cp.spawn, originalExecFile = cp.execFile;
+						cp.spawn = () => { const child = new EventEmitter(); child.pid = 42; return child; };
+			cp.execFile = (_binary, _args, _options, done) => { process.nextTick(() => done(new Error('fixture cleanup refused'))); };
+			try {
+				const result = await new UnityCliAdapter(process.execPath).invoke('version', [], { timeoutMs: 10 });
+				assert.strictEqual(result.error.code, 'cleanup_failed');
+				assert.strictEqual(result.error.terminationReason, 'timed_out');
+			} finally { cp.spawn = originalSpawn; cp.execFile = originalExecFile; }
+		});
+	}
+	await testAsync('CLI caller timeout/cancel terminate only owned parent and descendant; sentinel survives', async () => {
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-cli-owned-'));
+		const sentinel = cp.spawn(process.execPath, ['-e', 'setInterval(()=>{},1000)'], { windowsHide: true, stdio: 'ignore' });
+		const alive = pid => { try { process.kill(pid, 0); return true; } catch (error) { return error.code !== 'ESRCH'; } };
+		const wait = ms => new Promise(done => setTimeout(done, ms));
+		const owned = [];
+		try {
+			fs.writeFileSync(path.join(tmp, 'version'), "const cp=require('child_process'),fs=require('fs');const child=cp.spawn(process.execPath,['-e','setInterval(()=>{},1000)'],{stdio:'ignore',windowsHide:true});fs.writeFileSync(process.env.UCT_CLI_PIDS,JSON.stringify({parent:process.pid,descendant:child.pid}));setInterval(()=>{},1000);");
+			for (const reason of ['timed_out', 'cancelled']) {
+				const pidsFile = path.join(tmp, reason + '.json');
+				const controller = new AbortController();
+				const started = Date.now();
+				const pending = new UnityCliAdapter(process.execPath, { ...process.env, UCT_CLI_PIDS: pidsFile }).invoke('version', [], { cwd: tmp, timeoutMs: 2000, signal: controller.signal });
+				while (!fs.existsSync(pidsFile) && Date.now() - started < 1500) { await wait(10); }
+				assert.ok(fs.existsSync(pidsFile), 'Owned fixture reported its process tree');
+				const pids = JSON.parse(fs.readFileSync(pidsFile, 'utf8'));
+				owned.push(pids.parent, pids.descendant);
+				if (reason === 'cancelled') { controller.abort(); }
+				const result = await pending;
+				assert.strictEqual(result.ok, false);
+				assert.strictEqual(result.error.code, reason, result.error.message);
+				assert.strictEqual(result.error.terminationReason, reason);
+				const deadline = Date.now() + 1000;
+				while (owned.some(alive) && Date.now() < deadline) { await wait(10); }
+				assert.ok(!alive(pids.parent) && !alive(pids.descendant), 'Owned process tree exited');
+				assert.ok(alive(sentinel.pid), 'Unrelated sentinel remains alive');
+				assert.ok(Date.now() - started < 7000, 'Cleanup has a bounded deadline');
+			}
+		} finally {
+			for (const pid of owned) { if (alive(pid)) { try { process.kill(pid, 'SIGKILL'); } catch {} } }
+			sentinel.kill(); fs.rmSync(tmp, { recursive: true, force: true });
+		}
+	});
+	await testAsync('CLI module registers doctor and exposes only selected diagnostics', async () => {
+		const { UnityCliModule } = require(path.join(outDir, 'unity-cli', 'index'));
+		const { StatusBarController } = require(path.join(outDir, 'core', 'statusBarController'));
+		const originalProbe = UnityCliAdapter.prototype.probe, originalInvoke = UnityCliAdapter.prototype.invoke;
+		const originalOutput = vscode.window.createOutputChannel, originalStatusBar = vscode.window.createStatusBarItem;
+		const originalWarning = vscode.window.showWarningMessage, originalError = vscode.window.showErrorMessage;
+		const commands = new Map(), statuses = [], actions = [], lines = [], notifications = [], items = [];
+		const marker = 'synthetic-private-marker';
+		const goodProbe = () => ({ ok: true, binaryPath: process.execPath, exitCode: 0, signal: null, stdout: '', stderr: '', warnings: [], data: { version: UNITY_CLI_EXPECTED_VERSION, expectedVersion: UNITY_CLI_EXPECTED_VERSION } });
+		const goodData = () => ({ platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime', status: 'ok', messageKey: marker }], auth: { email: marker }, recentLog: [marker] });
+		const privateFailure = code => ({ ok: false, binaryPath: process.execPath, exitCode: 6, signal: null, stdout: marker, stderr: marker, error: { code, nativeCode: marker, message: marker, recovery: marker, expectedVersion: marker, foundVersion: marker } });
+		const assertPrivateAbsent = () => assert.ok(![...lines, ...notifications.map(item => item.message), ...items.flatMap(item => [String(item.text), String(item.tooltip)])].join('\n').includes(marker), 'CLI UI exposed private native diagnostic data');
+		let disposed = false;
+		UnityCliAdapter.prototype.probe = async () => goodProbe();
+		UnityCliAdapter.prototype.invoke = async command => {
+			assert.strictEqual(command, 'doctor');
+			return { ok: true, warnings: [], data: goodData() };
+		};
+		vscode.window.createOutputChannel = () => ({ clear() {}, show() {}, appendLine: line => lines.push(line), dispose() { disposed = true; } });
+		vscode.window.createStatusBarItem = () => {
+			const item = { show() {}, hide() {}, dispose() {} }; items.push(item); return item;
+		};
+		vscode.window.showWarningMessage = async message => { notifications.push({ severity: 'warning', message }); };
+		vscode.window.showErrorMessage = async message => { notifications.push({ severity: 'error', message }); };
+		const statusBar = new StatusBarController({ subscriptions: [] });
+		const module = new UnityCliModule(result => { statuses.push(result); statusBar.setUnityCliStatus(result); });
+		try {
+			await module.activate({ registerCommand: (id, run) => commands.set(id, run), registerStatusBarContributor: contributor => actions.push(...contributor.getActions()) });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assert.strictEqual(actions[0].command, 'unity-cursor-toolkit.doctor');
+			assert.strictEqual(statuses.at(-1).data.version, UNITY_CLI_EXPECTED_VERSION);
+			assert.ok(lines.some(line => line.includes(UNITY_CLI_EXPECTED_VERSION)));
+			assert.ok(lines.includes('Binary: ' + process.execPath));
+			assert.ok(items.at(-1).text.includes(UNITY_CLI_EXPECTED_VERSION));
+			assert.ok(items.at(-1).tooltip.includes('Binary: ' + process.execPath));
+			assertPrivateAbsent();
+
+			lines.length = 0;
+			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: { platform: marker, arch: marker, checks: [{ id: marker, status: marker }, { id: marker, status: 'ok' }] } });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assertPrivateAbsent();
+			assert.ok(lines.includes('Doctor checks: 2; ok: 1; other: 1.'));
+
+			for (const stage of ['probe', 'doctor']) for (const code of ['operation_failed', 'version_mismatch']) {
+				lines.length = 0; notifications.length = 0;
+				UnityCliAdapter.prototype.probe = async () => stage === 'probe' ? privateFailure(code) : goodProbe();
+				UnityCliAdapter.prototype.invoke = async () => privateFailure(code);
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				const expected = code === 'version_mismatch' ? 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found unverified version.' : code + ': Unity CLI diagnostics failed. Check the pinned CLI installation and configuration.';
+				assert.ok(lines.includes(expected));
+				assert.ok(notifications.some(item => item.severity === (code === 'version_mismatch' ? 'warning' : 'error') && item.message === expected));
+				assert.ok(lines.includes('Binary: ' + process.execPath));
+			}
+			for (const version of [marker, '1.0.0-beta.12\n' + marker, '1.2.3-' + 'x'.repeat(65), null]) {
+				lines.length = 0; notifications.length = 0;
+				UnityCliAdapter.prototype.probe = async () => ({ ...privateFailure('version_mismatch'), error: { ...privateFailure('version_mismatch').error, foundVersion: version } });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				assert.ok(items.at(-1).text.includes('unverified version'));
+				assert.strictEqual(items.at(-1).tooltip, 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found unverified version.\nBinary: ' + process.execPath + '\nClick to run Unity CLI Doctor.');
+				UnityCliAdapter.prototype.probe = async () => ({ ...goodProbe(), data: { version, expectedVersion: marker } });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assertPrivateAbsent();
+				assert.ok(lines.includes('Unity CLI: unverified version (expected ' + UNITY_CLI_EXPECTED_VERSION + ')'));
+			}
+			UnityCliAdapter.prototype.probe = async () => ({ ...privateFailure('version_mismatch'), error: { ...privateFailure('version_mismatch').error, foundVersion: '1.0.0-beta.11' } });
+			UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data: goodData() });
+			await commands.get('unity-cursor-toolkit.doctor')();
+			assert.ok(items.at(-1).text.includes('1.0.0-beta.11'));
+			const mismatch = 'version_mismatch: Expected Unity CLI ' + UNITY_CLI_EXPECTED_VERSION + '; found 1.0.0-beta.11.';
+			assert.ok(lines.includes(mismatch));
+			assert.ok(notifications.some(item => item.severity === 'warning' && item.message === mismatch));
+			assert.ok(items.at(-1).tooltip.includes(mismatch));
+			assertPrivateAbsent();
+			UnityCliAdapter.prototype.probe = async () => goodProbe();
+			for (const data of [null, { platform: 'fixture', arch: 'x64', checks: [] }, { platform: 'fixture', arch: 'x64', checks: [{ id: 'runtime' }] }]) {
+				lines.length = 0;
+				UnityCliAdapter.prototype.invoke = async () => ({ ok: true, warnings: [], data });
+				await commands.get('unity-cursor-toolkit.doctor')();
+				assert.ok(lines.some(line => line.includes('invalid_output')));
+				assert.ok(!lines.some(line => line.includes('Doctor checks')));
+			}
+			await module.deactivate(); assert.ok(disposed);
+			const logged = [], originalConsoleError = console.error;
+			console.error = message => logged.push(message);
+			const failingModule = new UnityCliModule(() => { throw new Error(marker); });
+			try {
+				await failingModule.activate({ registerCommand() {}, registerStatusBarContributor() {} });
+				await new Promise(done => setImmediate(done));
+				await failingModule.deactivate();
+				assert.ok(logged.includes('[UnityCliModule] Diagnostic activation failed.'));
+				assert.ok(!logged.join('\n').includes(marker), 'Activation logging exposed private exception data');
+			} finally { console.error = originalConsoleError; }
+		} finally {
+			await module.deactivate(); statusBar.dispose();
+			UnityCliAdapter.prototype.probe = originalProbe; UnityCliAdapter.prototype.invoke = originalInvoke;
+			vscode.window.createOutputChannel = originalOutput; vscode.window.createStatusBarItem = originalStatusBar;
+			vscode.window.showWarningMessage = originalWarning; vscode.window.showErrorMessage = originalError;
+		}
+	});
+}
+
+function testCliEvidencePrivacy() {
+	test('CLI and Pipeline captures redact identities and keep public evidence', () => {
+		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
+		const read = file => {
+			try { return JSON.parse(fs.readFileSync(path.join(root, file), 'utf8')); }
+			catch { throw new Error(file + ': invalid capture JSON'); }
+		};
+		const baseline = read('2026-10-08-cli-1.0.0-beta.12-windows-x64.json');
+		assert.ok(/^[a-f0-9]{64}$/.test(baseline.binarySha256), 'CLI checksum must remain a SHA-256 digest');
+		const sensitive = /licensing|Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|access[ -]?token|bearer|license[ -]?(?:serial|key|id)|hardware[ -]?id|user[ -]?id|account[ -]?id|^\s*(?:Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/im;
+		const inspect = (value, file) => {
+			if (!value || typeof value !== 'object') return;
+			for (const [key, item] of Object.entries(value)) {
+				if (['stdout', 'stderr', 'editorLog'].includes(key) && typeof item === 'string') {
+					const log = item.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)).join('\n');
+					assert.ok(!sensitive.test(log), file + ': unredacted identity or licensing log field');
+				} else inspect(item, file);
+			}
+		};
+
+		const marker = 'fixtureSensitive';
+		const rawLog = '-hubSessionId\n' + marker + '\nSession Id: ' + marker + '\nId: ' + marker + '\nProduct: ' + marker + '\nType: ' + marker + '\nExpiration: ' + marker + '\npublic diagnostic\n';
+		const sourceRoot = path.resolve(root, '..');
+		for (const file of ['capture-baseline.js', 'capture-proof.js']) {
+			const source = fs.readFileSync(path.join(sourceRoot, file), 'utf8');
+			const baselineScript = file === 'capture-baseline.js';
+			const start = source.indexOf(baselineScript ? 'function scrubRoots(' : 'function scrub(');
+			const end = source.indexOf(baselineScript ? 'const commands =' : "if (name === 'build-dirty-versioned'", start);
+			assert.ok(start >= 0 && end > start, file + ': scrubber boundary missing');
+			const context = { root: '/fixture', repo: '/fixture', editorRoots: [], process: { env: {} } };
+			require('vm').createContext(context);
+			require('vm').runInContext(source.slice(start, end), context);
+			for (const text of [context.scrub(rawLog), ...(baselineScript ? [JSON.parse(context.output(JSON.stringify({ success: true, data: { log: rawLog } }))).data.log] : [])]) {
+				assert.ok(!text.includes(marker), file + ': credential continuation leaked');
+				assert.ok(text.includes('public diagnostic'), file + ': public diagnostic removed');
+			}
+		}
+
+		const pipelineRoot = path.resolve(root, '../../pipeline-install-proof');
+		const pipelineSource = fs.readFileSync(path.join(pipelineRoot, 'capture-proof.js'), 'utf8');
+		const pipelineStart = pipelineSource.indexOf('function withoutSecrets(');
+		const pipelineEnd = pipelineSource.indexOf('function record(', pipelineStart);
+		const logExpression = pipelineSource.match(/evidence\.editorLog = ([^\n]+);/);
+		assert.ok(pipelineStart >= 0 && pipelineEnd > pipelineStart && logExpression, 'Pipeline log sanitizer boundary missing');
+		const pipelineContext = {
+			fixture: undefined, editorRoot: undefined, binaryPath: undefined, log: rawLog,
+			os: { tmpdir: () => '', homedir: () => '', hostname: () => '' }, process: { env: {} }
+		};
+		require('vm').createContext(pipelineContext);
+		require('vm').runInContext(pipelineSource.slice(pipelineStart, pipelineEnd), pipelineContext);
+		const pipelineLog = require('vm').runInContext(logExpression[1], pipelineContext);
+		assert.ok(!pipelineLog.includes(marker), 'Pipeline capture leaked an identity or licensing continuation');
+		assert.ok(pipelineLog.includes('public diagnostic'), 'Pipeline capture removed public diagnostics');
+		const publicData = { Id: 'public-id', Product: 'public-product', Type: 'public-type', binarySha256: baseline.binarySha256 };
+		assert.strictEqual(JSON.stringify(pipelineContext.scrub(publicData)), JSON.stringify(publicData), 'Pipeline scrubber changed public metadata');
+		for (const file of fs.readdirSync(path.join(pipelineRoot, 'results')).filter(file => file.endsWith('.json'))) {
+			let capture;
+			try { capture = JSON.parse(fs.readFileSync(path.join(pipelineRoot, 'results', file), 'utf8')); }
+			catch { throw new Error(file + ': invalid Pipeline capture JSON'); }
+			inspect(capture, file);
+		}
+		for (const file of fs.readdirSync(root).filter(file => file.endsWith('.json'))) inspect(read(file), file);
+	});
+}
+
+function testCoreClrEvidencePrivacy() {
+	test('Unity proof captures remove identity and licensing continuations', () => {
+		const root = path.resolve(__dirname, '../../experiments/coreclr-package-audit');
+		const input = '-hubSessionId\nfixtureSensitive\nSession Id: fixtureSensitive\nCorrelation-Id: fixtureSensitive\nMachine Id: fixtureSensitive\nId: fixtureSensitive\nProduct: fixtureSensitive\nType: fixtureSensitive\nExpiration: fixtureSensitive\npublic diagnostic\n';
+		for (const [file, symbol, endMarker, startMarker] of [
+			['run-lifecycle-probe.js', 'sanitize', '\n\t\t};'],
+			['run-render-smoke.js', 'clean', '\n\t};'],
+			['../coreclr-debug-probe/run-debug-probe.js', 'sanitize', '\n\t\t};'],
+			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', ' };'],
+			['../assistant-relay-probe/run-assistant-probe.js', 'sanitize', '\n\t}', 'function sanitize(text) {'],
+			['../test-runner-bridge/run-bridge-proof.js', 'sanitize', '\n\t}', 'function sanitize(text, raw = false) {'],
+			['../test-runner-bridge/run-optional-compile-proof.js', 'sanitize', '\n\t}', 'function sanitize(text, rawLog = false) {'],
+			['../../unity-cursor-toolkit/scripts/run-editor-window-capture-spike.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function cleanString(value) {'],
+			['../../unity-cursor-toolkit/scripts/build-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
+			['../../unity-cursor-toolkit/scripts/run-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
+			['../../unity-cursor-toolkit/scripts/measure-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {']
+		]) {
+			const source = fs.readFileSync(path.join(root, file), 'utf8');
+			const start = source.indexOf(startMarker || 'const ' + symbol + ' = value => {');
+			const end = source.indexOf(endMarker, start) + endMarker.length;
+			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');
+			const sanitize = require('vm').runInNewContext(source.slice(start, end) + '\n' + symbol, {
+				input, fixture: '/fixture', unityPath: '/editor/Unity', unity: '/editor/Unity', debugRoot: '/debugger', sanitizers: [], replacements: [], path,
+				project: '/fixture', projectRoot: '/fixture', proofRoot: '/proof', ownedRoot: '/output', repo: '/repo', repoRoot: '/repo', options: { unity: '/editor/Unity', proofRoot: '/proof' },
+				os: { homedir: () => '/home/fixture', hostname: () => 'fixtureHost', networkInterfaces: () => ({}) }
+			});
+			const output = sanitize(input);
+			assert.ok(!output.includes('fixtureSensitive'), file + ': sanitizer leaked an identity or licensing value');
+			assert.ok(output.includes('public diagnostic'), file + ': sanitizer removed public diagnostics');
+			if (symbol === 'sanitizeLog') {
+				const label = 'DOTNET_SYSTEM_GLOBALIZATION_USENLS', secret = 'private'.repeat(6);
+				assert.strictEqual(sanitize(label + '=1'), label + '=1');
+				if (file.endsWith('-viewport-service.js')) assert.ok(!sanitize('ContinuationId: fixtureSensitive').includes('fixtureSensitive'));
+				assert.ok(sanitize(label + '=' + secret).startsWith(label + '='));
+				for (const value of [label + '=' + secret, 'inline ' + secret + ' end', 'inline ' + secret + '== end', secret + '+/=']) {
+					assert.ok(!sanitize(value).includes(secret), 'viewport capture retained an opaque value');
+				}
+			}
+			if (file.includes('/test-runner-bridge/')) {
+				const opaque = 'fixture'.repeat(6) + '+/=';
+				assert.ok(!sanitize(opaque, true).includes(opaque), file + ': raw log retained an opaque credential');
+				assert.strictEqual(sanitize(opaque, false), opaque, file + ': structured public values changed');
+				assert.strictEqual(sanitize('[Physics::Module] Id: 0x12345678', true), '[Physics::Module] Id: 0x12345678');
+				assert.strictEqual(sanitize('DOTNET_SYSTEM_GLOBALIZATION_USENLS=1', true), 'DOTNET_SYSTEM_GLOBALIZATION_USENLS=1');
+			}
+		}
+		for (const file of [
+			'results/unity7-lifecycle-2026-10-08T04-57-52-040Z/Editor.log',
+			'results/unity7-console-reset-baseline-2026-10-08T05-29-37-263Z/Editor.log',
+			'results/unity7-package-lifecycle-2026-10-08T05-27-37-571Z/Editor.log',
+			'results/unity7-urp-smoke-2026-10-08T05-58-37-071Z/Editor.log',
+			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/build.log',
+			'../coreclr-debug-probe/results/unity7-netcoredbg-2026-10-08T06-00-43-631Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-22-05-773Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-25-10-927Z/editor.log',
+			'../assistant-relay-probe/results/assistant-relay-2026-10-08T06-36-43-227Z/editor.log',
+			'results/unity6-package-lifecycle-2026-10-08T06-48-05-022Z/Editor.log',
+			'results/unity6-package-lifecycle-2026-10-08T06-51-17-382Z/Editor.log',
+			'results/unity7-package-lifecycle-2026-10-08T06-53-39-341Z/Editor.log',
+			'../test-runner-bridge/results/absent-2026-10-08T06-55-44-135Z/editor.log',
+			'../test-runner-bridge/results/absent-2026-10-08T07-29-54-107Z/editor.log',
+			'../test-runner-bridge/results/bridge-absent-2026-10-08T07-38-39-672Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-38-57-653Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-44-20-292Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-53-48-415Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-58-15-643Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T07-59-23-494Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-09-27-212Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-15-52-148Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-19-44-038Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-27-02-241Z/editor.log',
+			'../test-runner-bridge/results/bridge-present-2026-10-08T08-31-11-797Z/editor.log',
+			'../test-runner-bridge/results/present-2026-10-08T06-55-58-646Z/editor.log',
+			'../test-runner-bridge/results/present-2026-10-08T07-30-11-939Z/editor.log'
+		]) {
+			const capture = fs.readFileSync(path.join(root, file), 'utf8');
+			const log = capture.split(/\r?\n/).filter(line => !/^\s*<[^>]+>\s*$/.test(line)
+				&& !/^-+$/.test(line.trim()) && !/^__uct_lifecycle_current_[a-f0-9]{32}$/.test(line.trim())).join('\n');
+			assert.ok(!/^\s*(?:(?:Session|(?:External )?Correlation|Machine)[ -]?Id|Id|Product|Type|Expiration):|^\s*[A-Za-z0-9+\/_-]{32,}={0,2}\s*$/im.test(log), file + ': Unity capture contains an identity or licensing value');
+		}
+	});
+}
+
+
+async function testAssistantRelayProof() {
+	const root = path.resolve(__dirname, '../../experiments/assistant-relay-probe');
+	const runner = fs.readFileSync(path.join(root, 'run-assistant-probe.js'), 'utf8');
+	const providerSource = fs.readFileSync(path.join(root, 'relay-provider.js'), 'utf8');
+	const localRequire = require('module').createRequire(path.join(root, 'run-assistant-probe.js'));
+	const providerHash = require('crypto').createHash('sha256').update(providerSource).digest('hex');
+	const valid = { passed: true, providerSha256: providerHash, allowed: { isError: false }, faults: [{}] };
+	await testAsync('Assistant proof refuses failed or unbound policy evidence before Editor work', async () => {
+		const evaluate = evidence => {
+			const context = { __dirname: root, process: { argv: ['node', 'probe', '--policy-evidence', 'policy-fixture'] },
+				require: name => name === 'fs' ? { ...fs, readFileSync: (file, ...args) => file === 'policy-fixture' ? JSON.stringify(evidence) : fs.readFileSync(file, ...args) } : localRequire(name) };
+			const end = runner.lastIndexOf('\nmain().catch(');
+			assert.ok(end > 0, 'Assistant runner entry boundary missing');
+			require('vm').runInNewContext(runner.slice(0, end), context);
+			return context.main();
+		};
+		for (const evidence of [
+			{ ...valid, passed: false }, { ...valid, providerSha256: undefined },
+			{ ...valid, providerSha256: '0'.repeat(64) }, { ...valid, allowed: { isError: true } },
+			{ ...valid, policyTests: { ...valid, passed: false } }
+		]) await assert.rejects(evaluate(evidence), /successful policy checks|current provider|does not match current provider/);
+		for (const evidence of [valid, { ...valid, policyTests: valid }])
+			await assert.rejects(evaluate(evidence), /--editor and --archive are required/);
+	});
+	test('Assistant proof requires normal relay exit before successful cleanup', () => {
+		const expression = runner.match(/record\.normalEditorExit = ([^\n]+);/);
+		assert.ok(expression, 'Assistant cleanup decision missing');
+		for (const [childExit, expected] of [
+			[{ exited: true, code: 0, signal: null }, true],
+			[{ exited: true, code: 9, signal: null }, false],
+			[{ exited: true, code: 0, signal: 'SIGTERM' }, false],
+			[{ exited: false, code: 0, signal: null }, false]
+		]) {
+			const result = require('vm').runInNewContext(expression[1], {
+				record: { editorExit: { code: 0 }, remainingOwnedProcesses: [], childExit }, relay: {},
+				fs: { existsSync: () => true }, path, proof: '/owned-proof'
+			});
+			assert.strictEqual(result, expected, 'Relay failure must block normal cleanup');
+		}
+	});
+	test('Assistant relay rejects malformed JSON-RPC without escaping pending-request cleanup', () => {
+		const relayModule = { exports: {} };
+		require('vm').runInNewContext(providerSource, { module: relayModule, require: localRequire, clearTimeout, setTimeout });
+		const { RelayClient } = relayModule.exports;
+		for (const value of [null, [], 'unexpected', 7]) {
+			let rejected;
+			const client = Object.assign(Object.create(RelayClient.prototype), {
+				buffer: '', messages: [], pending: new Map([[1, { reject: error => { rejected = error; } }]])
+			});
+			assert.doesNotThrow(() => client.receive(JSON.stringify(value) + '\n'));
+			assert.strictEqual(rejected?.code, 'relay_protocol_error');
+			assert.strictEqual(client.pending.size, 0);
+		}
+		let received;
+		const client = Object.assign(Object.create(RelayClient.prototype), {
+			buffer: '', messages: [], pending: new Map([[1, { resolve: value => { received = value; } }]])
+		});
+		client.receive(JSON.stringify({ jsonrpc: '2.0', id: 1, result: { tools: [] } }) + '\n');
+		assert.strictEqual(JSON.stringify(received), '{"tools":[]}');
+		assert.strictEqual(client.failure, undefined);
+	});
+}
+
+async function testPipelineEligibility() {
+	const { checkPipelineEligibility, evaluatePipelineEligibility, PIPELINE_REGISTRY_URL } = require(path.join(outDir, 'core', 'pipelineEligibility'));
+	const publishedAt = '2026-09-25T18:42:14.022Z';
+	const snapshot = {
+		url: PIPELINE_REGISTRY_URL, checkedAt: '2026-10-08T05:23:00.000Z', httpDate: 'Thu, 08 Oct 2026 05:23:00 GMT',
+		metadata: { name: 'com.unity.pipeline', versions: { '0.8.0-exp.1': { unity: '6000.0' } }, time: { '0.8.0-exp.1': publishedAt } }
+	};
+	await testAsync('Pipeline gate uses explicit pin, package minimum and both clocks before installation', async () => {
+		const eligible = evaluatePipelineEligibility('6000.3.9f1', '0.8.0-exp.1', snapshot);
+		assert.strictEqual(eligible.ok, true);
+		assert.strictEqual(eligible.publishedAt, publishedAt);
+		assert.strictEqual(eligible.minimumEditorVersion, '6000.0');
+		assert.strictEqual(eligible.registryUrl, PIPELINE_REGISTRY_URL);
+		for (const [declared, pin, change, code] of [
+			['6000.3.9f1', 'latest', {}, 'pipeline_pin_invalid'],
+			['6000.3.9f1', '^0.8.0-exp.1', {}, 'pipeline_pin_invalid'],
+			[null, '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9junk', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['6000.3.9f1 extra', '0.8.0-exp.1', {}, 'pipeline_project_version_invalid'],
+			['2019.4.40f1', '0.8.0-exp.1', {}, 'pipeline_editor_unsupported'],
+			['6000.3.9f1', '0.9.0-exp.1', {}, 'pipeline_version_unavailable'],
+			['6000.3.9f1', '0.8.0-exp.1', { httpDate: 'Sat, 26 Sep 2026 18:42:15 GMT' }, 'pipeline_version_too_recent'],
+			['6000.3.9f1', '0.8.0-exp.1', { checkedAt: '2026-09-26T18:42:15.000Z' }, 'pipeline_version_too_recent'],
+			['6000.3.9f1', '0.8.0-exp.1', { httpDate: null }, 'pipeline_metadata_invalid'],
+			['6000.3.9f1', '0.8.0-exp.1', { checkedAt: 'invalid' }, 'pipeline_metadata_invalid'],
+			['6000.3.9f1', '0.8.0-exp.1', { metadata: { ...snapshot.metadata, time: {} } }, 'pipeline_metadata_invalid'],
+			['6000.3.9f1', '0.8.0-exp.1', { metadata: { ...snapshot.metadata, versions: { '0.8.0-exp.1': { unity: '6000.0', unityRelease: '1f1' } } } }, 'pipeline_metadata_invalid']
+		]) {
+			const result = evaluatePipelineEligibility(declared, pin, { ...snapshot, ...change });
+			assert.strictEqual(result.ok, false);
+			assert.strictEqual(result.error.code, code);
+			if (code === 'pipeline_editor_unsupported') {
+				assert.strictEqual(result.error.declaredEditorVersion, declared);
+				assert.strictEqual(result.error.minimumEditorVersion, '6000.0');
+			}
+		}
+	});
+	await testAsync('Pipeline request refusal precedes registry access and leaves manifest/lock bytes unchanged', async () => {
+		const https = require('https'), originalGet = https.get;
+		const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-pipeline-gate-'));
+		let calls = 0;
+		https.get = () => { calls++; throw new Error('fixture offline'); };
+		try {
+			fs.mkdirSync(path.join(tmp, 'Packages'));
+			fs.mkdirSync(path.join(tmp, 'ProjectSettings'));
+			const manifest = path.join(tmp, 'Packages', 'manifest.json'), lock = path.join(tmp, 'Packages', 'packages-lock.json');
+			fs.writeFileSync(manifest, '{"dependencies":{}}\n'); fs.writeFileSync(lock, '{"dependencies":{}}\n');
+			const before = [fs.readFileSync(manifest), fs.readFileSync(lock)];
+			assert.strictEqual((await checkPipelineEligibility(tmp, '0.8.0-exp.1')).error.code, 'pipeline_project_version_invalid');
+			fs.writeFileSync(path.join(tmp, 'ProjectSettings', 'ProjectVersion.txt'), 'm_EditorVersion: 6000.3.9f1\n');
+			assert.strictEqual((await checkPipelineEligibility(tmp, 'latest')).error.code, 'pipeline_pin_invalid');
+			assert.strictEqual(calls, 0);
+			assert.strictEqual((await checkPipelineEligibility(tmp, '0.8.0-exp.1')).error.code, 'pipeline_registry_unavailable');
+			assert.strictEqual(calls, 1);
+			assert.deepStrictEqual(fs.readFileSync(manifest), before[0]); assert.deepStrictEqual(fs.readFileSync(lock), before[1]);
+		} finally { https.get = originalGet; fs.rmSync(tmp, { recursive: true, force: true }); }
+	});
+	await testAsync('CLI read-only Pipeline version query checks the grouped JSON command from argv', async () => {
+		const cp = require('child_process'), originalSpawn = cp.spawn;
+		const { EventEmitter } = require('events');
+		const { UnityCliAdapter } = require(path.join(outDir, 'core', 'unityCliAdapter'));
+		let observedArgs;
+		cp.spawn = (_binary, args) => {
+			observedArgs = args;
+			const child = new EventEmitter();
+			child.stdout = new EventEmitter(); child.stdout.setEncoding = () => {};
+			child.stderr = new EventEmitter(); child.stderr.setEncoding = () => {};
+			process.nextTick(() => {
+				child.stdout.emit('data', JSON.stringify({ success: true, command: 'pipeline list-versions', data: { versions: ['0.8.0-exp.1'] }, errors: [], warnings: [] }));
+				child.emit('close', 0, null);
+			});
+			return child;
+		};
+		try {
+			const adapter = new UnityCliAdapter(process.execPath);
+			const result = await adapter.invoke('pipeline', ['list-versions'], { timeoutMs: 1000 });
+			assert.strictEqual(result.ok, true);
+			assert.strictEqual(observedArgs.at(-1), 'list-versions');
+			assert.strictEqual((await adapter.invoke('pipeline', ['install'], { timeoutMs: 1000 })).error.code, 'policy_refused');
+			assert.strictEqual((await adapter.invoke('pipeline', ['list-versions', '--force'], { timeoutMs: 1000 })).error.code, 'policy_refused');
+		} finally { cp.spawn = originalSpawn; }
+	});
+}
+
 async function main() {
 	console.log('Unity Cursor Toolkit -- Runtime Tests\n');
 	console.log(`Using compiled output: ${outDir}`);
@@ -4461,7 +5503,15 @@ async function main() {
 		process.exit(1);
 	}
 
+	testCliEvidencePrivacy();
+	testCoreClrEvidencePrivacy();
+	await testAssistantRelayProof();
 	testTypes();
+	testRuntimeCapabilities();
+	await testRuntimeConsumers();
+	await testUnityCliAdapter();
+	await testPipelineEligibility();
+	testCapabilityMatrix();
 	testConnectionUnit();
 	await testUnityEditorLauncher();
 	testUnityLicenseScript();

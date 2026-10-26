@@ -1,0 +1,59 @@
+{
+  "packages": [
+    {
+      "name": "com.unity.test-framework",
+      "version": "1.8.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework"
+    },
+    {
+      "name": "com.unity.ext.nunit",
+      "version": "2.1.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.ext.nunit"
+    }
+  ],
+  "frames": [
+    {
+      "elapsedMs": 32,
+      "stream": "stdout",
+      "characters": 325
+    }
+  ],
+  "leftoverEditorPids": [],
+  "startedAt": "2026-10-08T04:35:44.817Z",
+  "completedAt": "2026-10-08T04:35:45.779Z",
+  "cliVersion": "1.0.0-beta.12",
+  "editorVersion": "6000.6.4f1",
+  "platform": "windows-x64",
+  "args": [
+    "run",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1",
+    "--command",
+    "cli_proof",
+    "--timeout",
+    "60",
+    "--log-file",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Logs\\registered-command.log",
+    "--non-interactive",
+    "--no-log-proxy",
+    "--no-banner",
+    "--format",
+    "json"
+  ],
+  "exitCode": 6,
+  "signal": null,
+  "durationMs": 961,
+  "stdout": "{\n  \"success\": false,\n  \"command\": \"run\",\n  \"data\": null,\n  \"errors\": [\n    {\n      \"code\": \"COMMAND_FAILED\",\n      \"message\": \"The project at \\\"<repo>\\\\experiments\\\\unity-cli-baseline\\\\fixture-6000.6.4f1\\\" does not include the com.unity.pipeline package. Run unity pipeline install to add it.\"\n    }\n  ],\n  \"warnings\": []\n}\n",
+  "stderr": "",
+  "editorLog": null,
+  "xmlProduced": false,
+  "buildArtifactPresentAfter": false,
+  "projectVersionFileUnchanged": true,
+  "projectVersionAfter": "m_EditorVersion: 6000.6.4f1\nm_EditorVersionWithRevision: 6000.6.4f1 (12bfff696524)\n",
+  "declaredEditorVersionUnchanged": true,
+  "redactions": [
+    "repository/user roots",
+    "Editor roots",
+    "OS-user/host identifiers",
+    "credential/identity log lines"
+  ]
+}

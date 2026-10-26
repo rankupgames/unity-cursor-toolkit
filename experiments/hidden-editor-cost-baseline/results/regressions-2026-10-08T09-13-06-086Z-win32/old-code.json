@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-08T09:13:06.087Z",
+  "script": "measure-editor-streaming.js at HEAD",
+  "oldSourceSha256": "8418ff5276ff6f9d5e32b0cf1ada17b9a451171fc3267c3faf01567581d83398",
+  "exitCode": 1,
+  "stdout": "Measurement regressions: 0/5 passed\n",
+  "stderr": "FAIL wrong-project: Expected \"actual\" to be strictly unequal to: 0\nFAIL no-frames: Expected \"actual\" to be strictly unequal to: 0\nFAIL no-stop-ack: Expected \"actual\" to be strictly unequal to: 0\nFAIL missing-metrics: Expected \"actual\" to be strictly unequal to: 0\nFAIL drains-last-sample: Expected values to be strictly equal:\n\n0 !== 1\n\n",
+  "expected": "All five regression assertions fail on previous code"
+}

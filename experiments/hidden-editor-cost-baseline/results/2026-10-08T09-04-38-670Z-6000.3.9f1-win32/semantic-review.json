@@ -1,0 +1,7 @@
+{
+  "observedAt": "2026-10-08T09:17:55.481Z",
+  "review": "All five saved frames inspected. GameView contains cube/sphere silhouettes rendered cyan, consistent with async shader placeholder; expected red/green content not demonstrated.",
+  "apiAndNonblankEvidence": true,
+  "finalSemanticAcceptance": false,
+  "supersededBy": "Refined expected-color and shader-completion gate; failed subsequent outcome retained separately."
+}

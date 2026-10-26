@@ -1,0 +1,704 @@
+{
+  "observedAt": "2026-10-08T06:00:43.631Z",
+  "version": "7000.0.0a7",
+  "productVersion": "7000.0.0a7_581996e1a8f7",
+  "acquisition": "Existing Unity Launcher installation; no Unity download by this experiment.",
+  "revision": "581996e1a8f7",
+  "os": "Windows_NT 10.0.19045",
+  "arch": "x64",
+  "debugger": {
+    "release": "3.2.0-1092",
+    "source": "9744e1f051866215611b8440c638042aa2aa2f72",
+    "sha256": "3c410a45fa502415203a94fcb88654af65bf8e3dac158a5527a722e7a6b9274a"
+  },
+  "environment": {
+    "DOTNET_EnableDiagnostics": null,
+    "COMPlus_EnableDiagnostics": null,
+    "DOTNET_EnableDiagnostics_Debugger": null,
+    "COMPlus_EnableDiagnostics_Debugger": null
+  },
+  "overrides": [
+    "UCT_DEBUG_EVIDENCE",
+    "UCT_DEBUG_BUILD_RESULT"
+  ],
+  "shipsDebugging": false,
+  "attempts": [
+    {
+      "mode": "editor",
+      "pid": 28192,
+      "command": {
+        "executable": "<unity-executable>",
+        "args": [
+          "-batchmode",
+          "-nographics",
+          "-debugCodeOptimization",
+          "-projectPath",
+          "<disposable-project>",
+          "-executeMethod",
+          "UCTDebugProbe.EditorProbe.Run",
+          "-logFile",
+          "<disposable-project>\\editor.log"
+        ],
+        "cwd": "<disposable-project>"
+      },
+      "tests": {
+        "attach": false,
+        "breakpoint": false,
+        "stepOver": false,
+        "stepIn": false,
+        "stepOut": false,
+        "locals": false,
+        "detach": false
+      },
+      "runtime": {
+        "pid": 28192,
+        "version": "7000.0.0a7",
+        "coreLibrary": "System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e",
+        "runtimeVersion": "10.0.10",
+        "architecture": "x64",
+        "optimization": "Debug",
+        "phase": "editor:ready",
+        "debuggerAttached": false,
+        "heartbeats": 0,
+        "result": 0
+      },
+      "debuggerCommand": {
+        "executable": "<debugger-root>\\unpacked\\netcoredbg\\netcoredbg.exe",
+        "args": [
+          "--interpreter=vscode",
+          "--engineLogging=<engine.log>"
+        ],
+        "transport": "stdio",
+        "tcpPorts": []
+      },
+      "breakpointResponse": {
+        "breakpoints": [
+          {
+            "id": 1,
+            "line": 90,
+            "message": "The breakpoint is pending and will be resolved when debugging starts.",
+            "verified": false
+          }
+        ]
+      },
+      "failure": "configurationDone: Failed command 'configurationDone' : 0x80004005",
+      "debuggerExit": {
+        "code": 0,
+        "signal": null
+      },
+      "dap": [
+        {
+          "at": "2026-10-08T06:00:54.722Z",
+          "direction": "send",
+          "message": {
+            "seq": 1,
+            "type": "request",
+            "command": "initialize",
+            "arguments": {
+              "adapterID": "uct-private-proof",
+              "linesStartAt1": true,
+              "columnsStartAt1": true,
+              "pathFormat": "path"
+            }
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:54.805Z",
+          "direction": "receive",
+          "message": {
+            "body": {
+              "capabilities": {
+                "exceptionBreakpointFilters": [
+                  {
+                    "filter": "all",
+                    "label": "all"
+                  },
+                  {
+                    "filter": "user-unhandled",
+                    "label": "user-unhandled"
+                  }
+                ],
+                "supportTerminateDebuggee": true,
+                "supportsCancelRequest": true,
+                "supportsConditionalBreakpoints": true,
+                "supportsConfigurationDoneRequest": true,
+                "supportsExceptionFilterOptions": true,
+                "supportsExceptionInfoRequest": true,
+                "supportsExceptionOptions": false,
+                "supportsFunctionBreakpoints": true,
+                "supportsSetExpression": true,
+                "supportsSetVariable": true,
+                "supportsTerminateRequest": true
+              }
+            },
+            "event": "capabilities",
+            "seq": 1,
+            "type": "event"
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:54.814Z",
+          "direction": "receive",
+          "message": {
+            "body": {
+              "exceptionBreakpointFilters": [
+                {
+                  "filter": "all",
+                  "label": "all"
+                },
+                {
+                  "filter": "user-unhandled",
+                  "label": "user-unhandled"
+                }
+              ],
+              "supportTerminateDebuggee": true,
+              "supportsCancelRequest": true,
+              "supportsConditionalBreakpoints": true,
+              "supportsConfigurationDoneRequest": true,
+              "supportsExceptionFilterOptions": true,
+              "supportsExceptionInfoRequest": true,
+              "supportsExceptionOptions": false,
+              "supportsFunctionBreakpoints": true,
+              "supportsSetExpression": true,
+              "supportsSetVariable": true,
+              "supportsTerminateRequest": true
+            },
+            "command": "initialize",
+            "request_seq": 1,
+            "seq": 2,
+            "success": true,
+            "type": "response"
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:54.814Z",
+          "direction": "receive",
+          "message": {
+            "body": {},
+            "event": "initialized",
+            "seq": 3,
+            "type": "event"
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:54.815Z",
+          "direction": "send",
+          "message": {
+            "seq": 2,
+            "type": "request",
+            "command": "attach",
+            "arguments": {
+              "processId": 28192
+            }
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:54.815Z",
+          "direction": "send",
+          "message": {
+            "seq": 3,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+              "source": {
+                "path": "<disposable-project>\\Assets\\ProbeTarget.cs"
+              },
+              "breakpoints": [
+                {
+                  "line": 90
+                }
+              ]
+            }
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:54.815Z",
+          "direction": "receive",
+          "message": {
+            "body": {},
+            "command": "attach",
+            "request_seq": 2,
+            "seq": 4,
+            "success": true,
+            "type": "response"
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:54.816Z",
+          "direction": "receive",
+          "message": {
+            "body": {
+              "breakpoints": [
+                {
+                  "id": 1,
+                  "line": 90,
+                  "message": "The breakpoint is pending and will be resolved when debugging starts.",
+                  "verified": false
+                }
+              ]
+            },
+            "command": "setBreakpoints",
+            "request_seq": 3,
+            "seq": 5,
+            "success": true,
+            "type": "response"
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:54.816Z",
+          "direction": "send",
+          "message": {
+            "seq": 4,
+            "type": "request",
+            "command": "configurationDone",
+            "arguments": {}
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:59.967Z",
+          "direction": "receive",
+          "message": {
+            "command": "configurationDone",
+            "message": "Failed command 'configurationDone' : 0x80004005",
+            "request_seq": 4,
+            "seq": 6,
+            "success": false,
+            "type": "response"
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:59.967Z",
+          "direction": "send",
+          "message": {
+            "seq": 5,
+            "type": "request",
+            "command": "disconnect",
+            "arguments": {
+              "terminateDebuggee": false
+            }
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:59.967Z",
+          "direction": "receive",
+          "message": {
+            "body": {},
+            "event": "terminated",
+            "seq": 7,
+            "type": "event"
+          }
+        },
+        {
+          "at": "2026-10-08T06:00:59.967Z",
+          "direction": "receive",
+          "message": {
+            "body": {},
+            "command": "disconnect",
+            "request_seq": 5,
+            "seq": 8,
+            "success": true,
+            "type": "response"
+          }
+        }
+      ],
+      "debuggerStderr": "",
+      "exit": {
+        "code": 3221226324,
+        "signal": null,
+        "exited": true,
+        "hexadecimal": "0xC0000354",
+        "normalExit": false
+      },
+      "finalState": {
+        "pid": 28192,
+        "version": "7000.0.0a7",
+        "coreLibrary": "System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e",
+        "runtimeVersion": "10.0.10",
+        "architecture": "x64",
+        "optimization": "Debug",
+        "phase": "editor:ready",
+        "debuggerAttached": false,
+        "heartbeats": 1,
+        "result": 0
+      },
+      "passed": false,
+      "cleanupDisconnectAccepted": true,
+      "behaviorEvidence": {
+        "attach": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "breakpoint": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "stepOver": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "stepIn": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "stepOut": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "locals": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "detach": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        }
+      }
+    },
+    {
+      "mode": "player",
+      "pid": 39832,
+      "command": {
+        "executable": "<disposable-project>\\Build\\Probe.exe",
+        "args": [
+          "-batchmode",
+          "-nographics",
+          "-logFile",
+          "<disposable-project>\\player.log"
+        ],
+        "cwd": "<disposable-project>"
+      },
+      "tests": {
+        "attach": false,
+        "breakpoint": false,
+        "stepOver": false,
+        "stepIn": false,
+        "stepOut": false,
+        "locals": false,
+        "detach": false
+      },
+      "runtime": {
+        "pid": 39832,
+        "version": "7000.0.0a7",
+        "coreLibrary": "System.Private.CoreLib, Version=10.0.0.0, Culture=neutral, PublicKeyToken=7cec85d7bea7798e",
+        "runtimeVersion": "10.0.10",
+        "architecture": "x64",
+        "optimization": "Development",
+        "phase": "player:ready",
+        "debuggerAttached": false,
+        "heartbeats": 4,
+        "result": 0
+      },
+      "debuggerCommand": {
+        "executable": "<debugger-root>\\unpacked\\netcoredbg\\netcoredbg.exe",
+        "args": [
+          "--interpreter=vscode",
+          "--engineLogging=<engine.log>"
+        ],
+        "transport": "stdio",
+        "tcpPorts": []
+      },
+      "breakpointResponse": {
+        "breakpoints": [
+          {
+            "id": 1,
+            "line": 90,
+            "message": "The breakpoint is pending and will be resolved when debugging starts.",
+            "verified": false
+          }
+        ]
+      },
+      "failure": "configurationDone: Failed command 'configurationDone' : 0x80004005",
+      "debuggerExit": {
+        "code": 0,
+        "signal": null
+      },
+      "dap": [
+        {
+          "at": "2026-10-08T06:01:41.357Z",
+          "direction": "send",
+          "message": {
+            "seq": 1,
+            "type": "request",
+            "command": "initialize",
+            "arguments": {
+              "adapterID": "uct-private-proof",
+              "linesStartAt1": true,
+              "columnsStartAt1": true,
+              "pathFormat": "path"
+            }
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:41.382Z",
+          "direction": "receive",
+          "message": {
+            "body": {
+              "capabilities": {
+                "exceptionBreakpointFilters": [
+                  {
+                    "filter": "all",
+                    "label": "all"
+                  },
+                  {
+                    "filter": "user-unhandled",
+                    "label": "user-unhandled"
+                  }
+                ],
+                "supportTerminateDebuggee": true,
+                "supportsCancelRequest": true,
+                "supportsConditionalBreakpoints": true,
+                "supportsConfigurationDoneRequest": true,
+                "supportsExceptionFilterOptions": true,
+                "supportsExceptionInfoRequest": true,
+                "supportsExceptionOptions": false,
+                "supportsFunctionBreakpoints": true,
+                "supportsSetExpression": true,
+                "supportsSetVariable": true,
+                "supportsTerminateRequest": true
+              }
+            },
+            "event": "capabilities",
+            "seq": 1,
+            "type": "event"
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:41.383Z",
+          "direction": "receive",
+          "message": {
+            "body": {
+              "exceptionBreakpointFilters": [
+                {
+                  "filter": "all",
+                  "label": "all"
+                },
+                {
+                  "filter": "user-unhandled",
+                  "label": "user-unhandled"
+                }
+              ],
+              "supportTerminateDebuggee": true,
+              "supportsCancelRequest": true,
+              "supportsConditionalBreakpoints": true,
+              "supportsConfigurationDoneRequest": true,
+              "supportsExceptionFilterOptions": true,
+              "supportsExceptionInfoRequest": true,
+              "supportsExceptionOptions": false,
+              "supportsFunctionBreakpoints": true,
+              "supportsSetExpression": true,
+              "supportsSetVariable": true,
+              "supportsTerminateRequest": true
+            },
+            "command": "initialize",
+            "request_seq": 1,
+            "seq": 2,
+            "success": true,
+            "type": "response"
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:41.383Z",
+          "direction": "receive",
+          "message": {
+            "body": {},
+            "event": "initialized",
+            "seq": 3,
+            "type": "event"
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:41.435Z",
+          "direction": "send",
+          "message": {
+            "seq": 2,
+            "type": "request",
+            "command": "attach",
+            "arguments": {
+              "processId": 39832
+            }
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:41.436Z",
+          "direction": "send",
+          "message": {
+            "seq": 3,
+            "type": "request",
+            "command": "setBreakpoints",
+            "arguments": {
+              "source": {
+                "path": "<disposable-project>\\Assets\\ProbeTarget.cs"
+              },
+              "breakpoints": [
+                {
+                  "line": 90
+                }
+              ]
+            }
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:41.436Z",
+          "direction": "receive",
+          "message": {
+            "body": {},
+            "command": "attach",
+            "request_seq": 2,
+            "seq": 4,
+            "success": true,
+            "type": "response"
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:41.436Z",
+          "direction": "receive",
+          "message": {
+            "body": {
+              "breakpoints": [
+                {
+                  "id": 1,
+                  "line": 90,
+                  "message": "The breakpoint is pending and will be resolved when debugging starts.",
+                  "verified": false
+                }
+              ]
+            },
+            "command": "setBreakpoints",
+            "request_seq": 3,
+            "seq": 5,
+            "success": true,
+            "type": "response"
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:41.436Z",
+          "direction": "send",
+          "message": {
+            "seq": 4,
+            "type": "request",
+            "command": "configurationDone",
+            "arguments": {}
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:46.518Z",
+          "direction": "receive",
+          "message": {
+            "command": "configurationDone",
+            "message": "Failed command 'configurationDone' : 0x80004005",
+            "request_seq": 4,
+            "seq": 6,
+            "success": false,
+            "type": "response"
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:46.518Z",
+          "direction": "send",
+          "message": {
+            "seq": 5,
+            "type": "request",
+            "command": "disconnect",
+            "arguments": {
+              "terminateDebuggee": false
+            }
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:46.518Z",
+          "direction": "receive",
+          "message": {
+            "body": {},
+            "event": "terminated",
+            "seq": 7,
+            "type": "event"
+          }
+        },
+        {
+          "at": "2026-10-08T06:01:46.518Z",
+          "direction": "receive",
+          "message": {
+            "body": {},
+            "command": "disconnect",
+            "request_seq": 5,
+            "seq": 8,
+            "success": true,
+            "type": "response"
+          }
+        }
+      ],
+      "debuggerStderr": "",
+      "exit": {
+        "code": 3221226324,
+        "signal": null,
+        "exited": true,
+        "hexadecimal": "0xC0000354",
+        "normalExit": false
+      },
+      "passed": false,
+      "cleanupDisconnectAccepted": true,
+      "behaviorEvidence": {
+        "attach": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "breakpoint": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "stepOver": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "stepIn": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "stepOut": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "locals": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        },
+        "detach": {
+          "passed": false,
+          "observation": "Not observed: configurationDone: Failed command 'configurationDone' : 0x80004005"
+        }
+      }
+    }
+  ],
+  "build": {
+    "command": {
+      "executable": "<unity-executable>",
+      "args": [
+        "-batchmode",
+        "-nographics",
+        "-debugCodeOptimization",
+        "-buildTarget",
+        "Win64",
+        "-projectPath",
+        "<disposable-project>",
+        "-executeMethod",
+        "UCTDebugProbe.EditorProbe.BuildPlayer",
+        "-logFile",
+        "<disposable-project>\\build.log"
+      ],
+      "cwd": "<disposable-project>"
+    },
+    "code": 0,
+    "signal": null,
+    "result": {
+      "version": "7000.0.0a7",
+      "target": "StandaloneWindows64",
+      "backend": "CoreCLR",
+      "api": "NET_Standard_2_0",
+      "options": "Development|AllowDebugging",
+      "result": "Succeeded",
+      "errors": 0
+    }
+  },
+  "passed": false,
+  "recommendation": "stop: Editor and CoreCLR player native attachment fails at configurationDone (0x80004005); both targets exited abnormally (0xC0000354). Breakpoint, stepping, locals, and managed detach remain unproved. This ships nothing and grants no permission to ship."
+}

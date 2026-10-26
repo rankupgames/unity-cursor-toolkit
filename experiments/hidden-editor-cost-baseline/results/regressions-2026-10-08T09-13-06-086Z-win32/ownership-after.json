@@ -1,0 +1,15 @@
+{
+  "observedAt": "2026-10-08T09:59:20.922Z",
+  "passed": 9,
+  "total": 9,
+  "samplerSha256": "3d69af484dbcd5b43753f6cb15564c5673a49983bb4c4cb12fbd0125d83d18d5",
+  "testSha256": "2842a98c678b1fb8a599ca3434eb81cee1256a0203d67270f15123e2b82009dc",
+  "boundary": "Actual Node process/TCP; fake production Start/Stop ORmatch semantics",
+  "newCases": [
+    "occupied same view refuses without start/stop",
+    "owned ID-only cleanup preserves existing game and late scene foreign sessions",
+    "success-only malformed status refuses"
+  ],
+  "failBefore": "ownership-before.json",
+  "limits": "Status/start not atomic; exclusive Editor use required. No additional Unity launch."
+}

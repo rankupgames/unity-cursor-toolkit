@@ -29,6 +29,7 @@ namespace UnityCursorToolkit.InternalSmoke
 		private const string FailureRunIdKey = "UCT_INTERNAL_SMOKE_FAILURE_RUN_ID";
 		private const string AttemptsKey = "UCT_INTERNAL_SMOKE_ATTEMPTS";
 		private const int TimeoutSeconds = 90;
+		private static int inventorySentinel = 73;
 
 		static UnityCursorToolkitInternalSmoke()
 		{
@@ -40,6 +41,10 @@ namespace UnityCursorToolkit.InternalSmoke
 
 		public static void Run()
 		{
+			ValidateRuntimeAndStateReset();
+			ValidateStaticInventory();
+			ValidateSceneObjectIds();
+			ValidateBridgeReload();
 			ValidateUntermIntegration();
 			SessionState.SetBool(RunningKey, true);
 			SessionState.SetString(PhaseKey, "enterPlay");
@@ -52,6 +57,240 @@ namespace UnityCursorToolkit.InternalSmoke
 			HookUpdate();
 		}
 
+		[Serializable]
+		private sealed class SceneIdResult
+		{
+			public bool success;
+			public int instanceId;
+			public string entityId;
+			public int componentInstanceId;
+			public string componentEntityId;
+		}
+
+		private static void ValidateSceneObjectIds()
+		{
+			string Call(string tool, string json)
+			{
+				Type type = Type.GetType("UnityCursorToolkit.MCP." + tool + ", UnityCursorToolkit.Editor", true);
+				return (string)type.GetMethod("HandleCommand").Invoke(Activator.CreateInstance(type), new object[] { json });
+			}
+			string Id(SceneIdResult result, bool parent = false)
+			{
+#if UNITY_7000_0_OR_NEWER
+				if (string.IsNullOrEmpty(result.entityId)) throw new InvalidOperationException("Unity 7 did not return an entity ID.");
+				return "\"" + (parent ? "parentEntityId" : "entityId") + "\":\"" + result.entityId + "\"";
+#else
+				if (result.instanceId == 0) throw new InvalidOperationException("Mono did not return an instance ID.");
+				return "\"" + (parent ? "parentInstanceId" : "instanceId") + "\":" + result.instanceId;
+#endif
+			}
+			GameObject child = null, parentObject = null;
+			string prefix = "UCT_IdProbe_" + Guid.NewGuid().ToString("N");
+			try
+			{
+				var childId = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"create\",\"name\":\"" + prefix + "\"}"));
+				child = GameObject.Find(prefix);
+				var parentId = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"create\",\"name\":\"" + prefix + "_parent\"}"));
+				parentObject = GameObject.Find(prefix + "_parent");
+				var found = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"find\"," + Id(childId) + "}"));
+				if (!childId.success || !parentId.success || !found.success || Id(found) != Id(childId)) throw new InvalidOperationException("Object ID did not round-trip.");
+				Call("ManageGameObjectTool", "{\"action\":\"setParent\"," + Id(childId) + "," + Id(parentId, true) + "}");
+				if (child.transform.parent != parentObject.transform) throw new InvalidOperationException("Parent ID did not resolve.");
+				try
+				{
+					var invalid = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"setParent\"," + Id(childId) + ",\"parentEntityId\":\"invalid\"}"));
+					if (invalid.success) throw new InvalidOperationException("Invalid parent ID was accepted.");
+				}
+				catch (TargetInvocationException error) when (error.InnerException is ArgumentException) { }
+				if (child.transform.parent != parentObject.transform) throw new InvalidOperationException("Invalid parent ID changed the hierarchy.");
+				Call("ManageGameObjectTool", "{\"action\":\"setTransform\"," + Id(childId) + ",\"position\":[1,2,3]}");
+				if (child.transform.position != new Vector3(1, 2, 3)) throw new InvalidOperationException("Object ID transform failed.");
+				var component = JsonUtility.FromJson<SceneIdResult>(Call("ManageComponentTool", "{\"action\":\"add\"," + Id(childId) + ",\"componentType\":\"UnityEngine.Camera\"}"));
+#if UNITY_7000_0_OR_NEWER
+				if (!component.success || string.IsNullOrEmpty(component.componentEntityId)) throw new InvalidOperationException("Component entity ID missing.");
+#else
+				if (!component.success || component.componentInstanceId == 0) throw new InvalidOperationException("Component instance ID missing.");
+#endif
+				if (!Call("ManageSceneTool", "{\"action\":\"getHierarchy\"}").Contains(Id(childId))) throw new InvalidOperationException("Hierarchy ID missing.");
+				Call("ManageGameObjectTool", "{\"action\":\"destroy\"," + Id(childId) + "}");
+				if (child != null) throw new InvalidOperationException("Object ID destroy failed.");
+				Debug.Log("[UCT Internal Smoke] Scene object IDs: create/find/parent/transform/component/hierarchy/destroy passed; invalid parent preserved hierarchy.");
+			}
+			finally
+			{
+				if (child != null) UnityEngine.Object.DestroyImmediate(child);
+				if (parentObject != null) UnityEngine.Object.DestroyImmediate(parentObject);
+			}
+		}
+
+		private static void ValidateStaticInventory()
+		{
+			Type tool = Type.GetType("UnityCursorToolkit.MCP.StaticInventoryTool, UnityCursorToolkit.Editor", true);
+			object inventory = tool.GetMethod("Collect", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null);
+			string output = GetArg("-uctStaticInventoryPath", string.Empty);
+			if (!string.IsNullOrEmpty(output)) File.WriteAllText(output, JsonUtility.ToJson(inventory, true));
+			IList fields = (IList)inventory.GetType().GetField("fields").GetValue(inventory);
+			bool foundSentinel = false;
+			foreach (object field in fields)
+			{
+				Type entry = field.GetType();
+				string assembly = (string)entry.GetField("assembly").GetValue(field);
+				if (assembly == "UnityCursorToolkit.Editor" || assembly == "UnityCursorToolkit.Runtime")
+					throw new InvalidOperationException("Static inventory included package-owned fields.");
+				if ((string)entry.GetField("type").GetValue(field) == typeof(UnityCursorToolkitInternalSmoke).FullName
+					&& (string)entry.GetField("field").GetValue(field) == "inventorySentinel")
+				{
+					foundSentinel = true;
+					if ((bool)entry.GetField("hasCleanupAttribute").GetValue(field))
+						throw new InvalidOperationException("Static inventory invented a cleanup attribute.");
+				}
+			}
+			if (!foundSentinel || inventorySentinel != 73 || fields.Count > (int)inventory.GetType().GetField("maxFields").GetValue(inventory))
+				throw new InvalidOperationException("Static inventory omitted user metadata, changed its value, or exceeded its bound: " + JsonUtility.ToJson(inventory));
+
+		}
+		private static void ValidateBridgeReload()
+		{
+			Type handler = typeof(UnityCursorToolkit.HotReloadHandler);
+			const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+			MethodInfo before = handler.GetMethod("OnBeforeAssemblyReload", flags);
+			MethodInfo after = handler.GetMethod("OnAfterAssemblyReload", flags);
+			if (after == null) throw new InvalidOperationException("The bridge has no preserved-state reload restart hook.");
+			MethodInfo start = handler.GetMethod("StartWithoutMutex", flags);
+			FieldInfo currentPort = handler.GetField("currentPort", flags);
+			FieldInfo lastPort = handler.GetField("lastSuccessfulPort", flags);
+			FieldInfo initialized = handler.GetField("isInitialized", flags);
+			FieldInfo restartIntent = handler.GetField("wasRunningBeforeReload", flags);
+			int originalPort = (int)currentPort.GetValue(null);
+			int originalLastPort = (int)lastPort.GetValue(null);
+			bool originalInitialized = (bool)initialized.GetValue(null);
+			bool originalRestartIntent = (bool)restartIntent.GetValue(null);
+			bool originalRunning = UnityCursorToolkit.HotReloadHandler.IsServerRunning();
+			string lastPortKey = (string)handler.GetField("lastPortPrefKey", flags).GetRawConstantValue();
+			string runningKey = (string)handler.GetField("sessionRunningKey", flags).GetRawConstantValue();
+			bool hadLastPort = EditorPrefs.HasKey(lastPortKey);
+			int previousLastPort = EditorPrefs.GetInt(lastPortKey);
+			bool previousRunning = SessionState.GetBool(runningKey, false);
+			try
+			{
+				// The owned proof must not depend on fixed ports excluded by the host OS.
+				UnityCursorToolkit.HotReloadHandler.Stop();
+				var probe = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, 0);
+				int fixturePort;
+				try
+				{
+					probe.Start();
+					fixturePort = ((System.Net.IPEndPoint)probe.LocalEndpoint).Port;
+				}
+				finally { probe.Stop(); }
+				currentPort.SetValue(null, fixturePort);
+				lastPort.SetValue(null, fixturePort);
+				start.Invoke(null, null);
+				WaitForBridgeServer();
+				before.Invoke(null, null);
+				after.Invoke(null, null);
+				WaitForBridgeServer();
+				if (!(bool)initialized.GetValue(null))
+					throw new InvalidOperationException("The bridge did not restart after a preserved-state reload.");
+
+				UnityCursorToolkit.HotReloadHandler.Stop();
+				before.Invoke(null, null);
+				after.Invoke(null, null);
+				if (UnityCursorToolkit.HotReloadHandler.IsServerRunning() || (bool)initialized.GetValue(null))
+					throw new InvalidOperationException("Reload restarted a manually stopped bridge.");
+			}
+			finally
+			{
+				UnityCursorToolkit.HotReloadHandler.Stop();
+				currentPort.SetValue(null, originalPort);
+				lastPort.SetValue(null, originalLastPort);
+				restartIntent.SetValue(null, originalRestartIntent);
+				if (originalRunning)
+				{
+					start.Invoke(null, null);
+					WaitForBridgeServer();
+				}
+				else initialized.SetValue(null, originalInitialized);
+				if (hadLastPort) EditorPrefs.SetInt(lastPortKey, previousLastPort);
+				else EditorPrefs.DeleteKey(lastPortKey);
+				SessionState.SetBool(runningKey, previousRunning);
+			}
+		}
+
+		private static void WaitForBridgeServer()
+		{
+			var timer = System.Diagnostics.Stopwatch.StartNew();
+			while (!UnityCursorToolkit.HotReloadHandler.IsServerRunning() && timer.ElapsedMilliseconds < 5000)
+				System.Threading.Thread.Sleep(10);
+			if (!UnityCursorToolkit.HotReloadHandler.IsServerRunning())
+				throw new InvalidOperationException("The bridge listener did not start during the owned reload smoke.");
+			using (var client = new System.Net.Sockets.TcpClient())
+			{
+				client.ReceiveTimeout = 2000;
+				client.SendTimeout = 2000;
+				client.Connect(System.Net.IPAddress.Loopback, UnityCursorToolkit.HotReloadHandler.GetCurrentPort());
+				byte[] ping = Encoding.UTF8.GetBytes("{\"command\":\"ping\"}\n");
+				System.Net.Sockets.NetworkStream stream = client.GetStream();
+				stream.Write(ping, 0, ping.Length);
+				using (var reader = new StreamReader(stream))
+				{
+					if (reader.ReadLine() != "{\"command\":\"pong\"}")
+						throw new InvalidOperationException("The bridge did not answer ping after the owned reload.");
+				}
+			}
+		}
+
+		// Exercise session cleanup twice without a domain reload, so stale static state is visible.
+		private static void ValidateRuntimeAndStateReset()
+		{
+			string projectInfo = CallMcpTool("UnityCursorToolkit.MCP.ProjectInfoTool, UnityCursorToolkit.Editor", "{}");
+			bool mono = typeof(object).Assembly.GetType("Mono.Runtime") != null;
+			bool coreClr = !mono && typeof(object).Assembly.GetName().Name == "System.Private.CoreLib";
+			AssertContains(projectInfo, "\"isCoreCLR\":" + (coreClr ? "true" : "false"));
+			AssertContains(projectInfo, "\"hasDomainReload\":" + (mono ? "true" : "false"));
+
+			Type enumerator = Type.GetType("UnityCursorToolkit.Core.AssemblyEnumerator, UnityCursorToolkit.Editor", true);
+			bool toolkitFound = false;
+			foreach (Assembly assembly in (IEnumerable)enumerator.GetMethod("GetLoaded", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null))
+			{
+				toolkitFound |= assembly == enumerator.Assembly;
+			}
+			if (!toolkitFound) throw new InvalidOperationException("Assembly enumeration omitted the toolkit.");
+
+			Type bridge = Type.GetType("UnityCursorToolkit.MCP.MCPBridge, UnityCursorToolkit.Editor", true);
+			Type console = Type.GetType("UnityCursorToolkit.ConsoleToCursor, UnityCursorToolkit.Editor", true);
+			Type profiler = Type.GetType("UnityCursorToolkit.ProfilerSessionRecorder, UnityCursorToolkit.Editor", true);
+			const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+			bridge.GetMethod("Initialize", flags).Invoke(null, null);
+			foreach (PlayModeStateChange state in new[] { PlayModeStateChange.EnteredPlayMode, PlayModeStateChange.EnteredEditMode })
+			{
+				IDictionary oldHandlers = (IDictionary)bridge.GetField("_handlers", flags).GetValue(null);
+				bridge.GetMethod("OnPlayModeStateChanged", flags).Invoke(null, new object[] { state });
+				IDictionary newHandlers = (IDictionary)bridge.GetField("_handlers", flags).GetValue(null);
+				if (ReferenceEquals(oldHandlers, newHandlers) || newHandlers.Count == 0)
+					throw new InvalidOperationException("MCP handlers were not rebuilt for the new session.");
+				foreach (object key in oldHandlers.Keys)
+				{
+					if (!newHandlers.Contains(key) || ReferenceEquals(oldHandlers[key], newHandlers[key]))
+						throw new InvalidOperationException("MCP retained a stale tool handler: " + key);
+				}
+
+				console.GetMethod("OnLogReceived", flags).Invoke(null, new object[] { "State reset smoke", "", LogType.Log });
+				IList entries = (IList)console.GetField("entryBuffer", flags).GetValue(null);
+				if (entries.Count == 0) throw new InvalidOperationException("Console smoke did not seed an entry.");
+				console.GetMethod("OnPlayModeStateChanged", flags).Invoke(null, new object[] { state });
+				if (entries.Count != 0) throw new InvalidOperationException("Console retained the previous session.");
+
+				object timings = profiler.GetField("frameTimings", flags).GetValue(null);
+				Type timingType = timings.GetType().GetGenericArguments()[0];
+				timings.GetType().GetMethod("Enqueue").Invoke(timings, new[] { Activator.CreateInstance(timingType) });
+				string oldSession = (string)profiler.GetField("sessionId", flags).GetValue(null);
+				profiler.GetMethod("ResetSession", flags).Invoke(null, null);
+				if (oldSession == (string)profiler.GetField("sessionId", flags).GetValue(null)
+					|| (int)timings.GetType().GetProperty("Count").GetValue(timings) != 0)
+					throw new InvalidOperationException("Profiler retained the previous session.");
+			}
+		}
 		/// <summary>
 		/// Proves menu registration, native API binding, editor text round-trip, and GPU rendering.
 		/// </summary>

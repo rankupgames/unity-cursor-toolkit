@@ -1,0 +1,64 @@
+{
+  "success": false,
+  "editorVersion": "6000.3.9f1",
+  "platform": "Windows 10  (10.0.19045) 64bit",
+  "coreLibrary": "mscorlib",
+  "editorPid": 12408,
+  "firstFrameAt": "2026-10-08T09:14:19.3872728Z",
+  "pixelsPerPoint": 1,
+  "visibilityEvidence": [],
+  "allCapturesSucceeded": false,
+  "captures": [
+    {
+      "window": "sceneView",
+      "success": true,
+      "path": "<owned-project>\\run-0\\frames\\sceneView.jpg",
+      "width": 800,
+      "height": 520,
+      "distinctColors": 297,
+      "error": ""
+    },
+    {
+      "window": "gameView",
+      "success": false,
+      "path": "<owned-project>\\run-0\\frames\\gameView.jpg",
+      "width": 813,
+      "height": 915,
+      "distinctColors": 20,
+      "error": "blank_frame_or_scene_missing: Capture must contain expected red cube and green sphere."
+    },
+    {
+      "window": "inspector",
+      "success": true,
+      "path": "<owned-project>\\run-0\\frames\\inspector.jpg",
+      "width": 775,
+      "height": 915,
+      "distinctColors": 63,
+      "error": ""
+    },
+    {
+      "window": "packageManager",
+      "success": true,
+      "path": "<owned-project>\\run-0\\frames\\packageManager.jpg",
+      "width": 1066,
+      "height": 737,
+      "distinctColors": 23,
+      "error": ""
+    },
+    {
+      "window": "customProbe",
+      "success": true,
+      "path": "<owned-project>\\run-0\\frames\\customProbe.jpg",
+      "width": 420,
+      "height": 280,
+      "distinctColors": 109,
+      "error": ""
+    }
+  ],
+  "inputTest": {
+    "attempted": true,
+    "rotationAngle": 13.275,
+    "changed": true,
+    "error": ""
+  }
+}

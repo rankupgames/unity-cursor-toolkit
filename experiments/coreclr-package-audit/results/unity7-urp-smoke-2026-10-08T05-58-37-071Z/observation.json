@@ -1,0 +1,37 @@
+{
+  "observedAt": "2026-10-08T05:58:37.071Z",
+  "editorVersion": "7000.0.0a7",
+  "platform": "win32",
+  "architecture": "x64",
+  "renderPipeline": "17.7.0",
+  "templateName": "com.unity.template.urp-blank-17.3.0.tgz",
+  "templateSha256": "0fc1fe28d6077b020a550021aa74feeef922d89d9c0ad8954cd245bd5ed0f909",
+  "outcome": {
+    "code": 0,
+    "signal": null,
+    "timeout": false
+  },
+  "smoke": {
+    "success": true,
+    "message": "Internal smoke passed.",
+    "viewportFramePath": "<disposable-project>/viewport.jpg",
+    "viewportFrameBytes": 1236
+  },
+  "passed": true,
+  "readinessClaim": false,
+  "arguments": [
+    "-batchmode",
+    "-projectPath",
+    "<disposable-project>",
+    "-executeMethod",
+    "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke.Run",
+    "-uctSmokeResultPath",
+    "<disposable-project>\\result.json",
+    "-uctSmokeViewportFramePath",
+    "<disposable-project>\\viewport.jpg",
+    "-logFile",
+    "<disposable-project>\\Editor.log"
+  ],
+  "scope": "Disposable URP fixture and current package snapshot; no user project upgrade or capture-code substitution.",
+  "editorBuild": "7000.0.0a7 (581996e1a8f7)"
+}

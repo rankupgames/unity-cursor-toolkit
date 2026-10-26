@@ -1,0 +1,21 @@
+{
+	"name": "UnityCursorToolkit.TestRunnerIntegration.Editor",
+	"references": [
+		"UnityEditor.TestRunner",
+		"UnityEngine.TestRunner"
+	],
+	"includePlatforms": [
+		"Editor"
+	],
+	"autoReferenced": true,
+	"defineConstraints": [
+		"UCT_TEST_FRAMEWORK"
+	],
+	"versionDefines": [
+		{
+			"name": "com.unity.test-framework",
+			"expression": "1.1",
+			"define": "UCT_TEST_FRAMEWORK"
+		}
+	]
+}

@@ -1,0 +1,321 @@
+{
+  "observedAt": "2026-10-08T05:02:43.266Z",
+  "editorVersion": "6000.3.9f1",
+  "platform": "windows-x64",
+  "project": "CursorUnityTool",
+  "scope": "Working tree migration collector and scene-ID smoke; metadata only, no field values.",
+  "staticsInventory": {
+    "fields": [
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "<PrivateImplementationDetails>",
+        "field": "561B6524E2BDB74265C71843035853D644A947A91F7D57267D7CD0932E934740",
+        "fieldType": "<PrivateImplementationDetails>+__StaticArrayInitTypeSize=215",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "<PrivateImplementationDetails>",
+        "field": "B6E5864CEE1FDE26C53B2A788ED79D4BD44AF15D9453FEBB26A2B89B9204D060",
+        "fieldType": "<PrivateImplementationDetails>+__StaticArrayInitTypeSize=336",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "ReadmeEditor",
+        "field": "k_Space",
+        "fieldType": "System.Single",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "ReadmeEditor",
+        "field": "s_ReadmeSourceDirectory",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "ReadmeEditor",
+        "field": "s_ShowedReadmeSessionStateName",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "allCapturesSucceeded",
+        "fieldType": "System.Boolean",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "autoQuit",
+        "fieldType": "System.Boolean",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "captureResults",
+        "fieldType": "System.Collections.Generic.List`1[[System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "finished",
+        "fieldType": "System.Boolean",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "frame",
+        "fieldType": "System.Int32",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "gameWindow",
+        "fieldType": "UnityEditor.EditorWindow",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "inputAngle",
+        "fieldType": "System.Single",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "inputChanged",
+        "fieldType": "System.Boolean",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "inputError",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "inspectorWindow",
+        "fieldType": "UnityEditor.EditorWindow",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "outputDir",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "packageWindow",
+        "fieldType": "UnityEditor.EditorWindow",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "probeWindow",
+        "fieldType": "UnityEditor.EditorWindow",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "resultPath",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "rotationBefore",
+        "fieldType": "UnityEngine.Quaternion",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "rotationCaptured",
+        "fieldType": "System.Boolean",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "sceneWindow",
+        "fieldType": "UnityEditor.EditorWindow",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike",
+        "field": "started",
+        "fieldType": "System.Boolean",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "AttemptsKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "FailureRunIdKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportFpsKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportHeightKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportQualityKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportSessionIdKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportStatusPathKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportWidthKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "PhaseKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "ResultPathKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "RunningKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "StartedTicksKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "SuccessRunIdKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "TimeoutSeconds",
+        "fieldType": "System.Int32",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "ViewportFramePathKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "inventorySentinel",
+        "fieldType": "System.Int32",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.ViewportServiceBuild",
+        "field": "ScenePath",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp",
+        "type": "<PrivateImplementationDetails>",
+        "field": "5BC8A3122A9596B25AF9801916E76BC219C73A9BA047CB38EE6AF1FB85444520",
+        "fieldType": "<PrivateImplementationDetails>+__StaticArrayInitTypeSize=234",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp",
+        "type": "<PrivateImplementationDetails>",
+        "field": "7C337470FB5DF31BD8F53B70A150EE831E7546CC7A35E70431964B15D38456FA",
+        "fieldType": "<PrivateImplementationDetails>+__StaticArrayInitTypeSize=134",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp",
+        "type": "UnityCursorToolkit.ViewportService.ViewportServiceServer",
+        "field": "DefaultPort",
+        "fieldType": "System.Int32",
+        "hasCleanupAttribute": false
+      }
+    ],
+    "assembliesScanned": 2,
+    "typesScanned": 29,
+    "truncated": false,
+    "errors": [],
+    "durationMs": 287,
+    "maxAssemblies": 128,
+    "maxTypes": 2048,
+    "maxFields": 4096,
+    "maxDurationMs": 500
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "observedAt": "2026-10-08T10:39:56.632Z",
+  "passed": 8,
+  "total": 8,
+  "scope": "2 full-sampler VM cases with real TCP/file boundary + 6 subprocess TCP probe cases; no Unity launched",
+  "sourceHashes": {
+    "sampler": "7b0dfc7e2fbc560757582659edd616ae7a41b946e1084ca2c7a5e6948fa64022",
+    "probe": "22a9a7c444e5dac6a7ca6d915e0512adedbebd3176310110001d0849860f8245",
+    "test": "c6550db4ac4ab002b60cc6ff17a2d6946852b3751ff6e3d8b296ddfe113c4cfa"
+  },
+  "priorFixtureFailure": "Preserved in current-measurement.json; VM __filename corrected before successful rerun"
+}
