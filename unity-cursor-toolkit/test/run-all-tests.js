@@ -10,6 +10,7 @@ const suites = [
 	'run-tests.js',
 	'simplified-context-tests.js',
 	'remote-shell-tests.js',
+	'session-cli-tests.js',
 	'package-sync-tests.js'
 ];
 const SUITE_TIMEOUT_MS = 30_000;

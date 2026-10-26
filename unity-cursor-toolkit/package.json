@@ -380,6 +380,7 @@
     "unity:license": "node scripts/unity-license.js",
     "remote-shell": "node out/remote-shell/sidecarCli.js",
     "mcp:serve": "node out/mcp/server.js",
+    "sessions": "node out/sessions/cli.js",
     "package": "vsce package",
     "publish": "vsce publish",
     "install:extension": "npm install",
