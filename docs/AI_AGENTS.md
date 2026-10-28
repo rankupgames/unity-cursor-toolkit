@@ -14,8 +14,8 @@ preserve existing calls, and catalog/result `_meta` identifies the selected orig
 The recorded Windows baseline is exact 6000.3.9f1: isolated package activation,
 TCP handshake, console, and standalone MCP checks passed. The fixture uses an
 available port and isolated preferences, so it does not prove default-install
-listener activation. Unity 2019.4 parity is user-blocked; no exact legacy LTS
-candidate is configured. Unrun versions and platforms remain untested.
+listener activation. Unity 2019.4.40f1 is a configured Windows candidate, but
+execution remains user-blocked. Unrun versions and platforms remain untested.
 
 Exact 7000.0.0a7/CoreCLR observations are readiness preparation, not general
 shipped Unity 7 support. Read the [capability matrix](CAPABILITY_MATRIX.md),
