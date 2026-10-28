@@ -3806,9 +3806,9 @@ function testStatusBarController() {
 	const { StatusBarController } = require(path.join(outDir, 'core', 'statusBarController'));
 	const { ConnectionState } = require(path.join(outDir, 'core', 'types'));
 
-	function makeController() {
+	function makeController(getRuntimeCapabilities) {
 		const ctx = createMockExtensionContext();
-		const ctrl = new StatusBarController(ctx);
+		const ctrl = new StatusBarController(ctx, getRuntimeCapabilities);
 		const connectItem = ctx.subscriptions[0];
 		const quickAccessItem = ctx.subscriptions[1];
 		return { ctrl, connectItem, quickAccessItem, cliItem: ctx.subscriptions[2] };
@@ -3835,15 +3835,37 @@ function testStatusBarController() {
 		ctrl.dispose();
 	});
 
-	test('Connected: green color, port in tooltip, stop command', () => {
-		const { ctrl, connectItem, quickAccessItem } = makeController();
-		ctrl.update(ConnectionState.Connected, 55500);
-
-		assert.ok(connectItem.text.includes('circle-filled') || connectItem.text.includes('Unity'));
-		assert.ok(connectItem.tooltip.includes('55500'));
-		assert.ok(connectItem.color instanceof vscode.ThemeColor);
-		assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.stopConnection');
-		ctrl.dispose();
+	test('Connected: shows capability-selected reload mode through compilation and clears it on reconnect', () => {
+		const { parseRuntimeCapabilities } = require(path.join(outDir, 'core', 'runtimeCapabilities'));
+		let payload;
+		const { ctrl, connectItem } = makeController(() => parseRuntimeCapabilities(payload));
+		try {
+			for (const [info, mode] of [
+				[undefined, 'Reload unavailable'],
+				[{}, 'Mono reload'],
+				[{ unityVersion: '7000.0.0a7', runtime: { isCoreCLR: false, hasDomainReload: true } }, 'Mono reload'],
+				[{ unityVersion: '6000.3.9f1', runtime: { isCoreCLR: true, hasDomainReload: false } }, 'Unity reload'],
+				[{ runtime: {} }, 'Reload unavailable'],
+				[{ runtime: { isCoreCLR: false, hasDomainReload: false } }, 'Reload unavailable']
+			]) {
+				payload = info;
+				ctrl.update(ConnectionState.Connected, 55500);
+				assert.ok(connectItem.text.includes(mode), 'Status bar omitted the active reload mode');
+				assert.ok(connectItem.tooltip.includes(mode));
+				assert.ok(connectItem.tooltip.includes('55500'));
+				assert.ok(connectItem.color instanceof vscode.ThemeColor);
+				assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.stopConnection');
+				for (const success of [true, false]) {
+					ctrl.showCompilationResult(success, 1, 1);
+					assert.ok(connectItem.text.includes(mode), 'Compilation result lost the reload mode');
+				}
+				for (const state of [ConnectionState.Reconnecting, ConnectionState.Disconnected]) {
+					ctrl.update(state, null);
+					assert.ok(!connectItem.text.includes(mode));
+					assert.ok(!connectItem.tooltip.includes(mode));
+				}
+			}
+		} finally { ctrl.dispose(); }
 	});
 
 	test('Connecting: shows sync spinner, hides quick access', () => {

@@ -70,7 +70,10 @@ export function activate(context: vscode.ExtensionContext): void {
 		const port = await connectToLinkedUnityProject(projectPath, generation);
 		return isConnectionRequestCurrent(generation) ? port : undefined;
 	});
-	statusBar = new StatusBarController(context);
+	statusBar = new StatusBarController(context, () => connection.getRuntimeCapabilities());
+	context.subscriptions.push(connection.onRuntimeCapabilitiesChanged(() => {
+		statusBar.update(connection.info.state, connection.info.port);
+	}));
 	moduleLoader = new ModuleLoader();
 
 	const messageHandlers: IMessageHandler[] = [];
