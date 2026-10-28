@@ -1,0 +1,103 @@
+{
+  "redactions": [
+    "repository/user roots",
+    "Editor roots from installed inventory",
+    "OS-user/host identifiers",
+    "credential/identity log lines"
+  ],
+  "interruptReceived": false,
+  "partialArtifactPresent": false,
+  "packages": [
+    {
+      "name": "com.unity.test-framework",
+      "version": "1.8.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.test-framework"
+    },
+    {
+      "name": "com.unity.ext.nunit",
+      "version": "2.1.0",
+      "source": "<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/com.unity.ext.nunit"
+    }
+  ],
+  "frames": [
+    {
+      "elapsedMs": 43,
+      "stream": "stdout",
+      "characters": 380
+    }
+  ],
+  "leftoverEditorPids": [],
+  "startedAt": "2026-10-09T01:28:48.801Z",
+  "completedAt": "2026-10-09T01:28:49.753Z",
+  "cliVersion": "1.0.0-beta.12",
+  "binarySha256": "94047d1d84d66fc178cee541a9c3f69d2199edf15cdf37d3f308d7d9fb064a96",
+  "installedEditorVersions": [
+    "7000.0.0a7",
+    "6000.6.4f1",
+    "6000.3.25f1",
+    "6000.3.9f1"
+  ],
+  "moduleEvidence": [
+    {
+      "args": [
+        "editors",
+        "module",
+        "list",
+        "6000.3.9f1",
+        "--format",
+        "json"
+      ],
+      "exitCode": 0,
+      "editorVersion": "6000.3.9f1",
+      "module": "android",
+      "status": "Installed"
+    },
+    {
+      "args": [
+        "editors",
+        "module",
+        "list",
+        "6000.6.4f1",
+        "--format",
+        "json"
+      ],
+      "exitCode": 0,
+      "editorVersion": "6000.6.4f1",
+      "module": "android",
+      "status": "Available"
+    }
+  ],
+  "editorVersion": "6000.6.4f1",
+  "platform": "windows-x64",
+  "args": [
+    "build",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1",
+    "--target",
+    "Android",
+    "--output-path",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Build\\2026-10-09-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-missing-module-native.apk",
+    "--log-file",
+    "<repo>\\experiments\\unity-cli-baseline\\fixture-6000.6.4f1\\Logs\\2026-10-09-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-missing-module-native.log",
+    "--timeout",
+    "60",
+    "--allow-dirty-build",
+    "--no-provenance",
+    "--no-accelerator",
+    "--non-interactive",
+    "--no-log-proxy",
+    "--no-banner",
+    "--format",
+    "json"
+  ],
+  "exitCode": 2,
+  "signal": null,
+  "durationMs": 1012,
+  "stdout": "{\n  \"success\": false,\n  \"command\": \"build\",\n  \"data\": null,\n  \"errors\": [\n    {\n      \"code\": \"COMMAND_FAILED\",\n      \"message\": \"Target Android has no built-in command-line build. Pass --execute-method, or use a Unity 6+ build profile with --profile. Only desktop targets (StandaloneLinux64, StandaloneOSX, StandaloneWindows64) build without them.\"\n    }\n  ],\n  \"warnings\": []\n}\n",
+  "stderr": "",
+  "editorLog": null,
+  "xmlProduced": false,
+  "projectVersionBefore": "m_EditorVersion: 6000.6.4f1\nm_EditorVersionWithRevision: 6000.6.4f1 (12bfff696524)\n",
+  "projectVersionAfter": "m_EditorVersion: 6000.6.4f1\nm_EditorVersionWithRevision: 6000.6.4f1 (12bfff696524)\n",
+  "declaredEditorVersionUnchanged": true,
+  "buildArtifactPresentAfter": false
+}
