@@ -1,11 +1,11 @@
 'use strict';
 const assert = require('assert'), Module = require('module');
-const originalLoad = Module._load, commands = new Map(), output = [];
+const originalLoad = Module._load, commands = new Map(), output = [], progress = [];
 let choices = [], cancel, disposed = false;
 const vscode = { ProgressLocation: { Notification: 15 }, window: {
  createOutputChannel: () => ({ show() {}, appendLine: text => output.push(text), dispose: () => { disposed = true; } }),
  showQuickPick: async () => choices.shift(), showInputBox: async () => choices.shift(),
- withProgress: async (_options, run) => run({ report() {} }, { onCancellationRequested: callback => { cancel = callback; return { dispose() {} }; } })
+ withProgress: async (_options, run) => run({ report: value => progress.push(value.message) }, { onCancellationRequested: callback => { cancel = callback; return { dispose() {} }; } })
 } };
 Module._load = (name, ...rest) => name === 'vscode' ? vscode : originalLoad.call(Module, name, ...rest);
 const { UnityTestCommands } = require('../out/mcp/unityTestCommands');
@@ -15,10 +15,11 @@ async function test(name, run) { try { await run(); passed++; console.log('PASS 
 const result = { backend: 'bridge', editorVersion: '6000.3.9f1', mode: 'EditMode', status: 'failed', runId: 'owned-run', tests: [{ status: 'failed', fullName: 'Game.Tests.Fails', durationMs: 4, message: 'Expected true', stackTrace: '<project>/Tests.cs:10' }], summary: { total: 1, passed: 0, failed: 1 }, error: { code: 'tests_failed', message: 'One test failed.', recovery: 'Inspect the failure.' } };
 async function main() {
  await test('command palette selections use the shared provider and print backend, exact version and failure details', async () => {
-  let request; const ui = new UnityTestCommands({ registerCommand: (name, run) => commands.set(name, run) }, { execute: async (name,args) => { request={name,args}; return result; } });
+  let request; const ui = new UnityTestCommands({ registerCommand: (name, run) => commands.set(name, run) }, { execute: async (name,args,context) => { request={name,args}; context.reportProgress(0,0,'CLI tests are running; counts unavailable.'); context.reportProgress(1,2,'Bridge test progress'); return result; } });
   try {
    choices = ['EditMode','bridge','namespace','Game.Tests']; await commands.get('unity-cursor-toolkit.tests.run')();
    assert.deepStrictEqual(request,{name:'run_tests',args:{mode:'EditMode',backend:'bridge',filter:{namespace:'Game.Tests'}}});
+   assert.deepStrictEqual(progress, ['CLI tests are running; counts unavailable.', 'Bridge test progress (1/2)']);
    assert(output.some(line=>line.includes('bridge | Unity 6000.3.9f1'))); assert(output.includes('Expected true')); assert(output.includes('<project>/Tests.cs:10')); assert(output.some(line=>line.startsWith('tests_failed:')));
    choices = [undefined]; request = undefined; await commands.get('unity-cursor-toolkit.tests.list')(); assert.strictEqual(request,undefined);
   } finally { ui.dispose(); }
