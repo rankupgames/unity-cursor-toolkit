@@ -72,6 +72,33 @@
             "maximum": 1000,
             "description": "Maximum console entries retained in the bounded ring buffer."
           },
+          "unityCursorToolkit.statics.enabled": {
+            "type": "boolean",
+            "default": false,
+            "description": "Opt in to allowlisted static field fingerprints and consecutive play-mode transition diffs. Disabling clears in-memory snapshots and detaches capture hooks."
+          },
+          "unityCursorToolkit.statics.assemblyAllowlist": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1, "maxLength": 128 },
+            "maxItems": 128,
+            "uniqueItems": true,
+            "default": [],
+            "description": "Exact assembly names to scan, restricted to compilation sources wholly under this project's Assets. Engine, system and package assemblies are excluded."
+          },
+          "unityCursorToolkit.statics.maxFields": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1000,
+            "default": 1000,
+            "description": "Field-count budget for a static scan. Reaching this cap discards the partial snapshot and emits one structured warning."
+          },
+          "unityCursorToolkit.statics.maxScanMilliseconds": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "description": "Cooperative scan budget in milliseconds. Metadata calls cannot be interrupted; checks occur before and after them. Reaching the budget discards the snapshot."
+          },
           "unityCursorToolkit.hotReload.preferILPatch": {
             "type": "boolean",
             "default": true,
@@ -380,7 +407,7 @@
     "watch": "tsc -watch -p ./",
     "dev:watch": "tsc -watch -p ./",
     "pretest": "npm run compile",
-    "test": "node test/run-all-tests.js && node test/viewport-measurement-tests.js && node test/player-viewport-proof-tests.js",
+    "test": "node test/run-all-tests.js && node test/vendor-validation-tests.js && node test/viewport-measurement-tests.js && node test/player-viewport-proof-tests.js",
     "test:unity-internal": "node scripts/run-internal-unity-smoke.js",
     "dev:unity-viewport": "node scripts/run-internal-viewport-stream.js",
     "spike:editor-windows": "node scripts/run-editor-window-capture-spike.js",
@@ -399,6 +426,7 @@
     "unity:license": "node scripts/unity-license.js",
     "remote-shell": "node out/remote-shell/sidecarCli.js",
     "mcp:serve": "node out/mcp/server.js",
+    "sessions": "node out/sessions/cli.js",
     "package": "vsce package",
     "publish": "vsce publish",
     "install:extension": "npm install",
@@ -416,6 +444,9 @@
     "audit": "npm audit"
   },
   "overrides": {
+    "@azure/identity": {
+      "@azure/msal-node": "7.1.0"
+    },
     "ovsx": {
       "@vscode/vsce": "$@vscode/vsce"
     }

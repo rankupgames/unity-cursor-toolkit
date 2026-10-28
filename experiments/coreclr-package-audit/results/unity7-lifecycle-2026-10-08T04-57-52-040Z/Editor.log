@@ -65,15 +65,15 @@ Logging is directed to a specific file, skipping project log.
 Failed to start primary listening socket at (0.0.0.0:55504-55512).
 Player connection [37116]  Target information:
 
-Player connection [37116]  * "[IP] 192.168.4.23 [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [37116]  * "[IP] <private-ip> [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
-Player connection [37116]  * "[IP] 172.30.143.174 [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [37116]  * "[IP] <private-ip> [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
-Player connection [37116]  * "[IP] 192.168.240.1 [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [37116]  * "[IP] <private-ip> [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
-Player connection [37116]  * "[IP] 192.168.144.1 [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [37116]  * "[IP] <private-ip> [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
-Player connection [37116]  * "[IP] 100.96.0.19 [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,DESKTOP-C857SRJ) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+Player connection [37116]  * "[IP] 100.96.0.19 [Port] 55511 [ProcessId] 63404 [Flags] 130 [Guid] 963438772 [EditorId] 963438772 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
 
 Unable to join player connection multicast group (err: 10013).
 Player connection [37116] Host joined alternative multi-casting on [225.0.0.222:34997]...

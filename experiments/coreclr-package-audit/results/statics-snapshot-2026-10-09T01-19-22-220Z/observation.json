@@ -1,0 +1,126 @@
+{
+  "observedAt": "2026-10-09T01:19:22.220Z",
+  "consoleResetBaseline": false,
+  "fixture": "canonical package and sample Assets copy with static owner fixtures; no play transitions",
+  "pid": 23960,
+  "outcome": {
+    "code": 0,
+    "signal": null,
+    "normalExit": true,
+    "timeout": false,
+    "phase": "execution"
+  },
+  "completed": true,
+  "readinessClaim": false,
+  "events": [
+    {
+      "callback": "snapshotMeasurement",
+      "pid": 23960,
+      "editorVersion": "6000.3.9f1",
+      "checks": [
+        "owner",
+        "snapshot_foundation",
+        "disabled_no_snapshot",
+        "invalid_enabled_refused",
+        "complete_owned_snapshot",
+        "<licensing or credential line omitted>",
+        "unchanged_fingerprint_stable",
+        "changed_fingerprint_changes",
+        "array_count",
+        "array_count_changes",
+        "null_fingerprint",
+        "no_user_initializer",
+        "<licensing or credential line omitted>",
+        "bounded_string",
+        "<licensing or credential line omitted>",
+        "<licensing or credential line omitted>",
+        "<licensing or credential line omitted>",
+        "hard_off_clears_latest"
+      ],
+      "samples": [
+        {
+          "scanDurationMs": 13.5096,
+          "totalConfigureMilliseconds": 13.7087,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 10.5406,
+          "totalConfigureMilliseconds": 10.6517,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 13.6018,
+          "totalConfigureMilliseconds": 13.7064,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 10.6326,
+          "totalConfigureMilliseconds": 10.7423,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 10.6455,
+          "totalConfigureMilliseconds": 10.7671,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 13.3878,
+          "totalConfigureMilliseconds": 13.4946,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 10.6073,
+          "totalConfigureMilliseconds": 10.7189,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 13.8931,
+          "totalConfigureMilliseconds": 14.0097,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 11.1459,
+          "totalConfigureMilliseconds": 11.2643,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        },
+        {
+          "scanDurationMs": 10.9231,
+          "totalConfigureMilliseconds": 11.0343,
+          "complete": false,
+          "skippedReason": "time_budget",
+          "fieldCount": 0
+        }
+      ]
+    },
+    {
+      "callback": "complete",
+      "pid": 23960,
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "deadlines": {
+    "startupSeconds": 180,
+    "executionSeconds": 90,
+    "normalExitGraceSeconds": 15
+  },
+  "scope": "Exact sample Assets copy plus owner fixtures. Cooperative scan timing; no play-mode diff, native CI or other Editor guarantee."
+}
