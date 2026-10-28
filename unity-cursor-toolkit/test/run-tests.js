@@ -5271,6 +5271,23 @@ async function testUnityCliAdapter() {
 }
 
 function testCliEvidencePrivacy() {
+
+	test('native CI smoke failures keep Editor logs out of job output', () => {
+		const source = fs.readFileSync(path.join(__dirname, '../scripts/run-internal-unity-smoke.js'), 'utf8');
+		const begin = source.indexOf('function runProcess('), end = source.indexOf('function parseToolResult(', begin);
+		assert.ok(begin >= 0 && end > begin, 'Native runner owner boundary missing');
+		const probe = [
+			"const vm=require('vm'),{EventEmitter}=require('events');let childOutput='';",
+			"const context={unityLogPath:'fixture.log',tail:()=> 'fixtureSensitive',spawn:(_command,_args,options)=>{const child=new EventEmitter();if(options.stdio!=='ignore')childOutput='fixtureSensitive';process.nextTick(()=>child.emit('exit',1,null));return child;}};",
+			"vm.createContext(context);vm.runInContext(" + JSON.stringify(source.slice(begin, end)) + ",context);",
+			"context.runProcess('Unity',[]).then(()=>{throw Error('Expected failure');},error=>{process.stdout.write(JSON.stringify({message:error.message,childOutput}));});"
+		].join('\n');
+		const result = require('child_process').spawnSync(process.execPath, ['-e', probe], { encoding: 'utf8', timeout: 10000 });
+		assert.strictEqual(result.status, 0, result.stderr);
+		const output = JSON.parse(result.stdout);
+		assert.ok(output.message.includes('code=1'));
+		assert.ok(!JSON.stringify(output).includes('fixtureSensitive'), 'Raw Editor diagnostics leaked into CI output');
+	});
 	test('CLI and Pipeline captures redact identities and keep public evidence', () => {
 		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
 		const read = file => {
@@ -5352,7 +5369,7 @@ function testCoreClrEvidencePrivacy() {
 			['../../unity-cursor-toolkit/scripts/run-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
 			['../../unity-cursor-toolkit/scripts/measure-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {']
 		]) {
-			const source = fs.readFileSync(path.join(root, file), 'utf8');
+			const source = fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 			const start = source.indexOf(startMarker || 'const ' + symbol + ' = value => {');
 			const end = source.indexOf(endMarker, start) + endMarker.length;
 			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');
