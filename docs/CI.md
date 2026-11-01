@@ -34,16 +34,9 @@ lane: `id=check`, `profile=small-web`, `runTimeoutSeconds=1800`,
 Select the child-folder name during registration. Keep its job disabled outside
 the administrative dispatch lifecycle.
 
-For the existing integration branch, the project selection is
-`rankupgames/unity-cursor-toolkit`, branch `integration/unity-runtime-sessions`.
-Register `check` under the existing `homelab-pilot` parent, with child folder
-`unity-cursor-toolkit-validation`. The resulting job is
-`homelab-pilot/unity-cursor-toolkit-validation/check`. Protect `homelab-pilot`
-and preserve the existing reporter protection set. Resolve credential references
-and the admin site from the live owner before applying this proposed selection.
-
-Use the accepted immutable shared revision from the
-[adoption runbook](https://github.com/dudetru25/homelab-config/blob/57ee3490c4c5bea810c62c3c69f9c14dba8fc33c/docs/runbooks/jenkins-repo-adoption.md).
+Resolve the accepted immutable shared revision, approved job placement and admin
+binding through the infrastructure owner. Keep private runbooks, host addresses,
+job paths, credential identities and reporter state outside this public repo.
 Register and dispatch only after the source and registry changes are approved
 and published. A passing result needs the exact tested SHA and native Jenkins
 build URL. Retain failures, skipped checks and cleanup limits.
