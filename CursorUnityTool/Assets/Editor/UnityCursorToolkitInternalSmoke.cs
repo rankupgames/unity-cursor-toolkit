@@ -177,6 +177,21 @@ namespace UnityCursorToolkit.InternalSmoke
 						}
 						break;
 					case "startCommands":
+						AgentCommandRunnerCancellationSmoke.VerifyCancellationAndDestruction();
+						SessionState.SetString(PhaseKey, "waitCancellationReload");
+						AgentCommandRunnerCancellationSmoke.BeginDomainReload();
+						break;
+					case "waitCancellationReload":
+						if (AgentCommandRunnerCancellationSmoke.VerifyAfterReload())
+						{
+							SessionState.SetString(PhaseKey, "waitPlayAfterCancellationReload");
+							if (!EditorApplication.isPlayingOrWillChangePlaymode) EditorApplication.EnterPlaymode();
+						}
+						break;
+					case "waitPlayAfterCancellationReload":
+						if (EditorApplication.isPlaying) SessionState.SetString(PhaseKey, "startCommandProtocol");
+						break;
+					case "startCommandProtocol":
 						StartCommandTests();
 						break;
 					case "pollCommands":

@@ -141,6 +141,7 @@ namespace UnityCursorToolkit.AgentCommands
 			}
 
 			builder.Append("],\"capabilities\":{");
+			AgentCommandJson.AppendProperty(builder, "supportsDeterministicCancellation", AgentCommandRunner.SupportsDeterministicCancellation).Append(",");
 			builder.Append("\"supportedHosts\":[\"editor\",\"editorBatchmode\",\"player\",\"auto\"],");
 			builder.Append("\"batchmodeEntry\":\"UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run\",");
 			builder.Append("\"viewportInputPrefixes\":[\"viewport.tap\",\"viewport.swipe\",\"viewport.key\",\"viewport.text\"]");

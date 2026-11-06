@@ -45,6 +45,29 @@ public static class ExampleAgentCommands
 
 Registered commands require play mode because they run through a hidden `MonoBehaviour` coroutine runner on Unity's main thread.
 
+`AgentCommandRunner.SupportsDeterministicCancellation` is a public static Boolean
+property with value `true` in implementations that own deterministic iterator
+cleanup. The command catalog also reports `capabilities.supportsDeterministicCancellation`.
+Consumers that must support older pinned packages can check the public property
+through reflection before starting a command. A missing property, wrong type, or
+value other than `true` must block workflows that require this contract.
+
+The runner owns the handler and nested `IEnumerator` values yielded directly by
+that chain. Cancellation stops further steps, detaches each owned iterator, and
+calls `IDisposable.Dispose` once, from the innermost iterator to its parent.
+Normal completion and failure release the same ownership. Repeated cancellation
+of a terminal run does nothing. Runner disable, destruction, and Editor assembly
+reload cancel active runs without replaying their handlers. Run history does not
+survive assembly reload.
+
+A cancellation requested inside `MoveNext` or iterator cleanup completes after
+that call returns. Its immediate status can remain `Running`; poll until terminal
+before reusing the run's input or world scope. Cleanup exceptions produce `Failed`,
+and the runner still attempts the remaining cleanup. The feature must release its
+held inputs, objects, and protection in its iterator's `finally` block. Separately
+started Unity coroutines, tasks, and other external work remain the feature's
+responsibility.
+
 ## MCP Tool
 
 The companion extension exposes the generic `game_command` MCP tool:

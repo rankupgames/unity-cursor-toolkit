@@ -24,6 +24,10 @@ namespace UnityCursorToolkit.AgentCommands
 		/// Hidden singleton runner created on demand during play mode.
 		/// </summary>
 		private static AgentCommandRunner instance;
+		private static bool isShuttingDown;
+
+		/// <summary>Owned iterator chains are disposed once on cancellation and runner teardown.</summary>
+		public static bool SupportsDeterministicCancellation => true;
 
 		/// <summary>
 		/// Monotonic suffix used to keep run ids stable and readable.
@@ -53,6 +57,10 @@ namespace UnityCursorToolkit.AgentCommands
 		/// <returns>Status snapshot for the scheduled or rejected command.</returns>
 		public static AgentCommandRunSnapshot Run(string commandName, string argsJson)
 		{
+			if (isShuttingDown)
+			{
+				return AgentCommandRunSnapshot.Rejected(commandName, "runner_stopping: commands cannot start during runner cleanup or assembly reload.");
+			}
 			AgentCommandDescriptor descriptor;
 			AgentCommandHandler handler;
 			if (AgentCommandRegistry.TryGet(commandName, out descriptor, out handler) == false)
@@ -65,13 +73,26 @@ namespace UnityCursorToolkit.AgentCommands
 				return AgentCommandRunSnapshot.Rejected(commandName, "Game commands require Unity play mode: " + commandName);
 			}
 
-				AgentCommandRunner runner = GetOrCreate();
-				AgentCommandRunState state = new AgentCommandRunState(CreateRunId(commandName), commandName, handler, new AgentCommandContext(commandName, argsJson));
-				runner.runs[state.RunId] = state;
-				runner.runOrder.Add(state.RunId);
-				runner.TrimRetainedRuns();
-				state.Coroutine = runner.StartCoroutine(runner.ExecuteCommand(state));
-				return state.ToSnapshot();
+			AgentCommandRunner runner = GetOrCreate();
+			if (!runner.isActiveAndEnabled)
+			{
+				return AgentCommandRunSnapshot.Rejected(commandName, "runner_disabled: enable the command runner before starting a command.");
+			}
+			AgentCommandRunState state = new AgentCommandRunState(CreateRunId(commandName), commandName, handler, new AgentCommandContext(commandName, argsJson));
+			runner.runs[state.RunId] = state;
+			runner.runOrder.Add(state.RunId);
+			runner.TrimRetainedRuns();
+			try
+			{
+				Coroutine coroutine = runner.StartCoroutine(runner.ExecuteCommand(state));
+				if (!state.IsTerminal)
+				{
+					if (coroutine == null) runner.FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure("command_start_failed: Unity did not schedule the command."));
+					else state.Coroutine = coroutine;
+				}
+			}
+			catch (Exception exception) { runner.FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure(exception.Message)); }
+			return state.ToSnapshot();
 		}
 
 		/// <summary>
@@ -103,11 +124,11 @@ namespace UnityCursorToolkit.AgentCommands
 				return AgentCommandRunSnapshot.Rejected(string.Empty, "Unknown game command run: " + runId);
 			}
 
-			if (state.Coroutine != null && (state.Status == AgentCommandStatus.Pending || state.Status == AgentCommandStatus.Running))
+			if (!state.IsTerminal && !state.IsFinishing)
 			{
-				instance.StopCoroutine(state.Coroutine);
-				state.Complete(AgentCommandStatus.Canceled, AgentCommandResult.Failure("Command run canceled."));
-				instance.TrimRetainedRuns();
+				state.CancellationRequested = true;
+				// A reentrant request must wait until the current MoveNext/Dispose call returns.
+				if (!state.IsExecuting) instance.FinishRun(state, AgentCommandStatus.Canceled, AgentCommandResult.Failure("Command run canceled."), true);
 			}
 
 			return state.ToSnapshot();
@@ -132,6 +153,10 @@ namespace UnityCursorToolkit.AgentCommands
 			}
 
 			instance = runnerObject.AddComponent<AgentCommandRunner>();
+#if UNITY_EDITOR
+			UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+			UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += OnBeforeAssemblyReload;
+#endif
 			return instance;
 		}
 
@@ -204,46 +229,164 @@ namespace UnityCursorToolkit.AgentCommands
 		private IEnumerator ExecuteCommand(AgentCommandRunState state)
 		{
 			state.Status = AgentCommandStatus.Running;
-			IEnumerator handlerRoutine;
+			Exception failure = null;
+			IEnumerator routine = null;
+			state.IsExecuting = true;
 			try
 			{
-				handlerRoutine = state.Handler(state.Context);
+				routine = state.Handler(state.Context);
+				state.PushRoutine(routine);
 			}
 			catch (Exception exception)
 			{
-				state.Complete(AgentCommandStatus.Failed, AgentCommandResult.Failure(exception.Message));
+				failure = exception;
+			}
+			finally { state.IsExecuting = false; }
+
+			if (failure != null)
+			{
+				FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure(failure.Message));
 				yield break;
 			}
-
-			while (true)
+			if (routine == null || state.CancellationRequested)
 			{
-				object currentYield;
+				CompleteCommand(state);
+				yield break;
+			}
+			IEnumerator driver = ExecuteOwnedRoutine(state, routine, true);
+			using (driver as IDisposable)
+			{
+				while (driver.MoveNext()) yield return driver.Current;
+			}
+		}
+
+		/// <summary>Unity schedules nested waits; only the actual handler iterators belong to the run.</summary>
+		private IEnumerator ExecuteOwnedRoutine(AgentCommandRunState state, IEnumerator routine, bool isRoot)
+		{
+			while (!state.IsTerminal && !state.CancellationRequested)
+			{
+				object currentYield = null;
+				bool completed = false;
+				Exception failure = null;
+				state.IsExecuting = true;
 				try
 				{
-					if (handlerRoutine == null || handlerRoutine.MoveNext() == false)
+					if (!routine.MoveNext())
 					{
-						break;
+						state.PopRoutine();
+						completed = true;
 					}
-
-					currentYield = handlerRoutine.Current;
+					else if (!state.CancellationRequested)
+					{
+						currentYield = routine.Current;
+						IEnumerator nested = currentYield as IEnumerator;
+						if (nested != null)
+						{
+							state.PushRoutine(nested);
+							currentYield = ExecuteOwnedRoutine(state, nested, false);
+						}
+					}
 				}
 				catch (Exception exception)
 				{
-					state.Complete(AgentCommandStatus.Failed, AgentCommandResult.Failure(exception.Message));
+					failure = exception;
+				}
+				finally { state.IsExecuting = false; }
+
+				if (failure != null)
+				{
+					FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure(failure.Message));
 					yield break;
 				}
-
+				if (state.CancellationRequested)
+				{
+					CompleteCommand(state);
+					yield break;
+				}
+				if (completed)
+				{
+					if (isRoot) CompleteCommand(state);
+					yield break;
+				}
 				yield return currentYield;
 			}
+			if (state.CancellationRequested) CompleteCommand(state);
+		}
 
+		private void CompleteCommand(AgentCommandRunState state)
+		{
+			if (state.IsTerminal || state.IsFinishing) return;
+			if (state.CancellationRequested)
+			{
+				FinishRun(state, AgentCommandStatus.Canceled, AgentCommandResult.Failure("Command run canceled."));
+				return;
+			}
 			if (state.Context.HasResult == false)
 			{
 				state.Context.Succeed("Command completed.");
 			}
 
 			AgentCommandStatus finalStatus = state.Context.Result.Success ? AgentCommandStatus.Succeeded : AgentCommandStatus.Failed;
-			state.Complete(finalStatus, state.Context.Result);
+			FinishRun(state, finalStatus, state.Context.Result);
+		}
+
+		/// <summary>Detach ownership before calling cleanup so reentrant cancellation cannot dispose twice.</summary>
+		private void FinishRun(AgentCommandRunState state, AgentCommandStatus status, AgentCommandResult result, bool stopCoroutine = false)
+		{
+			if (state.IsTerminal || state.IsFinishing) return;
+			state.IsFinishing = true;
+			Coroutine coroutine = state.Coroutine;
+			state.Coroutine = null;
+			Exception cleanupFailure = null;
+			try
+			{
+				if (stopCoroutine && coroutine != null) StopCoroutine(coroutine);
+			}
+			catch (Exception exception) { cleanupFailure = exception; }
+			while (state.Routines.Count > 0)
+			{
+				try { state.PopRoutine(); }
+				catch (Exception exception) { if (cleanupFailure == null) cleanupFailure = exception; }
+			}
+			state.Complete(cleanupFailure == null ? status : AgentCommandStatus.Failed,
+				cleanupFailure == null ? result : AgentCommandResult.Failure("command_cleanup_failed: " + cleanupFailure.Message));
 			TrimRetainedRuns();
+		}
+
+		private void CancelOwnedRuns(string reason)
+		{
+			bool wasShuttingDown = isShuttingDown;
+			isShuttingDown = true;
+			try
+			{
+				// Cleanup callbacks can cancel other runs and trim retained entries.
+				var ownedRuns = new AgentCommandRunState[runs.Count];
+				runs.Values.CopyTo(ownedRuns, 0);
+				foreach (AgentCommandRunState state in ownedRuns)
+				{
+					if (state.IsTerminal) continue;
+					state.CancellationRequested = true;
+					if (!state.IsExecuting) FinishRun(state, AgentCommandStatus.Canceled, AgentCommandResult.Failure(reason), true);
+				}
+			}
+			finally { isShuttingDown = wasShuttingDown; }
+		}
+
+#if UNITY_EDITOR
+		private static void OnBeforeAssemblyReload()
+		{
+			isShuttingDown = true;
+			AgentCommandRunner runner = instance;
+			if (runner == null) return;
+			runner.CancelOwnedRuns("Command canceled before assembly reload.");
+			// The hidden owner must not survive with an empty, reconstructed run table.
+			if (runner != null) DestroyImmediate(runner.gameObject);
+		}
+#endif
+
+		private void OnDisable()
+		{
+			CancelOwnedRuns("Command canceled because its runner was disabled.");
 		}
 
 		/// <summary>
@@ -251,8 +394,12 @@ namespace UnityCursorToolkit.AgentCommands
 		/// </summary>
 		private void OnDestroy()
 		{
+			CancelOwnedRuns("Command canceled because its runner was destroyed.");
 			if (instance == this)
 			{
+#if UNITY_EDITOR
+				UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= OnBeforeAssemblyReload;
+#endif
 				instance = null;
 			}
 		}
@@ -275,7 +422,7 @@ namespace UnityCursorToolkit.AgentCommands
 			/// <summary>
 			/// Coroutine delegate that executes the game command.
 			/// </summary>
-			public AgentCommandHandler Handler { get; }
+			public AgentCommandHandler Handler { get; private set; }
 
 			/// <summary>
 			/// Command context shared with the game-authored handler.
@@ -286,6 +433,27 @@ namespace UnityCursorToolkit.AgentCommands
 			/// Coroutine handle used when cancellation is requested.
 			/// </summary>
 			public Coroutine Coroutine { get; set; }
+			public readonly List<IEnumerator> Routines = new List<IEnumerator>();
+			public bool CancellationRequested;
+			public bool IsExecuting;
+			public bool IsFinishing;
+
+			public void PushRoutine(IEnumerator routine)
+			{
+				if (routine == null) return;
+				foreach (IEnumerator owned in Routines)
+				{
+					if (ReferenceEquals(owned, routine)) throw new InvalidOperationException("command_iterator_cycle: an iterator cannot yield its active owner.");
+				}
+				Routines.Add(routine);
+			}
+
+			public void PopRoutine()
+			{
+				IEnumerator routine = Routines[Routines.Count - 1];
+				Routines.RemoveAt(Routines.Count - 1);
+				(routine as IDisposable)?.Dispose();
+			}
 
 			/// <summary>
 			/// Current execution status.
@@ -334,6 +502,7 @@ namespace UnityCursorToolkit.AgentCommands
 				Status = status;
 				Result = result;
 				Coroutine = null;
+				Handler = null;
 			}
 
 			/// <summary>
