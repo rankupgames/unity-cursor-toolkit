@@ -31,23 +31,9 @@ namespace UnityCursorToolkit.MCP
 		{
 			var result = new Inventory();
 			var timer = Stopwatch.StartNew();
-			var userAssemblies = new HashSet<string>(StringComparer.Ordinal);
-			string projectRoot = Directory.GetParent(Application.dataPath).FullName;
-			string assetsRoot = Path.GetFullPath(Application.dataPath) + Path.DirectorySeparatorChar;
-			var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
-			foreach (var assembly in CompilationPipeline.GetAssemblies(AssembliesType.Editor))
-			{
-				// Source ownership, not name prefixes: package and engine assemblies are excluded.
-				if (assembly.sourceFiles.Length == 0) continue;
-				bool ownsAllSources = true;
-				foreach (string source in assembly.sourceFiles)
-				{
-					if (!Path.GetFullPath(Path.IsPathRooted(source) ? source : Path.Combine(projectRoot, source)).StartsWith(assetsRoot, comparison)) { ownsAllSources = false; break; }
-					if (timer.ElapsedMilliseconds >= result.maxDurationMs) { result.truncated = true; break; }
-				}
-				if (result.truncated) break;
-				if (ownsAllSources) userAssemblies.Add(assembly.name);
-			}
+			bool truncated;
+			var userAssemblies = GetUserAssemblyNames(timer, result.maxDurationMs, out truncated);
+			result.truncated = truncated;
 			foreach (var assembly in AssemblyEnumerator.GetLoaded())
 			{
 				if (result.truncated || timer.ElapsedMilliseconds >= result.maxDurationMs) { result.truncated = true; break; }
@@ -87,6 +73,29 @@ namespace UnityCursorToolkit.MCP
 				right.assembly + "/" + right.type + "/" + right.field));
 			result.durationMs = timer.ElapsedMilliseconds;
 			return result;
+		}
+
+		internal static HashSet<string> GetUserAssemblyNames(Stopwatch timer, int maxDurationMs, out bool truncated)
+		{
+			truncated = false;
+			var userAssemblies = new HashSet<string>(StringComparer.Ordinal);
+			string projectRoot = Directory.GetParent(Application.dataPath).FullName;
+			string assetsRoot = Path.GetFullPath(Application.dataPath) + Path.DirectorySeparatorChar;
+			var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+			foreach (var assembly in CompilationPipeline.GetAssemblies(AssembliesType.Editor))
+			{
+				// Source ownership, not name prefixes: package and engine assemblies are excluded.
+				if (assembly.sourceFiles.Length == 0) continue;
+				bool ownsAllSources = true;
+				foreach (string source in assembly.sourceFiles)
+				{
+					if (!Path.GetFullPath(Path.IsPathRooted(source) ? source : Path.Combine(projectRoot, source)).StartsWith(assetsRoot, comparison)) { ownsAllSources = false; break; }
+					if (timer.ElapsedMilliseconds >= maxDurationMs) { truncated = true; break; }
+				}
+				if (truncated) break;
+				if (ownsAllSources) userAssemblies.Add(assembly.name);
+			}
+			return userAssemblies;
 		}
 
 		private static bool HasCleanup(FieldInfo field)

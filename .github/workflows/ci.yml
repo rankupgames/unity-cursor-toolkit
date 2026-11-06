@@ -15,10 +15,21 @@ jobs:
     outputs:
       has_changes: ${{ steps.changes.outputs.has_changes }}
       build_version: ${{ steps.version.outputs.build_version }}
+      capability_matrix: ${{ steps.capabilities.outputs.capability_matrix }}
     steps:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+
+      - name: Export capability CI matrix
+        id: capabilities
+        run: |
+          node unity-cursor-toolkit/scripts/generate-capability-matrix.js --check
+          node <<'NODE'
+          const fs = require('fs');
+          const matrix = JSON.parse(fs.readFileSync('unity-cursor-toolkit/capability-matrix.json', 'utf8'));
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, 'capability_matrix=' + JSON.stringify(matrix.ci) + '\n');
+          NODE
 
       - name: Check for changes since last build
         id: changes
@@ -47,8 +58,34 @@ jobs:
           echo "build_version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
           echo "Version: ${BUILD_VERSION}"
 
-  build:
+  capability-definitions:
+    name: Capability definition (${{ matrix.id }})
     needs: check-changes
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.check-changes.outputs.capability_matrix) }}
+    steps:
+      - uses: actions/checkout@v6
+      - name: Validate capability candidate definition
+        env:
+          CAPABILITY_CANDIDATE: ${{ toJSON(matrix) }}
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const assert = require('node:assert/strict');
+          const { advertisedCapabilities, generateMatrix } = require('./unity-cursor-toolkit/scripts/generate-capability-matrix');
+          const matrix = JSON.parse(fs.readFileSync('unity-cursor-toolkit/capability-matrix.json', 'utf8'));
+          const input = JSON.parse(fs.readFileSync('unity-cursor-toolkit/capability-matrix-input.json', 'utf8'));
+          const source = fs.readFileSync('Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/ProjectInfoProvider.cs', 'utf8');
+          assert.deepStrictEqual(matrix, generateMatrix(advertisedCapabilities(source), input), 'Capability definitions are stale');
+          const candidate = JSON.parse(process.env.CAPABILITY_CANDIDATE);
+          assert.deepStrictEqual(candidate, matrix.ci.include.find(entry => entry.id === candidate.id), 'Capability candidate is missing or stale');
+          console.log(JSON.stringify({ candidate, capabilities: matrix.rows.map(row => ({ capability: row.capability, cell: row.cells[candidate.band] })), nativeExecution: 'untested' }));
+          NODE
+
+  build:
+    needs: [check-changes, capability-definitions]
     if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     defaults:

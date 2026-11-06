@@ -1,0 +1,34 @@
+{
+  "observedAt": "2026-10-09T01:15:31.053Z",
+  "consoleResetBaseline": false,
+  "fixture": "canonical package and sample Assets copy with static owner fixtures; no play transitions",
+  "pid": 23808,
+  "outcome": {
+    "code": 1,
+    "signal": null,
+    "normalExit": true,
+    "timeout": false,
+    "phase": "execution"
+  },
+  "completed": false,
+  "readinessClaim": false,
+  "events": [
+    {
+      "callback": "snapshotFailure",
+      "pid": 23808,
+      "check": "exact_cap_complete"
+    },
+    {
+      "callback": "complete",
+      "pid": 23808,
+      "passed": false
+    }
+  ],
+  "passed": false,
+  "deadlines": {
+    "startupSeconds": 180,
+    "executionSeconds": 90,
+    "normalExitGraceSeconds": 15
+  },
+  "scope": "Exact sample Assets copy plus owner fixtures. Cooperative scan timing; no play-mode diff, native CI or other Editor guarantee."
+}

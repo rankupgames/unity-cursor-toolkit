@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -97,8 +98,14 @@ function collectFiles(rootPath) {
 	return files.sort((left, right) => left.localeCompare(right));
 }
 
-function sha256(filePath) {
-	return crypto.createHash('sha256').update(fs.readFileSync(filePath)).digest('hex');
+const newlineNormalizedExtensions = new Set(['.asmdef', '.cs', '.json', '.md', '.meta']);
+
+function sha256ReviewedFile(filePath) {
+	let content = fs.readFileSync(filePath);
+	if (newlineNormalizedExtensions.has(path.extname(filePath).toLowerCase())) {
+		content = Buffer.from(content.toString('utf8').replace(/\r\n/g, '\n'), 'utf8');
+	}
+	return crypto.createHash('sha256').update(content).digest('hex');
 }
 
 function validatePackageManifest(packageRoot) {
@@ -116,7 +123,7 @@ function validatePackageManifest(packageRoot) {
 	if (fs.existsSync(thirdPartyNoticesPath) === false) {
 		fail(`${normalizeRelativePath(repositoryRoot, packageRoot)} is missing Third Party Notices.md`);
 	}
-	if (sha256(thirdPartyNoticesPath) !== expectedThirdPartyNoticesHash) {
+	if (sha256ReviewedFile(thirdPartyNoticesPath) !== expectedThirdPartyNoticesHash) {
 		fail(`${normalizeRelativePath(repositoryRoot, thirdPartyNoticesPath)} does not match the reviewed fork notices`);
 	}
 }
@@ -147,6 +154,15 @@ function validateNativePluginMeta(vendorRoot, relativePath, expectedGuid, expect
 	if (metaText.includes(`guid: ${expectedGuid}`) === false || metaText.includes('PluginImporter:') === false || /:\sAny[\s\S]{0,220}enabled: 0/.test(metaText) === false || editorImporterPattern.test(metaText) === false) {
 		fail(`${normalizeRelativePath(repositoryRoot, metaPath)} must preserve the reviewed Editor-only ${expectedOs} importer`);
 	}
+}
+
+function hasExecutablePermission(filePath) {
+	if (process.platform !== 'win32') {
+		return (fs.statSync(filePath).mode & 0o111) !== 0;
+	}
+	const relativePath = normalizeRelativePath(repositoryRoot, filePath);
+	const indexEntry = execFileSync('git', ['-C', repositoryRoot, 'ls-files', '--stage', '--', relativePath], { encoding: 'utf8' }).trim();
+	return indexEntry.startsWith('100755 ');
 }
 
 function validateVendorManifest(vendorRoot) {
@@ -207,7 +223,7 @@ function validateVendorManifest(vendorRoot) {
 			fail(`invalid SHA-256 for ${relativePath}`);
 		}
 
-		const actualHash = sha256(path.join(vendorRoot, relativePath));
+		const actualHash = sha256ReviewedFile(path.join(vendorRoot, relativePath));
 		if (actualHash !== expectedHash) {
 			fail(`checksum mismatch for ${relativePath}`);
 		}
@@ -241,7 +257,7 @@ function validateVendorManifest(vendorRoot) {
 	}
 
 	const macDebuggerPath = path.join(vendorRoot, 'Plugins', 'macOS', 'unterm-debugger');
-	if ((fs.statSync(macDebuggerPath).mode & 0o111) === 0) {
+	if (!hasExecutablePermission(macDebuggerPath)) {
 		fail(`${normalizeRelativePath(repositoryRoot, macDebuggerPath)} must retain executable permissions`);
 	}
 
@@ -280,8 +296,8 @@ function validateMirroredVendor(canonicalManifest) {
 
 	const canonicalFiles = [manifestFileName, ...Object.keys(canonicalManifest.files)];
 	for (const relativePath of canonicalFiles) {
-		const canonicalHash = sha256(path.join(canonicalVendorRoot, relativePath));
-		const smokeHash = sha256(path.join(smokeVendorRoot, relativePath));
+		const canonicalHash = sha256ReviewedFile(path.join(canonicalVendorRoot, relativePath));
+		const smokeHash = sha256ReviewedFile(path.join(smokeVendorRoot, relativePath));
 		if (canonicalHash !== smokeHash) {
 			fail(`canonical and internal smoke vendor copies differ at ${relativePath}`);
 		}
@@ -296,14 +312,18 @@ function validateMirroredVendor(canonicalManifest) {
 	for (const relativePath of packageLevelFiles) {
 		const canonicalPath = path.join(canonicalPackageRoot, relativePath);
 		const smokePath = path.join(smokePackageRoot, relativePath);
-		if (fs.existsSync(canonicalPath) === false || fs.existsSync(smokePath) === false || sha256(canonicalPath) !== sha256(smokePath)) {
+		if (fs.existsSync(canonicalPath) === false || fs.existsSync(smokePath) === false || sha256ReviewedFile(canonicalPath) !== sha256ReviewedFile(smokePath)) {
 			fail(`canonical and internal smoke package metadata differ at ${relativePath}`);
 		}
 	}
 }
 
-validatePackageManifest(canonicalPackageRoot);
+if (require.main === module) {
+	validatePackageManifest(canonicalPackageRoot);
 validatePackageManifest(smokePackageRoot);
 const canonicalManifest = validateVendorManifest(canonicalVendorRoot);
 validateMirroredVendor(canonicalManifest);
 console.log(`Validated ${Object.keys(canonicalManifest.files).length} vendored Unity-Unterm files at ${canonicalManifest.sourceCommit}`);
+}
+
+module.exports = { sha256ReviewedFile };

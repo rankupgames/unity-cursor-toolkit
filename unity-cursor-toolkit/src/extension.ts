@@ -33,6 +33,7 @@ import { ProjectModule, hasLinkedUnityProject, getLinkedProjectPath, isScriptIns
 import { RemoteShellModule } from './remote-shell/index';
 import { ViewportPrototypeModule } from './viewport/index';
 import { UnityCliModule } from './unity-cli/index';
+import { StaticsModule } from './statics/index';
 
 let connection: ConnectionManager;
 let commandSender: CommandSender;
@@ -70,7 +71,10 @@ export function activate(context: vscode.ExtensionContext): void {
 		const port = await connectToLinkedUnityProject(projectPath, generation);
 		return isConnectionRequestCurrent(generation) ? port : undefined;
 	});
-	statusBar = new StatusBarController(context);
+	statusBar = new StatusBarController(context, () => connection.getRuntimeCapabilities());
+	context.subscriptions.push(connection.onRuntimeCapabilitiesChanged(() => {
+		statusBar.update(connection.info.state, connection.info.port);
+	}));
 	moduleLoader = new ModuleLoader();
 
 	const messageHandlers: IMessageHandler[] = [];
@@ -97,6 +101,7 @@ export function activate(context: vscode.ExtensionContext): void {
 	moduleLoader.register(new ProjectModule());
 	moduleLoader.register(new ConsoleModule());
 	moduleLoader.register(new HotReloadModule());
+	moduleLoader.register(new StaticsModule());
 	moduleLoader.register(new McpModule());
 	moduleLoader.register(new MigrationModule());
 	moduleLoader.register(new DebugModule());

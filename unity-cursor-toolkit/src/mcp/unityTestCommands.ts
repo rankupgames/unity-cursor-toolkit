@@ -39,7 +39,7 @@ export class UnityTestCommands implements vscode.Disposable {
 			const subscription = token.onCancellationRequested(() => controller.abort());
 			this.output.show(true);
 			try {
-				const result = await this.tools.execute(name, args, { signal: controller.signal, reportProgress: (done, total, message) => progress.report({ message: message + ' (' + done + '/' + total + ')' }) });
+				const result = await this.tools.execute(name, args, { signal: controller.signal, reportProgress: (done, total, message) => progress.report({ message: total > 0 ? message + ' (' + done + '/' + total + ')' : message }) });
 				this.output.appendLine(result.backend + ' | Unity ' + (result.editorVersion || 'unresolved') + ' | ' + result.mode + ' | ' + result.status + ' | ' + result.runId);
 				for (const test of result.tests) {
 					this.output.appendLine(test.status + ': ' + test.fullName + ' (' + test.durationMs + ' ms)');

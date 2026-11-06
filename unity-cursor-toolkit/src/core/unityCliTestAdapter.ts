@@ -122,6 +122,7 @@ async function normalizeReport(xml: string, snapshot: UnityTestSnapshot, filters
 			const statuses: Record<string, UnityTestStatus> = { Passed: 'passed', Failed: 'failed', Skipped: 'skipped', Inconclusive: 'inconclusive', NotRun: 'not_run', Cancelled: 'not_run', Canceled: 'not_run' };
 			let status = typeof data.result === 'string' ? statuses[data.result] : undefined;
 			if (!status) { throw new Error('Unknown result state'); }
+			if (status === 'passed' && node.failure !== undefined) { throw new Error('Passed test contains failure metadata'); }
 			const isCancelled = data.result === 'Cancelled' || data.result === 'Canceled' || data.label === 'Cancelled' || data.label === 'Canceled';
 			const counter = status === 'not_run' ? 'notRun' : status;
 			actual[counter]++; actual.total++;

@@ -72,6 +72,7 @@ const vscode = {
 			update: async () => {}
 		}),
 		workspaceFolders: null,
+		onDidChangeConfiguration: () => ({ dispose() {} }),
 		createFileSystemWatcher: (globPattern) => {
 			_lastCreatedWatcher = createMockFileSystemWatcher(globPattern);
 			_allCreatedWatchers.push(_lastCreatedWatcher);
@@ -532,6 +533,29 @@ function testCapabilityMatrix() {
 		const matrix = generateMatrix(advertisedCapabilities(source), config);
 		assert.strictEqual(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix.json'), 'utf8').replace(/\r\n/g, '\n'), JSON.stringify(matrix, null, 2) + '\n');
 		assert.strictEqual(fs.readFileSync(path.join(root, 'docs/CAPABILITY_MATRIX.md'), 'utf8').replace(/\r\n/g, '\n'), renderMarkdown(matrix));
+		const workflow = fs.readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8').replace(/\r\n/g, '\n');
+		assert.ok(workflow.includes('matrix: \${{ fromJSON(needs.check-changes.outputs.capability_matrix) }}'), 'CI does not consume the generated capability matrix');
+		assert.ok(workflow.includes('needs: [check-changes, capability-definitions]'), 'Build must require capability definition validation');
+		const body = name => workflow.slice(workflow.indexOf('- name: ' + name)).match(/node <<'NODE'\n([\s\S]*?)\n\s+NODE/)[1];
+		const producer = body('Export capability CI matrix'), consumer = body('Validate capability candidate definition');
+		const run = (code, output, fixture = config) => {
+			let exported, reported;
+			const fakeFs = {
+				readFileSync: file => file.endsWith('ProjectInfoProvider.cs') ? source : JSON.stringify(file.endsWith('capability-matrix-input.json') ? fixture : output),
+				appendFileSync: (_file, value) => { exported = value; }
+			};
+			new Function('require', 'process', 'console', code)(id => id === 'fs' ? fakeFs : id.includes('generate-capability-matrix') ? require('../scripts/generate-capability-matrix') : require(id),
+				{ env: { GITHUB_OUTPUT: 'fixture-output', CAPABILITY_CANDIDATE: JSON.stringify(matrix.ci.include[0]) } }, { log: value => { reported = JSON.parse(value); } });
+			return { exported, reported };
+		};
+		assert.deepStrictEqual(JSON.parse(run(producer, matrix).exported.trim().slice('capability_matrix='.length)), matrix.ci);
+		assert.strictEqual(run(consumer, matrix).reported.nativeExecution, 'untested');
+		for (const mutate of [output => output.rows.pop(), output => output.ci.include.shift()]) {
+			const stale = JSON.parse(JSON.stringify(matrix)); mutate(stale);
+			assert.throws(() => run(consumer, stale));
+		}
+		const missingEvidence = JSON.parse(JSON.stringify(config)); delete missingEvidence.observations[0].evidence;
+		assert.throws(() => run(consumer, matrix, missingEvidence));
 	});
 	test('local compatibility import requires exact identity, all checks, runtime and normal owned exits', () => {
 		const config = { bands: ['Mono', 'Core'], ci: { include: [
@@ -3446,6 +3470,33 @@ async function testModuleLoader() {
 		assert.ok(!log.includes('bad:off'), 'Bad module never in active list');
 	});
 
+	await testAsync('static settings stay off by default, synchronize opt-in changes, and disable on disposal', async () => {
+		const { StaticsModule } = require(path.join(outDir, 'statics', 'index'));
+		const originalConfig = vscode.workspace.getConfiguration;
+		const originalEvent = vscode.workspace.onDidChangeConfiguration;
+		let changed, stateChanged, configuration = {}, disposed = 0;
+		const calls = [];
+		const connection = { info: { state: 'disconnected' }, onStateChanged: handler => { stateChanged = handler; return { dispose() { disposed++; } }; } };
+		vscode.workspace.getConfiguration = section => { assert.strictEqual(section, 'unityCursorToolkit.statics'); return { get: (key, fallback) => configuration[key] === undefined ? fallback : configuration[key] }; };
+		vscode.workspace.onDidChangeConfiguration = handler => { changed = handler; return { dispose() { disposed++; } }; };
+		const module = new StaticsModule();
+		try {
+			await module.activate({ connectionManager: connection, commandSender: { send: (command, payload) => calls.push({ command, payload }) } });
+			assert.deepStrictEqual(calls, [], 'Disabled/disconnected configuration must not request scanning or connection');
+			connection.info.state = 'connected'; stateChanged();
+			assert.deepStrictEqual(calls.pop(), { command: 'configureStatics', payload: { enabled: false, assemblyAllowlist: [], maxFields: 1000, maxScanMilliseconds: 10 } });
+			configuration = { enabled: true, assemblyAllowlist: ['Assembly-CSharp'], maxFields: 25, maxScanMilliseconds: 8 };
+			changed({ affectsConfiguration: section => section === 'unrelated' }); assert.strictEqual(calls.length, 0);
+			changed({ affectsConfiguration: section => section === 'unityCursorToolkit.statics' });
+			assert.deepStrictEqual(calls.pop().payload, configuration);
+			for (const enabled of [false, null, 'true', [], {}]) { configuration.enabled = enabled; changed({ affectsConfiguration: () => true }); assert.strictEqual(calls.pop().payload.enabled, enabled, 'Preserve invalid types for the Editor fail-closed validator'); }
+			await module.deactivate(); assert.deepStrictEqual(calls.pop(), { command: 'configureStatics', payload: { enabled: false } });
+			changed({ affectsConfiguration: () => true }); stateChanged(); assert.strictEqual(calls.length, 0); assert.strictEqual(disposed, 2);
+			const properties = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')).contributes.configuration[0].properties;
+			for (const [key, value] of Object.entries({ enabled: false, assemblyAllowlist: [], maxFields: 1000, maxScanMilliseconds: 10 })) { assert(properties['unityCursorToolkit.statics.' + key], 'Static snapshot opt-in settings must ship defaults'); assert.deepStrictEqual(properties['unityCursorToolkit.statics.' + key].default, value); }
+		} finally { vscode.workspace.getConfiguration = originalConfig; vscode.workspace.onDidChangeConfiguration = originalEvent; }
+	});
+
 	await testAsync('disabled module is skipped (config returns false)', async () => {
 		const origGetConfig = vscode.workspace.getConfiguration;
 		vscode.workspace.getConfiguration = () => ({
@@ -3806,9 +3857,9 @@ function testStatusBarController() {
 	const { StatusBarController } = require(path.join(outDir, 'core', 'statusBarController'));
 	const { ConnectionState } = require(path.join(outDir, 'core', 'types'));
 
-	function makeController() {
+	function makeController(getRuntimeCapabilities) {
 		const ctx = createMockExtensionContext();
-		const ctrl = new StatusBarController(ctx);
+		const ctrl = new StatusBarController(ctx, getRuntimeCapabilities);
 		const connectItem = ctx.subscriptions[0];
 		const quickAccessItem = ctx.subscriptions[1];
 		return { ctrl, connectItem, quickAccessItem, cliItem: ctx.subscriptions[2] };
@@ -3835,15 +3886,37 @@ function testStatusBarController() {
 		ctrl.dispose();
 	});
 
-	test('Connected: green color, port in tooltip, stop command', () => {
-		const { ctrl, connectItem, quickAccessItem } = makeController();
-		ctrl.update(ConnectionState.Connected, 55500);
-
-		assert.ok(connectItem.text.includes('circle-filled') || connectItem.text.includes('Unity'));
-		assert.ok(connectItem.tooltip.includes('55500'));
-		assert.ok(connectItem.color instanceof vscode.ThemeColor);
-		assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.stopConnection');
-		ctrl.dispose();
+	test('Connected: shows capability-selected reload mode through compilation and clears it on reconnect', () => {
+		const { parseRuntimeCapabilities } = require(path.join(outDir, 'core', 'runtimeCapabilities'));
+		let payload;
+		const { ctrl, connectItem } = makeController(() => parseRuntimeCapabilities(payload));
+		try {
+			for (const [info, mode] of [
+				[undefined, 'Reload unavailable'],
+				[{}, 'Mono reload'],
+				[{ unityVersion: '7000.0.0a7', runtime: { isCoreCLR: false, hasDomainReload: true } }, 'Mono reload'],
+				[{ unityVersion: '6000.3.9f1', runtime: { isCoreCLR: true, hasDomainReload: false } }, 'Unity reload'],
+				[{ runtime: {} }, 'Reload unavailable'],
+				[{ runtime: { isCoreCLR: false, hasDomainReload: false } }, 'Reload unavailable']
+			]) {
+				payload = info;
+				ctrl.update(ConnectionState.Connected, 55500);
+				assert.ok(connectItem.text.includes(mode), 'Status bar omitted the active reload mode');
+				assert.ok(connectItem.tooltip.includes(mode));
+				assert.ok(connectItem.tooltip.includes('55500'));
+				assert.ok(connectItem.color instanceof vscode.ThemeColor);
+				assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.stopConnection');
+				for (const success of [true, false]) {
+					ctrl.showCompilationResult(success, 1, 1);
+					assert.ok(connectItem.text.includes(mode), 'Compilation result lost the reload mode');
+				}
+				for (const state of [ConnectionState.Reconnecting, ConnectionState.Disconnected]) {
+					ctrl.update(state, null);
+					assert.ok(!connectItem.text.includes(mode));
+					assert.ok(!connectItem.tooltip.includes(mode));
+				}
+			}
+		} finally { ctrl.dispose(); }
 	});
 
 	test('Connecting: shows sync spinner, hides quick access', () => {
@@ -5198,6 +5271,23 @@ async function testUnityCliAdapter() {
 }
 
 function testCliEvidencePrivacy() {
+
+	test('native CI smoke failures keep Editor logs out of job output', () => {
+		const source = fs.readFileSync(path.join(__dirname, '../scripts/run-internal-unity-smoke.js'), 'utf8');
+		const begin = source.indexOf('function runProcess('), end = source.indexOf('function parseToolResult(', begin);
+		assert.ok(begin >= 0 && end > begin, 'Native runner owner boundary missing');
+		const probe = [
+			"const vm=require('vm'),{EventEmitter}=require('events');let childOutput='';",
+			"const context={unityLogPath:'fixture.log',tail:()=> 'fixtureSensitive',spawn:(_command,_args,options)=>{const child=new EventEmitter();if(options.stdio!=='ignore')childOutput='fixtureSensitive';process.nextTick(()=>child.emit('exit',1,null));return child;}};",
+			"vm.createContext(context);vm.runInContext(" + JSON.stringify(source.slice(begin, end)) + ",context);",
+			"context.runProcess('Unity',[]).then(()=>{throw Error('Expected failure');},error=>{process.stdout.write(JSON.stringify({message:error.message,childOutput}));});"
+		].join('\n');
+		const result = require('child_process').spawnSync(process.execPath, ['-e', probe], { encoding: 'utf8', timeout: 10000 });
+		assert.strictEqual(result.status, 0, result.stderr);
+		const output = JSON.parse(result.stdout);
+		assert.ok(output.message.includes('code=1'));
+		assert.ok(!JSON.stringify(output).includes('fixtureSensitive'), 'Raw Editor diagnostics leaked into CI output');
+	});
 	test('CLI and Pipeline captures redact identities and keep public evidence', () => {
 		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
 		const read = file => {
@@ -5279,7 +5369,7 @@ function testCoreClrEvidencePrivacy() {
 			['../../unity-cursor-toolkit/scripts/run-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {'],
 			['../../unity-cursor-toolkit/scripts/measure-viewport-service.js', 'sanitizeLog', "\n\t}).join('\\n');\n}", 'function clean(value) {']
 		]) {
-			const source = fs.readFileSync(path.join(root, file), 'utf8');
+			const source = fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
 			const start = source.indexOf(startMarker || 'const ' + symbol + ' = value => {');
 			const end = source.indexOf(endMarker, start) + endMarker.length;
 			assert.ok(start >= 0 && end > start + endMarker.length, file + ': sanitizer boundary missing');

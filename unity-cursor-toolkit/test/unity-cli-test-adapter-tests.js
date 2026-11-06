@@ -181,6 +181,7 @@ async function main() {
 		['missing', null], ['empty', ''], ['malformed', '<test-run>'], ['DTD', '<!DOCTYPE test-run [<!ENTITY x SYSTEM "file:///private">]>' + passXml],
 		['inconsistent totals', passXml.replace('total="1"', 'total="2"')], ['unknown leaf state', passXml.replace(/result="Passed"/g, 'result="Unknown"')],
 		['wrong selected test', passXml.replace(/CliEditTests.Passing/g, 'Other.Passing')],
+		['passed leaf with failure', passXml.replace('</test-case>', '<failure><message>Fixture failure</message></failure></test-case>')],
 		['missing duration', passXml.replace(/duration="[^"]+"/g, '')], ['native/pass mismatch', failXml]
 	]) await test(name + ' report never becomes partial success', () => withFixture(async ({ adapter, request }) => { const result = await adapter.runTests({ ...request, filters: { test: 'CliEditTests.Passing' } }); code(result, 'invalid_results'); assert.strictEqual(result.tests.length, 0); assert.strictEqual(result.summary.total, 0); }, { report }));
 	for (const [name, status, counter, errorCode] of [['skipped-mapping', 'completed', 'skipped', undefined], ['inconclusive-mapping', 'failed', 'inconclusive', 'tests_failed']]) {

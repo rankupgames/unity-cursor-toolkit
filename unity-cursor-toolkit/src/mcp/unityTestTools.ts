@@ -88,8 +88,23 @@ export class UnityTestMcpTools implements IToolProvider {
 			return confirmed ? fail(code, message) : fail('cancellation_unconfirmed', 'The owned run could not be confirmed stopped.', 'Inspect the same Editor before retrying; no other backend was started.');
 		};
 		const cliRun = async (request: UnityTestRequest): Promise<UnityTestSnapshot> => {
-			const result = await this.cli.runTests({ ...request, onSelected: version => context.reportProgress?.(0, 0, 'cli ' + version + ': selected') });
-			return expired && result.status === 'cancelled' ? { ...result, status: 'timed_out', error: { code: 'timed_out', message: 'The test request deadline expired.', recovery: 'Inspect the interrupted run before retrying.' } } : result;
+			let heartbeat: ReturnType<typeof setInterval> | undefined, stopped = false;
+			const stop = () => { stopped = true; if (heartbeat) { clearInterval(heartbeat); } };
+			request.signal?.addEventListener('abort', stop, { once: true });
+			try {
+				const result = await this.cli.runTests({ ...request, onSelected: version => {
+					if (stopped || request.signal?.aborted || !context.reportProgress) { return; }
+					context.reportProgress(0, 0, 'cli ' + version + ': selected');
+					if (!stopped && !heartbeat) {
+						heartbeat = setInterval(() => {
+							if (stopped || request.signal?.aborted) { return; }
+							try { context.reportProgress?.(0, 0, 'cli ' + version + ': active; test counts unavailable'); }
+							catch { stop(); controller.abort(); }
+						}, 1000);
+					}
+				} });
+				return expired && result.status === 'cancelled' ? { ...result, status: 'timed_out', error: { code: 'timed_out', message: 'The test request deadline expired.', recovery: 'Inspect the interrupted run before retrying.' } } : result;
+			} finally { stop(); request.signal?.removeEventListener('abort', stop); }
 		};
 		const timer = setTimeout(() => { expired = true; controller.abort(); }, timeoutMs);
 		const interruptible = (pending: Promise<Record<string, unknown> | null>): Promise<Record<string, unknown> | null> => new Promise((resolve, reject) => {

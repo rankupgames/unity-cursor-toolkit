@@ -10,6 +10,8 @@ const suites = [
 	'run-tests.js',
 	'simplified-context-tests.js',
 	'remote-shell-tests.js',
+	'session-cli-tests.js',
+	'jenkins-request-tests.js',
 	'package-sync-tests.js',
 	'unity-cli-test-adapter-tests.js',
 	'unity-test-tools-tests.js',

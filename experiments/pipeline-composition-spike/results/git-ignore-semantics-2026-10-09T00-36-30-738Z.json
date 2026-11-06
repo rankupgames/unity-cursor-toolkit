@@ -1,0 +1,24 @@
+{
+  "observedAt": "2026-10-09T00:36:30.738Z",
+  "scope": "Git ignore semantics only; no new Editor, transport, ACL, token or command-execution proof",
+  "method": "Execute actual capture runner Git init/check-ignore statements in a disposable TEMP repository, using its exact ignore rules and empty descriptor-relative fixture; remove Library/ as a failing control, then restore it",
+  "gitVersion": "git version 2.54.0.windows.1",
+  "ignoreRules": [
+    "Library/",
+    "Temp/",
+    "Obj/",
+    "Logs/"
+  ],
+  "descriptorRelativePath": "Library/Pipeline/.unity-pipeline-port",
+  "descriptorContents": "empty fixture; no token value",
+  "gitIgnoreVerified": true,
+  "missingLibraryRuleRefused": true,
+  "restoredLibraryRuleIgnored": true,
+  "priorLiveCapture": {
+    "path": "experiments/pipeline-composition-spike/results/2026-10-08T06-32-23-165Z-windows-x64.json",
+    "sha256": "ccdbf673eda0945380cc85a19ce24ffcb4ed8dc6aec41cc4e2fb8105c44dd596",
+    "gitIgnoreVerified": false,
+    "claims": "Historical live descriptor location and ACL observation remain unchanged; combine only with this separate ignore-semantics proof"
+  },
+  "ownedFixtureCleanupVerified": true
+}
