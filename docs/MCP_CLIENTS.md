@@ -178,8 +178,10 @@ When rebuilding the extension from source, install with `npm ci`. Dependency upd
 
 Set `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` to the selected Unity project. The standalone
 MCP process monitors an active compile request or a failed Editor response independently
-of Unity's main thread. It can foreground only the verified existing macOS Editor
-that owns that project's lock; it never launches another Editor or replays a command.
+of Unity's main thread. After verifying the selected project's existing lock owner
+and executable, it activates that verified Unity bundle with `open -a`. It does not
+request a new instance or pass launch arguments. A fresh read-only `osascript`
+process must then confirm that exact PID is foreground. It never replays a command.
 
 `editor_validation` with `action: "recover"` opens a bounded recovery episode. The
 monitor permits at most two focus attempts and stops on compiler errors, project/process
