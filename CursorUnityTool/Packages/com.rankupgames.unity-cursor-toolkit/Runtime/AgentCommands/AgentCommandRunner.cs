@@ -2,7 +2,7 @@
 // Author: Miguel A. Lopez
 // Company: Rank Up Games LLC
 // Project: Unity Cursor Toolkit
-// Description: Hidden runtime coroutine runner for MCP-scheduled game commands.
+// Description: Hidden main-thread runner for MCP-scheduled project commands.
 // Created: 2026-05-28
 // Last Modified: 2026-05-28
 // =============================================================================
@@ -21,7 +21,7 @@ namespace UnityCursorToolkit.AgentCommands
 	public sealed class AgentCommandRunner : MonoBehaviour
 	{
 		/// <summary>
-		/// Hidden singleton runner created on demand during play mode.
+		/// Hidden runner created on demand for Edit Mode results and Play Mode coroutines.
 		/// </summary>
 		private static AgentCommandRunner instance;
 		private static bool isShuttingDown;
@@ -50,7 +50,7 @@ namespace UnityCursorToolkit.AgentCommands
 		private readonly List<string> runOrder = new List<string>();
 
 		/// <summary>
-		/// Schedules a registered command and returns the initial run status.
+		/// Runs an editor command synchronously or schedules a Play Mode coroutine.
 		/// </summary>
 		/// <param name="commandName">Registered command name selected by MCP.</param>
 		/// <param name="argsJson">Raw JSON arguments forwarded to the game command.</param>
@@ -68,9 +68,18 @@ namespace UnityCursorToolkit.AgentCommands
 				return AgentCommandRunSnapshot.Rejected(commandName, "Unknown game command: " + commandName);
 			}
 
-			if (Application.isPlaying == false)
+			if (Application.isPlaying == false && descriptor.RequiresPlayMode)
 			{
 				return AgentCommandRunSnapshot.Rejected(commandName, "Game commands require Unity play mode: " + commandName);
+			}
+			if (descriptor.RequiresEditMode)
+			{
+#if UNITY_EDITOR
+				if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode || UnityEditor.EditorApplication.isCompiling || UnityEditor.EditorApplication.isUpdating)
+					return AgentCommandRunSnapshot.Rejected(commandName, "editor_not_ready: editor commands require idle Edit Mode.");
+#else
+				return AgentCommandRunSnapshot.Rejected(commandName, "editor_required: editor commands are unavailable in a player.");
+#endif
 			}
 
 			AgentCommandRunner runner = GetOrCreate();
@@ -82,16 +91,20 @@ namespace UnityCursorToolkit.AgentCommands
 			runner.runs[state.RunId] = state;
 			runner.runOrder.Add(state.RunId);
 			runner.TrimRetainedRuns();
-			try
+			if (descriptor.RequiresEditMode) runner.ExecuteEditorCommand(state);
+			else
 			{
-				Coroutine coroutine = runner.StartCoroutine(runner.ExecuteCommand(state));
-				if (!state.IsTerminal)
+				try
 				{
-					if (coroutine == null) runner.FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure("command_start_failed: Unity did not schedule the command."));
-					else state.Coroutine = coroutine;
+					Coroutine coroutine = runner.StartCoroutine(runner.ExecuteCommand(state));
+					if (!state.IsTerminal)
+					{
+						if (coroutine == null) runner.FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure("command_start_failed: Unity did not schedule the command."));
+						else state.Coroutine = coroutine;
+					}
 				}
+				catch (Exception exception) { runner.FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure(exception.Message)); }
 			}
-			catch (Exception exception) { runner.FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure(exception.Message)); }
 			return state.ToSnapshot();
 		}
 
@@ -219,6 +232,33 @@ namespace UnityCursorToolkit.AgentCommands
 				runOrder.RemoveAt(i);
 				i--;
 			}
+		}
+
+		/// <summary>Executes an editor handler once and rejects waits or missing completion evidence.</summary>
+		private void ExecuteEditorCommand(AgentCommandRunState state)
+		{
+			state.Status = AgentCommandStatus.Running;
+			Exception failure = null;
+			state.IsExecuting = true;
+			try
+			{
+				IEnumerator routine = state.Handler(state.Context);
+				state.PushRoutine(routine);
+				if (routine != null && !state.CancellationRequested && routine.MoveNext())
+					state.Context.Fail("editor_command_yielded: editor commands must complete synchronously.");
+				else if (!state.Context.HasResult)
+					state.Context.Fail("editor_command_result_missing: explicitly report command completion.");
+			}
+			catch (Exception exception)
+			{
+				failure = exception;
+			}
+			finally
+			{
+				state.IsExecuting = false;
+			}
+			if (failure != null) FinishRun(state, AgentCommandStatus.Failed, AgentCommandResult.Failure(failure.Message));
+			else CompleteCommand(state);
 		}
 
 		/// <summary>

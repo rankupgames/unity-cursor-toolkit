@@ -43,7 +43,11 @@ public static class ExampleAgentCommands
 }
 ```
 
-Registered commands require play mode because they run through a hidden `MonoBehaviour` coroutine runner on Unity's main thread.
+Ordinary commands require Play Mode and use the hidden coroutine runner. Commands whose names start with `editor.` require idle Edit Mode and execute synchronously on the same main thread. Register them through the same registry from editor-only code. They must report `context.Succeed(...)` or `context.Fail(...)` without yielding; waits and missing results fail explicitly. Their catalog entries report `requiresPlayMode: false`, `requiresEditMode: true`, and omit the player host.
+
+For example, register `editor.wia.destruction.spawns.export` against the same export method used by the Editor button, then call `game_command` with `action: "run"`, that command name, `host: "editor"`, and `args: {}`. The normal run/status protocol is unchanged. Editor commands reject Play Mode and never stop it automatically.
+
+Editor commands reject `player` and `editorBatchmode` hosts. Iterator cleanup completes inside the command failure boundary, so a cleanup exception becomes a retained failed run.
 
 `AgentCommandRunner.SupportsDeterministicCancellation` is a public static Boolean
 property with value `true` in implementations that own deterministic iterator

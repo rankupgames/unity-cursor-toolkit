@@ -45,6 +45,7 @@ namespace UnityCursorToolkit.InternalSmoke
 		public static void Run()
 		{
 			ValidateUntermIntegration();
+			ValidateEditorCommands();
 			SessionState.SetBool(RunningKey, true);
 			SessionState.SetString(PhaseKey, "prepareSceneOrientation");
 			SessionState.SetString(ResultPathKey, GetArg("-uctSmokeResultPath", "/tmp/uct-internal-smoke-result.json"));
@@ -105,6 +106,80 @@ namespace UnityCursorToolkit.InternalSmoke
 					throw new InvalidOperationException("Missing Unity-Unterm toolkit menu alias: " + expectedMenuPath);
 				}
 			}
+		}
+
+		private static void ValidateEditorCommands()
+		{
+			var calls = new List<string>();
+			IEnumerator Complete(AgentCommandContext context)
+			{
+				calls.Add(context.CommandName);
+				context.Succeed("editor smoke completed");
+				yield break;
+			}
+			IEnumerator MissingResult(AgentCommandContext context) { yield break; }
+			IEnumerator Yielding(AgentCommandContext context) { yield return null; }
+			IEnumerator Failing(AgentCommandContext context) { context.Fail("expected editor failure"); yield break; }
+			IEnumerator DisposeFailure(AgentCommandContext context)
+			{
+				try { yield return null; }
+				finally { throw new InvalidOperationException("expected disposal failure"); }
+			}
+			var commands = new[] { "editor.smoke.complete", "editor.smoke.missing", "editor.smoke.yield", "editor.smoke.fail", "smoke.playOnly", "editor.smoke.dispose" };
+			AgentCommandRegistry.Register(commands[0], "Synchronous editor completion.", Complete);
+			AgentCommandRegistry.Register(commands[1], "Missing editor result.", MissingResult);
+			AgentCommandRegistry.Register(commands[2], "Unsupported editor wait.", Yielding);
+			AgentCommandRegistry.Register(commands[3], "Explicit editor failure.", Failing);
+			AgentCommandRegistry.Register(commands[4], "Play Mode guard.", Complete);
+			AgentCommandRegistry.Register(commands[5], "Editor iterator disposal failure.", DisposeFailure);
+			try
+			{
+				var success = AgentCommandRunner.Run(commands[0], "{}");
+				if (success.Status != AgentCommandStatus.Succeeded || calls.Count != 1 || calls[0] != commands[0] ||
+					AgentCommandRunner.GetStatus(success.RunId).Status != AgentCommandStatus.Succeeded)
+					throw new InvalidOperationException("Editor command did not execute exactly once with retained success.");
+				for (var index = 1; index < commands.Length; index++)
+					if (AgentCommandRunner.Run(commands[index], "{}").Status != AgentCommandStatus.Failed)
+						throw new InvalidOperationException("Editor command accepted an invalid execution boundary: " + commands[index]);
+				if (calls.Count != 1) throw new InvalidOperationException("Play-only handler ran outside Play Mode.");
+				AgentCommandRegistry.TryGet(commands[0], out var descriptor, out _);
+				if (descriptor.RequiresPlayMode || !descriptor.RequiresEditMode)
+					throw new InvalidOperationException("Editor command discovery reported the wrong mode.");
+				CommandCatalog catalog = JsonUtility.FromJson<CommandCatalog>(AgentCommandRegistry.ToCatalogJson());
+				CommandMetadata editor = Array.Find(catalog.commands, command => command.name == commands[0]);
+				CommandMetadata play = Array.Find(catalog.commands, command => command.name == commands[4]);
+				if (editor == null || editor.requiresPlayMode || !editor.requiresEditMode || editor.supportsBatchmode ||
+					string.Join(",", editor.supportedHosts) != "editor,auto" || play == null || !play.requiresPlayMode || play.requiresEditMode ||
+					string.Join(",", play.supportedHosts) != "editor,player,auto")
+					throw new InvalidOperationException("Serialized command discovery has an invalid mode or host contract.");
+				foreach (string host in new[] { "player", "editorBatchmode", "invalid" })
+				{
+					string result = CallMcpTool("UnityCursorToolkit.MCP.GameCommandTool, UnityCursorToolkit.Editor",
+						"{\"action\":\"run\",\"commandName\":\"" + commands[0] + "\",\"host\":\"" + host + "\",\"args\":{}}");
+					AssertContains(result, "editor_host_required");
+				}
+				if (calls.Count != 1) throw new InvalidOperationException("An unsupported host executed an editor command.");
+			}
+			finally
+			{
+				foreach (var command in commands) AgentCommandRegistry.Unregister(command);
+			}
+		}
+
+		[Serializable]
+		private sealed class CommandCatalog
+		{
+			public CommandMetadata[] commands = Array.Empty<CommandMetadata>();
+		}
+
+		[Serializable]
+		private sealed class CommandMetadata
+		{
+			public string name = string.Empty;
+			public bool requiresPlayMode;
+			public bool requiresEditMode;
+			public bool supportsBatchmode;
+			public string[] supportedHosts = Array.Empty<string>();
 		}
 
 		public static void StartViewportStream()
@@ -497,7 +572,7 @@ namespace UnityCursorToolkit.InternalSmoke
 
 			string stop = CallMcpTool("UnityCursorToolkit.MCP.ViewportStreamTool, UnityCursorToolkit.Editor", "{\"action\":\"stop\"}");
 			AssertContains(stop, "\"success\":true");
-			Finish(true, "Internal smoke passed.");
+			Finish(true, "Editor-hosted command, profiler scene, SceneView JPEG orientation, and camera stream smoke passed. This is not player proof.");
 		}
 
 		private static void StartLiveViewport()
