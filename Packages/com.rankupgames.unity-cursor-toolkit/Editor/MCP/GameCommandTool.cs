@@ -28,7 +28,7 @@ namespace UnityCursorToolkit.MCP
 		/// <summary>
 		/// Human-readable tool description for local registry diagnostics.
 		/// </summary>
-		public string Description => "List, schedule, poll, or cancel game-authored runtime agent commands.";
+		public string Description => "List, run, poll, or cancel project commands using their declared mode and host.";
 
 		/// <summary>
 		/// Routes game command actions to the runtime command registry and runner.
@@ -67,6 +67,13 @@ namespace UnityCursorToolkit.MCP
 			}
 
 			string commandArgsJson = GameCommandToolJson.GetObject(argsJson, "args") ?? "{}";
+			AgentCommandDescriptor descriptor;
+			AgentCommandHandler handler;
+			string host = GameCommandToolJson.GetString(argsJson, "host", "auto");
+			if (AgentCommandRegistry.TryGet(commandName, out descriptor, out handler) && descriptor.RequiresEditMode && host != "editor" && host != "auto")
+			{
+				return GameCommandToolJson.Error("editor_host_required: editor commands support only editor and auto hosts.");
+			}
 			return AgentCommandRunner.Run(commandName, commandArgsJson).ToJson();
 		}
 

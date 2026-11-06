@@ -7,6 +7,7 @@
 // Last Modified: 2026-05-28
 // =============================================================================
 
+using System;
 using System.Text;
 
 namespace UnityCursorToolkit.AgentCommands
@@ -25,6 +26,12 @@ namespace UnityCursorToolkit.AgentCommands
 		/// Human-readable explanation of what the command triggers.
 		/// </summary>
 		public string Description { get; }
+
+		/// <summary>Editor-prefixed commands execute synchronously outside Play Mode.</summary>
+		public bool RequiresEditMode => Name != null && Name.StartsWith("editor.", StringComparison.Ordinal);
+
+		/// <summary>All other commands retain their Play Mode coroutine contract.</summary>
+		public bool RequiresPlayMode => !RequiresEditMode;
 
 		/// <summary>
 		/// True when this command is intended as a viewport input adapter.
@@ -57,10 +64,11 @@ namespace UnityCursorToolkit.AgentCommands
 			builder.Append("{");
 			AgentCommandJson.AppendProperty(builder, "name", Name).Append(",");
 			AgentCommandJson.AppendProperty(builder, "description", Description).Append(",");
-			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", true).Append(",");
+			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", RequiresPlayMode).Append(",");
+			AgentCommandJson.AppendProperty(builder, "requiresEditMode", RequiresEditMode).Append(",");
 			AgentCommandJson.AppendProperty(builder, "supportsBatchmode", false).Append(",");
 			AgentCommandJson.AppendProperty(builder, "supportsViewportInput", SupportsViewportInput).Append(",");
-			builder.Append("\"supportedHosts\":[\"editor\",\"player\",\"auto\"]");
+			builder.Append(RequiresEditMode ? "\"supportedHosts\":[\"editor\",\"auto\"]" : "\"supportedHosts\":[\"editor\",\"player\",\"auto\"]");
 			builder.Append("}");
 		}
 	}

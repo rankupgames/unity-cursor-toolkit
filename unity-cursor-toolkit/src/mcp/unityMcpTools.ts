@@ -189,7 +189,7 @@ export class UnityMcpTools implements IToolProvider {
 			{
 				name: 'game_command',
 				title: 'Game Command',
-				description: 'List, schedule, poll, or cancel game-authored runtime commands and workflows registered inside the Unity project.',
+				description: 'List, run, poll, or cancel project commands. Each command declares its Edit Mode or Play Mode requirement and supported hosts.',
 				inputSchema: {
 					type: 'object',
 					properties: withDryRunProperty({

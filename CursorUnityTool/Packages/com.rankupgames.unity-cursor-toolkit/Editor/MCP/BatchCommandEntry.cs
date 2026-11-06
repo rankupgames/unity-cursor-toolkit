@@ -42,7 +42,11 @@ namespace UnityCursorToolkit.AgentCommands
 					}
 					else
 					{
-						result = AgentCommandRunner.Run(commandName, commandArgsJson).ToJson();
+						AgentCommandDescriptor descriptor;
+						AgentCommandHandler handler;
+						result = AgentCommandRegistry.TryGet(commandName, out descriptor, out handler) && descriptor.RequiresEditMode
+							? Error("editor_host_required: editor commands do not support the editorBatchmode host.")
+							: AgentCommandRunner.Run(commandName, commandArgsJson).ToJson();
 						exitCode = result.Contains("\"success\":false") ? 1 : 0;
 					}
 				}

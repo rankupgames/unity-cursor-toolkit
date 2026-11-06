@@ -60,7 +60,7 @@ Editor, backend, and capability set in plans and results. See
 
 ## Runtime Game Commands
 
-Use `game_command` when the Unity project has registered workflows through `UnityCursorToolkit.AgentCommands`. Commands run in play mode on Unity's main thread and should call the game's existing public subsystem methods.
+Use `game_command` when the Unity project has registered workflows through `UnityCursorToolkit.AgentCommands`. Ordinary commands use Play Mode coroutines. Commands prefixed with `editor.` require idle Edit Mode and complete synchronously. Read each command's mode and host metadata before execution. Commands should call existing subsystem methods.
 
 Recommended flow:
 
