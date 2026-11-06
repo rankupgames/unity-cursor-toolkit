@@ -117,3 +117,9 @@ These prompts are intentionally conservative: inspect first, summarize state, th
   present open issues as available tools.
 
 For a silent bridge during an active request, the standalone server has bounded exact-project recovery. Use `editor_validation` action `recover` to open an explicit episode; do not replay the failed mutation. A foreground Editor still needs a fresh main-thread response.
+
+For requested gameplay testing, arm `session_monitor` before Play and subscribe to
+its events. At session end, read the summary, profiler/console artifacts and relevant
+snapshots. Keep native Console/stack matches labeled candidates, inspect truncation
+and timing metadata, and never infer the missing field or throwing instance solely
+from a type name. See `docs/PLAY_SESSIONS.md`.

@@ -395,7 +395,8 @@
     "bump:minor": "npm version minor && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix 2>/dev/null || code --install-extension *.vsix)",
     "local": "npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
     "audit": "npm audit",
-    "unity:focus": "node scripts/focus-unity-editor.js"
+    "unity:focus": "node scripts/focus-unity-editor.js",
+    "unity:watch-sessions": "node scripts/watch-play-sessions.js"
   },
   "overrides": {
     "ovsx": {

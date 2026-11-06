@@ -19,6 +19,8 @@ import { UnityContextMcpTools } from './unityContextIndex';
 import { ViewportStreamMcpTools } from './viewportStreamTools';
 import { EditorRecoveryMonitor } from './editorRecoveryMonitor';
 import { focusUnityEditor } from '../core/unityEditorFocus';
+import { SessionJournalWatcher } from './sessionJournal';
+import { SessionMonitorTools } from './sessionMonitorTools';
 import { isDryRun, isMutatingToolCall } from './toolMetadata';
 import type { ToolDefinition, ToolResult } from '../core/interfaces';
 
@@ -72,10 +74,12 @@ export interface StandaloneMcpRuntime {
 	readonly viewportTools: ViewportStreamMcpTools;
 	readonly readOnly: boolean;
 	handleRequest(request: JsonRpcRequest): Promise<unknown>;
+	onNotification(handler: (notification: Record<string, unknown>) => void): () => void;
 	dispose(): void;
 }
 
 const RESOURCES: readonly ResourceDefinition[] = [
+	{ uri: 'unity://sessions/events', name: 'unity-play-session-events', title: 'Play Session Events', description: 'Bounded lifecycle/error/snapshot events. Subscribe for updates; snapshots are next-tick observations, not replay state.', mimeType: 'application/json' },
 	{
 		uri: 'unity://project/info',
 		name: 'unity-project-info',
@@ -150,10 +154,24 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 	const viewportTools = new ViewportStreamMcpTools(connection);
 	const recovery = new EditorRecoveryMonitor(connection, { projectRoot: process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH,
 		focusEditor: readOnly ? undefined : (root, pid) => focusUnityEditor(root, { expectedPid: pid }) });
+	const unityTools = new UnityMcpTools(connection, recovery);
+	const notifications = new Set<(notification: Record<string, unknown>) => void>();
+	let initialized = false;
+	let sessionSubscribed = false;
+	let loggingLevel = 1;
+	const levels = ['debug', 'info', 'notice', 'warning', 'error', 'critical', 'alert', 'emergency'];
+	const notify = (notification: Record<string, unknown>) => { for (const handler of notifications) handler(notification); };
+	const journal = new SessionJournalWatcher(process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH, event => {
+		if (!initialized) return;
+		const level = event.kind === 'error_observed' ? 'error' : event.kind === 'watch_error' ? 'warning' : 'info';
+		if (levels.indexOf(level) >= loggingLevel) notify({ jsonrpc: '2.0', method: 'notifications/message', params: { level, logger: 'unity.play_session', data: event } });
+		if (sessionSubscribed) notify({ jsonrpc: '2.0', method: 'notifications/resources/updated', params: { uri: 'unity://sessions/events' } });
+	});
 
 	connection.onMessage((message) => consoleStore.addFromUnityMessage(message));
 	connection.onMessage((message) => viewportTools.handleUnityMessage(message));
-	router.register(new UnityMcpTools(connection, recovery));
+	router.register(unityTools);
+	router.register(new SessionMonitorTools(unityTools, journal));
 	router.register(new UnityContextMcpTools());
 	router.register(viewportTools);
 	router.register(new StandaloneConsoleMcpTools(consoleStore));
@@ -165,9 +183,24 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 		consoleStore,
 		viewportTools,
 		readOnly,
-		handleRequest: (request) => handleRequest(router, consoleStore, readOnly, request),
+		handleRequest: async (request) => {
+			if (request.method === 'notifications/initialized') { initialized = true; journal.start(); return {}; }
+			if (request.method === 'logging/setLevel') {
+				const level = (request.params as { level?: unknown } | undefined)?.level;
+				if (typeof level !== 'string' || !levels.includes(level)) throw new InvalidParamsError('Unknown MCP logging level.');
+				loggingLevel = levels.indexOf(level); return {};
+			}
+			if (request.method === 'resources/subscribe' || request.method === 'resources/unsubscribe') {
+				if (parseResourceUri(request.params) !== 'unity://sessions/events') throw new InvalidParamsError('Only the session event resource supports subscriptions.');
+				sessionSubscribed = request.method === 'resources/subscribe';
+				if (sessionSubscribed) journal.start();
+				return {};
+			}
+			return handleRequest(router, consoleStore, readOnly, request);
+		},
+		onNotification: handler => { notifications.add(handler); return () => { notifications.delete(handler); }; },
 		dispose: () => {
-			recovery.dispose();
+			journal.dispose(); recovery.dispose(); notifications.clear();
 			void viewportTools.dispose();
 			connection.dispose();
 		}
@@ -176,6 +209,7 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 
 export function startStdioServer(runtime = createStandaloneMcpRuntime()): void {
 	let buffer = '';
+	runtime.onNotification(notification => process.stdout.write(JSON.stringify(notification) + '\n'));
 
 	process.stdin.setEncoding('utf8');
 	process.stdin.on('data', (chunk: string) => {
@@ -213,6 +247,7 @@ async function handleLine(runtime: StandaloneMcpRuntime, line: string): Promise<
 	}
 
 	if (request.id == null) {
+		if (request.method === 'notifications/initialized') await runtime.handleRequest(request);
 		return;
 	}
 
@@ -293,6 +328,9 @@ async function readResource(
 		case 'unity://tools/catalog':
 			text = JSON.stringify(router.getToolDefinitions().map(toCatalogEntry), null, 2);
 			break;
+		case 'unity://sessions/events':
+			text = toolResultToText(await router.routeToolCall('session_monitor', { action: 'events', afterSequence: 0, limit: 50 }));
+			break;
 		case 'unity://context/summary':
 			text = toolResultToText(await router.routeToolCall('unity_context', { action: 'summary' }));
 			break;
@@ -331,7 +369,7 @@ function buildInitializeResult(tools: readonly ToolDefinition[], readOnly: boole
 		protocolVersion: PROTOCOL_VERSION,
 		capabilities: {
 			tools: { listChanged: false },
-			resources: { listChanged: false },
+			resources: { listChanged: false, subscribe: true },
 			prompts: { listChanged: false },
 			logging: {}
 		},

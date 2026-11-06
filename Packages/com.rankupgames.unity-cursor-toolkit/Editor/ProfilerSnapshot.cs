@@ -201,6 +201,8 @@ namespace UnityCursorToolkit
 					StartRecorders(settings.FrameBufferLength);
 				}
 
+				string capturedActiveScene;
+				List<LoadedSceneSnapshot> capturedScenes = LoadedSceneCapture.Capture(out capturedActiveScene);
 				var session = new ProfilerSnapshotSession
 				{
 					id = sessionId,
@@ -208,7 +210,8 @@ namespace UnityCursorToolkit
 					startedUtc = sessionStartedUtc,
 					capturedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
 					unityVersion = Application.unityVersion,
-					activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path,
+					activeScene = capturedActiveScene,
+					loadedScenes = capturedScenes,
 					isPlaying = EditorApplication.isPlaying,
 					isPaused = EditorApplication.isPaused,
 					isCompiling = EditorApplication.isCompiling,
@@ -358,6 +361,8 @@ namespace UnityCursorToolkit
 
 		private static void OnPlayModeStateChanged(PlayModeStateChange state)
 		{
+			// Preserve the final profiler buffers before their Play-mode shutdown callback disposes them.
+			if (state == PlayModeStateChange.ExitingPlayMode) PlaySessionMonitor.CaptureBeforeProfilerShutdown();
 			if (state == PlayModeStateChange.ExitingPlayMode || state == PlayModeStateChange.ExitingEditMode)
 			{
 				lock (syncRoot)

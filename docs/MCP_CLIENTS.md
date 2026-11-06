@@ -196,3 +196,10 @@ npm run unity:focus -- --project /path/to/UnityProject
 
 The command reports `activated` only after verifying the foreground process. Other
 results remain explicit; activation alone is not compile or bridge proof.
+
+## Play sessions
+
+Use `session_monitor` to opt in to start/error/end snapshots and read object/component
+evidence. The selected-project journal supports event-driven standby notifications
+and the `unity://sessions/events` resource. See [Play session evidence](PLAY_SESSIONS.md)
+for capture timing, attribution limits, budgets and subscription commands.
