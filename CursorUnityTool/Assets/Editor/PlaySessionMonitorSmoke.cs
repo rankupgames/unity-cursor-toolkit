@@ -49,6 +49,7 @@ namespace UnityCursorToolkit.InternalSmoke
 			try
 			{
 				SceneManager.SetActiveScene(owned);
+				EditorSceneManager.MoveSceneBefore(owned, SceneManager.GetSceneAt(0));
 				root = new GameObject("Session snapshot \"root\"");
 				SceneManager.MoveGameObjectToScene(root, owned);
 				root.layer = 2;
@@ -72,16 +73,20 @@ namespace UnityCursorToolkit.InternalSmoke
 				object snapshot = builder.GetMethod("Capture", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null,
 					new object[] { "play_20261106_120000_0123abcd", "snapshot-0001", "native_contract_smoke", null });
 				var data = JsonUtility.FromJson<Snapshot>(JsonUtility.ToJson(snapshot));
-				Require(!data.truncated, "Native contract world exceeded snapshot limits; no partial result counts as proof.");
+				// This fixture proves its own rows. A large consumer world can hit unrelated row budgets.
+				if (data.truncated) Debug.Log("Snapshot contract world was truncated; only the complete owned fixture is checked.");
 				Row rootRow = Find(data.objects, root.GetInstanceID());
 				Row firstRow = Find(data.objects, first.GetInstanceID());
 				Row secondRow = Find(data.objects, second.GetInstanceID());
+				Require(!rootRow.componentsTruncated && !firstRow.componentsTruncated && !secondRow.componentsTruncated, "Owned fixture components were truncated.");
+				Require(rootRow.childCount == 2 && rootRow.sceneHandle == owned.handle, "Child count or scene identity was lost.");
 				Require(rootRow.parentInstanceId == 0 && firstRow.parentInstanceId == rootRow.instanceId && secondRow.parentInstanceId == rootRow.instanceId, "Parent IDs do not preserve the actual hierarchy.");
 				Require(firstRow.siblingIndex == 0 && secondRow.siblingIndex == 1, "Sibling order changed.");
 				Require(rootRow.layer == 2 && rootRow.tag == "Player" && rootRow.position == root.transform.position, "World position/layer/tag do not match Unity.");
 				Require(rootRow.rotation == root.transform.rotation && rootRow.localScale == root.transform.localScale, "Rotation or local scale was lost.");
 				Require(firstRow.localPosition == first.transform.localPosition && !firstRow.activeSelf && !firstRow.activeInHierarchy, "Inactive child state or local transform is absent.");
 				ComponentRow capturedProbe = FindComponent(rootRow, probe.GetInstanceID());
+				Require(!capturedProbe.referencesTruncated, "Owned probe reference capture was truncated.");
 				Require(capturedProbe.type == typeof(PlaySessionSnapshotProbe).FullName && capturedProbe.slot == 1, "Component identity/type/slot does not match the actual component.");
 				ComponentRow capturedCollider = FindComponent(rootRow, collider.GetInstanceID());
 				Require(capturedCollider.slot == 2 && capturedCollider.hasEnabled && !capturedCollider.enabled, "The actual disabled Collider state was lost.");
@@ -89,6 +94,22 @@ namespace UnityCursorToolkit.InternalSmoke
 				Reference assigned = capturedProbe.references.Find(item => item.propertyPath == "assigned");
 				Require(unassigned != null && unassigned.state == "unassigned" && unassigned.instanceId == 0, "Unassigned reference was mislabeled.");
 				Require(assigned != null && assigned.state == "assigned" && assigned.instanceId == second.GetInstanceID(), "Assigned reference identity was lost.");
+				Type errorType = assembly.GetType("UnityCursorToolkit.PlaySessionError", true);
+				foreach (string stack in new[]
+				{
+					typeof(PlaySessionSnapshotProbe).FullName + ".Execute ()",
+					" #8 (Mono JIT Code) [PlaySessionSnapshotProbe.cs:1] " + typeof(PlaySessionSnapshotProbe).FullName + ":Execute ()"
+				})
+				{
+					object error = Activator.CreateInstance(errorType, true);
+					errorType.GetField("stackTrace").SetValue(error, stack);
+					snapshot.GetType().GetField("error").SetValue(snapshot, error);
+					((IList)snapshot.GetType().GetField("candidateComponentIds").GetValue(snapshot)).Clear();
+					((IList)snapshot.GetType().GetField("candidateObjectIds").GetValue(snapshot)).Clear();
+					builder.GetMethod("Correlate", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new[] { snapshot });
+					Require(((IList)snapshot.GetType().GetField("candidateComponentIds").GetValue(snapshot)).Contains(probe.GetInstanceID()) &&
+						((IList)snapshot.GetType().GetField("candidateObjectIds").GetValue(snapshot)).Contains(root.GetInstanceID()), "The native/managed stack did not identify the fixture component and owner as candidates.");
+				}
 				string json = JsonUtility.ToJson(snapshot);
 				Require(!json.Contains("UCT_VALUE_MUST_NOT_BE_CAPTURED"), "Serialized string values leaked into the diagnostic snapshot.");
 
@@ -183,14 +204,14 @@ namespace UnityCursorToolkit.InternalSmoke
 		[Serializable] private sealed class Snapshot { public bool truncated; public List<Row> objects; }
 		[Serializable] private sealed class Row
 		{
-			public int instanceId, parentInstanceId, siblingIndex, layer;
+			public int instanceId, parentInstanceId, siblingIndex, childCount, sceneHandle, layer;
 			public string tag;
 			public Vector3 position, localPosition, localScale;
 			public Quaternion rotation;
-			public bool activeSelf, activeInHierarchy;
+			public bool activeSelf, activeInHierarchy, componentsTruncated;
 			public List<ComponentRow> components;
 		}
-		[Serializable] private sealed class ComponentRow { public int instanceId, slot; public string type; public bool hasEnabled, enabled; public List<Reference> references; }
+		[Serializable] private sealed class ComponentRow { public int instanceId, slot; public string type; public bool hasEnabled, enabled, referencesTruncated; public List<Reference> references; }
 		[Serializable] private sealed class Reference { public string propertyPath, state; public int instanceId; }
 	}
 

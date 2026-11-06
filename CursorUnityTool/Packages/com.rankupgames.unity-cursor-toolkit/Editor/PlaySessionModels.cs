@@ -368,11 +368,28 @@ namespace UnityCursorToolkit
 			{
 				string line = lines[i].Trim();
 				if (line.StartsWith("at ", StringComparison.Ordinal)) line = line.Substring(3);
+				int mono = line.IndexOf("(Mono JIT Code)", StringComparison.Ordinal);
+				if (mono >= 0)
+				{
+					line = line.Substring(mono + "(Mono JIT Code)".Length).TrimStart();
+					if (line.StartsWith("[", StringComparison.Ordinal))
+					{
+						int sourceEnd = line.IndexOf(']');
+						if (sourceEnd >= 0) line = line.Substring(sourceEnd + 1).TrimStart();
+					}
+				}
 				int call = line.IndexOf('(');
 				if (call < 0) continue;
 				string callName = line.Substring(0, call).Trim();
-				int method = callName.LastIndexOf('.');
-				if (method > 0) names.Add(callName.Substring(0, method).Replace('+', '.'));
+				int method = Math.Max(callName.LastIndexOf('.'), callName.LastIndexOf(':'));
+				if (method > 0)
+				{
+					string owner = callName.Substring(0, method);
+					int coroutine = owner.IndexOf("/<", StringComparison.Ordinal);
+					if (coroutine < 0) coroutine = owner.IndexOf("+<", StringComparison.Ordinal);
+					if (coroutine >= 0) owner = owner.Substring(0, coroutine);
+					names.Add(owner.Replace('+', '.'));
+				}
 			}
 			for (int i = 0; i < snapshot.objects.Count; i++)
 			{
