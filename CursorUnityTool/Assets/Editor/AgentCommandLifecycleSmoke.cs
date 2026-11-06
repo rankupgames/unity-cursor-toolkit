@@ -1,7 +1,11 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Net;
+using System.Net.Sockets;
 using System.Reflection;
+using System.Text;
 using UnityCursorToolkit.AgentCommands;
 using UnityEditor;
 using UnityEngine;
@@ -122,6 +126,174 @@ namespace UnityCursorToolkit.InternalSmoke
 				foreach (string name in new[] { "cancel", "complete", "failure", "cleanup", "timeout", "disabled", "play_exit", "reload" })
 					AgentCommandRegistry.Unregister(PlayPrefix + name);
 			}
+		}
+
+		[MenuItem("Tools/Unity Cursor Toolkit/Diagnostics/Validate Command Result Framing")]
+		public static void ValidateResultFraming()
+		{
+			ResultFraming.Begin();
+		}
+
+		// This exercises the real TCP broadcaster, not a reflection call directly to HandleCommand.
+		private static class ResultFraming
+		{
+			private const string CommandName = EditorPrefix + "framing";
+			private static readonly List<byte> pending = new List<byte>();
+			private static readonly byte[] receive = new byte[31];
+			private static TcpClient client;
+			private static IAsyncResult connecting;
+			private static NetworkStream stream;
+			private static double deadline;
+			private static int caseIndex;
+			private static int responses;
+			private static string requestId;
+			private static string runId;
+
+			internal static void Begin()
+			{
+				Require(!EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isCompiling && !EditorApplication.isUpdating,
+					"Framing smoke requires idle Edit Mode.");
+				Require(client == null, "A framing smoke is already running.");
+				int port = HotReloadHandler.GetCurrentPort();
+				Require(port > 0, "The current Editor's bridge must already be listening.");
+				WriteResult("framing", false, 0);
+				caseIndex = 0;
+				responses = 0;
+				runId = null;
+				pending.Clear();
+				bool configured = false;
+				try
+				{
+					AgentCommandRegistry.Register(CommandName, "Owned real-TCP result framing fixture", Handler);
+					client = new TcpClient(AddressFamily.InterNetwork);
+					connecting = client.BeginConnect(IPAddress.Loopback, port, null, null);
+					deadline = EditorApplication.timeSinceStartup + 20;
+					EditorApplication.update += Tick;
+					AssemblyReloadEvents.beforeAssemblyReload += Cleanup;
+					configured = true;
+				}
+				finally { if (!configured) Cleanup(); }
+			}
+
+			private static IEnumerator Handler(AgentCommandContext context)
+			{
+				var args = JsonUtility.FromJson<FramingArgs>(context.ArgsJson);
+				string data = JsonUtility.ToJson(Fixture(), args.index != 2 && args.index != 4);
+				if (args.index == 1) data = data.Replace("\n", "\r\n");
+				if (args.index == 3) data = "{\"text\":\"invalid literal\nnewline\"}";
+				context.Succeed("Owned framing fixture.", data);
+				yield break;
+			}
+
+			private static void Tick()
+			{
+				bool tickCompleted = false;
+				try
+				{
+					Require(!EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isCompiling && !EditorApplication.isUpdating,
+						"The framing smoke's idle Editor context changed.");
+					Require(EditorApplication.timeSinceStartup < deadline, "Real TCP framing smoke timed out; no result was accepted.");
+					if (stream == null)
+					{
+						if (!connecting.IsCompleted) { tickCompleted = true; return; }
+						client.EndConnect(connecting);
+						stream = client.GetStream();
+						Send(false);
+					}
+					while (client != null && stream.DataAvailable)
+					{
+						int count = stream.Read(receive, 0, receive.Length);
+						Require(count > 0, "The real bridge closed the smoke connection.");
+						for (int i = 0; i < count; i++)
+						{
+							if (receive[i] != 10)
+							{
+								pending.Add(receive[i]);
+								Require(pending.Count <= 65536, "The framing fixture exceeded its bounded receive buffer.");
+								continue;
+							}
+							string line = Encoding.UTF8.GetString(pending.ToArray());
+							pending.Clear();
+							if (string.IsNullOrWhiteSpace(line)) continue;
+							var response = JsonUtility.FromJson<FramingEnvelope>(line);
+							if (response._requestId != requestId) continue;
+							Accept(response);
+							if (client == null) break;
+						}
+					}
+					tickCompleted = true;
+				}
+				finally { if (!tickCompleted) Cleanup(); }
+			}
+
+			private static void Send(bool status)
+			{
+				requestId = "uct_framing_" + Guid.NewGuid().ToString("N");
+				string args = status ? "{\"action\":\"status\",\"runId\":\"" + runId + "\"}"
+					: "{\"action\":\"run\",\"commandName\":\"" + CommandName + "\",\"args\":{\"index\":" + caseIndex + "}}";
+				byte[] request = Encoding.UTF8.GetBytes("{\"command\":\"mcpToolCall\",\"toolName\":\"game_command\",\"_requestId\":\"" + requestId + "\",\"args\":" + args + "}\n");
+				stream.Write(request, 0, request.Length);
+			}
+
+			private static void Accept(FramingEnvelope envelope)
+			{
+				Require(envelope.command == "mcpToolResult" && envelope.tool == "game_command" && envelope.result != null,
+					"A complete matching MCP response must fit in one newline-delimited record.");
+				responses++;
+				if (caseIndex == 3)
+					Require(!envelope.result.success && envelope.result.error != null && envelope.result.error.Contains("transport_json_invalid"),
+						"An invalid quoted newline must fail explicitly, not be silently removed or split into records.");
+				else
+				{
+					Require(envelope.result.success && envelope.result.status == "Succeeded" && envelope.result.result != null && envelope.result.result.success,
+						"The real run/status response did not preserve command success.");
+					Require(JsonUtility.ToJson(envelope.result.result.data) == JsonUtility.ToJson(Fixture()),
+						"Transport compaction changed string spaces, escaped controls, quotes, backslashes, nested objects or arrays.");
+					if (runId == null)
+					{
+						runId = envelope.result.runId;
+						Require(!string.IsNullOrEmpty(runId), "The command run ID was lost in transport.");
+						Send(true);
+						return;
+					}
+				}
+				runId = null;
+				caseIndex++;
+				if (caseIndex < 5) { Send(false); return; }
+				Require(responses == 9, "Expected five framing cases and nine real run/status response records.");
+				Cleanup();
+				WriteResult("framing", true, 5);
+				Debug.Log("Command result framing smoke passed: five real TCP cases and nine run/status responses, including LF/CRLF pretty JSON, escaped values, rejected quoted controls and recovery.");
+			}
+
+			private static FramingData Fixture() => new FramingData
+			{
+				text = "two  spaces\nsecond\r\nthird\ttab",
+				quote = "{\"quoted\":\"value\"}",
+				slash = "ends\\",
+				child = new FramingChild { number = 7 },
+				values = new[] { 1, 2, 3 }
+			};
+
+			private static void Cleanup()
+			{
+				EditorApplication.update -= Tick;
+				AssemblyReloadEvents.beforeAssemblyReload -= Cleanup;
+				AgentCommandRegistry.Unregister(CommandName);
+				stream?.Dispose();
+				client?.Close();
+				stream = null;
+				client = null;
+				connecting = null;
+				pending.Clear();
+			}
+
+			[Serializable] private sealed class FramingArgs { public int index; }
+			[Serializable] private sealed class FramingEnvelope { public string command; public string tool; public string _requestId; public FramingRun result; }
+			[Serializable] private sealed class FramingRun { public bool success; public string status; public string runId; public string error; public FramingCompletion result; }
+			[Serializable] private sealed class FramingCompletion { public bool success; public FramingData data; }
+			[Serializable] private sealed class FramingData { public string text; public string quote; public string slash; public FramingChild child; public int[] values; }
+			[Serializable] private sealed class FramingChild { public int number; }
 		}
 
 		private static AgentCommandRunner Runner() => (AgentCommandRunner)typeof(AgentCommandRunner).GetField("instance", PrivateStatic).GetValue(null);
