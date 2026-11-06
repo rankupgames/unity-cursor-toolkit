@@ -7,7 +7,9 @@ using System.Text;
 using System.Text.RegularExpressions;
 using UnityCursorToolkit.AgentCommands;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace UnityCursorToolkit.InternalSmoke
 {
@@ -207,8 +209,82 @@ namespace UnityCursorToolkit.InternalSmoke
 
 			if (EditorApplication.isPlayingOrWillChangePlaymode == false)
 			{
+				VerifyProfilerLoadedScenes();
 				SessionState.SetString(PhaseKey, "waitPlay");
 				EditorApplication.EnterPlaymode();
+			}
+		}
+
+		[Serializable]
+		private sealed class ProfilerSceneSummary
+		{
+			public string activeScene = string.Empty;
+			public ProfilerLoadedScene[] loadedScenes = Array.Empty<ProfilerLoadedScene>();
+		}
+
+		[Serializable]
+		private sealed class ProfilerLoadedScene
+		{
+			public string name = string.Empty;
+			public string path = string.Empty;
+			public bool isActive = false;
+		}
+
+		private static void VerifyProfilerLoadedScenes()
+		{
+			Scene originalActiveScene = SceneManager.GetActiveScene();
+			Scene first = default(Scene);
+			Scene second = default(Scene);
+			try
+			{
+				first = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+				first.name = "Profiler smoke \"first\"";
+				second = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+				second.name = "Profiler smoke second";
+				if (SceneManager.SetActiveScene(second) == false)
+					throw new InvalidOperationException("Could not activate the profiler fixture scene.");
+
+				Type recorder = Type.GetType("UnityCursorToolkit.ProfilerSessionRecorder, UnityCursorToolkit.Editor", true);
+				object session = recorder.GetMethod("CaptureCurrentSession", BindingFlags.Static | BindingFlags.NonPublic)
+					.Invoke(null, new object[] { false, false });
+				MethodInfo toJson = session.GetType().GetMethod("ToJson", BindingFlags.Instance | BindingFlags.NonPublic);
+				string capturedJson = (string)toJson.Invoke(session, new object[] { false });
+				ProfilerSceneSummary summary = JsonUtility.FromJson<ProfilerSceneSummary>(capturedJson);
+				var expected = new List<Scene>();
+				for (int i = 0; i < SceneManager.sceneCount; i++)
+				{
+					Scene scene = SceneManager.GetSceneAt(i);
+					if (scene.IsValid() && scene.isLoaded) expected.Add(scene);
+				}
+				if (summary.activeScene != second.path || summary.loadedScenes.Length != expected.Count)
+					throw new InvalidOperationException("Profiler scene snapshot has the wrong active scene or scene count.");
+				int activeCount = 0;
+				for (int i = 0; i < expected.Count; i++)
+				{
+					ProfilerLoadedScene actual = summary.loadedScenes[i];
+					if (actual.name != expected[i].name || actual.path != expected[i].path || actual.isActive != (expected[i] == second))
+						throw new InvalidOperationException("Profiler scene fields or manager order changed at index " + i + ".");
+					if (actual.isActive) activeCount++;
+				}
+				if (activeCount != 1 || first.path != string.Empty || second.path != string.Empty)
+					throw new InvalidOperationException("Profiler fixture did not preserve unsaved scenes and one active scene.");
+
+				EditorSceneManager.CloseScene(second, true);
+				SceneManager.SetActiveScene(first);
+				if ((string)toJson.Invoke(session, new object[] { false }) != capturedJson)
+					throw new InvalidOperationException("Profiler snapshot changed after a scene was unloaded.");
+				Type formatter = Type.GetType("UnityCursorToolkit.ProfilerSnapshotFormatter, UnityCursorToolkit.Editor", true);
+				string clipboard = (string)formatter.GetMethod("FormatClipboard", BindingFlags.Static | BindingFlags.NonPublic)
+					.Invoke(null, new object[] { session });
+				AssertContains(clipboard, "loadedScenes:");
+				AssertContains(clipboard, "Profiler smoke \\\"first\\\" | <unsaved>");
+				AssertContains(clipboard, "Profiler smoke second | <unsaved> | active");
+			}
+			finally
+			{
+				if (originalActiveScene.IsValid() && originalActiveScene.isLoaded) SceneManager.SetActiveScene(originalActiveScene);
+				if (second.IsValid() && second.isLoaded) EditorSceneManager.CloseScene(second, true);
+				if (first.IsValid() && first.isLoaded) EditorSceneManager.CloseScene(first, true);
 			}
 		}
 
