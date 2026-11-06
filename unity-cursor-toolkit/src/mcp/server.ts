@@ -17,6 +17,8 @@ import { StandaloneConsoleMcpTools, StandaloneConsoleStore } from './standaloneC
 import { StandaloneProjectMcpTools } from './standaloneProjectTools';
 import { UnityContextMcpTools } from './unityContextIndex';
 import { ViewportStreamMcpTools } from './viewportStreamTools';
+import { EditorRecoveryMonitor } from './editorRecoveryMonitor';
+import { focusUnityEditor } from '../core/unityEditorFocus';
 import { isDryRun, isMutatingToolCall } from './toolMetadata';
 import type { ToolDefinition, ToolResult } from '../core/interfaces';
 
@@ -146,10 +148,12 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 	const connection = new StandaloneUnityConnection();
 	const consoleStore = new StandaloneConsoleStore();
 	const viewportTools = new ViewportStreamMcpTools(connection);
+	const recovery = new EditorRecoveryMonitor(connection, { projectRoot: process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH,
+		focusEditor: readOnly ? undefined : (root, pid) => focusUnityEditor(root, { expectedPid: pid }) });
 
 	connection.onMessage((message) => consoleStore.addFromUnityMessage(message));
 	connection.onMessage((message) => viewportTools.handleUnityMessage(message));
-	router.register(new UnityMcpTools(connection));
+	router.register(new UnityMcpTools(connection, recovery));
 	router.register(new UnityContextMcpTools());
 	router.register(viewportTools);
 	router.register(new StandaloneConsoleMcpTools(consoleStore));
@@ -163,6 +167,7 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 		readOnly,
 		handleRequest: (request) => handleRequest(router, consoleStore, readOnly, request),
 		dispose: () => {
+			recovery.dispose();
 			void viewportTools.dispose();
 			connection.dispose();
 		}

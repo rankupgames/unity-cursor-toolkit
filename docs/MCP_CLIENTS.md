@@ -173,3 +173,26 @@ For headless discovery or non-rendering command workflows, pass `host: "editorBa
 The server resolves Unity from `UNITY_CURSOR_TOOLKIT_UNITY_PATH`, the `unityPath` argument, or the project version under `ProjectSettings/ProjectVersion.txt`.
 
 When rebuilding the extension from source, install with `npm ci`. Dependency updates should use npm 11.14.1 or newer with `--min-release-age=7`; security fixes for packages younger than 7 days need explicit hotfix approval before changing the lockfile.
+
+## Editor recovery
+
+Set `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` to the selected Unity project. The standalone
+MCP process monitors an active compile request or a failed Editor response independently
+of Unity's main thread. It can foreground only the verified existing macOS Editor
+that owns that project's lock; it never launches another Editor or replays a command.
+
+`editor_validation` with `action: "recover"` opens a bounded recovery episode. The
+monitor permits at most two focus attempts and stops on compiler errors, project/process
+mismatch or its deadline. Read-only servers do not foreground applications.
+`compileSucceeded` requires the matching request, compiler diagnostics and a fresh
+post-reload main-thread observation. Sync-only completion and a responsive Editor do
+not prove compilation.
+
+For an explicit operational focus on Node24:
+
+```bash
+npm run unity:focus -- --project /path/to/UnityProject
+```
+
+The command reports `activated` only after verifying the foreground process. Other
+results remain explicit; activation alone is not compile or bridge proof.

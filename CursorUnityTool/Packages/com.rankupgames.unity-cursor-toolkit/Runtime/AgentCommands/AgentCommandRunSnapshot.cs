@@ -73,6 +73,7 @@ namespace UnityCursorToolkit.AgentCommands
 			AgentCommandJson.AppendProperty(builder, "success", Status != AgentCommandStatus.Failed && Status != AgentCommandStatus.Canceled).Append(",");
 			AgentCommandJson.AppendProperty(builder, "runId", RunId).Append(",");
 			AgentCommandJson.AppendProperty(builder, "commandName", CommandName).Append(",");
+			AgentCommandJson.AppendProperty(builder, "executionMode", new AgentCommandDescriptor(CommandName, string.Empty).ExecutionMode).Append(",");
 			AgentCommandJson.AppendProperty(builder, "status", Status.ToString()).Append(",");
 			builder.Append("\"result\":");
 			if (Result == null)

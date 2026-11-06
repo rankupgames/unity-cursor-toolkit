@@ -1,0 +1,58 @@
+/** Exact-project activation of an already-running Unity Editor. Never launches Unity. */
+import * as fs from 'fs';
+import * as path from 'path';
+import { execFile } from 'child_process';
+
+export type FocusState = 'activated' | 'not_running' | 'ambiguous' | 'mismatch' | 'not_foreground' | 'failed' | 'unsupported';
+export interface FocusResult { state: FocusState; pid?: number; reason: string; }
+export type FocusCommand = (command: string, args: string[]) => Promise<string>;
+export interface FocusOptions {
+ platform?: string;
+ expectedPid?: number;
+ unityPath?: string;
+ run?: FocusCommand;
+ readVersion?: (file: string) => string;
+}
+const runCommand: FocusCommand = (command, args) => new Promise((resolve, reject) => {
+ execFile(command, args, { timeout: 3000, maxBuffer: 32768, encoding: 'utf8' }, (error, stdout) => error ? reject(error) : resolve(stdout));
+});
+
+export async function focusUnityEditor(projectRoot: string, options: FocusOptions = {}): Promise<FocusResult> {
+ if ((options.platform ?? process.platform) !== 'darwin') return { state: 'unsupported', reason: 'Automatic activation is available only on macOS.' };
+ const run = options.run ?? runCommand;
+ const lock = path.join(path.resolve(projectRoot), 'Temp', 'UnityLockfile');
+ let activating = false;
+ const owners = async (): Promise<number[]> => {
+  const result = await run('/usr/sbin/lsof', ['-t', lock]);
+  const values = result.trim().split(/\s+/).filter(Boolean);
+  if (values.some(value => !/^\d+$/.test(value))) return [];
+  return [...new Set(values.map(Number))].filter(value => Number.isSafeInteger(value) && value > 0);
+ };
+ try {
+  const pids = await owners();
+  if (pids.length !== 1) return { state: pids.length ? 'ambiguous' : 'not_running', reason: 'The selected project must have exactly one Editor lock owner.' };
+  const pid = pids[0];
+  if (options.expectedPid != null && options.expectedPid !== pid) return { state: 'mismatch', pid, reason: 'The selected Editor process changed.' };
+  const executable = (await run('/bin/ps', ['-p', String(pid), '-o', 'comm='])).trim();
+  const configured = options.unityPath ?? process.env.UNITY_CURSOR_TOOLKIT_UNITY_PATH;
+  const text = (options.readVersion ?? (file => fs.readFileSync(file, 'utf8')))(path.join(projectRoot, 'ProjectSettings', 'ProjectVersion.txt'));
+  const version = /^m_EditorVersion:\s*(\S+)\s*$/m.exec(text)?.[1];
+  if (!version || !/^\d+\.\d+\.\d+[a-z]\d+$/i.test(version) || (configured
+   ? path.resolve(executable) !== path.resolve(configured)
+   : !executable.endsWith('/' + version + '/Unity.app/Contents/MacOS/Unity'))) {
+   return { state: 'mismatch', pid, reason: 'The lock owner executable does not match the selected project Editor.' };
+  }
+  const checked = await owners();
+  if (checked.length !== 1 || checked[0] !== pid) return { state: 'mismatch', pid, reason: 'The project lock owner changed before activation.' };
+  // Address an existing process by PID. Neither API opens a bundle or starts another Editor.
+  const script = `ObjC.import('AppKit'); const pid=${pid}; const app=$.NSRunningApplication.runningApplicationWithProcessIdentifier(pid); if(!app) throw Error('process_not_running'); app.activateWithOptions(2); delay(0.1); const front=()=>Number($.NSWorkspace.sharedWorkspace.frontmostApplication.processIdentifier); if(front()!==pid){ const se=Application('System Events'); const matches=se.applicationProcesses.whose({unixId:pid})(); if(matches.length!==1) throw Error('process_mismatch'); matches[0].frontmost=true; } const deadline=Date.now()+1200; while(front()!==pid && Date.now()<deadline) delay(0.05); String(front()===pid);`;
+  activating = true;
+  const active = (await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', script])).trim() === 'true';
+  return { state: active ? 'activated' : 'not_foreground', pid, reason: active
+   ? 'The verified project owner is foreground. This does not prove compile or main-thread recovery.'
+   : 'macOS did not foreground the verified Editor process.' };
+ } catch (error) {
+  const code = (error as { code?: string | number }).code;
+  return { state: code === 1 && !activating ? 'not_running' : 'failed', reason: error instanceof Error ? error.message : 'Editor activation failed.' };
+ }
+}
