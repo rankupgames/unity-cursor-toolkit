@@ -9,34 +9,69 @@ async function test(name, action) { await action(); passed++; process.stdout.wri
 const root = path.resolve('/fixture/unity-project');
 const project = { projectPath: root, editorPid: 101 };
 async function main() {
- await test('focus validates the owner twice and activates only its PID', async () => {
+ await test('focus validates the owner twice, opens its verified bundle and verifies its PID in a fresh process', async () => {
   const calls = [];
   const result = await focusUnityEditor(root, { platform: 'darwin', readVersion: () => 'm_EditorVersion: 6000.3.9f1\n', run: async (command, args) => {
    calls.push({ command, args });
    if (command.endsWith('/lsof')) return '101\n';
    if (command.endsWith('/ps')) return '/fixture/6000.3.9f1/Unity.app/Contents/MacOS/Unity\n';
-   assert.ok(args.join(' ').includes('pid=101')); return 'true\n';
+   if (command.endsWith('/open')) { assert.deepStrictEqual(args, ['-a', '/fixture/6000.3.9f1/Unity.app']); return ''; }
+   assert.strictEqual(command, '/usr/bin/osascript');
+   assert.ok(args.join(' ').includes('pid=101'));
+   assert.ok(!args.join(' ').includes('frontmost=true'), 'Foreground proof must come from a fresh read, not the activation process.');
+   return 'true\n';
   } });
   assert.strictEqual(result.state, 'activated');
-  assert.deepStrictEqual(calls.map(c => path.basename(c.command)), ['lsof', 'ps', 'lsof', 'osascript']);
+  assert.deepStrictEqual(calls.map(c => path.basename(c.command)), ['lsof', 'ps', 'lsof', 'open', 'osascript']);
  });
- for (const [name, owners, executable, expected, expectedPid] of [
+ for (const [name, owners, executable, expected, expectedPid, unityPath] of [
   ['absent', '', '', 'not_running'], ['ambiguous', '101\n102', '', 'ambiguous'],
   ['wrong-install', '101', '/fixture/other/Unity', 'mismatch'], ['wrong-pid', '101', '', 'mismatch', 102],
-  ['handover', '101', '/fixture/6000.3.9f1/Unity.app/Contents/MacOS/Unity', 'mismatch']
+  ['handover', '101', '/fixture/6000.3.9f1/Unity.app/Contents/MacOS/Unity', 'mismatch'],
+  ['configured-other-bundle', '101', '/fixture/Other.app/Contents/MacOS/Unity', 'mismatch', undefined, '/fixture/Other.app/Contents/MacOS/Unity']
  ]) await test('focus rejects ' + name, async () => {
   let ownerReads = 0, activations = 0;
-  const result = await focusUnityEditor(root, { platform: 'darwin', expectedPid, readVersion: () => 'm_EditorVersion: 6000.3.9f1\n', run: async command => {
+  const result = await focusUnityEditor(root, { platform: 'darwin', expectedPid, unityPath, readVersion: () => 'm_EditorVersion: 6000.3.9f1\n', run: async command => {
    if (command.endsWith('/lsof')) return name === 'handover' && ++ownerReads > 1 ? '102' : owners;
    if (command.endsWith('/ps')) return executable;
    activations++; return 'true';
   } });
   assert.strictEqual(result.state, expected); assert.strictEqual(activations, 0);
  });
- await test('focus reports ignored activation and unsupported platforms', async () => {
-  const run = async command => command.endsWith('/lsof') ? '101' : command.endsWith('/ps') ? '/fixture/6000.3.9f1/Unity.app/Contents/MacOS/Unity' : 'false';
-  assert.strictEqual((await focusUnityEditor(root, { platform: 'darwin', run, readVersion: () => 'm_EditorVersion: 6000.3.9f1\n' })).state, 'not_foreground');
+ await test('focus ignores activation output and reports the fresh foreground result', async () => {
+  const calls = [];
+  const run = async (command, args) => {
+   calls.push({ command, args });
+   if (command.endsWith('/lsof')) return '101';
+   if (command.endsWith('/ps')) return '/fixture/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+   if (command.endsWith('/open')) return 'true'; // Successful activation output is not proof.
+   assert.strictEqual(command, '/usr/bin/osascript');
+   return 'false';
+  };
+  const result = await focusUnityEditor(root, { platform: 'darwin', run, readVersion: () => 'm_EditorVersion: 6000.3.9f1\n' });
+  assert.strictEqual(result.state, 'not_foreground');
+  assert.strictEqual(calls.filter(call => call.command.endsWith('/open')).length, 1);
+  assert.strictEqual(calls.filter(call => call.command.endsWith('/osascript')).length, 1);
+  const count = calls.length;
   assert.strictEqual((await focusUnityEditor(root, { platform: 'linux', run })).state, 'unsupported');
+  assert.strictEqual(calls.length, count);
+ });
+ for (const defect of ['open-failure', 'verification-failure', 'invalid-verification']) await test('focus rejects ' + defect, async () => {
+  const calls = [];
+  const result = await focusUnityEditor(root, { platform: 'darwin', readVersion: () => 'm_EditorVersion: 6000.3.9f1\n', run: async (command, args) => {
+   calls.push({ command, args });
+   if (command.endsWith('/lsof')) return '101';
+   if (command.endsWith('/ps')) return '/fixture/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+   if (command.endsWith('/open')) {
+    assert.deepStrictEqual(args, ['-a', '/fixture/6000.3.9f1/Unity.app']);
+    if (defect === 'open-failure') { const error = new Error('fixture activation rejected'); error.code = 1; throw error; }
+    return '';
+   }
+   if (defect === 'verification-failure') { const error = new Error('fixture fresh verification timed out'); error.code = 'ETIMEDOUT'; throw error; }
+   return 'not-a-process-state';
+  } });
+  assert.strictEqual(result.state, 'failed');
+  assert.strictEqual(calls.filter(call => call.command.endsWith('/osascript')).length, defect === 'open-failure' ? 0 : 1);
  });
  await test('recovery is bounded, never replays a command and needs a fresh selected-project response', async () => {
   let now = 0, responding = false, focuses = 0; const calls = [];

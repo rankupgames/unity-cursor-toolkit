@@ -1,4 +1,4 @@
-/** Exact-project activation of an already-running Unity Editor. Never launches Unity. */
+/** Exact-project activation after verifying an existing Unity Editor process and bundle. */
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFile } from 'child_process';
@@ -37,17 +37,22 @@ export async function focusUnityEditor(projectRoot: string, options: FocusOption
   const configured = options.unityPath ?? process.env.UNITY_CURSOR_TOOLKIT_UNITY_PATH;
   const text = (options.readVersion ?? (file => fs.readFileSync(file, 'utf8')))(path.join(projectRoot, 'ProjectSettings', 'ProjectVersion.txt'));
   const version = /^m_EditorVersion:\s*(\S+)\s*$/m.exec(text)?.[1];
-  if (!version || !/^\d+\.\d+\.\d+[a-z]\d+$/i.test(version) || (configured
+  const executableSuffix = '/Unity.app/Contents/MacOS/Unity';
+  if (!version || !/^\d+\.\d+\.\d+[a-z]\d+$/i.test(version) || !executable.endsWith(executableSuffix) || (configured
    ? path.resolve(executable) !== path.resolve(configured)
    : !executable.endsWith('/' + version + '/Unity.app/Contents/MacOS/Unity'))) {
    return { state: 'mismatch', pid, reason: 'The lock owner executable does not match the selected project Editor.' };
   }
   const checked = await owners();
   if (checked.length !== 1 || checked[0] !== pid) return { state: 'mismatch', pid, reason: 'The project lock owner changed before activation.' };
-  // Address and verify an existing process through System Events, not cached Cocoa activation state.
-  const script = `const pid=${pid}; const se=Application('System Events'); const matches=se.applicationProcesses.whose({unixId:pid})(); if(matches.length!==1) throw Error('process_mismatch'); matches[0].frontmost=true; const deadline=Date.now()+1200; while(!matches[0].frontmost() && Date.now()<deadline) delay(0.05); String(matches[0].frontmost());`;
+  const bundle = executable.slice(0, -'/Contents/MacOS/Unity'.length);
   activating = true;
-  const active = (await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', script])).trim() === 'true';
+  await run('/usr/bin/open', ['-a', bundle]);
+  // Use a fresh read-only process: an activation process can cache its own foreground result.
+  const script = `const pid=${pid}; const se=Application('System Events'); const matches=se.applicationProcesses.whose({unixId:pid})(); if(matches.length!==1) throw Error('process_mismatch'); String(matches[0].frontmost());`;
+  const foreground = (await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', script])).trim();
+  if (foreground !== 'true' && foreground !== 'false') return { state: 'failed', pid, reason: 'Foreground verification returned an invalid process state.' };
+  const active = foreground === 'true';
   return { state: active ? 'activated' : 'not_foreground', pid, reason: active
    ? 'The verified project owner is foreground. This does not prove compile or main-thread recovery.'
    : 'macOS did not foreground the verified Editor process.' };
