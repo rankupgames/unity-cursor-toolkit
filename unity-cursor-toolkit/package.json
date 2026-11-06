@@ -416,14 +416,13 @@
     "audit": "npm audit"
   },
   "overrides": {
-    "ovsx": {
-      "@vscode/vsce": "$@vscode/vsce"
-    }
+    "form-data": "4.0.6",
+    "undici": "7.29.0"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.60.0",
-    "@vscode/vsce": "^4.0.0",
+    "@vscode/vsce": "^3.7.1",
     "esbuild": "^0.25.0",
     "fs-extra": "^10.0.0",
     "ovsx": "^0.10.11",
