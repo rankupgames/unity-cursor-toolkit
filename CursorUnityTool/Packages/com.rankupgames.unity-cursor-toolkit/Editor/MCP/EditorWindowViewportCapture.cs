@@ -35,6 +35,7 @@ namespace UnityCursorToolkit.MCP
 			public byte[] bytes;
 			public int width;
 			public int height;
+			// Reports a correction already applied to the encoded bytes, not a client-side transform.
 			public bool flippedVertical;
 		}
 
@@ -382,7 +383,11 @@ namespace UnityCursorToolkit.MCP
 		private static bool ShouldFlipReadbackVertically(string view)
 		{
 			// GameView and Windows editor readbacks use a bottom-origin buffer here.
-			return Application.platform == RuntimePlatform.WindowsEditor || view == "game";
+			// Metal SceneView GUIView.GrabPixels also needs normalization before JPEG
+			// encoding, including its native toolbar. This is not camera projection.
+			return Application.platform == RuntimePlatform.WindowsEditor || view == "game"
+				|| (view == "scene" && Application.platform == RuntimePlatform.OSXEditor
+					&& SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Metal);
 		}
 
 		private static void DisposeCachedResources()
