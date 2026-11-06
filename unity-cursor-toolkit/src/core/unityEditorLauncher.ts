@@ -122,6 +122,24 @@ export function resolveUnityEditorPath(projectPath: string, options: UnityEditor
 	return null;
 }
 
+/** Read only the existing toolkit-owned launch record; never inspect a global Editor log. */
+export function readOwnedUnityEditorLogPath(projectPath: string): string | null {
+	const lockPath = path.join(os.tmpdir(), `unity-cursor-toolkit-hidden-editor-${projectHash(projectPath)}.lock.json`);
+	try {
+		if (fs.statSync(lockPath).size > 64 * 1024) { return null; }
+		const record = readLaunchLock(lockPath);
+		if (record?.owner !== 'unity-cursor-toolkit' || record.sessionOwned !== true
+			|| normalizeUnityProjectPath(record.projectPath) !== normalizeUnityProjectPath(projectPath)
+			|| typeof record.pid !== 'number' || !Number.isInteger(record.pid) || record.pid <= 0
+			|| typeof record.launchId !== 'string' || record.launchId.length === 0
+			|| typeof record.logPath !== 'string' || !path.isAbsolute(record.logPath)
+			|| !defaultProcessExists(record.pid)) { return null; }
+		const started = Date.parse(record.startedAt);
+		return Number.isFinite(started) && started <= Date.now() && fs.statSync(record.logPath).mtimeMs >= started
+			? record.logPath : null;
+	} catch { return null; }
+}
+
 export function readUnityProjectVersion(projectPath: string): string | null {
 	return readProjectVersion(projectPath, {});
 }

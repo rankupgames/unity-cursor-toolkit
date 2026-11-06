@@ -118,14 +118,10 @@ public class HotReloadHandler : EditorWindow
         CompilationPipeline.compilationStarted += OnCompilationStarted;
         #endif
 
-        // Auto-start on Unity load (always start so extension can connect immediately)
-        EditorApplication.delayCall += () => {
-            if (isInitialized == false)
-            {
-                EditorPrefs.SetBool(wasRunningPrefKey, false);
-                StartWithoutMutex();
-            }
-        };
+        // Start transport after caching Unity configuration; delayCall can stall while unfocused.
+        // The worker only handles sockets. Editor commands remain queued for OnEditorUpdate.
+        EditorPrefs.SetBool(wasRunningPrefKey, false);
+        StartWithoutMutex();
     }
 
     /// <summary>
@@ -1209,7 +1205,7 @@ public class HotReloadHandler : EditorWindow
     }
 
     /// <summary>
-    /// Completes refresh notifications when no script compilation was needed.
+    /// Reports an inconclusive refresh when compilation has not started.
     /// </summary>
     private static void PollRefreshCompilationCompletion()
     {
@@ -1225,7 +1221,7 @@ public class HotReloadHandler : EditorWindow
 
         refreshCompilationPending = false;
         CompilationPipeline.compilationFinished -= OnCompilationFinished;
-        BroadcastToClients("{\"command\":\"compilationResult\",\"success\":true}");
+        BroadcastToClients("{\"command\":\"compilationResult\",\"success\":false,\"status\":\"inconclusive\",\"reason\":\"compilation_start_not_observed\"}");
     }
     #endif
 
