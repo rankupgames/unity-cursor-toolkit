@@ -199,7 +199,7 @@ namespace UnityCursorToolkit
 
 		private static void Restore()
 		{
-			if (!enabled) return;
+			if (!enabled || session != null) return;
 			string id = SessionState.GetString(Key + "ActiveSession", string.Empty);
 			if (string.IsNullOrEmpty(id)) { if (Application.isPlaying) Begin("entered_play"); return; }
 			if (!ValidSessionId(id)) { Unhook(); SetFailure("session_state_invalid"); return; }
@@ -305,7 +305,13 @@ namespace UnityCursorToolkit
 			if (state == PlayModeStateChange.EnteredPlayMode && enabled)
 			{
 				NativeConsoleContext.ObserveReset();
-				if (session == null) Begin("entered_play");
+				if (session == null)
+				{
+					// EnteredPlayMode may precede delayCall after a domain reload.
+					// Restore the persisted run before considering a new session.
+					if (!string.IsNullOrEmpty(SessionState.GetString(Key + "ActiveSession", string.Empty))) Restore();
+					else Begin("entered_play");
+				}
 				else Hook();
 			}
 			if (state == PlayModeStateChange.ExitingPlayMode) End("exiting_play", true);
