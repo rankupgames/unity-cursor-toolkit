@@ -44,8 +44,8 @@ export async function focusUnityEditor(projectRoot: string, options: FocusOption
   }
   const checked = await owners();
   if (checked.length !== 1 || checked[0] !== pid) return { state: 'mismatch', pid, reason: 'The project lock owner changed before activation.' };
-  // Address an existing process by PID. Neither API opens a bundle or starts another Editor.
-  const script = `ObjC.import('AppKit'); const pid=${pid}; const app=$.NSRunningApplication.runningApplicationWithProcessIdentifier(pid); if(!app) throw Error('process_not_running'); app.activateWithOptions(2); delay(0.1); const front=()=>Number($.NSWorkspace.sharedWorkspace.frontmostApplication.processIdentifier); if(front()!==pid){ const se=Application('System Events'); const matches=se.applicationProcesses.whose({unixId:pid})(); if(matches.length!==1) throw Error('process_mismatch'); matches[0].frontmost=true; } const deadline=Date.now()+1200; while(front()!==pid && Date.now()<deadline) delay(0.05); String(front()===pid);`;
+  // Address and verify an existing process through System Events, not cached Cocoa activation state.
+  const script = `const pid=${pid}; const se=Application('System Events'); const matches=se.applicationProcesses.whose({unixId:pid})(); if(matches.length!==1) throw Error('process_mismatch'); matches[0].frontmost=true; const deadline=Date.now()+1200; while(!matches[0].frontmost() && Date.now()<deadline) delay(0.05); String(matches[0].frontmost());`;
   activating = true;
   const active = (await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', script])).trim() === 'true';
   return { state: active ? 'activated' : 'not_foreground', pid, reason: active
