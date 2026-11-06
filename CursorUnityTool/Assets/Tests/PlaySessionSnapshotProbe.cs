@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using UnityEngine;
 
 namespace UnityCursorToolkit.InternalSmoke
@@ -10,3 +11,4 @@ namespace UnityCursorToolkit.InternalSmoke
 		public string excludedString = "UCT_VALUE_MUST_NOT_BE_CAPTURED";
 	}
 }
+#endif

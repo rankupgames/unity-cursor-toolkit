@@ -63,6 +63,7 @@ namespace UnityCursorToolkit.InternalSmoke
 				GameObject second = new GameObject("Second child");
 				second.transform.SetParent(root.transform, false);
 				var probe = root.AddComponent<PlaySessionSnapshotProbe>();
+				Require(probe, "The snapshot probe must be compiled outside Editor folders and remain guarded by UNITY_EDITOR.");
 				probe.assigned = second;
 				BoxCollider collider = root.AddComponent<BoxCollider>();
 				collider.enabled = false;
