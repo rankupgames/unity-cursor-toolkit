@@ -30,6 +30,7 @@ Inside VS Code/Cursor, run **Unity Toolkit: Copy MCP Client Config** to copy rea
 | `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` | Unity project root used for `.meta` resolution |
 | `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY` | Set to `1` to block mutating tools |
 | `UNITY_CURSOR_TOOLKIT_MCP_PORTS` | Comma-separated Unity TCP ports, default `55500,55501,55502,55503,55504` |
+| `UNITY_CURSOR_TOOLKIT_EDITOR_LOG_PATH` | Optional absolute Editor log path owned by the selected project; otherwise use verified Editor metadata or its existing toolkit-owned launch record. No global log fallback. |
 | `UNITY_CURSOR_TOOLKIT_UNITY_PATH` | Optional Unity executable path for `game_command` with `host: "editorBatchmode"` |
 
 ## Cursor
@@ -173,3 +174,64 @@ For headless discovery or non-rendering command workflows, pass `host: "editorBa
 The server resolves Unity from `UNITY_CURSOR_TOOLKIT_UNITY_PATH`, the `unityPath` argument, or the project version under `ProjectSettings/ProjectVersion.txt`.
 
 When rebuilding the extension from source, install with `npm ci`. Dependency updates should use npm 11.14.1 or newer with `--min-release-age=7`; security fixes for packages younger than 7 days need explicit hotfix approval before changing the lockfile.
+
+`editor_validation` status reads in the standalone server and extension run in
+Node and return without waiting for Unity's main thread. They report compiler evidence, domain reload, toolkit
+transport, and main-thread readiness separately. The selected project must match
+`UNITY_CURSOR_TOOLKIT_PROJECT_PATH` (or the configured working directory). A pong
+proves only toolkit transport; a project-info reply must verify the project before
+commands are sent. A dropped compile request is never replayed automatically.
+
+Default discovery checks ports 55500 through 55504. Reload can select another
+available port in that range. An explicit `UNITY_CURSOR_TOOLKIT_MCP_PORTS` list
+limits discovery to that list. One refused port does not prove listener absence.
+Status reports `connectedPort` only after the bridge confirms the selected project.
+`editorProcessId` is the PID reported by that verified bridge, or `null` when the
+package does not report it. These fields clear on disconnect or project mismatch.
+A listening socket alone does not prove a toolkit pong or main-thread response.
+
+The monitor reads the existing project validation result and a bounded incremental
+Editor log tail. Old or mismatched results cannot prove the active request passed.
+Compilation and reload callbacks prove success; absent evidence or a timeout returns
+`inconclusive`. Logs alone never prove overall success; a fresh main-thread reply
+is also required. Initial status-only observation skips historical log lines.
+`operationId` correlates compile requests with their result across domain reload.
+Automatic compilations after user edits use the same callbacks and result file;
+a later compile replaces earlier diagnostics after an explicit request finishes.
+Both Node processes watch only the selected project's result path, including
+directory creation and atomic replacement. A new pending operation starts bounded
+background observation without a tool call. Idle observation has no polling timer.
+The extension uses its existing connection and replaces its monitor when the linked
+project changes. Deactivation closes the watcher and active observation timer.
+Reloads without compilation report `compilerStatus: "not_requested"`; they cannot
+prove that scripts compiled. `automaticObservation` reports watcher availability.
+`suspectedFocusWait` is an observation, not a confirmed cause. During an automatic
+operation, an explicit validation request, or recovery after a lost bridge response,
+the Node monitor continues observing in the background. After main-thread silence
+it can focus the selected running macOS Editor. It resolves the project lock owner,
+checks its executable/version and the bridge PID when available, and checks ownership
+again. It sets that exact PID frontmost through System Events. AppKit must then
+confirm that PID is active.
+Recovery makes at most two attempts and stops on terminal results, timeout or
+shutdown. It never launches or restarts Unity, saves assets, or replays the lost
+command. A later fresh main-thread response proves bridge readiness; compilation
+still requires its separate completion evidence. Recovery reports its reason;
+activation alone remains `waiting_for_main_thread`, and an unconfirmed timeout fails.
+
+Read-only server mode disables native focus recovery and blocks the explicit
+`editor_validation` action `recover`. The extension also disables native focus
+when `UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY=1`. Recovery observes without requesting
+a compile. macOS Automation denial is
+reported explicitly, without repeated permission attempts. Other operating
+systems return `unsupported`.
+
+For an existing Editor before the new standalone server is built and installed,
+the source helper is available from the extension directory with Node 22.18+:
+
+```sh
+node scripts/focus-unity-editor.js --project <unity-project-root> [--expected-pid <pid>]
+```
+
+The helper emits one JSON result; exit 0 requires verified activation, 1 reports
+an unsuccessful result, and 2 rejects invalid arguments. This utility does not
+replace the consumer's pinned Unity package or install the new MCP server.

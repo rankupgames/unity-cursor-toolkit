@@ -7,6 +7,7 @@
  * Company: Rank Up Games LLC
  */
 
+import type { EditorValidationMonitor } from './editorValidationMonitor';
 import type { IToolProvider, ICommandSender, ToolDefinition, ToolResult } from '../core/interfaces';
 import { buildBatchmodeCommandPlan, runBatchmodeGameCommand, shouldUseEditorBatchmode } from './gameCommandBatchmode';
 import { getToolAnnotations, isDryRun, isMutatingToolCall, withDryRunProperty } from './toolMetadata';
@@ -17,7 +18,7 @@ export class UnityMcpTools implements IToolProvider {
 
 	private readonly commandSender: ICommandSender;
 
-	constructor(commandSender: ICommandSender) {
+	constructor(commandSender: ICommandSender, private readonly validationMonitor?: EditorValidationMonitor | (() => EditorValidationMonitor | undefined)) {
 		this.commandSender = commandSender;
 	}
 
@@ -173,13 +174,13 @@ export class UnityMcpTools implements IToolProvider {
 			{
 				name: 'editor_validation',
 				title: 'Editor Validation',
-				description: 'Regenerate Unity project files, request script compilation, and poll the latest validation result.',
+				description: 'Regenerate Unity project files, request script compilation, and poll the latest validation result. recover focuses the selected Editor when its main thread is stalled after an automatic compile or domain reload; it sends no command to Unity.',
 				inputSchema: {
 					type: 'object',
 					properties: withDryRunProperty({
 						action: {
 							type: 'string',
-							enum: ['list', 'status', 'sync_project_files', 'request_compile', 'sync_and_compile'],
+							enum: ['list', 'status', 'recover', 'sync_project_files', 'request_compile', 'sync_and_compile'],
 							description: 'Editor validation action. Defaults to sync_and_compile.'
 						}
 					})
@@ -271,6 +272,7 @@ export class UnityMcpTools implements IToolProvider {
 	}
 
 	public async handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {
+		const validationMonitor = typeof this.validationMonitor === 'function' ? this.validationMonitor() : this.validationMonitor;
 		if (name === 'batch_execute') {
 			return this.handleBatchExecute(args);
 		}
@@ -284,11 +286,31 @@ export class UnityMcpTools implements IToolProvider {
 			return UnityMcpTools.buildDryRunResult(name, unityArgs);
 		}
 
+		if (name === 'editor_validation' && validationMonitor != null) {
+			if (unityArgs.action === 'status') { return validationMonitor.status(); }
+			if (unityArgs.action === 'recover') {
+				validationMonitor.recover();
+				return validationMonitor.status();
+			}
+			if ((unityArgs.action === 'request_compile' || unityArgs.action === 'sync_and_compile' || unityArgs.action == null) && !validationMonitor.beginRequest()) {
+				return { content: [{ type: 'text', text: 'The previous compile request has unconfirmed delivery. Poll status; it will not be replayed.' }], isError: true };
+			}
+			if (unityArgs.action === 'request_compile' || unityArgs.action === 'sync_and_compile' || unityArgs.action == null) {
+				unityArgs.operationId = validationMonitor.operationId;
+			}
+		}
+
 		const result = await this.commandSender.request('mcpToolCall', { toolName: name, args: unityArgs });
+		if (name === 'editor_validation' && validationMonitor != null) {
+			validationMonitor.acceptResponse(result);
+			if (result == null) { return validationMonitor.status(); }
+		}
 
 		if (result == null) {
+			// The command may have been accepted, so it is not replayed. Recovery only focuses the selected Editor.
+			validationMonitor?.recover();
 			return {
-				content: [{ type: 'text', text: `Unity did not respond. Is the project connected and the MCPBridge installed?` }],
+				content: [{ type: 'text', text: `Unity did not respond. Is the project connected and the MCPBridge installed?${validationMonitor == null ? '' : ' Editor recovery started; poll editor_validation status. The command was not replayed.'}` }],
 				isError: true
 			};
 		}

@@ -11,6 +11,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { ToolRouter } from './toolRouter';
+import { EditorValidationMonitor } from './editorValidationMonitor';
+import { focusUnityEditor } from '../core/unityEditorFocus';
 import { UnityMcpTools } from './unityMcpTools';
 import { StandaloneUnityConnection } from './standaloneConnection';
 import { StandaloneConsoleMcpTools, StandaloneConsoleStore } from './standaloneConsole';
@@ -149,7 +151,9 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 
 	connection.onMessage((message) => consoleStore.addFromUnityMessage(message));
 	connection.onMessage((message) => viewportTools.handleUnityMessage(message));
-	router.register(new UnityMcpTools(connection));
+	const validationMonitor = new EditorValidationMonitor(connection, () => connection.observation, undefined, undefined, undefined, readOnly ? undefined : focusUnityEditor);
+	validationMonitor.start();
+	router.register(new UnityMcpTools(connection, validationMonitor));
 	router.register(new UnityContextMcpTools());
 	router.register(viewportTools);
 	router.register(new StandaloneConsoleMcpTools(consoleStore));
@@ -163,6 +167,7 @@ export function createStandaloneMcpRuntime(readOnly = isReadOnlyMode()): Standal
 		readOnly,
 		handleRequest: (request) => handleRequest(router, consoleStore, readOnly, request),
 		dispose: () => {
+			validationMonitor.dispose();
 			void viewportTools.dispose();
 			connection.dispose();
 		}

@@ -9,6 +9,9 @@
  */
 
 import * as net from 'net';
+import * as path from 'path';
+import { resolveProjectRoot } from './standaloneProjectTools';
+import type { EditorBridgeObservation } from './editorValidationMonitor';
 import type { ICommandSender } from '../core/interfaces';
 
 const DEFAULT_PORTS = [55500, 55501, 55502, 55503, 55504] as const;
@@ -34,9 +37,13 @@ export class StandaloneUnityConnection implements ICommandSender {
 	private pendingRequests = new Map<string, PendingRequest>();
 	private requestCounter = 0;
 	private socket: net.Socket | undefined;
+	private connectingSocket: net.Socket | undefined;
 	private connectedPort: number | null = null;
 	private dataBuffer = '';
 	private connectPromise: Promise<boolean> | undefined;
+	private projectInfo: Record<string, unknown> | undefined;
+	private lastMainThreadResponse = 0;
+	private disposed = false;
 
 	constructor(ports: readonly number[] = parsePorts(process.env.UNITY_CURSOR_TOOLKIT_MCP_PORTS)) {
 		this.ports = ports;
@@ -44,6 +51,11 @@ export class StandaloneUnityConnection implements ICommandSender {
 
 	public get port(): number | null {
 		return this.connectedPort;
+	}
+
+	public get observation(): EditorBridgeObservation {
+		return { transportConnected: this.connectedPort != null, port: this.projectInfo == null ? null : this.connectedPort,
+			lastMainThreadResponse: this.projectInfo == null ? 0 : this.lastMainThreadResponse, projectInfo: this.projectInfo };
 	}
 
 	public onMessage(handler: StandaloneUnityMessageHandler): () => void {
@@ -66,6 +78,10 @@ export class StandaloneUnityConnection implements ICommandSender {
 			return null;
 		}
 
+		return this.requestOnSocket(command, payload);
+	}
+
+	private requestOnSocket(command: string, payload?: Record<string, unknown>): Promise<Record<string, unknown> | null> {
 		const requestId = `mcp_${++this.requestCounter}_${Date.now()}`;
 		return new Promise((resolve) => {
 			const timer = setTimeout(() => {
@@ -79,6 +95,8 @@ export class StandaloneUnityConnection implements ICommandSender {
 	}
 
 	public dispose(): void {
+		this.disposed = true;
+		this.connectingSocket?.destroy();
 		this.rejectPendingRequests();
 		this.destroySocket();
 		this.messageHandlers.length = 0;
@@ -94,7 +112,8 @@ export class StandaloneUnityConnection implements ICommandSender {
 	}
 
 	private async ensureConnected(): Promise<boolean> {
-		if (this.socket != null && this.socket.writable) {
+		if (this.disposed) { return false; }
+		if (this.socket != null && this.socket.writable && this.projectInfo != null) {
 			return true;
 		}
 
@@ -113,12 +132,23 @@ export class StandaloneUnityConnection implements ICommandSender {
 		this.destroySocket();
 
 		for (const port of this.ports) {
+			if (this.disposed) { return false; }
 			const socket = await this.tryPort(port);
-			if (socket) {
+			if (socket && !this.disposed) {
 				this.socket = socket;
 				this.connectedPort = port;
 				this.attachSocketListeners(socket);
-				return true;
+				// Pong proves toolkit transport only. Verify the selected project on Unity's main thread before dispatch.
+				const response = await this.requestOnSocket('mcpToolCall', { toolName: 'project_info', args: {} });
+				const info = parseObject(response?.result);
+				if (info != null && typeof info.projectPath === 'string' && path.resolve(info.projectPath) === resolveProjectRoot()) {
+					this.projectInfo = info;
+					return true;
+				}
+				this.destroySocket();
+				this.rejectPendingRequests();
+			} else {
+				socket?.destroy();
 			}
 		}
 
@@ -128,7 +158,10 @@ export class StandaloneUnityConnection implements ICommandSender {
 	private tryPort(port: number): Promise<net.Socket | null> {
 		return new Promise((resolve) => {
 			const socket = new net.Socket();
+			this.connectingSocket = socket;
 			let settled = false;
+			let buffer = '';
+			const timer = setTimeout(() => settle(null), CONNECT_TIMEOUT_MS);
 
 			const settle = (result: net.Socket | null) => {
 				if (settled) {
@@ -136,6 +169,8 @@ export class StandaloneUnityConnection implements ICommandSender {
 				}
 
 				settled = true;
+				if (this.connectingSocket === socket) { this.connectingSocket = undefined; }
+				clearTimeout(timer);
 				socket.removeAllListeners();
 
 				if (result == null) {
@@ -147,9 +182,19 @@ export class StandaloneUnityConnection implements ICommandSender {
 
 			socket.setTimeout(CONNECT_TIMEOUT_MS);
 			socket.once('connect', () => {
-				socket.setTimeout(0);
-				settle(socket);
+				socket.write('{"command":"ping"}\n');
 			});
+			socket.on('data', (raw: Buffer) => {
+				buffer += raw.toString();
+				if (buffer.length > 64 * 1024) { settle(null); return; }
+				const lines = buffer.split('\n');
+				buffer = lines.pop() ?? '';
+				if (lines.some(line => parseJsonObject(line)?.command === 'pong')) {
+					socket.setTimeout(0);
+					settle(socket);
+				}
+			});
+			socket.once('close', () => settle(null));
 			socket.once('error', () => settle(null));
 			socket.once('timeout', () => settle(null));
 			socket.connect(port, 'localhost');
@@ -158,6 +203,7 @@ export class StandaloneUnityConnection implements ICommandSender {
 
 	private attachSocketListeners(socket: net.Socket): void {
 		socket.on('data', (raw: Buffer) => {
+			if (this.socket !== socket) { return; }
 			this.dataBuffer += raw.toString();
 			const lines = this.dataBuffer.split('\n');
 			this.dataBuffer = lines.pop() ?? '';
@@ -186,10 +232,12 @@ export class StandaloneUnityConnection implements ICommandSender {
 		});
 
 		socket.on('close', () => {
+			if (this.socket !== socket) { return; }
 			this.destroySocket();
 			this.rejectPendingRequests();
 		});
 		socket.on('error', () => {
+			if (this.socket !== socket) { return; }
 			this.destroySocket();
 			this.rejectPendingRequests();
 		});
@@ -205,6 +253,7 @@ export class StandaloneUnityConnection implements ICommandSender {
 			return;
 		}
 
+		this.lastMainThreadResponse = Date.now();
 		clearTimeout(pending.timer);
 		this.pendingRequests.delete(requestId);
 		pending.resolve(payload);
@@ -225,6 +274,8 @@ export class StandaloneUnityConnection implements ICommandSender {
 			this.socket = undefined;
 		}
 		this.connectedPort = null;
+		this.projectInfo = undefined;
+		this.lastMainThreadResponse = 0;
 		this.dataBuffer = '';
 	}
 }
@@ -256,4 +307,8 @@ function parseJsonObject(line: string): Record<string, unknown> | null {
 	} catch {
 		return null;
 	}
+}
+
+function parseObject(value: unknown): Record<string, unknown> | null {
+	return typeof value === 'string' ? parseJsonObject(value) : value != null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
 }

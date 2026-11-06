@@ -2248,6 +2248,14 @@ function testUnityProfilerSafetySource() {
 		const syncSource = validationSource.slice(syncStart, syncEnd);
 		assert.ok(syncSource.includes('AssetDatabase.Refresh'));
 		assert.ok(!syncSource.includes('RequestScriptCompilation('));
+		for (const relative of ['HotReloadHandler.cs', 'MCP/EditorValidationTool.cs', 'MCP/ProjectInfoProvider.cs']) {
+			assert.strictEqual(fs.readFileSync(path.join(editorRoot, relative), 'utf8'), fs.readFileSync(path.join(duplicateEditorRoot, relative), 'utf8'));
+		}
+		const constructor = hotReloadSource.slice(hotReloadSource.indexOf('static HotReloadHandler()'), hotReloadSource.indexOf('[MenuItem("Tools/Hot Reload/Start")]'));
+		assert.ok(constructor.includes('StartWithoutMutex();'));
+		assert.ok(!constructor.includes('EditorApplication.delayCall'));
+		assert.ok(!validationSource.includes('SetCompletedStatus("succeeded", "Project files synchronized. Unity did not start'));
+
 	});
 
 	test('editor lifecycle saves scenes and assets before scheduling a normal exit', () => {
@@ -2870,6 +2878,713 @@ async function testUnityMcpTools() {
 // mcp/server.ts (standalone MCP stdio)
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
+async function testEditorValidationMonitor() {
+	console.log('\n── independent Editor validation monitor ──');
+	const { EditorValidationMonitor } = require(path.join(outDir, 'mcp', 'editorValidationMonitor'));
+	const { StandaloneUnityConnection } = require(path.join(outDir, 'mcp', 'standaloneConnection'));
+	const { UnityMcpTools } = require(path.join(outDir, 'mcp', 'unityMcpTools'));
+	function fixture(sender = { send() {}, request: () => new Promise(() => {}) }) {
+		const project = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-monitor-'));
+		const log = path.join(project, 'SyntheticEditor.log');
+		const resultPath = path.join(project, 'TestResults/UnityCursorToolkit/EditorValidation/latest.json');
+		fs.mkdirSync(path.dirname(resultPath), { recursive: true });
+		fs.writeFileSync(log, '');
+		let now = Date.now();
+		const observation = { transportConnected: false, lastMainThreadResponse: 0, projectInfo: { projectPath: project, editorSessionId: 'synthetic-session' } };
+		const monitor = new EditorValidationMonitor(sender, () => observation, project, log, () => now);
+		return {
+			project, log, monitor, observation,
+			advance: ms => { now += ms; },
+			ready: () => { observation.transportConnected = true; observation.lastMainThreadResponse = now; },
+			status: async () => {
+				const response = await Promise.race([monitor.status(), new Promise(resolve => setImmediate(() => resolve(null)))]);
+				assert.ok(response, 'status must return while the bridge promise is still blocked');
+				return JSON.parse(response.content[0].text);
+			},
+			write: fields => fs.writeFileSync(resultPath, JSON.stringify({
+				projectPath: project, operationId: monitor.operationId, editorSessionId: 'synthetic-session', observedUtc: new Date(now).toISOString(),
+				requestedUtc: new Date(now).toISOString(), status: 'running', pending: true, ...fields
+			})),
+			clear: () => { monitor.dispose(); fs.rmSync(project, { recursive: true, force: true }); }
+		};
+	}
+
+	await testAsync('compiler errors remain observable with a blocked bridge and partial log lines', async () => {
+		const f = fixture();
+		f.monitor.beginRequest();
+		fs.appendFileSync(f.log, 'COMMAND LINE ARGUMENTS: -synthetic-token PRIVATE_FIXTURE_TOKEN\nAssets/SyntheticCompileFixture.cs(7,3): error CS1002: ; expected');
+		assert.strictEqual((await f.status()).status, 'waiting_for_compile');
+		fs.appendFileSync(f.log, '\n');
+		const state = await f.status();
+		assert.strictEqual(state.status, 'failed');
+		assert.strictEqual(state.transportConnected, false);
+		assert.strictEqual(state.mainThreadReady, false);
+		assert.strictEqual(state.diagnostics[0].code, 'CS1002');
+		assert.ok(!JSON.stringify(state).includes('PRIVATE_FIXTURE_TOKEN'));
+		f.clear();
+	});
+
+	await testAsync('compiler success remains pending until domain reload evidence arrives', async () => {
+		const f = fixture();
+		f.monitor.beginRequest();
+		f.ready();
+		f.write({ status: 'reloading', compilationCompleted: true, reloadCompleted: false });
+		let state = await f.status();
+		assert.strictEqual(state.compilerStatus, 'succeeded');
+		assert.strictEqual(state.status, 'reloading');
+		assert.strictEqual(state.success, false);
+		f.observation.transportConnected = false;
+		f.observation.lastMainThreadResponse = 0;
+		f.write({ status: 'succeeded', pending: false, compilationCompleted: true, reloadCompleted: true });
+		state = await f.status();
+		assert.strictEqual(state.status, 'reloading');
+		assert.strictEqual(state.reloadStatus, 'completed');
+		assert.strictEqual(state.mainThreadReady, false, 'file evidence is not a main-thread reply');
+		f.ready();
+		assert.strictEqual((await f.status()).status, 'succeeded');
+		f.clear();
+	});
+
+	await testAsync('terminal success does not time out and a later automatic compile replaces old failures', async () => {
+		const f = fixture();
+		f.monitor.beginRequest();
+		fs.appendFileSync(f.log, 'Assets/SyntheticCompileFixture.cs(7,3): error CS1002: ; expected\n');
+		assert.strictEqual((await f.status()).status, 'failed');
+		f.advance(1_000);
+		f.write({ operationId: 'synthetic-automatic-compile', status: 'succeeded', pending: false, compilationCompleted: true, reloadCompleted: true });
+		f.ready();
+		assert.strictEqual((await f.status()).status, 'succeeded');
+		f.advance(120_000);
+		f.write({ operationId: 'synthetic-automatic-compile', status: 'succeeded', pending: false, compilationCompleted: true, reloadCompleted: true });
+		f.ready();
+		const response = await f.monitor.status();
+		assert.strictEqual(JSON.parse(response.content[0].text).status, 'succeeded');
+		assert.strictEqual(response.isError, false);
+		f.clear();
+	});
+
+	await testAsync('focus wait is suspected and timeouts remain inconclusive', async () => {
+		const f = fixture();
+		f.monitor.beginRequest();
+		f.write({ editorFocused: false });
+		assert.strictEqual((await f.status()).suspectedFocusWait, true);
+		f.advance(120_000);
+		const state = await f.status();
+		assert.strictEqual(state.status, 'inconclusive');
+		assert.strictEqual(state.pending, false);
+		assert.strictEqual(state.success, false);
+		assert.strictEqual(state.requestDelivery, 'accepted');
+		assert.strictEqual((await f.status()).status, 'inconclusive', 'an expired request stays inconclusive on later polls');
+		f.clear();
+	});
+
+	for (const [name, fields] of [
+		['old observation', { observedUtc: new Date(0).toISOString() }],
+		['other project', { projectPath: path.join(os.tmpdir(), 'synthetic-other-project') }],
+		['other session', { editorSessionId: 'synthetic-other-session' }],
+		['previous request', { operationId: 'synthetic-previous-operation' }]
+	]) {
+		await testAsync(`validation result rejects ${name}`, async () => {
+			const f = fixture();
+			f.monitor.beginRequest();
+			f.ready();
+			f.write({ status: 'succeeded', compilationCompleted: true, reloadCompleted: true, ...fields });
+			assert.strictEqual((await f.status()).success, false);
+			f.clear();
+		});
+	}
+
+	await testAsync('verified log metadata remains usable after the bridge disconnects', async () => {
+		const f = fixture();
+		f.observation.projectInfo.editorLogPath = f.log;
+		const monitor = new EditorValidationMonitor({ send() {}, request: () => new Promise(() => {}) }, () => f.observation, f.project, null);
+		await monitor.status();
+		f.observation.projectInfo = undefined;
+		fs.appendFileSync(f.log, 'Assets/SyntheticCompileFixture.cs(7,3): error CS1002: ; expected\n');
+		const state = JSON.parse((await monitor.status()).content[0].text);
+		assert.strictEqual(state.status, 'failed');
+		assert.strictEqual(state.transportConnected, false);
+		f.clear();
+	});
+
+	await testAsync('status-only startup ignores historical compiler errors before a successful reload', async () => {
+		const f = fixture();
+		fs.appendFileSync(f.log, 'Assets/SyntheticCompileFixture.cs(7,3): error CS1002: ; expected\nReloading assemblies\n');
+		const state = await f.status();
+		assert.strictEqual(state.status, 'unknown');
+		assert.strictEqual(state.diagnostics.length, 0);
+		assert.strictEqual(state.success, false);
+		f.clear();
+	});
+
+	await testAsync('partial or malformed status evidence cannot complete a compile request', async () => {
+		const f = fixture();
+		f.monitor.beginRequest();
+		f.ready();
+		const resultPath = path.join(f.project, 'TestResults/UnityCursorToolkit/EditorValidation/latest.json');
+		fs.writeFileSync(resultPath, '{"status":');
+		assert.strictEqual((await f.status()).success, false);
+		f.write({ status: 'succeeded', pending: 'false', errorCount: '0', compilationCompleted: true, reloadCompleted: true });
+		assert.strictEqual((await f.status()).success, false);
+		f.clear();
+	});
+
+	await testAsync('log truncation clears obsolete errors and waits for complete replacement lines', async () => {
+		const f = fixture();
+		f.monitor.beginRequest();
+		fs.appendFileSync(f.log, 'Assets/SyntheticCompileFixture.cs(7,3): error CS1002: ' + 'x'.repeat(300) + '\n');
+		assert.strictEqual((await f.status()).status, 'failed');
+		fs.writeFileSync(f.log, 'new log\n');
+		const state = await f.status();
+		assert.strictEqual(state.logReset, true);
+		assert.strictEqual(state.diagnostics.length, 0);
+		assert.strictEqual(state.success, false);
+		f.clear();
+	});
+
+	await testAsync('dropped compile request is dispatched once while status remains responsive', async () => {
+		let mutations = 0;
+		const sender = { send() {}, request: async (_command, payload) => {
+			if (payload.args.action === 'request_compile') { mutations++; }
+			return null;
+		} };
+		const f = fixture(sender);
+		const tools = new UnityMcpTools(sender, f.monitor);
+		await tools.handleToolCall('editor_validation', { action: 'request_compile' });
+		const repeated = await tools.handleToolCall('editor_validation', { action: 'request_compile' });
+		assert.strictEqual(repeated.isError, true);
+		assert.strictEqual(mutations, 1);
+		const state = await f.status();
+		assert.strictEqual(state.requestDelivery, 'unconfirmed');
+		assert.strictEqual(state.status, 'waiting_for_compile');
+		f.clear();
+	});
+
+	await testAsync('standalone discovery verifies the project, reports its endpoint, and follows a moved listener without replay', async () => {
+		const calls = [];
+		const mutations = [];
+		const sockets = [];
+		const unrelated = net.createServer(socket => { sockets.push(socket); socket.end('{"command":"native_debugger"}\n'); });
+		const makeBridge = (project, connections = []) => net.createServer(socket => {
+			sockets.push(socket);
+			connections.push(socket);
+			socket.on('data', data => {
+				for (const line of data.toString().trim().split('\n')) {
+					const message = JSON.parse(line);
+					if (message.command === 'ping') { socket.write('{"command":"pong"}\n'); }
+					if (message.command === 'mcpToolCall') {
+						calls.push([project, message.toolName]);
+						if (message.args.action === 'request_compile') { mutations.push(project); }
+						socket.write(JSON.stringify({ command: 'mcpToolResult', _requestId: message._requestId,
+							result: { projectPath: project, editorProcessId: process.pid } }) + '\n');
+					}
+				}
+			});
+		});
+		const { resolveProjectRoot } = require(path.join(outDir, 'mcp', 'standaloneProjectTools'));
+		const selectedProject = resolveProjectRoot();
+		const wrongProject = path.join(selectedProject, 'synthetic-other-project');
+		const wrong = makeBridge(wrongProject);
+		const selectedSockets = [];
+		const selected = makeBridge(selectedProject, selectedSockets);
+		const replacement = makeBridge(selectedProject);
+		const ports = await Promise.all([unrelated, wrong, selected, replacement].map(server => listenOnLocalhost(server)));
+		const connection = new StandaloneUnityConnection(ports);
+		const result = await connection.request('mcpToolCall', { toolName: 'editor_validation', args: { action: 'request_compile' } });
+		assert.ok(result);
+		assert.strictEqual(connection.port, ports[2]);
+		assert.deepStrictEqual(calls, [[wrongProject, 'project_info'], [selectedProject, 'project_info'], [selectedProject, 'editor_validation']]);
+		assert.strictEqual(connection.observation.transportConnected, true);
+		assert.ok(connection.observation.lastMainThreadResponse > 0);
+		assert.strictEqual(connection.observation.port, ports[2]);
+		const monitor = new EditorValidationMonitor(connection, () => connection.observation, selectedProject, null);
+		const state = JSON.parse((await monitor.status()).content[0].text);
+		assert.strictEqual(state.connectedPort, ports[2]);
+		assert.strictEqual(state.editorProcessId, process.pid);
+		assert.strictEqual(state.success, false, 'endpoint discovery is not compilation proof');
+		monitor.dispose();
+
+		const disconnected = new Promise(resolve => connection.socket.once('close', resolve));
+		for (const socket of selectedSockets) { socket.destroy(); }
+		await Promise.all([closeServer(selected), disconnected]);
+		assert.strictEqual(connection.observation.port, null);
+		assert.strictEqual(connection.observation.projectInfo, undefined);
+		const detachedMonitor = new EditorValidationMonitor({ send() {}, request: async () => null },
+			() => connection.observation, selectedProject, null);
+		const detached = JSON.parse((await detachedMonitor.status()).content[0].text);
+		detachedMonitor.dispose();
+		assert.strictEqual(detached.connectedPort, null);
+		assert.strictEqual(detached.editorProcessId, null);
+		assert.strictEqual(detached.mainThreadReady, false);
+		assert.ok(await connection.request('mcpToolCall', { toolName: 'project_info', args: {} }));
+		assert.strictEqual(connection.observation.port, ports[3]);
+		assert.strictEqual(connection.observation.projectInfo.projectPath, selectedProject);
+		assert.deepStrictEqual(mutations, [selectedProject], 're-discovery must not replay the earlier compile request');
+		connection.dispose();
+		for (const socket of sockets) { socket.destroy(); }
+		await Promise.all([unrelated, wrong, replacement].map(closeServer));
+	});
+
+	// Recovery: the monitor focuses the selected Editor only for an active request or recover episode with a silent main thread.
+	function recoveryFixture(focusOutcome = { state: 'activated' }) {
+		const requests = [];
+		const sender = { send() {}, request: (type, payload) => { requests.push(payload); return new Promise(() => {}); } };
+		const focusCalls = [];
+		let resolveFocus;
+		const focus = request => { focusCalls.push(request); return resolveFocus != null ? new Promise(resolve => { resolveFocus = () => resolve(focusOutcome); }) : Promise.resolve(focusOutcome); };
+		const project = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-recovery-'));
+		const log = path.join(project, 'SyntheticEditor.log');
+		fs.writeFileSync(log, '');
+		let now = Date.now();
+		const observation = { transportConnected: false, lastMainThreadResponse: 0, projectInfo: { projectPath: project, editorSessionId: 'synthetic-session' } };
+		const ticks = new Set();
+		const schedule = callback => { ticks.add(callback); return () => ticks.delete(callback); };
+		let changed;
+		let watchClosed = false;
+		const watch = (_filename, callback) => { changed = callback; return () => { watchClosed = true; }; };
+		const monitor = new EditorValidationMonitor(sender, () => observation, project, log, () => now, focusOutcome === null ? undefined : focus, schedule, watch);
+		return {
+			project, log, monitor, observation, requests, focusCalls,
+			write: fields => {
+				const filename = path.join(project, 'TestResults/UnityCursorToolkit/EditorValidation/latest.json');
+				fs.mkdirSync(path.dirname(filename), { recursive: true });
+				fs.writeFileSync(filename, JSON.stringify({ projectPath: project, editorSessionId: 'synthetic-session',
+					operationId: 'synthetic-auto-compile', observedUtc: new Date(now).toISOString(), status: 'compiling', pending: true, ...fields }));
+			},
+			change: async () => { changed(); await new Promise(resolve => setImmediate(resolve)); },
+			watchClosed: () => watchClosed,
+			tick: async () => {
+				const queued = [...ticks];
+				ticks.clear();
+				queued.forEach(callback => callback());
+				await new Promise(resolve => setImmediate(resolve));
+			},
+			pendingTicks: () => ticks.size,
+			holdFocus: () => { resolveFocus = () => {}; },
+			releaseFocus: () => resolveFocus(),
+			advance: ms => { now += ms; },
+			ready: () => { observation.transportConnected = true; observation.lastMainThreadResponse = now; },
+			status: async () => { const state = JSON.parse((await monitor.status()).content[0].text); await new Promise(resolve => setImmediate(resolve)); return state; },
+			clear: () => { monitor.dispose(); fs.rmSync(project, { recursive: true, force: true }); }
+		};
+	}
+
+	await testAsync('automatic compile events start bounded recovery without a tool call and preserve exact Editor identity', async () => {
+		const f = recoveryFixture();
+		f.observation.projectInfo.editorProcessId = 4242;
+		f.monitor.start();
+		assert.strictEqual(f.pendingTicks(), 0, 'idle file observation must not poll');
+		f.write({});
+		await f.change();
+		assert.strictEqual(f.pendingTicks(), 1);
+		assert.strictEqual(f.monitor.beginRequest(), false, 'an automatic compile owns the active operation');
+		f.advance(6_000);
+		await f.tick();
+		assert.deepStrictEqual(f.focusCalls, [{ projectRoot: f.project, expectedPid: 4242 }]);
+		assert.strictEqual((await f.status()).success, false, 'activation cannot prove compilation');
+		f.advance(1_000);
+		f.write({ status: 'succeeded', pending: false, compilationCompleted: true, reloadCompleted: true });
+		f.ready();
+		await f.change();
+		const state = await f.status();
+		assert.strictEqual(state.success, true);
+		assert.strictEqual(state.requestDelivery, 'observed_automatic');
+		assert.strictEqual(state.recovery.state, 'recovered');
+		assert.strictEqual(f.pendingTicks(), 0);
+		assert.ok(f.requests.every(payload => payload.toolName === 'editor_validation' && payload.args.action === 'status'));
+		f.clear();
+		assert.strictEqual(f.watchClosed(), true);
+	});
+
+	await testAsync('the result watcher follows directory creation and atomic replacement without a caller poll', async () => {
+		const project = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-result-watch-'));
+		const filename = path.join(project, 'TestResults/UnityCursorToolkit/EditorValidation/latest.json');
+		let signal;
+		const observed = new Promise(resolve => { signal = resolve; });
+		const sender = { send() {}, request: async (_command, payload) => { signal(payload); return null; } };
+		const observation = { transportConnected: false, lastMainThreadResponse: 0,
+			projectInfo: { projectPath: project, editorSessionId: 'synthetic-session' } };
+		const monitor = new EditorValidationMonitor(sender, () => observation, project, null, Date.now, undefined, () => () => {});
+		monitor.start();
+		fs.mkdirSync(path.dirname(filename), { recursive: true });
+		fs.writeFileSync(filename + '.tmp', JSON.stringify({ projectPath: project, editorSessionId: 'synthetic-session',
+			operationId: 'synthetic-watch-operation', observedUtc: new Date().toISOString(), status: 'compiling', pending: true }));
+		fs.renameSync(filename + '.tmp', filename);
+		let timeout;
+		const event = await Promise.race([observed, new Promise((_resolve, reject) => {
+			timeout = setTimeout(() => reject(new Error('The project result watcher did not observe atomic replacement.')), 2_000);
+		})]).finally(() => clearTimeout(timeout));
+		assert.deepStrictEqual(event, { toolName: 'editor_validation', args: { action: 'status' } });
+		assert.strictEqual(monitor.operationId, 'synthetic-watch-operation');
+		monitor.dispose();
+		fs.rmSync(project, { recursive: true, force: true });
+	});
+
+	await testAsync('reload-only observation does not claim a compile and still works with native focus disabled', async () => {
+		const f = recoveryFixture(null);
+		f.monitor.start();
+		f.write({ operationId: 'synthetic-auto-reload', status: 'reloading', syncMethod: 'automatic_reload' });
+		await f.change();
+		f.advance(1_000);
+		f.write({ operationId: 'synthetic-auto-reload', status: 'succeeded', pending: false,
+			compilationCompleted: false, reloadCompleted: true, syncMethod: 'automatic_reload' });
+		f.ready();
+		await f.change();
+		const state = await f.status();
+		assert.strictEqual(state.success, true);
+		assert.strictEqual(state.compilerStatus, 'not_requested');
+		assert.strictEqual(state.reloadStatus, 'completed');
+		assert.strictEqual(f.focusCalls.length, 0);
+		assert.strictEqual(f.pendingTicks(), 0);
+		f.clear();
+	});
+
+	await testAsync('automatic observation rejects stale, other-project and other-session events without opening recovery', async () => {
+		const f = recoveryFixture();
+		f.monitor.start();
+		for (const fields of [{ observedUtc: new Date(0).toISOString() }, { projectPath: path.join(f.project, 'other') },
+			{ editorSessionId: 'synthetic-other-session' }]) {
+			f.write(fields);
+			await f.change();
+			assert.strictEqual(f.pendingTicks(), 0);
+		}
+		f.advance(60_000);
+		await f.tick();
+		assert.strictEqual(f.focusCalls.length, 0);
+		f.clear();
+	});
+
+	await testAsync('automatic observation expires once without reopening the same pending operation', async () => {
+		const f = recoveryFixture();
+		f.monitor.start();
+		f.write({});
+		await f.change();
+		f.advance(120_000);
+		await f.tick();
+		let state = await f.status();
+		assert.strictEqual(state.status, 'inconclusive');
+		assert.strictEqual(state.recovery.state, 'failed');
+		f.write({});
+		await f.change();
+		state = await f.status();
+		assert.strictEqual(state.status, 'inconclusive');
+		assert.strictEqual(f.pendingTicks(), 0);
+		f.clear();
+	});
+
+	await testAsync('a coalesced terminal event still needs a later main-thread reply and stale cached success cannot pass', async () => {
+		const f = recoveryFixture();
+		f.monitor.start();
+		f.write({ status: 'succeeded', pending: false, compilationCompleted: true, reloadCompleted: true });
+		await f.change();
+		assert.strictEqual(f.pendingTicks(), 1);
+		f.advance(6_000);
+		await f.tick();
+		assert.strictEqual(f.focusCalls.length, 1);
+		assert.strictEqual((await f.status()).success, false);
+		f.advance(1_000);
+		f.ready();
+		assert.strictEqual((await f.status()).success, true);
+		f.advance(20_000);
+		f.ready();
+		assert.strictEqual((await f.status()).success, false, 'fresh transport cannot refresh old compiler evidence');
+		f.clear();
+	});
+
+	await testAsync('a failed focus can retry and expiry cannot remain waiting for the main thread', async () => {
+		const f = recoveryFixture({ state: 'failed', reason: 'Synthetic activation failure.' });
+		f.monitor.recover();
+		f.advance(6_000);
+		await f.tick();
+		f.advance(11_000);
+		await f.tick();
+		assert.strictEqual(f.focusCalls.length, 2);
+		f.advance(60_000);
+		await f.tick();
+		assert.strictEqual((await f.status()).recovery.state, 'failed');
+		assert.strictEqual(f.pendingTicks(), 0);
+		f.clear();
+	});
+
+	await testAsync('a late activation result cannot replace confirmed main-thread recovery', async () => {
+		const f = recoveryFixture();
+		f.monitor.recover();
+		f.holdFocus();
+		f.advance(6_000);
+		await f.tick();
+		f.advance(1_000);
+		f.ready();
+		await f.tick();
+		f.releaseFocus();
+		await new Promise(resolve => setImmediate(resolve));
+		assert.strictEqual((await f.status()).recovery.state, 'recovered');
+		f.clear();
+	});
+
+	await testAsync('requested recovery progresses in the background without caller status polls and disposal stops it', async () => {
+		const f = recoveryFixture();
+		f.monitor.recover();
+		assert.strictEqual(f.pendingTicks(), 1);
+		f.advance(6_000);
+		await f.tick();
+		assert.deepStrictEqual(f.focusCalls, [{ projectRoot: f.project }]);
+		assert.ok(f.requests.every(payload => payload.toolName === 'editor_validation' && payload.args.action === 'status'));
+		f.monitor.dispose();
+		assert.strictEqual(f.pendingTicks(), 0);
+		f.advance(60_000);
+		await f.tick();
+		assert.strictEqual(f.focusCalls.length, 1);
+		assert.strictEqual(f.monitor.beginRequest(), false);
+		f.clear();
+	});
+
+	await testAsync('recovery focuses the selected project once per silence window and stops at the attempt bound', async () => {
+		const f = recoveryFixture();
+		f.monitor.beginRequest();
+		f.advance(4_000);
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 0, 'a short domain reload must not steal focus');
+		f.advance(2_000);
+		let state = await f.status();
+		assert.deepStrictEqual(f.focusCalls, [{ projectRoot: f.project }]);
+		state = await f.status();
+		assert.strictEqual(f.focusCalls.length, 1, 'no second focus inside the retry window');
+		assert.strictEqual(state.recovery.state, 'waiting_for_main_thread');
+		assert.strictEqual(state.success, false, 'focus alone is never compile success');
+		f.advance(11_000);
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 2);
+		f.advance(60_000);
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 2, 'attempts are bounded');
+		f.clear();
+	});
+
+	await testAsync('recovery closes when the main thread resumes before any focus is needed', async () => {
+		const f = recoveryFixture();
+		f.monitor.recover();
+		f.advance(1_000);
+		f.ready();
+		await f.tick();
+		assert.strictEqual(f.focusCalls.length, 0);
+		assert.strictEqual((await f.status()).recovery.state, 'recovered');
+		assert.strictEqual(f.pendingTicks(), 0);
+		f.advance(60_000);
+		await f.tick();
+		assert.strictEqual(f.focusCalls.length, 0);
+		f.clear();
+	});
+
+	await testAsync('recovery completes only after a fresh main-thread response and never replays a command', async () => {
+		const f = recoveryFixture();
+		f.monitor.beginRequest();
+		f.advance(6_000);
+		await f.status();
+		assert.strictEqual((await f.status()).recovery.state, 'waiting_for_main_thread');
+		f.advance(1_000);
+		f.ready();
+		const state = await f.status();
+		assert.strictEqual(state.recovery.state, 'recovered');
+		assert.strictEqual(state.success, false, 'recovery does not report compile success without completion evidence');
+		assert.ok(f.requests.every(payload => payload.toolName === 'editor_validation' && payload.args.action === 'status'), 'only read-only status probes reach Unity');
+		f.advance(60_000);
+		f.ready();
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 1, 'no focus while the main thread is ready');
+		f.clear();
+	});
+
+	await testAsync('recovery does not focus without an active episode, on compile error, on project mismatch, or after dispose', async () => {
+		let f = recoveryFixture();
+		f.advance(60_000);
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 0, 'no active request or recover episode');
+		f.clear();
+
+		f = recoveryFixture();
+		f.monitor.beginRequest();
+		fs.appendFileSync(f.log, 'Assets/SyntheticCompileFixture.cs(1,1): error CS1002: ; expected\n');
+		f.advance(60_000);
+		assert.strictEqual((await f.status()).status, 'failed');
+		assert.strictEqual(f.focusCalls.length, 0, 'a compile error is not a focus stall');
+		f.clear();
+
+		f = recoveryFixture();
+		f.monitor.beginRequest();
+		f.observation.projectInfo.projectPath = path.join(f.project, 'OtherProject');
+		f.advance(60_000);
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 0, 'a different project is never focused');
+		f.clear();
+
+		f = recoveryFixture();
+		f.monitor.beginRequest();
+		f.advance(6_000);
+		f.holdFocus();
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 1);
+		f.monitor.dispose();
+		f.releaseFocus();
+		await new Promise(resolve => setImmediate(resolve));
+		f.advance(60_000);
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 1, 'no focus after dispose');
+		f.clear();
+	});
+
+	await testAsync('recover opens a bounded episode without a request, and final focus states are not retried', async () => {
+		const f = recoveryFixture({ state: 'ambiguous' });
+		f.monitor.recover();
+		f.advance(6_000);
+		await f.status();
+		assert.strictEqual(f.focusCalls.length, 1);
+		let state = await f.status();
+		assert.strictEqual(state.recovery.lastFocus, 'ambiguous');
+		assert.strictEqual(state.recovery.focusAttempts, 1, 'the reported count must equal actual native focus calls');
+		f.advance(60_000);
+		state = await f.status();
+		assert.strictEqual(f.focusCalls.length, 1, 'ambiguous, mismatched, unsupported and exited Editors are not retried');
+		assert.ok(f.requests.every(payload => payload.args.action === 'status'));
+		f.clear();
+	});
+
+	await testAsync('extension recovery stays in its process, verifies the linked project, and releases its listeners', async () => {
+		const { McpModule } = require(path.join(outDir, 'mcp', 'index'));
+		const { initializeUnityProjectHandler } = require(path.join(outDir, 'project', 'projectHandler'));
+		const project = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-extension-monitor-'));
+		const other = path.join(project, 'other');
+		fs.mkdirSync(path.join(project, 'Assets'));
+		fs.mkdirSync(path.join(other, 'Assets'), { recursive: true });
+		const previousProject = process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH;
+		const previousReadOnly = process.env.UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY;
+		process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH = project;
+		process.env.UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY = '1';
+		const events = new EventEmitter();
+		const calls = [];
+		const connectionInfo = { state: 'connected', port: 1 };
+		let reportedProject = project;
+		let tools;
+		const subscribe = event => callback => { events.on(event, callback); return { dispose: () => events.off(event, callback) }; };
+		const context = createMockExtensionContext(project);
+		initializeUnityProjectHandler(context);
+		const module = new McpModule();
+		await module.activate({
+			extensionContext: context,
+			connectionManager: { info: connectionInfo, onStateChanged: subscribe('state'), onMessage: subscribe('message') },
+			commandSender: { send() {}, request: async (_command, payload) => {
+				calls.push(payload);
+				if (payload.toolName === 'project_info') { return { result: { projectPath: reportedProject, editorSessionId: 'synthetic-session' } }; }
+				if (payload.args.action !== 'status') { return { result: { success: false, error: 'Unexpected Unity mutation.' } }; }
+				return { result: { projectPath: reportedProject, editorSessionId: 'synthetic-session', operationId: '',
+					observedUtc: new Date().toISOString(), status: 'idle', pending: false } };
+			} },
+			registerToolProvider: provider => { tools = provider; }, registerStatusBarContributor() {}
+		});
+		const recovery = JSON.parse((await tools.handleToolCall('editor_validation', { action: 'recover' })).content[0].text);
+		assert.strictEqual(recovery.tool, 'editor_validation');
+		assert.strictEqual(recovery.projectPath, project);
+		await new Promise(resolve => setImmediate(resolve));
+		assert.ok(calls.some(payload => payload.toolName === 'project_info'));
+		assert.ok(calls.every(payload => payload.toolName === 'project_info' || payload.args.action === 'status'));
+
+		reportedProject = other;
+		events.emit('state', connectionInfo);
+		const rejected = await tools.handleToolCall('editor_validation', { action: 'request_compile' });
+		assert.strictEqual(rejected.isError, true);
+		assert.ok(rejected.content[0].text.includes('project_unverified'));
+		assert.ok(!calls.some(payload => payload.args.action === 'request_compile'), 'a mismatched Editor must receive no compile request');
+		assert.strictEqual(JSON.parse((await tools.handleToolCall('editor_validation', { action: 'status' })).content[0].text).status, 'blocked');
+
+		process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH = other;
+		events.emit('state', connectionInfo);
+		assert.strictEqual(JSON.parse((await tools.handleToolCall('editor_validation', { action: 'status' })).content[0].text).projectPath, other);
+		await new Promise(resolve => setImmediate(resolve));
+		await module.deactivate();
+		assert.strictEqual(events.listenerCount('state'), 0);
+		assert.strictEqual(events.listenerCount('message'), 0);
+		const callsBeforeDeactivate = calls.length;
+		const inactive = await tools.handleToolCall('editor_validation', { action: 'status' });
+		assert.strictEqual(inactive.isError, true);
+		assert.ok(inactive.content[0].text.includes('module_inactive'));
+		assert.strictEqual(calls.length, callsBeforeDeactivate);
+		if (previousProject === undefined) delete process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH; else process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH = previousProject;
+		if (previousReadOnly === undefined) delete process.env.UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY; else process.env.UNITY_CURSOR_TOOLKIT_MCP_READ_ONLY = previousReadOnly;
+		fs.rmSync(project, { recursive: true, force: true });
+	});
+
+	test('focus CLI rejects malformed arguments before native activation', () => {
+		const script = path.join(__dirname, '..', 'scripts', 'focus-unity-editor.js');
+		for (const args of [[], ['--project'], ['--unknown', 'fixture'], ['--project', 'fixture', '--project', 'other'],
+			['--project', 'fixture', '--expected-pid', '0'], ['--project', 'fixture', '--expected-pid', '-1'],
+			['--project', 'fixture', '--expected-pid', '1.5'], ['--project', 'fixture', '--expected-pid', '2147483648']]) {
+			const result = require('child_process').spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' });
+			assert.strictEqual(result.status, 2, JSON.stringify(args));
+			assert.strictEqual(result.stdout, '');
+			assert.ok(result.stderr.startsWith('Usage:'));
+		}
+	});
+
+	await testAsync('Editor focus binds the lock owner, revalidates before activation, and fails closed', async () => {
+		const { focusUnityEditor } = require(path.join(outDir, 'core', 'unityEditorFocus'));
+		const project = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-focus-'));
+		fs.mkdirSync(path.join(project, 'ProjectSettings'));
+		fs.writeFileSync(path.join(project, 'ProjectSettings', 'ProjectVersion.txt'), 'm_EditorVersion: 6000.3.9f1\n');
+		const unity = '/Applications/Unity/Hub/Editor/6000.3.9f1/Unity.app/Contents/MacOS/Unity';
+		function script({ owners = ['4242\n'], executable = unity, activation = { code: 0, stdout: 'requested\n', timedOut: false }, verification = { code: 0, stdout: 'activated\n', timedOut: false } } = {}) {
+			const calls = [];
+			let lockReads = 0;
+			const run = async (command, args) => {
+				calls.push([command, ...args]);
+				if (command === '/usr/sbin/lsof') {
+					const stdout = owners[Math.min(lockReads++, owners.length - 1)];
+					return { code: stdout === '' ? 1 : 0, stdout, timedOut: false };
+				}
+				if (command === '/bin/ps') { return { code: 0, stdout: `${executable}\n`, timedOut: false }; }
+				return args.includes('JavaScript') ? verification : activation;
+			};
+			return { calls, run };
+		}
+		const focus = (harness, extra = {}) => focusUnityEditor({ projectRoot: project, ...extra }, { platform: 'darwin', run: harness.run, env: {} });
+
+		let harness = script();
+		let result = await focus(harness);
+		assert.deepStrictEqual([result.state, result.pid], ['activated', 4242]);
+		assert.deepStrictEqual(harness.calls.map(call => call[0]), ['/usr/sbin/lsof', '/bin/ps', '/usr/sbin/lsof', '/usr/bin/osascript', '/usr/bin/osascript']);
+		assert.deepStrictEqual(harness.calls[0], ['/usr/sbin/lsof', '-t', path.join(project, 'Temp', 'UnityLockfile')]);
+		assert.strictEqual(harness.calls[3].at(-1), '4242');
+
+		harness = script();
+		result = await focusUnityEditor({ projectRoot: project }, { platform: 'darwin', run: harness.run,
+			readFile: () => 'm_EditorVersion: invalid\n', env: { UNITY_CURSOR_TOOLKIT_UNITY_PATH: unity } });
+		assert.strictEqual(result.state, 'mismatch');
+		assert.ok(!harness.calls.some(call => call[0] === '/usr/bin/osascript'), 'an executable override must not accept missing project version evidence');
+
+		harness = script();
+		assert.strictEqual((await focusUnityEditor({ projectRoot: project }, { platform: 'linux', run: harness.run })).state, 'unsupported');
+		assert.strictEqual(harness.calls.length, 0);
+
+		for (const [name, options, expected, extra] of [
+			['no owner', { owners: [''] }, 'not_running'],
+			['two owners', { owners: ['4242\n4243\n'] }, 'ambiguous'],
+			['other install', { executable: '/Applications/Unity/Hub/Editor/2022.3.1f1/Unity.app/Contents/MacOS/Unity' }, 'mismatch'],
+			['pid handover before activation', { owners: ['4242\n', '4300\n'] }, 'mismatch'],
+			['unexpected lock output', { owners: ['4242 Unity\n'] }, 'failed'],
+			['activation timeout', { activation: { code: null, stdout: '', timedOut: true } }, 'failed'],
+			['rejected activation', { activation: { code: 0, stdout: 'rejected\n', timedOut: false } }, 'failed'],
+			['ignored activation', { verification: { code: 0, stdout: 'background\n', timedOut: false } }, 'not_foreground'],
+			['OS automation denied', { activation: { code: 1, stdout: '', timedOut: false, nativeErrorCode: -1743 } }, 'permission_denied'],
+			['bridge reported another pid', {}, 'mismatch', { expectedPid: 1 }]
+		]) {
+			harness = script(options);
+			result = await focus(harness, extra);
+			assert.strictEqual(result.state, expected, name);
+			const activated = harness.calls.some(call => call[0] === '/usr/bin/osascript');
+			assert.strictEqual(activated, ['activation timeout', 'rejected activation', 'ignored activation', 'OS automation denied'].includes(name), `${name}: activation only after both lock checks pass`);
+		}
+		fs.rmSync(project, { recursive: true, force: true });
+	});
+}
+
 async function testStandaloneMcpServer() {
 	console.log('\n── mcp/server.ts (standalone stdio) ──');
 
@@ -2928,6 +3643,11 @@ async function testStandaloneMcpServer() {
 			});
 			assert.strictEqual(blocked.result.isError, true);
 			assert.ok(blocked.result.content[0].text.includes('blocked'));
+			const focusBlocked = await server.request('tools/call', {
+				name: 'editor_validation', arguments: { action: 'recover' }
+			});
+			assert.strictEqual(focusBlocked.result.isError, true);
+			assert.ok(focusBlocked.result.content[0].text.includes('blocked'), 'read-only mode cannot activate another app');
 
 			const dryRun = await server.request('tools/call', {
 				name: 'manage_gameobject',
@@ -4336,6 +5056,7 @@ async function main() {
 	await testConsoleMcpTools();
 	await testToolRouter();
 	await testUnityMcpTools();
+	await testEditorValidationMonitor();
 	await testStandaloneMcpServer();
 	await testLaunchJsonGenerator();
 	await testModuleLoader();

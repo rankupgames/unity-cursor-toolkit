@@ -32,6 +32,9 @@ namespace UnityCursorToolkit.MCP
 			sb.Append("\"platform\":\"").Append(Escape(Application.platform.ToString())).Append("\",");
 			sb.Append("\"isPlaying\":").Append(Application.isPlaying ? "true" : "false").Append(",");
 			sb.Append("\"isPaused\":").Append(EditorApplication.isPaused ? "true" : "false").Append(",");
+			sb.Append("\"editorSessionId\":\"").Append(Escape(EditorValidationState.GetEditorSessionId())).Append("\",");
+			sb.Append("\"editorProcessId\":").Append(System.Diagnostics.Process.GetCurrentProcess().Id).Append(",");
+			sb.Append("\"editorLogPath\":\"").Append(Escape(Application.consoleLogPath)).Append("\",");
 			sb.Append("\"projectPath\":\"").Append(Escape(GetProjectPath())).Append("\"");
 			sb.Append("}");
 			return sb.ToString();
