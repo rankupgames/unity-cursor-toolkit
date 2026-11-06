@@ -201,6 +201,17 @@ namespace UnityCursorToolkit
 					StartRecorders(settings.FrameBufferLength);
 				}
 
+				var activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+				var loadedScenes = new List<LoadedSceneSnapshot>();
+				for (int i = 0; i < UnityEngine.SceneManagement.SceneManager.sceneCount; i++)
+				{
+					var scene = UnityEngine.SceneManagement.SceneManager.GetSceneAt(i);
+					if (scene.IsValid() && scene.isLoaded)
+					{
+						loadedScenes.Add(new LoadedSceneSnapshot { name = scene.name, path = scene.path, isActive = scene == activeScene });
+					}
+				}
+
 				var session = new ProfilerSnapshotSession
 				{
 					id = sessionId,
@@ -208,7 +219,8 @@ namespace UnityCursorToolkit
 					startedUtc = sessionStartedUtc,
 					capturedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture),
 					unityVersion = Application.unityVersion,
-					activeScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().path,
+					activeScene = activeScene.path,
+					loadedScenes = loadedScenes,
 					isPlaying = EditorApplication.isPlaying,
 					isPaused = EditorApplication.isPaused,
 					isCompiling = EditorApplication.isCompiling,

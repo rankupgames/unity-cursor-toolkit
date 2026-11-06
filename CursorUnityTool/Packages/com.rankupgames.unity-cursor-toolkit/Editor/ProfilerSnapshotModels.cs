@@ -134,6 +134,13 @@ namespace UnityCursorToolkit
 #endif
 	}
 
+	internal sealed class LoadedSceneSnapshot
+	{
+		internal string name;
+		internal string path;
+		internal bool isActive;
+	}
+
 	internal sealed class ProfilerSnapshotSession
 	{
 		internal string id;
@@ -142,6 +149,8 @@ namespace UnityCursorToolkit
 		internal string capturedUtc;
 		internal string unityVersion;
 		internal string activeScene;
+		// Normal loaded scenes in SceneManager order; excludes DontDestroyOnLoad. Unsaved paths are empty.
+		internal List<LoadedSceneSnapshot> loadedScenes = new List<LoadedSceneSnapshot>();
 		internal bool isPlaying;
 		internal bool isPaused;
 		internal bool isCompiling;
@@ -172,6 +181,7 @@ namespace UnityCursorToolkit
 			ProfilerSnapshotJson.Prop(sb, "capturedUtc", capturedUtc).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "unityVersion", unityVersion).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "activeScene", activeScene).Append(",");
+			AppendLoadedScenes(sb);
 			ProfilerSnapshotJson.Prop(sb, "bottleneck", bottleneck).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "sessionPath", sessionPath).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "consoleTranscriptPath", consoleTranscriptPath).Append(",");
@@ -192,6 +202,21 @@ namespace UnityCursorToolkit
 			AppendWarnings(sb);
 			sb.Append("}");
 			return sb.ToString();
+		}
+
+		private void AppendLoadedScenes(StringBuilder sb)
+		{
+			sb.Append("\"loadedScenes\":[");
+			for (int i = 0; i < loadedScenes.Count; i++)
+			{
+				if (i > 0) sb.Append(",");
+				LoadedSceneSnapshot scene = loadedScenes[i];
+				sb.Append("{");
+				ProfilerSnapshotJson.Prop(sb, "name", scene.name).Append(",");
+				ProfilerSnapshotJson.Prop(sb, "path", scene.path).Append(",");
+				sb.Append("\"isActive\":").Append(ProfilerSnapshotJson.Bool(scene.isActive)).Append("}");
+			}
+			sb.Append("],");
 		}
 
 		private void AppendMetrics(StringBuilder sb, bool includeRaw)
@@ -394,6 +419,13 @@ namespace UnityCursorToolkit
 			sb.AppendLine("bottleneck: " + session.bottleneck);
 			sb.AppendLine("unityVersion: " + session.unityVersion);
 			sb.AppendLine("activeScene: " + session.activeScene);
+			sb.AppendLine("loadedScenes:");
+			foreach (LoadedSceneSnapshot scene in session.loadedScenes)
+			{
+				sb.AppendLine("- " + ProfilerSnapshotJson.Escape(scene.name)
+					+ " | " + (string.IsNullOrEmpty(scene.path) ? "<unsaved>" : ProfilerSnapshotJson.Escape(scene.path))
+					+ (scene.isActive ? " | active" : string.Empty));
+			}
 			sb.AppendLine("storedPath: " + session.sessionPath);
 			sb.AppendLine("consoleTranscriptPath: " + EmptyFallback(session.consoleTranscriptPath));
 			sb.AppendLine("consoleEntries: " + session.consoleEntryCount.ToString(CultureInfo.InvariantCulture));
