@@ -45,12 +45,12 @@ export async function focusUnityEditor(projectRoot: string, options: FocusOption
   }
   const checked = await owners();
   if (checked.length !== 1 || checked[0] !== pid) return { state: 'mismatch', pid, reason: 'The project lock owner changed before activation.' };
-  const bundle = executable.slice(0, -'/Contents/MacOS/Unity'.length);
   activating = true;
-  await run('/usr/bin/open', ['-a', bundle]);
+  // Target the existing owner by PID. Opening a bundle can choose a different running Editor.
+  const processScript = `const pid=${pid}; const se=Application('System Events'); const matches=se.applicationProcesses.whose({unixId:pid})(); if(matches.length!==1 || matches[0].name()!=='Unity') throw Error('process_mismatch');`;
+  await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', processScript + ' matches[0].frontmost=true;']);
   // Use a fresh read-only process: an activation process can cache its own foreground result.
-  const script = `const pid=${pid}; const se=Application('System Events'); const matches=se.applicationProcesses.whose({unixId:pid})(); if(matches.length!==1) throw Error('process_mismatch'); String(matches[0].frontmost());`;
-  const foreground = (await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', script])).trim();
+  const foreground = (await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', processScript + ' String(matches[0].frontmost());'])).trim();
   if (foreground !== 'true' && foreground !== 'false') return { state: 'failed', pid, reason: 'Foreground verification returned an invalid process state.' };
   const active = foreground === 'true';
   return { state: active ? 'activated' : 'not_foreground', pid, reason: active
