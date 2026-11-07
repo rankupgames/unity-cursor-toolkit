@@ -75,6 +75,7 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>JSON result for the requested editor validation action.</returns>
 		public string HandleCommand(string argsJson)
 		{
+			if (EditorValidationState.IsAssetImportWorker) return GameCommandToolJson.Error("unsupported_process: editor validation is unavailable in an asset import worker.");
 			string action = GameCommandToolJson.GetString(argsJson, "action", "sync_and_compile");
 			switch (action)
 			{
@@ -160,6 +161,7 @@ namespace UnityCursorToolkit.MCP
 		private const double NoCompileStartTimeoutSeconds = 4.0d;
 		private const double ReloadTimeoutSeconds = 60.0d;
 		private const string RequestIdKey = "UnityCursorToolkit.EditorValidation.RequestId";
+		private const string RequestOwnerPidKey = "UnityCursorToolkit.EditorValidation.RequestOwnerPid";
 		private const string OperationKey = "UnityCursorToolkit.EditorValidation.Operation";
 		private const string CompilationFinishedKey = "UnityCursorToolkit.EditorValidation.CompilationFinished";
 		private const string CompileSucceededKey = "UnityCursorToolkit.EditorValidation.CompileSucceeded";
@@ -174,11 +176,28 @@ namespace UnityCursorToolkit.MCP
 		internal static readonly int EditorPid = ReadEditorPid();
 		internal static string ProjectPath => Directory.GetParent(Application.dataPath).FullName;
 
+		// Import workers load editor assemblies but do not own validation requests or their result file.
+		internal static bool IsAssetImportWorker
+		{
+			get
+			{
+#if UNITY_2020_2_OR_NEWER
+				return AssetDatabase.IsAssetImportWorkerProcess();
+#else
+				return false;
+#endif
+			}
+		}
+
+		private static bool OwnsRequest => SessionState.GetInt(RequestOwnerPidKey, 0) == EditorPid &&
+			!string.IsNullOrEmpty(SessionState.GetString(RequestIdKey, string.Empty));
+
 		/// <summary>
 		/// Registers compile callbacks once per editor domain load.
 		/// </summary>
 		internal static void RegisterCallbacks()
 		{
+			if (IsAssetImportWorker) return;
 			CompilationPipeline.compilationStarted -= OnCompilationStarted;
 			CompilationPipeline.assemblyCompilationFinished -= OnAssemblyCompilationFinished;
 			CompilationPipeline.compilationFinished -= OnCompilationFinished;
@@ -209,6 +228,7 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>JSON status after project-file synchronization.</returns>
 		internal static string SyncProjectFilesOnly()
 		{
+			if (IsAssetImportWorker) return GameCommandToolJson.Error("unsupported_process: editor validation is unavailable in an asset import worker.");
 			if (SessionState.GetBool(PendingKey, false)) return GetStatusJson();
 			ResetRequestState();
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -245,6 +265,7 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>JSON status after the compile request is accepted or rejected.</returns>
 		internal static string RequestCompileOnly(string trigger)
 		{
+			if (IsAssetImportWorker) return GameCommandToolJson.Error("unsupported_process: editor validation is unavailable in an asset import worker.");
 			if (SessionState.GetBool(PendingKey, false)) return GetStatusJson();
 			ResetRequestState();
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -271,6 +292,7 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>JSON status after the compile request is accepted or rejected.</returns>
 		internal static string SyncAndRequestCompile(string trigger)
 		{
+			if (IsAssetImportWorker) return GameCommandToolJson.Error("unsupported_process: editor validation is unavailable in an asset import worker.");
 			if (SessionState.GetBool(PendingKey, false)) return GetStatusJson();
 			ResetRequestState();
 			if (EditorApplication.isPlayingOrWillChangePlaymode)
@@ -351,6 +373,7 @@ namespace UnityCursorToolkit.MCP
 		/// <returns>JSON status for the current or most recent validation request.</returns>
 		internal static string GetStatusJson()
 		{
+			if (IsAssetImportWorker) return GameCommandToolJson.Error("unsupported_process: editor validation is unavailable in an asset import worker.");
 			ObserveMainThread();
 			UpdateTransientCompileStatus();
 			return BuildStatusJson(true);
@@ -362,6 +385,7 @@ namespace UnityCursorToolkit.MCP
 		/// <param name="context">Unity compile context object.</param>
 		private static void OnCompilationStarted(object context)
 		{
+			if (IsAssetImportWorker) return;
 			if (!SessionState.GetBool(PendingKey, false)) BeginObservedCompilation(true);
 			else if (!SessionState.GetBool(CompilationStartedKey, false)) SessionState.SetBool(DiagnosticsCompleteKey, true);
 			SessionState.SetBool(CompilationStartedKey, true);
@@ -382,6 +406,7 @@ namespace UnityCursorToolkit.MCP
 		/// <param name="messages">Compiler diagnostics emitted for the assembly.</param>
 		private static void OnAssemblyCompilationFinished(string assemblyPath, CompilerMessage[] messages)
 		{
+			if (IsAssetImportWorker) return;
 			if (messages == null) return;
 			if (!SessionState.GetBool(PendingKey, false)) BeginObservedCompilation(false);
 			int errorCount = SessionState.GetInt(ErrorCountKey, 0);
@@ -410,10 +435,13 @@ namespace UnityCursorToolkit.MCP
 		/// <param name="context">Unity compile context object.</param>
 		private static void OnCompilationFinished(object context)
 		{
+			if (IsAssetImportWorker) return;
 			if (!SessionState.GetBool(PendingKey, false)) BeginObservedCompilation(false);
 			SessionState.SetBool(CompilationFinishedKey, true);
 			SessionState.SetString(CompileFinishedDomainKey, DomainId);
-			if (SessionState.GetInt(ErrorCountKey, 0) > 0 || EditorUtility.scriptCompilationFailed)
+			// scriptCompilationFailed can still describe the previous pass in this domain.
+			// Current diagnostics fail immediately; the global flag is checked after reload.
+			if (SessionState.GetInt(ErrorCountKey, 0) > 0)
 			{
 				SetCompletedStatus("failed", "Script compilation finished with compiler errors.", GetSyncMethod(), false);
 				return;
@@ -430,6 +458,7 @@ namespace UnityCursorToolkit.MCP
 		/// </summary>
 		private static void PollCompileStartTimeout()
 		{
+			if (IsAssetImportWorker) return;
 			ObserveMainThread();
 			if (!SessionState.GetBool(PendingKey, false))
 			{
@@ -439,7 +468,7 @@ namespace UnityCursorToolkit.MCP
 			if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;
 			if (SessionState.GetBool(CompilationStartedKey, false))
 			{
-				if (SessionState.GetInt(ErrorCountKey, 0) > 0 || EditorUtility.scriptCompilationFailed)
+				if (SessionState.GetInt(ErrorCountKey, 0) > 0)
 					SetCompletedStatus("failed", "Script compilation finished with compiler errors.", GetSyncMethod(), false);
 				else if (ReadEditorTime(ReloadTimeoutAtKey) > 0.0d && EditorApplication.timeSinceStartup >= ReadEditorTime(ReloadTimeoutAtKey))
 					SetCompletedStatus("inconclusive", "Compilation completion and post-reload main-thread readiness were not both observed.", GetSyncMethod(), false);
@@ -501,6 +530,7 @@ namespace UnityCursorToolkit.MCP
 			SessionState.SetInt(ErrorCountKey, 0);
 			SessionState.SetInt(WarningCountKey, 0);
 			SessionState.SetString(RequestIdKey, Guid.NewGuid().ToString("N"));
+			SessionState.SetInt(RequestOwnerPidKey, EditorPid);
 			SessionState.SetString(OperationKey, string.Empty);
 			SessionState.SetBool(CompilationFinishedKey, false);
 			SessionState.SetBool(CompileSucceededKey, false);
@@ -553,6 +583,7 @@ namespace UnityCursorToolkit.MCP
 
 		private static void OnBeforeAssemblyReload()
 		{
+			if (IsAssetImportWorker || !OwnsRequest || !SessionState.GetBool(PendingKey, false)) return;
 			SessionState.SetBool(ReloadPendingKey, true);
 			WriteCurrentResult(false);
 		}
@@ -560,6 +591,7 @@ namespace UnityCursorToolkit.MCP
 		/// <summary>Called only on Unity's main thread; a response in the compiler domain is not reload proof.</summary>
 		internal static void ObserveMainThread()
 		{
+			if (IsAssetImportWorker) return;
 			MainThreadObservedUtc = DateTime.UtcNow.ToString("O", CultureInfo.InvariantCulture);
 			if (EditorApplication.isCompiling || EditorApplication.isUpdating) return;
 			if (!SessionState.GetBool(PendingKey, false))
@@ -571,11 +603,22 @@ namespace UnityCursorToolkit.MCP
 				}
 				return;
 			}
-			if (!SessionState.GetBool(CompilationFinishedKey, false) ||
-				SessionState.GetString(CompileFinishedDomainKey, string.Empty) == DomainId) return;
+			if (!OwnsRequest)
+			{
+				SetCompletedStatus("inconclusive", "Validation request ownership does not match this Editor process. Request a new validation.", GetSyncMethod(), false);
+				return;
+			}
+			string compilerDomain = SessionState.GetString(CompileFinishedDomainKey, string.Empty);
+			if (!SessionState.GetBool(CompilationStartedKey, false) || !SessionState.GetBool(CompilationFinishedKey, false) ||
+				string.IsNullOrEmpty(compilerDomain) || compilerDomain == DomainId) return;
 			if (SessionState.GetInt(ErrorCountKey, 0) > 0 || EditorUtility.scriptCompilationFailed)
 			{
 				SetCompletedStatus("failed", "Compiler errors remain after domain reload.", GetSyncMethod(), false);
+				return;
+			}
+			if (!SessionState.GetBool(DiagnosticsCompleteKey, false))
+			{
+				SetCompletedStatus("inconclusive", "The reloaded main thread responded, but compilation diagnostics were not observed from the start.", GetSyncMethod(), false);
 				return;
 			}
 			SessionState.SetBool(CompileSucceededKey, true);
@@ -687,6 +730,7 @@ namespace UnityCursorToolkit.MCP
 		/// <param name="success">Whether the current status should be treated as successful by MCP clients.</param>
 		private static void WriteCurrentResult(bool success)
 		{
+			if (IsAssetImportWorker || !OwnsRequest) return;
 			string resultPath = GetResultPath();
 			Directory.CreateDirectory(Path.GetDirectoryName(resultPath));
 			string temporaryPath = resultPath + ".tmp";
@@ -705,7 +749,7 @@ namespace UnityCursorToolkit.MCP
 			bool pending = SessionState.GetBool(PendingKey, false);
 			bool compileSucceeded = SessionState.GetBool(CompileSucceededKey, false);
 			bool syncSucceeded = SessionState.GetBool(SyncSucceededKey, false);
-			success = success && !pending && GetStatus() == "succeeded" && (compileSucceeded || syncSucceeded);
+			success = success && OwnsRequest && !pending && GetStatus() == "succeeded" && (compileSucceeded || syncSucceeded);
 			return "{\"success\":" + ToJsonBool(success) +
 				",\"tool\":\"editor_validation\"" +
 				",\"requestId\":\"" + EditorControlHelpers.Escape(SessionState.GetString(RequestIdKey, string.Empty)) + "\"" +

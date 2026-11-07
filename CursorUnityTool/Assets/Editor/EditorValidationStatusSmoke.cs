@@ -3,6 +3,7 @@
 // Description: Native regression smoke for pending, inconclusive and post-compile status.
 #if UNITY_EDITOR
 using System;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using UnityEditor;
@@ -14,13 +15,13 @@ public static class EditorValidationStatusSmoke
     private const BindingFlags StaticPrivate = BindingFlags.Static | BindingFlags.NonPublic;
     private static readonly string[] StringKeys = { "StatusKey", "MessageKey", "SyncMethodKey", "RequestedUtcKey", "FinishedUtcKey", "CompileTimeoutAtKey", "RequestIdKey", "OperationKey", "CompileFinishedDomainKey", "ReloadTimeoutAtKey" };
     private static readonly string[] BoolKeys = { "PendingKey", "CompilationStartedKey", "CompilationFinishedKey", "CompileSucceededKey", "SyncSucceededKey", "DiagnosticsCompleteKey", "ReloadPendingKey" };
-    private static readonly string[] IntKeys = { "ErrorCountKey", "WarningCountKey" };
+    private static readonly string[] IntKeys = { "ErrorCountKey", "WarningCountKey", "RequestOwnerPidKey" };
 
     [Serializable]
     private sealed class Status
     {
         public bool success = false, pending = false, compileSucceeded = false, syncSucceeded = false, reloadPending = false;
-        public string status = string.Empty, requestId = string.Empty, projectPath = string.Empty, domainId = string.Empty, capturedUtc = string.Empty, mainThreadObservedUtc = string.Empty;
+        public string status = string.Empty, requestId = string.Empty, projectPath = string.Empty, domainId = string.Empty, capturedUtc = string.Empty, mainThreadObservedUtc = string.Empty, resultPath = string.Empty;
         public int editorPid = 0, errorCount = 0;
     }
 
@@ -36,6 +37,8 @@ public static class EditorValidationStatusSmoke
         var strings = StringKeys.ToDictionary(name => key(name), name => SessionState.GetString(key(name), string.Empty));
         var booleans = BoolKeys.ToDictionary(name => key(name), name => SessionState.GetBool(key(name), false));
         var integers = IntKeys.ToDictionary(name => key(name), name => SessionState.GetInt(key(name), 0));
+        string resultPath = (string)Invoke(state, "GetResultPath");
+        byte[] originalResult = File.Exists(resultPath) ? File.ReadAllBytes(resultPath) : null;
         try
         {
             Invoke(state, "ResetRequestState");
@@ -55,6 +58,19 @@ public static class EditorValidationStatusSmoke
             SessionState.SetBool(key("SyncSucceededKey"), true);
             Status syncOnly = Read(state);
             Require(syncOnly.success && syncOnly.syncSucceeded && !syncOnly.compileSucceeded, "Sync-only success must not certify compilation.");
+            Invoke(state, "WriteCurrentResult", true);
+            string ownedResult = File.ReadAllText(syncOnly.resultPath);
+            Invoke(state, "OnBeforeAssemblyReload");
+            Require(!SessionState.GetBool(key("ReloadPendingKey"), false) && File.ReadAllText(syncOnly.resultPath) == ownedResult,
+                "An idle reload must not create or replace validation evidence.");
+            SessionState.SetString(key("RequestIdKey"), string.Empty);
+            Invoke(state, "WriteCurrentResult", false);
+            Require(File.ReadAllText(syncOnly.resultPath) == ownedResult, "Requestless state must not replace an owned validation result.");
+            SessionState.SetString(key("RequestIdKey"), syncOnly.requestId);
+            SessionState.SetInt(key("RequestOwnerPidKey"), 0);
+            Invoke(state, "WriteCurrentResult", false);
+            Require(File.ReadAllText(syncOnly.resultPath) == ownedResult, "A different process owner must not replace validation evidence.");
+            SessionState.SetInt(key("RequestOwnerPidKey"), syncOnly.editorPid);
 
             Invoke(state, "ResetRequestState");
             Invoke(state, "SetRunningStatus", "running", "Synthetic compiler callback request.", "not_requested");
@@ -71,15 +87,35 @@ public static class EditorValidationStatusSmoke
             Status failed = Read(state);
             Require(failed.status == "failed" && failed.errorCount == 1 && !failed.pending && !failed.success && !failed.compileSucceeded,
                 "Compiler errors must dominate completion and reload status.");
+
+            Invoke(state, "ResetRequestState");
+            Invoke(state, "SetRunningStatus", "running", "Synthetic incomplete diagnostic request.", "not_requested");
+            Invoke(state, "OnCompilationStarted", new object());
+            Invoke(state, "OnCompilationFinished", new object());
+            SessionState.SetString(key("CompileFinishedDomainKey"), compilerFinished.domainId + "-previous");
+            SessionState.SetBool(key("DiagnosticsCompleteKey"), false);
+            Status incomplete = Read(state);
+            Require(incomplete.status == "inconclusive" && !incomplete.pending && !incomplete.success && !incomplete.compileSucceeded,
+                "A fresh domain without complete compiler diagnostics must remain inconclusive.");
+
+            Invoke(state, "ResetRequestState");
+            Invoke(state, "SetRunningStatus", "running", "Synthetic complete diagnostic request.", "not_requested");
+            Invoke(state, "OnCompilationStarted", new object());
+            Invoke(state, "OnCompilationFinished", new object());
+            SessionState.SetString(key("CompileFinishedDomainKey"), compilerFinished.domainId + "-previous");
+            Status ready = Read(state);
+            Require(ready.status == "succeeded" && !ready.pending && ready.success && ready.compileSucceeded,
+                "Complete diagnostics and a fresh main-thread domain must complete the owned request.");
         }
         finally
         {
             foreach (var item in strings) SessionState.SetString(item.Key, item.Value);
             foreach (var item in booleans) SessionState.SetBool(item.Key, item.Value);
             foreach (var item in integers) SessionState.SetInt(item.Key, item.Value);
-            Invoke(state, "WriteCurrentResult", true);
+            if (originalResult == null) File.Delete(resultPath);
+            else File.WriteAllBytes(resultPath, originalResult);
         }
-        Debug.Log("EditorValidationStatusSmoke passed: pending/no-start/sync-only/compiler-finish/error contracts. Real compilation and domain-reload success still require a native compile run.");
+        Debug.Log("EditorValidationStatusSmoke passed: pending/no-start/sync-only/ownership/compiler-finish/error/diagnostic contracts. Real compilation and domain-reload success still require a native compile run.");
     }
 
     private static Status Read(Type state) => JsonUtility.FromJson<Status>((string)Invoke(state, "GetStatusJson"));
