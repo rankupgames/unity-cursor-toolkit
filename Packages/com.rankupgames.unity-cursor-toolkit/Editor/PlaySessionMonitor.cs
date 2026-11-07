@@ -24,7 +24,8 @@ namespace UnityCursorToolkit
 		internal const int MaximumSnapshots = 8;
 		private const int MaximumErrorGroups = 64;
 		private const int MaximumArtifactBytes = 8 * 1024 * 1024;
-		private const long MaximumStorageBytes = 512L * 1024 * 1024;
+		private const long MaximumStorageBytes = PlaySessionStorage.MaximumStorageBytes;
+		// Live captures remain full JSON. Compaction is separately bounded idle maintenance.
 		private const long ReservedSessionBytes = 88L * 1024 * 1024;
 		private const string Key = "UnityCursorToolkit.PlaySessions.";
 		private static readonly object sync = new object();
@@ -104,35 +105,8 @@ namespace UnityCursorToolkit
 			return id == null ? Failure("snapshot_limit", lastFailure) : "{\"success\":true,\"sessionId\":\"" + ProfilerSnapshotJson.Escape(session.id) + "\",\"snapshotId\":\"" + id + "\"}";
 		}
 
-		internal static string Events(long after, int limit)
-		{
-			if (after < 0 || limit < 1 || limit > 100) return Failure("invalid_arguments", "Event cursor or limit is out of range.");
-			var sb = new StringBuilder("{\"success\":true,\"version\":1,\"events\":[");
-			long next = after;
-			int returned = 0;
-			bool hasMore = false;
-			if (File.Exists(JournalPath))
-			{
-				if (new FileInfo(JournalPath).Length > MaximumJournalBytes)
-					return Failure("journal_limit", "The existing session journal exceeds the bounded read limit.");
-				foreach (string line in File.ReadLines(JournalPath))
-				{
-					if (line.Length == 0) continue;
-					PlaySessionEvent item = JsonUtility.FromJson<PlaySessionEvent>(line);
-					if (item == null || item.version != 1 || item.sequence <= 0)
-						return Failure("journal_invalid", "Session journal contains an invalid event.");
-					if (item.sequence <= after) continue;
-					if (returned == limit) { hasMore = true; break; }
-					if (returned++ > 0) sb.Append(",");
-					sb.Append(line);
-					next = item.sequence;
-				}
-			}
-			sb.Append("],\"nextSequence\":").Append(next.ToString(CultureInfo.InvariantCulture));
-			sb.Append(",\"hasMore\":").Append(ProfilerSnapshotJson.Bool(hasMore));
-			sb.Append(",\"journalStopped\":").Append(ProfilerSnapshotJson.Bool(journalStopped)).Append("}");
-			return sb.ToString();
-		}
+		internal static string Events(long after, int limit) { return PlaySessionTimeline.Events(Root, after, limit, false, journalStopped); }
+		internal static string Timeline(long after, int limit) { return PlaySessionTimeline.Events(Root, after, limit, true, journalStopped); }
 
 		internal static string Read(string sessionId, string snapshotId, int offset, int limit)
 		{
@@ -156,7 +130,7 @@ namespace UnityCursorToolkit
 			if ((File.GetAttributes(path) & FileAttributes.ReparsePoint) != 0) return Failure("evidence_link_rejected", "Snapshot cannot be a symbolic link.");
 			if (new FileInfo(path).Length > PlaySessionSnapshotBuilder.MaximumSnapshotBytes)
 				return Failure("artifact_limit", "Snapshot exceeds its bounded read limit.");
-			PlaySessionSnapshot snapshot = JsonUtility.FromJson<PlaySessionSnapshot>(File.ReadAllText(path));
+			PlaySessionSnapshot snapshot = JsonUtility.FromJson<PlaySessionSnapshot>(PlaySessionStorage.Json(PlaySessionStorage.Read(Root, sessionId, snapshotId)));
 			if (snapshot == null || snapshot.version != 1 || snapshot.id != snapshotId || snapshot.sessionId != sessionId || snapshot.objects == null)
 				return Failure("snapshot_invalid", "Snapshot metadata does not match its requested identity.");
 			if (offset > snapshot.objects.Count) return Failure("offset_out_of_range", "Object offset exceeds the captured row count.");
@@ -482,28 +456,22 @@ namespace UnityCursorToolkit
 			if (error.lastUtcTicks > 0) error.lastUtc = new DateTime(error.lastUtcTicks, DateTimeKind.Utc).ToString("O");
 		}
 
+		internal static string Compact(string sessionId)
+		{
+			if (Application.isPlaying || EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating)
+				return Failure("idle_editor_required", "Compact completed sessions only after Play, compilation and import finish.");
+			if (session != null && session.id == sessionId && string.IsNullOrEmpty(session.endedUtc))
+				return Failure("completed_session_required", "The selected session is still active.");
+			PlaySessionStorage.Statistics stats = PlaySessionStorage.Compact(Root, sessionId);
+			return "{\"success\":true,\"storageVersion\":2,\"sessionId\":\"" + sessionId + "\",\"compacted\":" + stats.compacted +
+				",\"alreadyCompacted\":" + stats.alreadyCompacted + ",\"notSmaller\":" + stats.notSmaller + ",\"decodedBytes\":" + stats.decodedBytes +
+				",\"physicalBefore\":" + stats.physicalBefore + ",\"physicalAfter\":" + stats.physicalAfter + "}";
+		}
+
 		private static void ReserveStorage()
 		{
-			if (!Directory.Exists(Root)) return;
-			var directories = new Stack<DirectoryInfo>();
-			directories.Push(new DirectoryInfo(Root));
-			long bytes = 0;
-			int entries = 0;
-			while (directories.Count > 0)
-			{
-				DirectoryInfo directory = directories.Pop();
-				if ((directory.Attributes & FileAttributes.ReparsePoint) != 0) throw new IOException("Session storage cannot traverse symbolic links.");
-				foreach (FileSystemInfo entry in directory.EnumerateFileSystemInfos())
-				{
-					if (++entries > 10000) throw new IOException("Session storage inventory exceeded its bounded entry count.");
-					if ((entry.Attributes & FileAttributes.ReparsePoint) != 0) throw new IOException("Session storage cannot traverse symbolic links.");
-					DirectoryInfo child = entry as DirectoryInfo;
-					if (child != null) { directories.Push(child); continue; }
-					bytes += ((FileInfo)entry).Length;
-					if (bytes > MaximumStorageBytes - ReservedSessionBytes)
-						throw new IOException("Session storage budget reached; no evidence was deleted.");
-				}
-			}
+			if (PlaySessionStorage.Inventory(Root) > MaximumStorageBytes - ReservedSessionBytes)
+				throw new IOException("Session storage budget reached; no evidence was deleted. Compact completed sessions in idle Edit Mode.");
 		}
 
 		private static void ResumeSequence()

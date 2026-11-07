@@ -39,7 +39,7 @@ const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	editor_lifecycle: ['status'],
 	editor_validation: ['list', 'status'],
 	game_command: ['list', 'status'],
-	session_monitor: ['status', 'events', 'read', 'watch', 'unwatch'],
+	session_monitor: ['status', 'events', 'timeline', 'compare', 'read', 'watch', 'unwatch'],
 	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters'],
 	unity_context: ['query', 'read', 'summary'],
 	viewport_stream: ['status']

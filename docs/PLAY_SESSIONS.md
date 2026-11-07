@@ -70,3 +70,49 @@ from at most512serialized properties. Truncation is explicit. The journal is cap
 Budget exhaustion stops capture explicitly and deletes nothing. Truncated data
 must not be described as the full world. Snapshot duration is included; captures
 can allocate and interrupt a frame, so they are not zero-overhead performance proof.
+
+## Shared storage and master timeline
+
+Live Play captures remain raw version-1 JSON. After Play ends and the Editor is
+idle, `session_monitor` supports explicit completed-session maintenance:
+
+| Action | Required arguments | Effect |
+| --- | --- | --- |
+| `compact` | `sessionId` | Losslessly compact that completed session; changes storage. |
+| `timeline` | none | Read the global journal across sessions; `afterSequence` and `limit` 1–100 paginate it. |
+| `compare` | `sessionId`, `snapshotId`, `otherSessionId`, `otherSnapshotId` | Read capture differences; `offset` and `limit` 1–200 paginate changed object IDs. |
+
+A version-2 storage descriptor occupies the original snapshot path. It identifies
+one immutable manifest with the capture's original byte length and SHA-256. The
+manifest directly lists ordered byte blocks with immutable pack identity, offset,
+compressed and decoded lengths, and SHA-256. Identical blocks across sessions use
+the same stored bytes. New bytes use gzip compression. An older capture does not
+depend on the newest capture or a chain of previous captures. Pack footers rebuild
+the deduplication lookup; no mutable index is required to read evidence.
+
+Compaction accepts completed sessions only, retains the raw capture until a full
+length/hash round trip succeeds, and atomically replaces it without a backup.
+Interrupted publication is retryable. Reads accept both raw captures and version-2
+descriptors and retain the existing version-1 snapshot pagination response. Direct
+filesystem consumers must resolve descriptors through `read`, rather than assume
+all `snapshot-*.json` files contain raw object rows. Corrupt, missing, out-of-bounds
+or linked payloads fail explicitly. No capture or session is deleted.
+
+The 512 MiB ceiling measures actual physical files, including staging. Compaction
+reserves its worst-case publication bytes before writing and does not use an
+observed compression ratio for admission. Live capture keeps its existing full
+raw-session/end-slot reservation. Compression runs only during explicit idle-Editor
+maintenance, not during gameplay ticks.
+
+`timeline` projects the existing global event order and retains session IDs, error
+observations, capture references and sequence gaps. It does not invent occurrence
+timestamps omitted by error grouping. `compare` reports changed/added/absent
+captured object IDs within one session; an absent row is not proof of destruction
+when capture limits apply. Across sessions it reports exact-block shared/unique byte counts and states
+that object identity comparison is unavailable. Reused instance IDs never imply
+shared objects across sessions. Capture truncation flags remain visible.
+
+Native source checks are available under
+`Tools/Unity Cursor Toolkit/Validation/Session Storage Contracts`. They use owned
+synthetic captures and remove only their fixtures. Builds and test-suite execution
+remain subject to the project's Jenkins admission rules.

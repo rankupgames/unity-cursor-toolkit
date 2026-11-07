@@ -65,8 +65,8 @@ async function main() {
   assert.strictEqual(notifications.find(item => item.method === 'notifications/resources/updated').params.uri, 'unity://sessions/events');
  });
  await test('capture configuration is mutating while evidence reads and subscriptions are read-only', async () => {
-  for (const action of ['configure', 'capture']) assert.strictEqual(isMutatingToolCall('session_monitor', { action }), true);
-  for (const action of ['status', 'events', 'read', 'watch', 'unwatch']) assert.strictEqual(isMutatingToolCall('session_monitor', { action }), false);
+  for (const action of ['configure', 'capture', 'compact']) assert.strictEqual(isMutatingToolCall('session_monitor', { action }), true);
+  for (const action of ['status', 'events', 'timeline', 'compare', 'read', 'watch', 'unwatch']) assert.strictEqual(isMutatingToolCall('session_monitor', { action }), false);
   assert.strictEqual(new SessionJournalWatcher(undefined, () => {}).start().success, false);
  });
  fs.rmSync(root, { recursive: true, force: true });

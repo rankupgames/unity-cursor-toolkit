@@ -12,10 +12,10 @@ export class SessionMonitorTools implements IToolProvider {
   return [{ name: 'session_monitor', title: 'Session Monitor',
    description: 'Opt in to Play start/error/end snapshots; read object/component evidence and watch lifecycle events. Candidates from a stack are not proven causes. Capture runs on the next safe Editor tick.',
    inputSchema: { type: 'object', properties: withDryRunProperty({
-    action: { type: 'string', enum: ['status', 'configure', 'events', 'capture', 'read', 'watch', 'unwatch'] },
+    action: { type: 'string', enum: ['status', 'configure', 'events', 'capture', 'read', 'timeline', 'compare', 'compact', 'watch', 'unwatch'] },
     enabled: { type: 'boolean' }, captureOnError: { type: 'boolean' },
-    afterSequence: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 200, description: 'Events1..100; object reads1..200.' },
-    offset: { type: 'integer', minimum: 0 }, sessionId: { type: 'string' }, snapshotId: { type: 'string' }, reason: { type: 'string' }
+    afterSequence: { type: 'integer', minimum: 0 }, limit: { type: 'integer', minimum: 1, maximum: 200, description: 'Events/timeline1..100; object reads/changes1..200.' },
+    offset: { type: 'integer', minimum: 0 }, sessionId: { type: 'string' }, snapshotId: { type: 'string' }, otherSessionId: { type: 'string' }, otherSnapshotId: { type: 'string' }, reason: { type: 'string' }
    }) }, annotations: getToolAnnotations('session_monitor') }];
  }
  public async handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {

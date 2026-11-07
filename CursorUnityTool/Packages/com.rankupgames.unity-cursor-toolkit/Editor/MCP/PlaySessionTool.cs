@@ -33,7 +33,10 @@ namespace UnityCursorToolkit.MCP
 			{
 				case "status": allowed = new[] { "action" }; break;
 				case "configure": allowed = new[] { "action", "enabled", "captureOnError" }; break;
-				case "events": allowed = new[] { "action", "afterSequence", "limit" }; break;
+				case "events":
+				case "timeline": allowed = new[] { "action", "afterSequence", "limit" }; break;
+				case "compact": allowed = new[] { "action", "sessionId" }; break;
+				case "compare": allowed = new[] { "action", "sessionId", "snapshotId", "otherSessionId", "otherSnapshotId", "offset", "limit" }; break;
 				case "capture": allowed = new[] { "action", "reason" }; break;
 				case "read": allowed = new[] { "action", "sessionId", "snapshotId", "offset", "limit" }; break;
 				default: return Invalid("Unknown session_monitor action.");
@@ -51,10 +54,27 @@ namespace UnityCursorToolkit.MCP
 							return Invalid("configure requires enabled:boolean and optional captureOnError:boolean.");
 						return PlaySessionMonitor.Configure(enabled, capture);
 					case "events":
+					case "timeline":
 						long after, eventLimit;
 						if (!Integer(args, "afterSequence", 0, 0, 9007199254740991L, out after) || !Integer(args, "limit", 50, 1, 100, out eventLimit))
 							return Invalid("events requires a nonnegative safe afterSequence and limit 1..100.");
-						return PlaySessionMonitor.Events(after, (int)eventLimit);
+						return action == "timeline" ? PlaySessionMonitor.Timeline(after, (int)eventLimit) : PlaySessionMonitor.Events(after, (int)eventLimit);
+					case "compact":
+						string completedSession;
+						if (!Text(args, "sessionId", null, out completedSession) || !PlaySessionMonitor.ValidSessionId(completedSession))
+							return Invalid("compact requires one captured, completed session ID.");
+						return PlaySessionMonitor.Compact(completedSession);
+					case "compare":
+						string firstSession, firstSnapshot, secondSession, secondSnapshot;
+						long changeOffset, changeLimit;
+						if (!Text(args, "sessionId", null, out firstSession) || !PlaySessionMonitor.ValidSessionId(firstSession) ||
+							!Text(args, "snapshotId", null, out firstSnapshot) || !PlaySessionMonitor.ValidSnapshotId(firstSnapshot) ||
+							!Text(args, "otherSessionId", null, out secondSession) || !PlaySessionMonitor.ValidSessionId(secondSession) ||
+							!Text(args, "otherSnapshotId", null, out secondSnapshot) || !PlaySessionMonitor.ValidSnapshotId(secondSnapshot) ||
+							!Integer(args, "offset", 0, 0, PlaySessionSnapshotBuilder.MaximumObjects * 2, out changeOffset) ||
+							!Integer(args, "limit", 100, 1, 200, out changeLimit))
+							return Invalid("compare requires two captured identities, offset 0..20000 and limit 1..200.");
+						return PlaySessionTimeline.Compare(PlaySessionMonitor.Root, firstSession, firstSnapshot, secondSession, secondSnapshot, (int)changeOffset, (int)changeLimit);
 					case "capture":
 						string reason;
 						if (!Text(args, "reason", "manual", out reason) || string.IsNullOrWhiteSpace(reason) || reason.Length > 128)
