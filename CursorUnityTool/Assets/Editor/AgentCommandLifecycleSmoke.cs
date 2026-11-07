@@ -296,6 +296,124 @@ namespace UnityCursorToolkit.InternalSmoke
 			[Serializable] private sealed class FramingChild { public int number; }
 		}
 
+		[MenuItem("Tools/Unity Cursor Toolkit/Diagnostics/Validate Editor Save Guard")]
+		public static void ValidateSaveGuard()
+		{
+#if UNITY_2022_3_OR_NEWER
+			Require(!EditorApplication.isPlayingOrWillChangePlaymode && !EditorApplication.isCompiling && !EditorApplication.isUpdating,
+				"Save guard smoke requires idle Edit Mode.");
+			Type lifecycle = null;
+			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				lifecycle = assembly.GetType("UnityCursorToolkit.MCP.EditorLifecycleTool", false);
+				if (lifecycle != null) break;
+			}
+			Require(lifecycle != null, "The Editor lifecycle tool is not loaded.");
+			foreach (var existingWindow in Resources.FindObjectsOfTypeAll<EditorWindow>())
+				Require(!existingWindow.hasUnsavedChanges, "Preserve existing unsaved Editor window work before this smoke.");
+			foreach (var existingEditor in Resources.FindObjectsOfTypeAll<Editor>())
+				Require(!existingEditor.hasUnsavedChanges, "Preserve existing unsaved Inspector work before this smoke.");
+			var readDirty = lifecycle.GetMethod("GetDirtyAssetPaths", PrivateStatic);
+			Func<List<string>> dirty = () => (List<string>)readDirty.Invoke(null, null);
+			string folder = "Assets/UCTSaveGuardSmoke_" + Guid.NewGuid().ToString("N");
+			Require(!AssetDatabase.IsValidFolder(folder), "The owned fixture folder already exists.");
+			Require(!string.IsNullOrEmpty(AssetDatabase.CreateFolder("Assets", Path.GetFileName(folder))), "Could not create the owned fixture folder.");
+			EditorWindow window = null;
+			Editor inspector = null;
+			Texture2D image = null;
+			WriteResult("save-guard", false, 0);
+			try
+			{
+				string shaderPath = folder + "/Owned.shader";
+				File.WriteAllText(shaderPath, "Shader \"Hidden/UCTSaveGuardOwned\" { SubShader { Pass { } } }");
+				AssetDatabase.ImportAsset(shaderPath, ImportAssetOptions.ForceSynchronousImport);
+				var shader = AssetDatabase.LoadAssetAtPath<Shader>(shaderPath);
+				Require(shader && AssetDatabase.IsForeignAsset(shader), "The owned shader must be importer-generated.");
+				EditorUtility.SetDirty(shader);
+				Require(!dirty().Contains(shaderPath) && EditorUtility.IsDirty(shader), "A generated shader must not block saving or have its dirty flag cleared.");
+
+				string fontSource = FindImportedDynamicFont();
+				string fontPath = folder + "/OwnedFont" + Path.GetExtension(fontSource);
+				Require(AssetDatabase.CopyAsset(fontSource, fontPath), "Could not copy the owned foreign font fixture.");
+				AssetDatabase.ImportAsset(fontPath, ImportAssetOptions.ForceSynchronousImport);
+				var font = AssetDatabase.LoadAssetAtPath<Font>(fontPath);
+				Require(font && AssetDatabase.IsForeignAsset(font), "The owned font must be importer-generated.");
+				font.RequestCharactersInTexture("UCT", 12, FontStyle.Normal);
+				var atlas = font.material.mainTexture as Texture2D;
+				Require(atlas && AssetDatabase.IsSubAsset(atlas) && AssetDatabase.GetAssetPath(atlas) == fontPath,
+					"The font fixture must expose its own imported atlas subasset.");
+				EditorUtility.SetDirty(font);
+				EditorUtility.SetDirty(atlas);
+				Require(!dirty().Contains(fontPath) && EditorUtility.IsDirty(font) && EditorUtility.IsDirty(atlas),
+					"Generated font/atlas data must be excluded without clearing either dirty flag.");
+
+				string materialPath = folder + "/Owned.mat";
+				var material = new Material(shader);
+				AssetDatabase.CreateAsset(material, materialPath);
+				material.name = "Owned unsaved material";
+				EditorUtility.SetDirty(material);
+				Require(dirty().Contains(materialPath), "An unsaved native material must remain in the save guard.");
+
+				var importer = AssetImporter.GetAtPath(shaderPath);
+				importer.userData = "Owned pending import settings";
+				EditorUtility.SetDirty(importer);
+				Require(dirty().Contains(shaderPath), "A dirty importer must remain protected even when its generated shader is exempt.");
+
+				string texturePath = folder + "/Owned.png";
+				image = new Texture2D(2, 2);
+				File.WriteAllBytes(texturePath, image.EncodeToPNG());
+				AssetDatabase.ImportAsset(texturePath, ImportAssetOptions.ForceSynchronousImport);
+				var texture = AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath);
+				Require(texture && AssetDatabase.IsForeignAsset(texture), "The unrelated texture fixture must be foreign.");
+				EditorUtility.SetDirty(texture);
+				Require(dirty().Contains(texturePath), "An unrelated foreign texture must not receive the font-atlas exemption.");
+
+				window = ScriptableObject.CreateInstance<EditorWindow>();
+				window.titleContent = new GUIContent("UCT owned unsaved window");
+				typeof(EditorWindow).GetProperty("hasUnsavedChanges").GetSetMethod(true).Invoke(window, new object[] { true });
+				AssertSaveRefusedForOwnedUi(lifecycle, "Window: UCT owned unsaved window", material);
+				UnityEngine.Object.DestroyImmediate(window);
+				window = null;
+
+				inspector = Editor.CreateEditor(material);
+				typeof(Editor).GetProperty("hasUnsavedChanges").GetSetMethod(true).Invoke(inspector, new object[] { true });
+				AssertSaveRefusedForOwnedUi(lifecycle, "Inspector: " + inspector.GetType().Name, material);
+			}
+			finally
+			{
+				if (window) UnityEngine.Object.DestroyImmediate(window);
+				if (inspector) UnityEngine.Object.DestroyImmediate(inspector);
+				if (image) UnityEngine.Object.DestroyImmediate(image);
+				Require(AssetDatabase.DeleteAsset(folder), "The owned save-guard fixture folder could not be removed.");
+			}
+			WriteResult("save-guard", true, 8);
+			Debug.Log("Editor save guard smoke passed: generated shader/font/atlas flags retained, native material/importer/unrelated texture protected, and unsaved window/Inspector blocked before saving. No quit was scheduled.");
+#else
+			throw new InvalidOperationException("This native smoke requires Unity 2022.3 or later. Older Editors retain the original strict save guard.");
+#endif
+		}
+
+		private static string FindImportedDynamicFont()
+		{
+			foreach (string guid in AssetDatabase.FindAssets("t:Font"))
+			{
+				string path = AssetDatabase.GUIDToAssetPath(guid);
+				var font = AssetDatabase.LoadAssetAtPath<Font>(path);
+				if (font && font.dynamic && AssetDatabase.IsForeignAsset(font)) return path;
+			}
+			throw new InvalidOperationException("The native save-guard smoke requires an existing imported dynamic font to copy as an owned fixture.");
+		}
+
+		private static void AssertSaveRefusedForOwnedUi(Type lifecycle, string expectedOwner, Material unsavedMaterial)
+		{
+			EditorUtility.SetDirty(unsavedMaterial);
+			var arguments = new object[] { 0, 0, string.Empty };
+			bool saved = (bool)lifecycle.GetMethod("TrySaveProject", PrivateStatic).Invoke(null, arguments);
+			Require(!saved && ((string)arguments[2]).Contains(expectedOwner), "The save preflight did not identify the owned unsaved UI.");
+			Require((int)arguments[0] == 0 && (int)arguments[1] == 0 && EditorUtility.IsDirty(unsavedMaterial),
+				"Unsaved UI must block before scene or asset saving. The smoke must not schedule shutdown.");
+		}
+
 		private static AgentCommandRunner Runner() => (AgentCommandRunner)typeof(AgentCommandRunner).GetField("instance", PrivateStatic).GetValue(null);
 
 		private static AgentCommandRunSnapshot Schedule(string name, Counts counts, string mode)
