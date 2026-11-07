@@ -114,6 +114,8 @@ namespace UnityCursorToolkit.InternalSmoke
 					Require(((IList)snapshot.GetType().GetField("candidateComponentIds").GetValue(snapshot)).Contains(probe.GetInstanceID()) &&
 						((IList)snapshot.GetType().GetField("candidateObjectIds").GetValue(snapshot)).Contains(root.GetInstanceID()), "The native/managed stack did not identify the fixture component and owner as candidates.");
 				}
+				ValidateCaughtErrorCorrelation(assembly, builder, snapshot, probe);
+				ValidatePriorityBudget(builder, owned, root, probe);
 				string json = JsonUtility.ToJson(snapshot);
 				Require(!json.Contains("UCT_VALUE_MUST_NOT_BE_CAPTURED"), "Serialized string values leaked into the diagnostic snapshot.");
 
@@ -312,6 +314,76 @@ namespace UnityCursorToolkit.InternalSmoke
 		}
 		[Serializable] private sealed class StorageManifest { public int decodedBytes; public List<StorageBlock> blocks; }
 		[Serializable] private sealed class StorageBlock { public string pack, sha256; public long offset; }
+
+		private static void ValidateCaughtErrorCorrelation(Assembly assembly, Type builder, object snapshot, PlaySessionSnapshotProbe probe)
+		{
+			Type errorType = assembly.GetType("UnityCursorToolkit.PlaySessionError", true);
+			string owner = typeof(PlaySessionSnapshotProbe).FullName;
+			string[] messages =
+			{
+				"Something went wrong while executing a button event\nSystem.NullReferenceException: fixture\n  at " + owner + ".Execute () [0x00000] in Fixture.cs:1",
+				"UnityEngine.UnassignedReferenceException: The variable unassigned of PlaySessionSnapshotProbe has not been assigned.",
+				"UnassignedReferenceException: The variable unassigned of " + owner + " has not been assigned.",
+				"OtherException: The variable unassigned of PlaySessionSnapshotProbe has not been assigned.",
+				new string('x', 2048) + "\n  at " + owner + ".Execute ()"
+			};
+			for (int i = 0; i < messages.Length; i++)
+			{
+				object error = Activator.CreateInstance(errorType, true);
+				errorType.GetField("message").SetValue(error, messages[i]);
+				errorType.GetField("stackTrace").SetValue(error, "UnityEngine.Debug.LogError (System.Object)");
+				snapshot.GetType().GetField("error").SetValue(snapshot, error);
+				var components = (IList)snapshot.GetType().GetField("candidateComponentIds").GetValue(snapshot);
+				components.Clear(); ((IList)snapshot.GetType().GetField("candidateObjectIds").GetValue(snapshot)).Clear();
+				builder.GetMethod("Correlate", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new[] { snapshot });
+				Require(components.Contains(probe.GetInstanceID()) == (i < 3), "Caught error/header correlation or its bounded exact syntax failed for case " + i);
+				Require((int)snapshot.GetType().GetField("contextInstanceId").GetValue(snapshot) == 0 && !(bool)snapshot.GetType().GetField("contextPrioritized").GetValue(snapshot), "A type candidate was promoted to exact context.");
+			}
+			object contextless = JsonUtility.FromJson("{\"error\":{\"message\":\"fixture\"},\"objects\":[{\"instanceId\":71,\"components\":[{\"instanceId\":0,\"missingScript\":true}]}],\"candidateObjectIds\":[],\"candidateComponentIds\":[],\"consoleMatches\":[]}", snapshot.GetType());
+			builder.GetMethod("Correlate", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, new[] { contextless });
+			Require((int)contextless.GetType().GetField("contextObjectInstanceId").GetValue(contextless) == 0, "A missing-script zero ID fabricated a context owner.");
+		}
+
+		private static void ValidatePriorityBudget(Type builder, Scene scene, GameObject owner, PlaySessionSnapshotProbe probe)
+		{
+			var filler = new GameObject("Priority budget fixture");
+			SceneManager.MoveGameObjectToScene(filler, scene);
+			Light ownerLight = null;
+			try
+			{
+				filler.transform.SetAsFirstSibling(); owner.transform.SetAsLastSibling();
+				string name = new string('p', 8192);
+				for (int i = 0; i < 1100; i++)
+				{
+					var child = new GameObject(name); child.transform.SetParent(filler.transform, false);
+					if (i < 96) child.AddComponent<Light>().enabled = false;
+				}
+				ownerLight = owner.AddComponent<Light>(); ownerLight.enabled = false;
+				Require(UnityEditorInternal.ComponentUtility.MoveComponentUp(ownerLight) && UnityEditorInternal.ComponentUtility.MoveComponentUp(ownerLight), "Could not place the lower-ranked fixture component before the probe.");
+				MethodInfo capture = builder.GetMethod("Capture", BindingFlags.Static | BindingFlags.NonPublic);
+				object baseline = capture.Invoke(null, new object[] { "play_20261106_120000_0123abcd", "snapshot-0001", "priority_budget_fixture", null });
+				var before = JsonUtility.FromJson<Snapshot>(JsonUtility.ToJson(baseline));
+				Require(before.truncated && before.objects.Find(row => row.instanceId == owner.GetInstanceID()) == null, "Priority fixture did not exhaust the normal byte budget before the target.");
+				Type errorType = builder.Assembly.GetType("UnityCursorToolkit.PlaySessionError", true);
+				object error = Activator.CreateInstance(errorType, true);
+				errorType.GetField("message").SetValue(error, "Something went wrong while executing a button event\nUnityEngine.UnassignedReferenceException: The variable assigned of PlaySessionSnapshotProbe has not been assigned.\n  at UnityEngine.Transform.get_position ()\n  at " + typeof(PlaySessionSnapshotProbe).FullName + ".Execute ()\n  at UnityEngine.Light.get_intensity ()");
+				errorType.GetField("stackTrace").SetValue(error, "UnityEngine.Debug.LogError (System.Object)");
+				object prioritized = capture.Invoke(null, new[] { (object)"play_20261106_120000_0123abcd", "snapshot-0001", "priority_budget_fixture", error });
+				var after = JsonUtility.FromJson<Snapshot>(JsonUtility.ToJson(prioritized));
+				Row captured = Find(after.objects, owner.GetInstanceID());
+				Require(after.truncated && after.objects[0].instanceId == owner.GetInstanceID() && captured.parentInstanceId == 0 && captured.siblingIndex == owner.transform.GetSiblingIndex(), "Matching owner was not captured first with original hierarchy metadata.");
+				var candidates = (IList)prioritized.GetType().GetField("candidateComponentIds").GetValue(prioritized);
+				Require(candidates.Contains(probe.GetInstanceID()) && !candidates.Contains(owner.transform.GetInstanceID()) && candidates.Count == 64 && (int)candidates[0] == probe.GetInstanceID(), "Universal Transform frames consumed candidate slots or hid the script owner.");
+				var ids = new HashSet<int>(); foreach (Row row in after.objects) Require(ids.Add(row.instanceId), "Priority capture duplicated an object row.");
+				object exact = Activator.CreateInstance(prioritized.GetType(), true);
+				exact.GetType().GetField("contextInstanceId").SetValue(exact, filler.transform.GetInstanceID());
+				var owners = (IList)builder.GetMethod("PriorityOwners", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null,
+					new object[] { new List<GameObject> { filler, owner }, new Dictionary<string, int> { { typeof(PlaySessionSnapshotProbe).FullName, 0 } }, exact });
+				Require(owners.Count == 2 && (Transform)owners[0] == filler.transform && (Transform)owners[1] == owner.transform &&
+					(bool)exact.GetType().GetField("contextPrioritized").GetValue(exact), "A supplied exact nonzero Unity context owner did not precede type candidates.");
+			}
+			finally { if (ownerLight) Object.DestroyImmediate(ownerLight); Object.DestroyImmediate(filler); }
+		}
 
 		private static void ValidateContextSelection(Assembly assembly)
 		{

@@ -209,6 +209,7 @@ namespace UnityCursorToolkit
 		private const int MaximumComponentsPerObject = 32;
 		private const int MaximumReferencesPerComponent = 16;
 		private const int MaximumSerializedProperties = 512;
+		private const int MaximumPriorityScanObjects = 50000;
 		internal static PlaySessionSnapshot Capture(string sessionId, string id, string reason, PlaySessionError error)
 		{
 			var watch = Stopwatch.StartNew();
@@ -247,26 +248,85 @@ namespace UnityCursorToolkit
 				roots.AddRange(persistentRoots);
 				snapshot.includesDontDestroyOnLoad = true;
 			}
+			Dictionary<string, int> errorTypes = ErrorTypes(error);
+			if (error != null) NativeConsoleContext.Find(error, snapshot);
+			List<Transform> priority = PriorityOwners(roots, errorTypes, snapshot);
 			var stack = new Stack<Transform>();
 			for (int i = roots.Count - 1; i >= 0; i--) stack.Push(roots[i].transform);
-			if (error != null) NativeConsoleContext.Find(error, snapshot);
 			int encodedBytes = 32768; // Reserve room for header/error/correlation metadata.
-			while (stack.Count > 0)
+			bool room = true;
+			var captured = new HashSet<int>();
+			for (int i = 0; i < priority.Count && room; i++)
 			{
-				if (snapshot.objects.Count >= MaximumObjects) { Truncate(snapshot, "object_limit"); break; }
+				Transform owner = priority[i];
+				if (!owner) continue;
+				room = AppendObject(owner.gameObject, snapshot, ref encodedBytes);
+				if (room) captured.Add(owner.gameObject.GetInstanceID());
+			}
+			while (room && stack.Count > 0)
+			{
 				Transform transform = stack.Pop();
 				if (!transform) continue;
-				PlaySessionObject item = CaptureObject(transform.gameObject, snapshot);
-				int rowBytes = Encoding.UTF8.GetByteCount(JsonUtility.ToJson(item)) + 1;
-				if (encodedBytes + rowBytes > MaximumSnapshotBytes) { Truncate(snapshot, "snapshot_byte_limit"); break; }
-				encodedBytes += rowBytes;
-				snapshot.objects.Add(item);
+				// Prioritized owners retain their normal hierarchy traversal, without duplicate rows.
 				for (int i = transform.childCount - 1; i >= 0; i--) stack.Push(transform.GetChild(i));
+				if (!captured.Add(transform.gameObject.GetInstanceID())) continue;
+				room = AppendObject(transform.gameObject, snapshot, ref encodedBytes);
 			}
-			Correlate(snapshot);
+			ResolveCandidates(snapshot, errorTypes);
 			watch.Stop();
 			snapshot.captureMilliseconds = watch.Elapsed.TotalMilliseconds;
 			return snapshot;
+		}
+
+		private static bool AppendObject(GameObject owner, PlaySessionSnapshot snapshot, ref int encodedBytes)
+		{
+			if (snapshot.objects.Count >= MaximumObjects) { Truncate(snapshot, "object_limit"); return false; }
+			PlaySessionObject item = CaptureObject(owner, snapshot);
+			int rowBytes = Encoding.UTF8.GetByteCount(JsonUtility.ToJson(item)) + 1;
+			if (encodedBytes + rowBytes > MaximumSnapshotBytes) { Truncate(snapshot, "snapshot_byte_limit"); return false; }
+			encodedBytes += rowBytes;
+			snapshot.objects.Add(item);
+			return true;
+		}
+
+		private static List<Transform> PriorityOwners(List<GameObject> roots, Dictionary<string, int> names, PlaySessionSnapshot snapshot)
+		{
+			var result = new List<Transform>();
+			var ranks = new List<int>();
+			if (snapshot.contextInstanceId != 0)
+			{
+				Object context = EditorUtility.InstanceIDToObject(snapshot.contextInstanceId);
+				Component component = context as Component;
+				GameObject owner = component ? component.gameObject : context as GameObject;
+				if (owner && roots.Contains(owner.transform.root.gameObject))
+				{
+					AddRanked(result, ranks, owner.transform, int.MinValue, snapshot);
+					snapshot.contextPrioritized = true;
+				}
+			}
+			if (names.Count == 0) return result;
+			var stack = new Stack<Transform>();
+			var components = new List<Component>();
+			for (int i = roots.Count - 1; i >= 0; i--) stack.Push(roots[i].transform);
+			int scanned = 0;
+			while (stack.Count > 0)
+			{
+				if (++scanned > MaximumPriorityScanObjects) { Truncate(snapshot, "priority_scan_limit"); break; }
+				Transform current = stack.Pop();
+				if (!current) continue;
+				components.Clear();
+				current.gameObject.GetComponents(components);
+				if (components.Count > MaximumComponentsPerObject) snapshot.candidatesTruncated = true;
+				int rank = int.MaxValue;
+				for (int i = 0; i < components.Count && i < MaximumComponentsPerObject; i++)
+				{
+					Component component = components[i];
+					if (component) rank = Math.Min(rank, TypeRank(component.GetType().FullName, component.GetType().Name, names));
+				}
+				if (rank != int.MaxValue && !result.Contains(current)) AddRanked(result, ranks, current, rank, snapshot);
+				for (int i = current.childCount - 1; i >= 0; i--) stack.Push(current.GetChild(i));
+			}
+			return result;
 		}
 
 		private static int CompareSibling(GameObject left, GameObject right)
@@ -359,14 +419,22 @@ namespace UnityCursorToolkit
 			}
 		}
 
-		private static void Correlate(PlaySessionSnapshot snapshot)
+		private static Dictionary<string, int> ErrorTypes(PlaySessionError error)
 		{
-			if (snapshot.error == null) return;
-			var names = new HashSet<string>(StringComparer.Ordinal);
-			string[] lines = (snapshot.error.stackTrace ?? string.Empty).Split('\n');
+			var names = new Dictionary<string, int>(StringComparer.Ordinal);
+			if (error == null) return names;
+			ParseTypes(Limit(error.message, 2048), names);
+			ParseTypes(Limit(error.stackTrace, 4096), names);
+			return names;
+		}
+
+		private static void ParseTypes(string text, Dictionary<string, int> names)
+		{
+			string[] lines = text.Split('\n');
 			for (int i = 0; i < lines.Length; i++)
 			{
 				string line = lines[i].Trim();
+				UnassignedType(line, names);
 				if (line.StartsWith("at ", StringComparison.Ordinal)) line = line.Substring(3);
 				int mono = line.IndexOf("(Mono JIT Code)", StringComparison.Ordinal);
 				if (mono >= 0)
@@ -388,22 +456,91 @@ namespace UnityCursorToolkit
 					int coroutine = owner.IndexOf("/<", StringComparison.Ordinal);
 					if (coroutine < 0) coroutine = owner.IndexOf("+<", StringComparison.Ordinal);
 					if (coroutine >= 0) owner = owner.Substring(0, coroutine);
-					names.Add(owner.Replace('+', '.'));
+					AddType(owner, names);
 				}
 			}
+		}
+
+		private static void UnassignedType(string line, Dictionary<string, int> names)
+		{
+			const string header = "UnassignedReferenceException: The variable ";
+			if (line.StartsWith("UnityEngine.", StringComparison.Ordinal)) line = line.Substring("UnityEngine.".Length);
+			if (!line.StartsWith(header, StringComparison.Ordinal)) return;
+			int owner = line.IndexOf(" of ", header.Length, StringComparison.Ordinal);
+			int end = owner < 0 ? -1 : line.IndexOf(" has not been assigned.", owner + 4, StringComparison.Ordinal);
+			if (owner <= header.Length || end <= owner + 4) return;
+			string type = line.Substring(owner + 4, end - owner - 4);
+			for (int i = 0; i < type.Length; i++)
+				if (!(char.IsLetterOrDigit(type[i]) || type[i] == '_' || type[i] == '.' || type[i] == '+')) return;
+			AddType(type, names);
+		}
+
+		private static bool UniversalEngineType(string type)
+		{
+			// Wrapper frames occur on almost every owner and cannot identify a candidate instance.
+			return type == "UnityEngine.Object" || type == "UnityEngine.GameObject" || type == "UnityEngine.Component" ||
+				type == "UnityEngine.Transform" || type == "UnityEngine.Behaviour" || type == "UnityEngine.MonoBehaviour" ||
+				type == "UnityEngine.Debug" || type == "UnityEngine.Logger" || type == "UnityEngine.DebugLogHandler";
+		}
+
+		private static void AddType(string type, Dictionary<string, int> names)
+		{
+			type = type.Replace('+', '.');
+			if (!UniversalEngineType(type) && !names.ContainsKey(type)) names.Add(type, names.Count);
+		}
+
+		private static int TypeRank(string type, string simple, Dictionary<string, int> names)
+		{
+			if (type == null || UniversalEngineType(type)) return int.MaxValue;
+			type = type.Replace('+', '.');
+			if (simple == null) simple = type.Substring(type.LastIndexOf('.') + 1);
+			int fullRank, simpleRank;
+			if (!names.TryGetValue(type, out fullRank)) fullRank = int.MaxValue;
+			if (!names.TryGetValue(simple, out simpleRank)) simpleRank = int.MaxValue;
+			return Math.Min(fullRank, simpleRank);
+		}
+
+		private static void AddRanked<T>(List<T> values, List<int> ranks, T value, int rank, PlaySessionSnapshot snapshot)
+		{
+			int position = 0;
+			while (position < ranks.Count && ranks[position] <= rank) position++;
+			if (values.Count == 64)
+			{
+				snapshot.candidatesTruncated = true;
+				if (position == 64) return;
+				values.RemoveAt(63); ranks.RemoveAt(63);
+			}
+			values.Insert(position, value); ranks.Insert(position, rank);
+		}
+
+		private struct Candidate { public int componentId; public int objectId; }
+
+		private static void Correlate(PlaySessionSnapshot snapshot) { ResolveCandidates(snapshot, ErrorTypes(snapshot.error)); }
+
+		private static void ResolveCandidates(PlaySessionSnapshot snapshot, Dictionary<string, int> names)
+		{
+			if (snapshot.error == null) return;
+			var candidates = new List<Candidate>();
+			var ranks = new List<int>();
 			for (int i = 0; i < snapshot.objects.Count; i++)
 			{
 				PlaySessionObject item = snapshot.objects[i];
-				if (item.instanceId == snapshot.contextInstanceId) snapshot.contextObjectInstanceId = item.instanceId;
+				if (snapshot.contextInstanceId != 0 && item.instanceId == snapshot.contextInstanceId) snapshot.contextObjectInstanceId = item.instanceId;
 				for (int j = 0; j < item.components.Count; j++)
 				{
 					PlaySessionComponent component = item.components[j];
-					if (component.instanceId == snapshot.contextInstanceId) snapshot.contextObjectInstanceId = item.instanceId;
-					if (component.missingScript || component.type == null || !names.Contains(component.type.Replace('+', '.'))) continue;
-					if (snapshot.candidateComponentIds.Count >= 64) { snapshot.candidatesTruncated = true; continue; }
-					snapshot.candidateComponentIds.Add(component.instanceId);
-					if (!snapshot.candidateObjectIds.Contains(item.instanceId)) snapshot.candidateObjectIds.Add(item.instanceId);
+					if (snapshot.contextInstanceId != 0 && component.instanceId == snapshot.contextInstanceId) snapshot.contextObjectInstanceId = item.instanceId;
+					if (component.missingScript) continue;
+					int rank = TypeRank(component.type, null, names);
+					if (rank == int.MaxValue) continue;
+					if (snapshot.contextInstanceId != 0 && (component.instanceId == snapshot.contextInstanceId || item.instanceId == snapshot.contextInstanceId)) rank = int.MinValue;
+					AddRanked(candidates, ranks, new Candidate { componentId = component.instanceId, objectId = item.instanceId }, rank, snapshot);
 				}
+			}
+			for (int i = 0; i < candidates.Count; i++)
+			{
+				snapshot.candidateComponentIds.Add(candidates[i].componentId);
+				if (!snapshot.candidateObjectIds.Contains(candidates[i].objectId)) snapshot.candidateObjectIds.Add(candidates[i].objectId);
 			}
 			if (snapshot.contextInstanceId != 0 && snapshot.contextObjectInstanceId == 0)
 				snapshot.contextEvidence = "unity_log_context_not_captured";
