@@ -453,7 +453,7 @@ namespace UnityCursorToolkit
 		{
 			using (var output = new MemoryStream())
 			{
-				using (var gzip = new GZipStream(output, CompressionLevel.Optimal, true)) gzip.Write(raw, 0, raw.Length);
+				using (var gzip = new GZipStream(output, System.IO.Compression.CompressionLevel.Optimal, true)) gzip.Write(raw, 0, raw.Length);
 				return output.ToArray();
 			}
 		}
