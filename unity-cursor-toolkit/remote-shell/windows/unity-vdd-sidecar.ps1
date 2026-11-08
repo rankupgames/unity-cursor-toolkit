@@ -1,6 +1,8 @@
+[CmdletBinding(DefaultParameterSetName = 'Launch')]
 param(
-	[Parameter(Mandatory = $true)][string]$WorkspacePath,
-	[Parameter(Mandatory = $true)][string]$UnityPlayerPath,
+	[Parameter(Mandatory = $true, ParameterSetName = 'Version')][switch]$VersionOnly,
+	[Parameter(Mandatory = $true, ParameterSetName = 'Launch')][string]$WorkspacePath,
+	[Parameter(Mandatory = $true, ParameterSetName = 'Launch')][string]$UnityPlayerPath,
 	[string]$WindowTitle = "Unity VDD Shell",
 	[int]$Monitor = 2,
 	[int]$Width = 1280,
@@ -11,6 +13,11 @@ param(
 	[int]$ControlPort = 48171,
 	[string]$FfmpegPath = "ffmpeg"
 )
+
+if ($VersionOnly) {
+	@{ sidecarVersion = '1.0.0' } | ConvertTo-Json -Compress
+	exit 0
+}
 
 $ErrorActionPreference = "Stop"
 

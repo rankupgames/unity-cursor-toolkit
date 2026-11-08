@@ -12,7 +12,13 @@ const suites = [
 	'session-monitor-tests.js',
 	'simplified-context-tests.js',
 	'remote-shell-tests.js',
-	'package-sync-tests.js'
+	'package-sync-tests.js',
+	'unity-cli-test-adapter-tests.js',
+	'unity-test-tools-tests.js',
+	'mcp-test-runner-tests.js',
+	'unity-test-command-tests.js',
+	'pipeline-audit-tests.js',
+	'pipeline-mcp-tests.js'
 ];
 const SUITE_TIMEOUT_MS = 30_000;
 

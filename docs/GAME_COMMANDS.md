@@ -20,10 +20,13 @@ using System.Collections;
 using UnityEngine;
 using UnityCursorToolkit.AgentCommands;
 
-public static class ExampleAgentCommands
+public static partial class ExampleAgentCommands
 {
 	private const string CommandName = "auth.select_us_east";
 
+	#if UNITY_7000_0_OR_NEWER
+	[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+	#endif
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
 	private static void Register()
 	{
@@ -32,6 +35,14 @@ public static class ExampleAgentCommands
 			"Selects the US East server through the game's server selection handler.",
 			SelectUsEastServer);
 	}
+
+	#if UNITY_7000_0_OR_NEWER
+	[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+	private static void Unregister()
+	{
+		AgentCommandRegistry.Unregister(CommandName);
+	}
+	#endif
 
 	private static IEnumerator SelectUsEastServer(AgentCommandContext context)
 	{
@@ -58,6 +69,61 @@ The Editor host creates no scene object and has no idle update callback. Discove
 Runtime handlers retain Unity wait semantics, including nested/custom iterators and opaque Unity waits. A realtime 300-second deadline also bounds opaque waits while `timeScale` is zero. There are at most 16 active runs, 128 retained statuses, 128 nested iterators and 1,024 immediate advances per frame. The runtime component is disabled when no commands are active. No command is replayed after reload; its old run status is unavailable after that host is destroyed.
 
 Cancellation executes on Unity's main thread. It cannot preempt a blocked `MoveNext` or a stopped Editor main thread. Independently started coroutines and resources outside entered handlers are not owned by this stack. The native lifecycle smoke validates the callback bodies; an actual domain reload and each game's input-device release remain separate live-flow checks.
+
+## Consumer lifetime
+
+A registration owns its handler until that name is unregistered or replaced. The owner should remove only its own registrations before its code unloads. Registration is idempotent for the same name, including Play Mode entry with domain reload disabled. Finish or cancel the owner's active runs before an intentional code reload; unregistering a name prevents future scheduling but does not cancel an existing run.
+
+The runner retains terminal status and result data without retaining the completed handler delegate. Consumer handlers should return package result data rather than place consumer objects in external static caches.
+
+CoreCLR can keep unmodified assemblies and their statics alive while replacing consumer code. References from those statics can prevent the old consumer assembly from unloading. See Unity's [CoreCLR upgrade guide](https://discussions.unity.com/t/path-to-coreclr-2026-upgrade-guide/1714279). Use owner lifecycle hooks rather than clearing the shared registry or another owner's subscriptions.
+
+Editor consumers of `ILPatcher.OnPatchCompleted` must also detach their own callback. This example uses the existing Mono reload event and Unity 7 lifecycle attributes:
+
+```csharp
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityCursorToolkit.HotReload;
+
+public static partial class ProjectPatchObserver
+{
+#if UNITY_7000_0_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+#else
+    [InitializeOnLoadMethod]
+#endif
+    private static void Attach()
+    {
+        ILPatcher.OnPatchCompleted -= OnPatch;
+        ILPatcher.OnPatchCompleted += OnPatch;
+#if !UNITY_7000_0_OR_NEWER
+        AssemblyReloadEvents.beforeAssemblyReload -= Detach;
+        AssemblyReloadEvents.beforeAssemblyReload += Detach;
+#endif
+    }
+
+#if UNITY_7000_0_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+#endif
+    private static void Detach()
+    {
+        ILPatcher.OnPatchCompleted -= OnPatch;
+#if !UNITY_7000_0_OR_NEWER
+        AssemblyReloadEvents.beforeAssemblyReload -= Detach;
+#endif
+    }
+
+    private static void OnPatch(PatchResult result)
+    {
+        // Read result.Success before treating the patch as applied.
+    }
+}
+#endif
+```
+
+On CoreCLR, IL patching is refused and the completion event still reports that refusal. The callback must inspect the result. Native source reload is a separate lifecycle path.
+
+The [consumer proof](../experiments/consumer-lifecycle-proof/README.md) tests terminal target collection, owner-only unregistering and callback replacement. Its evidence records whether package statics were retained; ordinary static reconstruction does not prove selective reload retention.
 
 ## MCP Tool
 

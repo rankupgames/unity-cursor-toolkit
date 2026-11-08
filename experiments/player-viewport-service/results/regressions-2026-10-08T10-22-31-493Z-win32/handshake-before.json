@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-08T10:44:31.805Z",
+  "regression": "8MiB pre-pong bound omitted from immediately preceding probe source; real TCP sends9MiB before pong",
+  "exitCode": 1,
+  "stdout": "PASS measurement-frame-write\nPASS measurement-window-drain\nPASS normal\nPASS wrong-pid\nPASS foreign-stream\nPASS no-stop-ack\nPASS invalid-jpeg\nPASS malformed-status\nPlayer protocol regressions: 8/9 passed\n",
+  "stderr": "FAIL oversize-handshake: Expected \"actual\" to be strictly unequal to: 0\n",
+  "sourceHash": "88daab517b8446ba1e833f79d9192183f17eb414d22de289d76f5fb2a0dfc1da",
+  "testHash": "81181d138045e07b609198c409c715477064d35c2d839415801c716d44113f9e"
+}

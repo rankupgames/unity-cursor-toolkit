@@ -1,6 +1,6 @@
 /*
- Simple esbuild bundler for extension and view modules.
- This does not replace the tsc build; it's an optional bundling step.
+ Bundles extension/view modules or the standalone test adapter.
+ The compile script bundles the test parser after tsc; other targets are optional.
 */
 
 const esbuild = require('esbuild');
@@ -8,7 +8,12 @@ const path = require('path');
 
 const watch = process.argv.includes('--watch');
 
-const buildOptions = {
+const testAdapter = process.argv.includes('--test-adapter');
+const buildOptions = testAdapter ? {
+  entryPoints: [path.join(__dirname, '..', 'src', 'core', 'unityCliTestAdapter.ts')],
+  outfile: path.join(__dirname, '..', 'out', 'core', 'unityCliTestAdapter.js'),
+  platform: 'node', format: 'cjs', bundle: true, sourcemap: true, logLevel: 'info'
+} : {
   entryPoints: [
     path.join(__dirname, '..', 'src', 'extension.ts'),
     path.join(__dirname, '..', 'src', 'console', 'consolePanel.ts')

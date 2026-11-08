@@ -1,0 +1,1 @@
+{"completed":true,"faulted":false,"relayPid":10236,"packageFallback":"StopAsync sends IPC shutdown then invokes KillProcessTree if its handle remains."}

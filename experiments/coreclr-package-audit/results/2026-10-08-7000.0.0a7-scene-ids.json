@@ -1,0 +1,185 @@
+{
+  "observedAt": "2026-10-08T05:09:53.534Z",
+  "editorVersion": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "platform": "windows-x64",
+  "baseCommit": "64d2d1f",
+  "workingChanges": [
+    "Compatible EntityId scene tools",
+    "Scene ID smoke fixture"
+  ],
+  "fixture": "Disposable project with toolkit package and internal smoke source; no user project upgrade",
+  "attempts": [
+    {
+      "graphicsApi": "Direct3D12",
+      "compileErrors": [],
+      "sceneIdChecks": true,
+      "normalShutdown": true,
+      "viewport": {
+        "success": false,
+        "message": "InvalidOperationException: Persisted viewport frame does not contain visible contrast:  <fixture>\\smoke-frame.jpg",
+        "frameBytes": 866
+      },
+      "knownEnvironmentDiagnostics": [
+        "UnityEditor.Search.SearchDatabase startup ArgumentOutOfRangeException",
+        "OS-excluded default toolkit TCP ports; explicit ephemeral-port bridge check used"
+      ]
+    },
+    {
+      "graphicsApi": "Direct3D11",
+      "compileErrors": [],
+      "sceneIdChecks": true,
+      "normalShutdown": true,
+      "viewport": {
+        "success": false,
+        "message": "InvalidOperationException: Persisted viewport frame does not contain visible contrast:  <fixture>\\smoke-d3d11-frame.jpg",
+        "frameBytes": 866
+      },
+      "knownEnvironmentDiagnostics": [
+        "UnityEditor.Search.SearchDatabase startup ArgumentOutOfRangeException",
+        "OS-excluded default toolkit TCP ports; explicit ephemeral-port bridge check used"
+      ]
+    }
+  ],
+  "staticsInventory": {
+    "fields": [
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "<PrivateImplementationDetails>",
+        "field": "4759123A69983661472B2DA6B879CA41B8D78C3DA8672FEA5EA1F1822759B217",
+        "fieldType": "<PrivateImplementationDetails>+__StaticArrayInitTypeSize=152",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "<PrivateImplementationDetails>",
+        "field": "D07D4D17015A185187166EC4DF718B9189EEB7999A9928D27C3061F68B3680D8",
+        "fieldType": "<PrivateImplementationDetails>+__StaticArrayInitTypeSize=57",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "AttemptsKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "FailureRunIdKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportFpsKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportHeightKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportQualityKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportSessionIdKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportStatusPathKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "LiveViewportWidthKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "PhaseKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "ResultPathKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "RunningKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "StartedTicksKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "SuccessRunIdKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "TimeoutSeconds",
+        "fieldType": "System.Int32",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "ViewportFramePathKey",
+        "fieldType": "System.String",
+        "hasCleanupAttribute": false
+      },
+      {
+        "assembly": "Assembly-CSharp-Editor",
+        "type": "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke",
+        "field": "inventorySentinel",
+        "fieldType": "System.Int32",
+        "hasCleanupAttribute": false
+      }
+    ],
+    "assembliesScanned": 1,
+    "typesScanned": 13,
+    "truncated": false,
+    "errors": [],
+    "durationMs": 94,
+    "maxAssemblies": 128,
+    "maxTypes": 2048,
+    "maxFields": 4096,
+    "maxDurationMs": 500
+  },
+  "readinessClaim": false,
+  "limitation": "Scene ID compatibility passed; full Unity 7 smoke remains failed because viewport frames contain no contrast."
+}

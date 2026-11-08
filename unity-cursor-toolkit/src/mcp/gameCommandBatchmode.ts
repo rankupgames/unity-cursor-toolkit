@@ -122,6 +122,7 @@ async function resolveUnityPath(projectPath: string, args: Record<string, unknow
 		return explicit;
 	}
 
+	// ProjectVersion selects the installed batchmode Editor executable, not runtime feature behavior.
 	const version = await readUnityProjectVersion(projectPath);
 	const candidates = version ? unityPathCandidates(version) : [];
 	for (const candidate of candidates) {

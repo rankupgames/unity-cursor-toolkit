@@ -1,0 +1,422 @@
+{
+  "observedAt": "2026-10-08T09:26:00.320Z",
+  "editorVersion": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "platform": "win32",
+  "architecture": "x64",
+  "fixture": true,
+  "template": {
+    "name": "com.unity.template.urp-blank-17.3.0.tgz",
+    "sha256": "0fc1fe28d6077b020a550021aa74feeef922d89d9c0ad8954cd245bd5ed0f909",
+    "templateUrp": "17.7.0",
+    "installedUrp": "17.7.0",
+    "preferenceIsolation": {
+      "changes": [
+        {
+          "original": "UnityHotReloadHandler_ShowDebugLogs",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_ShowDebugLogs"
+        },
+        {
+          "original": "UnityHotReloadHandler_LastPort",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_LastPort"
+        }
+      ],
+      "originalSha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6",
+      "isolatedSha256": "550e3bd34e9e7ae1266ff0ce280c309bdccb52070cf20e01d415da727ea92102",
+      "defaultInstallProof": false
+    }
+  },
+  "sourceHashes": {
+    "runner": "4e13509e22627cba07d7c2b410ee50ff8604358ff6b03ce4f3731e3c31b98b14",
+    "sampler": "0692497cf0187a38ff065b818cfa10d3a7612794fd70f0f1b14d16e82ad5542e",
+    "spike": "2046498fab0d44cfba41cda254d0e682bf4e8ac81a760e460bd79081063dd7ba",
+    "capture": "a2ae99f511a5e787f98894be3e021eb545c9a274e70f91b2f2a064f8afc96f6a",
+    "stream": "a9cf7168f81b14590942d735ef50f1fecdc1f699f8f2e8ff59c80631fa081752"
+  },
+  "runs": [
+    {
+      "index": 0,
+      "phase": "unmeasured-import-functional",
+      "pid": 46192,
+      "port": 60442,
+      "startedAt": "2026-10-08T09:20:29.557Z",
+      "samples": [
+        {
+          "at": "2026-10-08T09:20:31.801Z",
+          "rssMb": 93.30078125,
+          "cpuSeconds": 0.375
+        },
+        {
+          "at": "2026-10-08T09:20:34.768Z",
+          "rssMb": 93.30078125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:20:39.775Z",
+          "rssMb": 93.30078125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:20:44.780Z",
+          "rssMb": 93.30078125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:20:49.782Z",
+          "rssMb": 93.30078125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:20:54.782Z",
+          "rssMb": 93.30078125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:20:59.809Z",
+          "rssMb": 93.30078125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:04.792Z",
+          "rssMb": 93.28125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:09.795Z",
+          "rssMb": 93.28125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:14.802Z",
+          "rssMb": 93.28125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:19.814Z",
+          "rssMb": 93.28125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:24.817Z",
+          "rssMb": 93.28125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:29.829Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:34.827Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:39.840Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:44.844Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:49.850Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:54.862Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:21:59.869Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:04.877Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:09.879Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:14.881Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:19.901Z",
+          "rssMb": 93.23046875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:24.910Z",
+          "rssMb": 92.6796875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:29.912Z",
+          "rssMb": 88.75390625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:34.913Z",
+          "rssMb": 85.2421875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:39.922Z",
+          "rssMb": 81.03515625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:44.934Z",
+          "rssMb": 77.79296875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:49.940Z",
+          "rssMb": 73.96875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:54.945Z",
+          "rssMb": 70.30859375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:22:59.954Z",
+          "rssMb": 67.5078125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:04.953Z",
+          "rssMb": 64.37109375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:09.966Z",
+          "rssMb": 61.90234375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:14.969Z",
+          "rssMb": 59.44921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:19.971Z",
+          "rssMb": 56.53125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:24.988Z",
+          "rssMb": 54.22265625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:29.992Z",
+          "rssMb": 52.54296875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:35.037Z",
+          "rssMb": 51.69921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:40.045Z",
+          "rssMb": 49.5859375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:45.015Z",
+          "rssMb": 47.28515625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:50.033Z",
+          "rssMb": 45.27734375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:23:55.020Z",
+          "rssMb": 43.45703125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:00.039Z",
+          "rssMb": 41.29296875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:05.053Z",
+          "rssMb": 40.01171875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:10.065Z",
+          "rssMb": 38.453125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:15.058Z",
+          "rssMb": 36.89453125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:20.058Z",
+          "rssMb": 35.109375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:25.072Z",
+          "rssMb": 33.72265625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:30.077Z",
+          "rssMb": 32.4765625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:35.083Z",
+          "rssMb": 32.4765625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:40.091Z",
+          "rssMb": 32.4765625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:45.094Z",
+          "rssMb": 32.4765625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:50.108Z",
+          "rssMb": 32.4765625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:24:55.110Z",
+          "rssMb": 32.4765625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:25:00.119Z",
+          "rssMb": 32.44921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:25:05.117Z",
+          "rssMb": 32.44921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:25:10.123Z",
+          "rssMb": 32.4609375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:25:15.142Z",
+          "rssMb": 32.4609375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:25:20.141Z",
+          "rssMb": 32.4609375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:25:25.155Z",
+          "rssMb": 32.4609375,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        }
+      ],
+      "hidden": [],
+      "result": null,
+      "errors": [
+        "result_missing: Editor exited or timed out before result"
+      ],
+      "passed": false,
+      "outcome": null,
+      "quittingObserved": false,
+      "ownedPidsRemaining": [
+        46192
+      ],
+      "editorBuild": null,
+      "compileErrors": []
+    }
+  ],
+  "passed": false,
+  "readinessClaim": false,
+  "limits": "Windows interval CPU vs macOS decaying ps CPU; different platform/GPU/SRP/resolution. Mac raw baseline unavailable. No causal CoreCLR-only claim."
+}

@@ -1,0 +1,1120 @@
+{
+  "observedAt": "2026-10-08T09:47:22.684Z",
+  "editorVersion": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "platform": "win32",
+  "architecture": "x64",
+  "fixture": true,
+  "template": {
+    "name": "com.unity.template.urp-blank-17.3.0.tgz",
+    "sha256": "0fc1fe28d6077b020a550021aa74feeef922d89d9c0ad8954cd245bd5ed0f909",
+    "templateUrp": "17.7.0",
+    "installedUrp": "17.7.0",
+    "preferenceIsolation": {
+      "changes": [
+        {
+          "original": "UnityHotReloadHandler_ShowDebugLogs",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_ShowDebugLogs"
+        },
+        {
+          "original": "UnityHotReloadHandler_LastPort",
+          "replacement": "<owned-prefix>UnityHotReloadHandler_LastPort"
+        }
+      ],
+      "originalSha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6",
+      "isolatedSha256": "2a65ba0680efc8c62e02cc85e463badfbbd0bff4cad7cda281ebd6c36a8587a5",
+      "defaultInstallProof": false
+    }
+  },
+  "sourceHashes": {
+    "runner": "3be6d6e81cd04d5e5e68b7df6ce51c87d7368727370731f7e4831556dfaf5bf6",
+    "sampler": "57979e31b4f56a7e371a42573d5b9504494225fa85026b9488a00dd358a577d7",
+    "spike": "2046498fab0d44cfba41cda254d0e682bf4e8ac81a760e460bd79081063dd7ba",
+    "capture": "a2ae99f511a5e787f98894be3e021eb545c9a274e70f91b2f2a064f8afc96f6a",
+    "stream": "a9cf7168f81b14590942d735ef50f1fecdc1f699f8f2e8ff59c80631fa081752"
+  },
+  "runs": [
+    {
+      "index": 0,
+      "phase": "functional",
+      "pid": 76536,
+      "port": 62050,
+      "startedAt": "2026-10-08T09:45:50.978Z",
+      "samples": [
+        {
+          "at": "2026-10-08T09:45:51.518Z",
+          "rssMb": 93.234375,
+          "cpuSeconds": 0.375
+        },
+        {
+          "at": "2026-10-08T09:45:56.204Z",
+          "rssMb": 93.23828125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:01.230Z",
+          "rssMb": 93.23828125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:06.216Z",
+          "rssMb": 93.23828125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:11.217Z",
+          "rssMb": 93.23828125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:16.224Z",
+          "rssMb": 93.23828125,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:21.240Z",
+          "rssMb": 93.19921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:26.243Z",
+          "rssMb": 93.19921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:31.240Z",
+          "rssMb": 93.19921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:36.250Z",
+          "rssMb": 93.19921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:41.252Z",
+          "rssMb": 93.19921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:46.250Z",
+          "rssMb": 93.19921875,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        },
+        {
+          "at": "2026-10-08T09:46:51.250Z",
+          "rssMb": 93.140625,
+          "cpuSeconds": 0.375,
+          "cpuPercent": 0
+        }
+      ],
+      "hidden": [],
+      "result": null,
+      "errors": [
+        "result_missing: Editor exited or timed out before result"
+      ],
+      "passed": false,
+      "startupWindows": [
+        {
+          "at": "2026-10-08T09:45:56.508Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:01.389Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:06.388Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:11.392Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:16.393Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:21.402Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:26.408Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:31.418Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:36.430Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:41.434Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:46.423Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        },
+        {
+          "at": "2026-10-08T09:46:51.428Z",
+          "pid": 76536,
+          "windows": [
+            {
+              "className": "EditorSoftwareTermsWindowClass",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "RICHEDIT50W",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Static",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [
+                "terms",
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "Button",
+              "visible": true,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "ConsoleWindowClass",
+              "visible": false,
+              "textCategories": [
+                "Unity"
+              ],
+              "button": "",
+              "containsExactVersion": true
+            },
+            {
+              "className": "MSCTFIME UI",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            },
+            {
+              "className": "IME",
+              "visible": false,
+              "textCategories": [],
+              "button": "",
+              "containsExactVersion": false
+            }
+          ],
+          "rawAccountTextCaptured": false
+        }
+      ],
+      "forcedCleanup": true,
+      "forcedOwnedPids": [
+        76536
+      ],
+      "outcome": {
+        "code": 4294967295,
+        "signal": null
+      },
+      "ownedPreferenceKeysRemaining": 0,
+      "quittingObserved": false,
+      "ownedPidsRemaining": [],
+      "editorBuild": null,
+      "compileErrors": []
+    }
+  ],
+  "passed": false,
+  "readinessClaim": false,
+  "limits": "Windows interval CPU vs macOS decaying ps CPU; different platform/GPU/SRP/resolution. Mac raw baseline unavailable. No causal CoreCLR-only claim."
+}

@@ -8,6 +8,7 @@ test/**
 backup/**
 tsconfig.json
 package-lock.json
+capability-matrix*.json
 webpack.config.js
 .yarnrc
 .yarnrc.yml

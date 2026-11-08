@@ -10,6 +10,13 @@ import * as vscode from 'vscode';
 import type { IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { ToolRouter } from './toolRouter';
 import { UnityMcpTools } from './unityMcpTools';
+import { PipelineMcpTools } from './pipelineMcpTools';
+import { UnityTestMcpTools } from './unityTestTools';
+import { UnityTestCommands } from './unityTestCommands';
+import { isMcpReadOnlyMode } from './toolMetadata';
+import { UnityCliTestAdapter } from '../core/unityCliTestAdapter';
+import { UnityCliAdapter } from '../core/unityCliAdapter';
+import { getLinkedProjectPath } from '../project/projectHandler';
 
 export class McpModule implements IModule {
 
@@ -17,14 +24,24 @@ export class McpModule implements IModule {
 
 	private toolRouter: ToolRouter | undefined;
 	private disposables: vscode.Disposable[] = [];
+	private testCommands: UnityTestCommands | undefined;
 
 	public async activate(ctx: ModuleContext): Promise<void> {
-		this.toolRouter = new ToolRouter();
+		this.toolRouter = new ToolRouter(isMcpReadOnlyMode());
 
-		const unityTools = new UnityMcpTools(ctx.commandSender);
-		this.toolRouter.register(unityTools);
+		const unityTools = new UnityMcpTools(ctx.commandSender, getLinkedProjectPath);
+		this.toolRouter.register(unityTools, 'toolkit');
 
 		ctx.registerToolProvider(unityTools);
+		const cliPath = vscode.workspace.getConfiguration('unityCursorToolkit.unityCli').get<string>('path');
+		const tests = new UnityTestMcpTools(ctx.commandSender, getLinkedProjectPath, new UnityCliTestAdapter(new UnityCliAdapter(cliPath)), isMcpReadOnlyMode());
+		this.toolRouter.register(tests, 'toolkit');
+		ctx.registerToolProvider(tests);
+		const pipeline = new PipelineMcpTools(new UnityCliAdapter(cliPath));
+		this.toolRouter.register(pipeline, 'pipeline');
+		ctx.registerToolProvider(pipeline);
+		this.testCommands = new UnityTestCommands(ctx, tests);
+		this.disposables.push(this.testCommands);
 
 		ctx.registerStatusBarContributor(new McpStatusContributor());
 	}
@@ -34,6 +51,7 @@ export class McpModule implements IModule {
 	}
 
 	public async deactivate(): Promise<void> {
+		await this.testCommands?.stop();
 		for (const d of this.disposables) {
 			d.dispose();
 		}

@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-08T10:22:31.495Z",
+  "passed": 6,
+  "total": 6,
+  "sourceSha256": "27d8a169a840144eb79e53b5d93c1221977d501c61b2769c6dcc5ebd923f5144",
+  "testSha256": "e8d7d5ce488365b1ef995d5e8c754c7e025c78e2aedaa2e6ccd65335aa10b482",
+  "boundary": "Real subprocess/TCP; actual ownedNodePID queried for Windows listener",
+  "limits": "No Unity launch or semanticrender proof from these tests"
+}

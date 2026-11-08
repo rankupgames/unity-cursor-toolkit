@@ -68,6 +68,21 @@ async function main() {
   for (const action of ['configure', 'capture', 'compact']) assert.strictEqual(isMutatingToolCall('session_monitor', { action }), true);
   for (const action of ['status', 'events', 'timeline', 'compare', 'read', 'watch', 'unwatch']) assert.strictEqual(isMutatingToolCall('session_monitor', { action }), false);
   assert.strictEqual(new SessionJournalWatcher(undefined, () => {}).start().success, false);
+  for (const readOnly of [true, false]) {
+   const runtime = createStandaloneMcpRuntime(readOnly), calls = [];
+   runtime.connection.request = async (command, payload) => { calls.push({ command, payload }); return { result: { success: true } }; };
+   try {
+    for (const name of ['session_monitor', 'toolkit.session_monitor']) {
+     const status = await runtime.handleRequest({ id: name, method: 'tools/call', params: { name, arguments: { action: 'status' } } });
+     assert.strictEqual(status.isError, false); assert.strictEqual(status._meta.canonicalName, 'toolkit.session_monitor');
+     assert.deepStrictEqual(calls.pop(), { command: 'mcpToolCall', payload: { toolName: 'session_monitor', args: { action: 'status' } } });
+     const capture = await runtime.handleRequest({ id: name, method: 'tools/call', params: { name, arguments: { action: 'capture' } } });
+     if (readOnly) { assert.strictEqual(capture.isError, true); assert.strictEqual(JSON.parse(capture.content[0].text).error.code, 'policy_refused'); }
+     else { assert.strictEqual(capture.isError, false); assert.strictEqual(calls.pop().payload.toolName, 'session_monitor'); }
+     assert.strictEqual(calls.length, 0);
+    }
+   } finally { await runtime.dispose(); }
+  }
  });
  fs.rmSync(root, { recursive: true, force: true });
  console.log(`\n ${passed} passed, 0 failed, ${passed} total`);

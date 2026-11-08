@@ -1,0 +1,327 @@
+{
+  "observedAt": "2026-10-08T06:51:17.382Z",
+  "consoleResetBaseline": false,
+  "fixture": "canonical package snapshot, only separate Assets handler recompiled",
+  "pid": 12584,
+  "outcome": {
+    "code": 0,
+    "signal": null,
+    "normalExit": true,
+    "timeout": false,
+    "phase": "execution"
+  },
+  "completed": true,
+  "readinessClaim": false,
+  "events": [
+    {
+      "utc": "2026-10-08T06:50:51.4205950Z",
+      "callback": "proofPortSelected",
+      "pid": 12584,
+      "generation": "685b73abc77746718a3c027e4038b6d6",
+      "stage": 0,
+      "port": 64108
+    },
+    {
+      "utc": "2026-10-08T06:50:51.4240972Z",
+      "callback": "run",
+      "pid": 12584,
+      "generation": "685b73abc77746718a3c027e4038b6d6",
+      "stage": 0,
+      "unityVersion": "6000.3.9f1",
+      "coreLibrary": "mscorlib"
+    },
+    {
+      "utc": "2026-10-08T06:50:51.7131741Z",
+      "callback": "InitializeOnLoad.delayCall",
+      "pid": 12584,
+      "generation": "685b73abc77746718a3c027e4038b6d6",
+      "stage": 0
+    },
+    {
+      "utc": "2026-10-08T06:50:51.7891411Z",
+      "callback": "networkVerified",
+      "pid": 12584,
+      "generation": "685b73abc77746718a3c027e4038b6d6",
+      "stage": 0,
+      "revision": 0,
+      "port": 64108,
+      "handler": "d7a994e2e2394d5eb4beed6aa9bad52e",
+      "packageMvid": "60dab1fc-1e2a-45ac-aca1-38af7771dcef"
+    },
+    {
+      "utc": "2026-10-08T06:50:51.7986423Z",
+      "callback": "requestRevision",
+      "pid": 12584,
+      "generation": "685b73abc77746718a3c027e4038b6d6",
+      "stage": 1,
+      "revision": 1
+    },
+    {
+      "utc": "2026-10-08T06:50:52.4221402Z",
+      "callback": "beforeAssemblyReload",
+      "pid": 12584,
+      "generation": "685b73abc77746718a3c027e4038b6d6",
+      "stage": 1
+    },
+    {
+      "utc": "2026-10-08T06:50:54.3951422Z",
+      "callback": "InitializeOnLoad.delayCall",
+      "pid": 12584,
+      "generation": "6da600805ff94698bd1103993c93940f",
+      "stage": 1
+    },
+    {
+      "utc": "2026-10-08T06:50:54.4336409Z",
+      "callback": "networkVerified",
+      "pid": 12584,
+      "generation": "6da600805ff94698bd1103993c93940f",
+      "stage": 1,
+      "revision": 1,
+      "port": 64108,
+      "handler": "26f6b6d705984ad8bc00a9d055a1c8e6",
+      "packageMvid": "60dab1fc-1e2a-45ac-aca1-38af7771dcef"
+    },
+    {
+      "utc": "2026-10-08T06:50:54.4351424Z",
+      "callback": "sessionResetVerified",
+      "pid": 12584,
+      "generation": "6da600805ff94698bd1103993c93940f",
+      "stage": 1,
+      "profilerSession": "editor_20261008_065053_716",
+      "consoleMarkerCount": 1
+    },
+    {
+      "utc": "2026-10-08T06:50:54.4361425Z",
+      "callback": "captureReleased",
+      "pid": 12584,
+      "generation": "6da600805ff94698bd1103993c93940f",
+      "stage": 1
+    },
+    {
+      "utc": "2026-10-08T06:50:54.4456413Z",
+      "callback": "requestRevision",
+      "pid": 12584,
+      "generation": "6da600805ff94698bd1103993c93940f",
+      "stage": 2,
+      "revision": 2
+    },
+    {
+      "callback": "assetImportWorkerObserved",
+      "pid": 76748
+    },
+    {
+      "callback": "assetImportWorkerObserved",
+      "pid": 6456
+    },
+    {
+      "utc": "2026-10-08T06:50:55.0621417Z",
+      "callback": "beforeAssemblyReload",
+      "pid": 12584,
+      "generation": "6da600805ff94698bd1103993c93940f",
+      "stage": 2
+    },
+    {
+      "callback": "assetImportWorkerObserved",
+      "pid": 76748
+    },
+    {
+      "callback": "assetImportWorkerObserved",
+      "pid": 6456
+    },
+    {
+      "utc": "2026-10-08T06:50:57.0021423Z",
+      "callback": "InitializeOnLoad.delayCall",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 2
+    },
+    {
+      "utc": "2026-10-08T06:50:57.1011414Z",
+      "callback": "networkVerified",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 2,
+      "revision": 2,
+      "port": 64108,
+      "handler": "9c2362f235d4483fbab187f5840019da",
+      "packageMvid": "60dab1fc-1e2a-45ac-aca1-38af7771dcef"
+    },
+    {
+      "utc": "2026-10-08T06:50:57.1026436Z",
+      "callback": "sessionResetVerified",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 2,
+      "profilerSession": "editor_20261008_065056_282",
+      "consoleMarkerCount": 1
+    },
+    {
+      "utc": "2026-10-08T06:50:57.1041425Z",
+      "callback": "captureReleased",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 2
+    },
+    {
+      "utc": "2026-10-08T06:50:57.1386409Z",
+      "callback": "viewportContinued",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 3,
+      "frames": 1,
+      "pixelValidityChecked": false
+    },
+    {
+      "utc": "2026-10-08T06:50:57.5422548Z",
+      "callback": "sessionResetVerified",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 4,
+      "profilerSession": "play_20261008_065057_192",
+      "consoleMarkerCount": 1
+    },
+    {
+      "utc": "2026-10-08T06:50:57.5426672Z",
+      "callback": "captureReleased",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 4
+    },
+    {
+      "utc": "2026-10-08T06:50:57.5441676Z",
+      "callback": "viewportContinued",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 4,
+      "frames": 2,
+      "pixelValidityChecked": false
+    },
+    {
+      "utc": "2026-10-08T06:50:57.9661763Z",
+      "callback": "sessionResetVerified",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 5,
+      "profilerSession": "editor_20261008_065057_575",
+      "consoleMarkerCount": 1
+    },
+    {
+      "utc": "2026-10-08T06:50:57.9676570Z",
+      "callback": "viewportContinued",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 5,
+      "frames": 3,
+      "pixelValidityChecked": false
+    },
+    {
+      "callback": "assetImportWorkerObserved",
+      "pid": 76748
+    },
+    {
+      "utc": "2026-10-08T06:51:00.0708465Z",
+      "callback": "manualStopVerified",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 5,
+      "port": 64108
+    },
+    {
+      "utc": "2026-10-08T06:51:00.0728697Z",
+      "callback": "requestRevision",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 6,
+      "revision": 3
+    },
+    {
+      "utc": "2026-10-08T06:51:00.5737907Z",
+      "callback": "beforeAssemblyReload",
+      "pid": 12584,
+      "generation": "ee7f7fc87c594374990533ab09dfc69a",
+      "stage": 6
+    },
+    {
+      "utc": "2026-10-08T06:51:02.3373888Z",
+      "callback": "InitializeOnLoad.delayCall",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 6
+    },
+    {
+      "callback": "assetImportWorkerObserved",
+      "pid": 6456
+    },
+    {
+      "utc": "2026-10-08T06:51:04.4045048Z",
+      "callback": "manualStopVerified",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 6,
+      "port": 64108
+    },
+    {
+      "utc": "2026-10-08T06:51:06.7923527Z",
+      "callback": "manualStopVerified",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 7,
+      "port": 64108
+    },
+    {
+      "utc": "2026-10-08T06:51:09.2248616Z",
+      "callback": "manualStopVerified",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 8,
+      "port": 64108
+    },
+    {
+      "utc": "2026-10-08T06:51:11.2562332Z",
+      "callback": "joinFailureVisible",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 8,
+      "expectedErrors": 2,
+      "replacementStarted": false,
+      "liveWorkerRetained": true
+    },
+    {
+      "utc": "2026-10-08T06:51:15.2754998Z",
+      "callback": "manualStopVerified",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 9,
+      "port": 64108
+    },
+    {
+      "utc": "2026-10-08T06:51:15.2760025Z",
+      "callback": "complete",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 9
+    },
+    {
+      "utc": "2026-10-08T06:51:15.2770025Z",
+      "callback": "shutdownWorkers",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 9,
+      "stopped": true
+    },
+    {
+      "utc": "2026-10-08T06:51:15.3380010Z",
+      "callback": "editorQuitting",
+      "pid": 12584,
+      "generation": "124eb1144719498f8e39307714a42c73",
+      "stage": 9
+    }
+  ],
+  "passed": true,
+  "deadlines": {
+    "startupSeconds": 180,
+    "executionSeconds": 90,
+    "normalExitGraceSeconds": 15
+  },
+  "scope": "Single installed Editor observation. Callback order is evidence, not a general lifecycle guarantee. Production frame delivery does not prove viewport pixel validity."
+}

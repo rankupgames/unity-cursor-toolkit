@@ -1,0 +1,23 @@
+{
+  "ok": true,
+  "exitCode": 0,
+  "stdout": {
+    "success": true,
+    "command": "test",
+    "data": {
+      "projectPath": "fixture",
+      "output": "temp-redacted\\uct-cli-tests-3AK1F2\\results.xml",
+      "reports": {
+        "nunit": "temp-redacted\\uct-cli-tests-3AK1F2\\results.xml",
+        "junit": null
+      },
+      "coverage": {
+        "requested": false,
+        "enabled": false,
+        "output": null
+      }
+    },
+    "errors": [],
+    "warnings": []
+  }
+}

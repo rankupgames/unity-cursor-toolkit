@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-08 08:25:50Z" end-time="2026-10-08 08:25:54Z" duration="4.0460137">
+  <test-suite type="TestSuite" id="1008" name="uct-test-bridge-fcvDFe" fullname="uct-test-bridge-fcvDFe" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 08:25:50Z" end-time="2026-10-08 08:25:54Z" duration="4.046014" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1004" name="UCT.Proof.PlayMode.dll" fullname="fixture/Library/ScriptAssemblies/UCT.Proof.PlayMode.dll" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 08:25:50Z" end-time="2026-10-08 08:25:54Z" duration="4.034403" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="76608" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestSuite" id="1005" name="BridgeProof" fullname="BridgeProof" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 08:25:50Z" end-time="2026-10-08 08:25:54Z" duration="4.032784" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-suite type="TestSuite" id="1006" name="Play" fullname="BridgeProof.Play" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 08:25:50Z" end-time="2026-10-08 08:25:54Z" duration="4.031722" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+          <properties />
+          <test-suite type="TestFixture" id="1001" name="Waiting" fullname="BridgeProof.Play.Waiting" classname="BridgeProof.Play.Waiting" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 08:25:50Z" end-time="2026-10-08 08:25:54Z" duration="4.029736" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+            <properties />
+            <test-case id="1002" name="Heartbeats" fullname="BridgeProof.Play.Waiting.Heartbeats" methodname="Heartbeats" classname="BridgeProof.Play.Waiting" runstate="Runnable" seed="724241428" result="Passed" start-time="2026-10-08 08:25:50Z" end-time="2026-10-08 08:25:54Z" duration="4.016145" asserts="0">
+              <properties>
+                <property name="_JOINTYPE" value="UnityCombinatorial" />
+                <property name="retryIteration" value="0" />
+                <property name="repeatIteration" value="0" />
+              </properties>
+              <output><![CDATA[Saving results to: temp-redacted\uct-cli-tests-3AK1F2\results.xml
+]]></output>
+            </test-case>
+          </test-suite>
+        </test-suite>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

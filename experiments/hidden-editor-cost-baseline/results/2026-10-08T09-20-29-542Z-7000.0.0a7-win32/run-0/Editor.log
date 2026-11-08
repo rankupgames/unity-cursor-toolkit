@@ -1,0 +1,44 @@
+VBCSCompilerPreWarmer: watching VBCSCompiler (PID 75796)
+VBCSCompilerPreWarmer: pre-warm launched (dotnet PID 36328)
+VBCSCompiler prewarm took 19.75 ms
+<private or licensing line omitted>
+Built from 'trunk' branch; Version is '7000.0.0a7 (581996e1a8f7) revision 5773718'; Using compiler version '195136248'; Build Type 'Release'
+<private or licensing line omitted>
+OS: 'Windows 10  (10.0.19045) 64bit Enterprise' Language: 'en' Physical Memory: 32702 MB
+BatchMode: 0, IsHumanControllingUs: 1, StartBugReporterOnCrash: 1, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-08T09:20:30Z
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+	ResponseCode: 505
+	ResponseStatus: Unsupported protocol version '1.19.0-rc.1'.
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+Starting IPC server.
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+  Version:                 1.19.0-rc.1+a1d64c6
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private licensing metadata omitted>
+<private licensing metadata omitted>
+<private licensing metadata omitted>
+<private licensing metadata omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>

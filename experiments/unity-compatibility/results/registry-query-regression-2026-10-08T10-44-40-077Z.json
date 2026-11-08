@@ -1,0 +1,26 @@
+{
+  "observedAt": "2026-10-08T10:44:40.077Z",
+  "scope": "actual CLI cleanup mode and one owned Windows registry sentinel; no Unity launch",
+  "sourceDelta": "baseline restores only the original ownedPreferenceNames helper; other runner logic unchanged",
+  "sourceSha256": "66f4f03e6eabd714a9c564a18010a42cca26857777ccda34b0472d47d79cb620",
+  "baselineSha256": "a56fb23181329958e04bffe488941b2829e524e643edbc315de8dd056f0e1a3f",
+  "baseline": {
+    "exitCode": 0,
+    "passed": true,
+    "reportedPreferenceCount": 0
+  },
+  "fixed": {
+    "exitCode": 1,
+    "passed": false,
+    "reportedPreferenceCount": 1,
+    "error": {
+      "code": "owned_preferences_remain"
+    }
+  },
+  "afterOwnedSentinelDeletion": {
+    "exitCode": 0,
+    "passed": true,
+    "reportedPreferenceCount": 0
+  },
+  "passed": true
+}

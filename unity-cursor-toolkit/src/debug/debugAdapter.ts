@@ -6,6 +6,8 @@
  */
 
 import * as vscode from 'vscode';
+import { getDebuggerType } from '../core/runtimeCapabilities';
+import type { RuntimeCapabilities } from '../core/runtimeCapabilities';
 
 const DEFAULT_MONO_DEBUG_PORT = 56000;
 
@@ -261,10 +263,13 @@ export class UnityDebugSession implements vscode.DebugAdapter {
  */
 export class UnityDebugAdapterDescriptorFactory implements vscode.DebugAdapterDescriptorFactory {
 
+	constructor(private readonly getRuntimeCapabilities: () => RuntimeCapabilities) {}
+
 	createDebugAdapterDescriptor(
 		session: vscode.DebugSession,
 		_executable: vscode.DebugAdapterExecutable | undefined
 	): vscode.ProviderResult<vscode.DebugAdapterDescriptor> {
+		getDebuggerType(this.getRuntimeCapabilities());
 		const config = session.configuration;
 		const port = (config.debugPort ?? config.port ?? 56000) as number;
 		const adapter = new UnityDebugSession(port);
