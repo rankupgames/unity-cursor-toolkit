@@ -14,6 +14,7 @@ Editor tools for Cursor/VS Code and MCP-capable AI agents integrating with Unity
 - **IL Patcher**: Runtime method body swapping during play mode (avoids domain reload)
 - **Unity-Unterm**: Toolkit-internal terminal, Claude Code, code editor, completion, and debugger windows on supported Unity 6000.3 editors
 - **Agent Safety**: Supports read-only MCP sessions and dry-run previews from the companion extension
+- **Spotlight**: Keyboard search for Editor windows, commands, assets, loaded scene objects, and exact components
 
 ## Installation
 
@@ -77,6 +78,35 @@ Do not install the standalone `dev.tnayuki.unterm` package beside this toolkit. 
 Open the bundled tools from **Tools > Unity Cursor Toolkit > Unterm**, then choose **New Terminal**, **Claude Code**, **Code Editor**, **Debugger**, or **Settings**. Unity-Unterm MCP access remains disabled until it is explicitly enabled for the current project in Preferences.
 
 The optional Claude Code panel uses an existing user-managed `claude` executable discovered from `UNTERM_CLAUDE_PATH`, `PATH`, common install locations, or a legacy Unterm install. The toolkit does not download or update Claude Code.
+
+## Spotlight
+
+Open **Tools > Unity Cursor Toolkit > Spotlight**, or press **Option+Space** on
+macOS and **Ctrl+Shift+K** on Windows. Rebind **Unity Cursor Toolkit/Spotlight**
+in Unity's Shortcuts manager. This Editor palette does not need an attached
+extension or MCP client.
+
+Type a name, type, or path. Arrow keys move through results without changing
+Editor selection. Enter performs the selected result's default action.
+Escape closes the palette and restores the previous Editor window's focus.
+Use the row menu, right-click, or **Shift+F10** for other available actions.
+
+- Scene results include inactive GameObjects and exact components in every
+  loaded additive scene. Paths include scene, sibling, and component identifiers
+  to distinguish repeated names. Hidden Editor objects are excluded.
+- Assets support Select, Open, and Ping. Loaded persistent objects include
+  exact sub-assets and ScriptableObjects. Unloaded sub-assets depend on the
+  native asset provider's index coverage.
+- GameObjects and components support Select, Ping, and Frame. Frame needs an
+  open Scene view. Existing Editor windows support Focus. Commands execute only
+  after an explicit action. Deleted results refuse actions.
+- Unity 2021.2 and later use the public asset, menu, and settings Search
+  providers. Unity 2019.4 through 2021.1 use AssetDatabase and managed `MenuItem`
+  discovery. Native-only menu commands and settings search need the newer API.
+
+The package's declared minimum remains Unity 2019.4. These implementation
+boundaries do not certify every Editor version. Unity 7 remains subject to the
+repository's compatibility gates.
 
 ## Companion Extension Validation
 
