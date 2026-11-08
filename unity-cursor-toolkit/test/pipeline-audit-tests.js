@@ -14,10 +14,10 @@ async function test(name, run) {
 	catch (error) { failed++; console.error('FAIL ' + name + ': ' + error.stack); }
 }
 function fixture() {
-	const root = fs.mkdtempSync(path.join(os.tmpdir(), 'uct-pipeline-audit-'));
+	const root = fs.realpathSync(fs.mkdtempSync(path.join(os.tmpdir(), 'uct-pipeline-audit-')));
 	const file = path.join(root, 'audit.jsonl');
 	return { root, file, audit: new PipelineAudit(file, ['get_status']), clean() {
-		assert.strictEqual(path.dirname(root), os.tmpdir());
+		assert.strictEqual(path.dirname(root), fs.realpathSync(os.tmpdir()));
 		assert(path.basename(root).startsWith('uct-pipeline-audit-'));
 		fs.rmSync(root, { recursive: true, force: true });
 	} };
