@@ -35,7 +35,11 @@ namespace UnityCursorToolkit.Spotlight
 		private Texture2D panelTexture, inputTexture, focusTexture;
 
 		[MenuItem("Tools/Unity Cursor Toolkit/Spotlight")]
+#if UNITY_EDITOR_OSX
+		[Shortcut("Unity Cursor Toolkit/Spotlight", KeyCode.Space, ShortcutModifiers.Alt)]
+#else
 		[Shortcut("Unity Cursor Toolkit/Spotlight", KeyCode.K, ShortcutModifiers.Action | ShortcutModifiers.Shift)]
+#endif
 		private static void OpenPalette()
 		{
 			foreach (var existing in Resources.FindObjectsOfTypeAll<SpotlightWindow>())

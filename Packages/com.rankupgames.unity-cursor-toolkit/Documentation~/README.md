@@ -81,7 +81,7 @@ The optional Claude Code panel uses an existing user-managed `claude` executable
 
 ## Spotlight
 
-Open **Tools > Unity Cursor Toolkit > Spotlight**, or press **Cmd+Shift+K** on
+Open **Tools > Unity Cursor Toolkit > Spotlight**, or press **Option+Space** on
 macOS and **Ctrl+Shift+K** on Windows. Rebind **Unity Cursor Toolkit/Spotlight**
 in Unity's Shortcuts manager. This Editor palette does not need an attached
 extension or MCP client.
