@@ -418,8 +418,10 @@
     "unity:watch-sessions": "node scripts/watch-play-sessions.js"
   },
   "overrides": {
-    "ovsx": {
-      "@vscode/vsce": "$@vscode/vsce"
+    "@vscode/vsce": {
+      ".": "$@vscode/vsce",
+      "@azure/identity": "4.14.1",
+      "minimatch": "11.0.1"
     }
   },
   "devDependencies": {
