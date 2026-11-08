@@ -19,7 +19,7 @@ namespace UnityCursorToolkit.Spotlight
 		private static readonly Color Ink = new Color32(242, 242, 242, 255);
 		private static readonly Color Muted = new Color32(184, 184, 184, 255);
 		private static readonly Color Selected = new Color32(36, 78, 120, 255);
-		private static readonly Color Focus = new Color32(100, 169, 238, 255);
+		private static readonly Color FocusColor = new Color32(100, 169, 238, 255);
 		private SpotlightSearch search;
 		private SpotlightResult selected;
 		private EditorWindow previousWindow;
@@ -273,7 +273,7 @@ namespace UnityCursorToolkit.Spotlight
 			errorStyle.wordWrap = true;
 			panelTexture = RoundedTexture(Panel, Line);
 			inputTexture = RoundedTexture(InputSurface, InputSurface);
-			focusTexture = RoundedTexture(Panel, Focus);
+			focusTexture = RoundedTexture(Panel, FocusColor);
 			panelStyle = new GUIStyle { normal = { background = panelTexture }, border = new RectOffset(9, 9, 9, 9) };
 			inputStyle = new GUIStyle { normal = { background = inputTexture }, border = new RectOffset(9, 9, 9, 9) };
 			focusedStyle = new GUIStyle(panelStyle) { normal = { background = focusTexture } };
