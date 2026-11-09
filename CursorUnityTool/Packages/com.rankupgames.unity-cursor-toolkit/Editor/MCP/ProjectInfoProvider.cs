@@ -24,6 +24,7 @@ namespace UnityCursorToolkit.MCP
 
 		public string HandleCommand(string argsJson)
 		{
+			EditorValidationState.ObserveMainThread();
 			var sb = new StringBuilder();
 			sb.Append("{");
 			sb.Append("\"unityVersion\":\"").Append(Escape(Application.unityVersion)).Append("\",");
@@ -35,7 +36,12 @@ namespace UnityCursorToolkit.MCP
 			sb.Append("\"platform\":\"").Append(Escape(Application.platform.ToString())).Append("\",");
 			sb.Append("\"isPlaying\":").Append(Application.isPlaying ? "true" : "false").Append(",");
 			sb.Append("\"isPaused\":").Append(EditorApplication.isPaused ? "true" : "false").Append(",");
-			sb.Append("\"projectPath\":\"").Append(Escape(GetProjectPath())).Append("\"");
+			sb.Append("\"projectPath\":\"").Append(Escape(GetProjectPath())).Append("\",");
+			sb.Append("\"editorPid\":").Append(EditorValidationState.EditorPid).Append(",");
+			sb.Append("\"domainId\":\"").Append(EditorValidationState.DomainId).Append("\",");
+			sb.Append("\"isCompiling\":").Append(EditorApplication.isCompiling ? "true" : "false").Append(",");
+			sb.Append("\"isUpdating\":").Append(EditorApplication.isUpdating ? "true" : "false").Append(",");
+			sb.Append("\"mainThreadObservedUtc\":\"").Append(EditorValidationState.MainThreadObservedUtc).Append("\"");
 			sb.Append("}");
 			return sb.ToString();
 		}

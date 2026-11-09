@@ -9,6 +9,7 @@
  */
 
 import * as net from 'net';
+import * as path from 'path';
 import type { ICommandSender } from '../core/interfaces';
 
 const DEFAULT_PORTS = [55500, 55501, 55502, 55503, 55504] as const;
@@ -37,8 +38,9 @@ export class StandaloneUnityConnection implements ICommandSender {
 	private connectedPort: number | null = null;
 	private dataBuffer = '';
 	private connectPromise: Promise<boolean> | undefined;
+	private disposed = false;
 
-	constructor(ports: readonly number[] = parsePorts(process.env.UNITY_CURSOR_TOOLKIT_MCP_PORTS)) {
+	constructor(ports: readonly number[] = parsePorts(process.env.UNITY_CURSOR_TOOLKIT_MCP_PORTS), private readonly projectRoot = process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH) {
 		this.ports = ports;
 	}
 
@@ -61,6 +63,7 @@ export class StandaloneUnityConnection implements ICommandSender {
 	}
 
 	public async request(command: string, payload?: Record<string, unknown>): Promise<Record<string, unknown> | null> {
+		if (this.disposed) return null;
 		const connected = await this.ensureConnected();
 		if (connected === false || this.socket == null || this.socket.writable === false) {
 			return null;
@@ -79,6 +82,7 @@ export class StandaloneUnityConnection implements ICommandSender {
 	}
 
 	public dispose(): void {
+		this.disposed = true;
 		this.rejectPendingRequests();
 		this.destroySocket();
 		this.messageHandlers.length = 0;
@@ -113,7 +117,9 @@ export class StandaloneUnityConnection implements ICommandSender {
 		this.destroySocket();
 
 		for (const port of this.ports) {
+			if (this.disposed) return false;
 			const socket = await this.tryPort(port);
+			if (this.disposed) { socket?.destroy(); return false; }
 			if (socket) {
 				this.socket = socket;
 				this.connectedPort = port;
@@ -147,8 +153,22 @@ export class StandaloneUnityConnection implements ICommandSender {
 
 			socket.setTimeout(CONNECT_TIMEOUT_MS);
 			socket.once('connect', () => {
-				socket.setTimeout(0);
-				settle(socket);
+				if (!this.projectRoot) { socket.setTimeout(0); settle(socket); return; }
+				const requestId = 'toolkit_project_attach';
+				let buffer = '';
+				socket.on('data', (raw: Buffer) => {
+					buffer += raw.toString('utf8');
+					if (buffer.length > 1024 * 1024) { settle(null); return; }
+					const lines = buffer.split('\n'); buffer = lines.pop() ?? '';
+					for (const line of lines) {
+						const response = parseJsonObject(line);
+						if (response?._requestId !== requestId) continue;
+						const info = typeof response.result === 'string' ? parseJsonObject(response.result) : response.result as Record<string, unknown> | undefined;
+						if (!info || typeof info.projectPath !== 'string' || path.resolve(info.projectPath) !== path.resolve(this.projectRoot as string)) { settle(null); return; }
+						socket.setTimeout(0); settle(socket); return;
+					}
+				});
+				socket.write(JSON.stringify({ command: 'mcpToolCall', toolName: 'project_info', args: {}, _requestId: requestId }) + '\n');
 			});
 			socket.once('error', () => settle(null));
 			socket.once('timeout', () => settle(null));

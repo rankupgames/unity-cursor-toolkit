@@ -7,6 +7,7 @@
 // Last Modified: 2026-05-28
 // =============================================================================
 
+using System;
 using System.Text;
 
 namespace UnityCursorToolkit.AgentCommands
@@ -25,6 +26,13 @@ namespace UnityCursorToolkit.AgentCommands
 		/// Human-readable explanation of what the command triggers.
 		/// </summary>
 		public string Description { get; }
+
+		/// <summary>editor.* commands are synchronous authoring operations and are excluded from player execution.</summary>
+		public bool RequiresPlayMode => string.IsNullOrEmpty(Name) || !Name.StartsWith("editor.", StringComparison.Ordinal);
+
+		/// <summary>The host contract used for command execution.</summary>
+		public string ExecutionMode => RequiresPlayMode ? "play" : "editorSynchronous";
+
 
 		/// <summary>
 		/// True when this command is intended as a viewport input adapter.
@@ -57,10 +65,11 @@ namespace UnityCursorToolkit.AgentCommands
 			builder.Append("{");
 			AgentCommandJson.AppendProperty(builder, "name", Name).Append(",");
 			AgentCommandJson.AppendProperty(builder, "description", Description).Append(",");
-			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", true).Append(",");
-			AgentCommandJson.AppendProperty(builder, "supportsBatchmode", false).Append(",");
+			AgentCommandJson.AppendProperty(builder, "executionMode", ExecutionMode).Append(",");
+			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", RequiresPlayMode).Append(",");
+			AgentCommandJson.AppendProperty(builder, "supportsBatchmode", !RequiresPlayMode).Append(",");
 			AgentCommandJson.AppendProperty(builder, "supportsViewportInput", SupportsViewportInput).Append(",");
-			builder.Append("\"supportedHosts\":[\"editor\",\"player\",\"auto\"]");
+			builder.Append(RequiresPlayMode ? "\"supportedHosts\":[\"editor\",\"player\",\"auto\"]" : "\"supportedHosts\":[\"editor\",\"editorBatchmode\"]");
 			builder.Append("}");
 		}
 	}

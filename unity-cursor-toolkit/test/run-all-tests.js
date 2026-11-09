@@ -8,6 +8,8 @@ const { spawnSync } = require('child_process');
 
 const suites = [
 	'run-tests.js',
+	'editor-recovery-tests.js',
+	'session-monitor-tests.js',
 	'simplified-context-tests.js',
 	'remote-shell-tests.js',
 	'package-sync-tests.js',

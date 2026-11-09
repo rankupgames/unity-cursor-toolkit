@@ -152,11 +152,13 @@ async function main() {
  });
  await test('MCP dry-run discovers in read-only mode and emits standard progress with the supplied token', async () => {
   const notifications = [], runtime = createStandaloneMcpRuntime(true, item => notifications.push(item)); const actions = [];
+  const subscribed = []; runtime.onNotification(item => subscribed.push(item));
   runtime.connection.request = async (_command, payload) => { actions.push(payload.args.action); return { result: payload.args.action === 'capabilities' ? capabilities : snapshot(payload.args, payload.args.action === 'list' ? 'discovering' : 'listed') }; };
   try {
    const result = await runtime.handleRequest({ id: 2, method: 'tools/call', params: { name: 'run_tests', _meta: { progressToken: 'progress-2' }, arguments: { projectPath, mode: 'EditMode', dryRun: true } } });
    assert.strictEqual(result.isError, false); assert.deepStrictEqual(actions, ['capabilities', 'list', 'status']);
    assert.deepStrictEqual(notifications.map(item => item.params.progress), [1, 2, 3]);
+   assert.deepStrictEqual(subscribed, notifications);
    assert.strictEqual(notifications[0].method, 'notifications/progress'); assert.strictEqual(notifications[0].params.progressToken, 'progress-2');
    assert.ok(!JSON.stringify(result).includes('ownerToken'));
   } finally { runtime.dispose(); }

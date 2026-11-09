@@ -413,11 +413,15 @@
     "bump": "node scripts/bump-version.js && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
     "bump:minor": "npm version minor && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix 2>/dev/null || code --install-extension *.vsix)",
     "local": "npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
-    "audit": "npm audit"
+    "audit": "npm audit",
+    "unity:focus": "node scripts/focus-unity-editor.js",
+    "unity:watch-sessions": "node scripts/watch-play-sessions.js"
   },
   "overrides": {
-    "ovsx": {
-      "@vscode/vsce": "$@vscode/vsce"
+    "@vscode/vsce": {
+      ".": "$@vscode/vsce",
+      "@azure/identity": "4.14.1",
+      "minimatch": "11.0.1"
     }
   },
   "devDependencies": {

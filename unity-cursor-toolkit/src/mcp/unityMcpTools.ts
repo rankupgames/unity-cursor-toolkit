@@ -9,6 +9,7 @@
 
 import type { IToolProvider, ICommandSender, ToolDefinition, ToolResult } from '../core/interfaces';
 import { buildBatchmodeCommandPlan, runBatchmodeGameCommand, shouldUseEditorBatchmode } from './gameCommandBatchmode';
+import type { EditorRecoveryMonitor } from './editorRecoveryMonitor';
 import { getToolAnnotations, isDryRun, isMutatingToolCall, withDryRunProperty } from './toolMetadata';
 import { resolveProjectRoot } from './standaloneProjectTools';
 
@@ -18,7 +19,7 @@ export class UnityMcpTools implements IToolProvider {
 
 	private readonly commandSender: ICommandSender;
 
-	constructor(commandSender: ICommandSender, private readonly projectRoot: () => string | undefined = resolveProjectRoot) {
+	constructor(commandSender: ICommandSender, private readonly projectRoot: () => string | undefined = resolveProjectRoot, private readonly recovery?: EditorRecoveryMonitor) {
 		this.commandSender = commandSender;
 	}
 
@@ -197,7 +198,7 @@ export class UnityMcpTools implements IToolProvider {
 					properties: withDryRunProperty({
 						action: {
 							type: 'string',
-							enum: ['list', 'status', 'sync_project_files', 'request_compile', 'sync_and_compile'],
+							enum: ['list', 'status', 'sync_project_files', 'request_compile', 'sync_and_compile', 'recover'],
 							description: 'Editor validation action. Defaults to sync_and_compile.'
 						}
 					})
@@ -312,11 +313,17 @@ export class UnityMcpTools implements IToolProvider {
 			return this.handleBatchExecute(args);
 		}
 
-		if (!this.getTools().some(tool => tool.name === name)) {
+		// SessionMonitorTools advertises this tool and relays its Editor-owned actions here.
+		if (name !== 'session_monitor' && !this.getTools().some(tool => tool.name === name)) {
 			return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
 				code: 'unknown_tool', message: 'Unknown toolkit batch tool: ' + name
 			} }) }], isError: true };
 		}
+
+		if (name === 'editor_validation' && args.action === 'recover' && args.dryRun !== true && this.recovery) {
+			return { content: [{ type: 'text', text: JSON.stringify(this.recovery.recover()) }] };
+		}
+
 		const unityArgs = UnityMcpTools.normalizeToolArgs(name, args);
 		if (name === 'game_command' && shouldUseEditorBatchmode(unityArgs)) {
 			return this.handleEditorBatchmodeGameCommand(args, unityArgs);
@@ -329,6 +336,7 @@ export class UnityMcpTools implements IToolProvider {
 		const result = await this.commandSender.request('mcpToolCall', { toolName: name, args: unityArgs });
 
 		if (result == null) {
+			this.recovery?.recover('unity_timeout');
 			return {
 				content: [{ type: 'text', text: `Unity did not respond. Is the project connected and the MCPBridge installed?` }],
 				isError: true
@@ -336,15 +344,24 @@ export class UnityMcpTools implements IToolProvider {
 		}
 
 		const resultPayload = result.result;
+		const observed = UnityMcpTools.parseResult(resultPayload ?? result);
+		if (observed) this.recovery?.observe(name, observed);
 		const resultText = typeof resultPayload === 'string'
 			? resultPayload
 			: JSON.stringify(resultPayload ?? result);
-		const isError = result.error === true || UnityMcpTools.isUnityErrorResult(resultPayload);
+		const isError = result.error === true || UnityMcpTools.isUnityErrorResult(observed);
 
 		return {
 			content: [{ type: 'text', text: resultText }],
 			isError
 		};
+	}
+
+	private static parseResult(value: unknown): Record<string, unknown> | undefined {
+		if (typeof value === 'string') {
+			try { value = JSON.parse(value) as unknown; } catch { return undefined; }
+		}
+		return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
 	}
 
 	private static isUnityErrorResult(result: unknown): boolean {
