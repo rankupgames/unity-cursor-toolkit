@@ -84,3 +84,5 @@ Check both module states in an isolated project:
 4. Change linked Markdown and image files, then add a previously missing linked file. Confirm reimport and view refresh.
 5. Check pan, pointer zoom, fit, clipping, text, lines and image placeholders. Confirm `.txt`, `.json` and multiple selections still delegate to Unity's native Inspector.
 6. Repeat on the oldest supported Unity version and the consumer's Unity version. Source/API review does not replace compilation or visual proof.
+
+The Python writer has separate usage and preservation checks in [`Tools~/README.md`](../Packages/com.rankupgames.unity-cursor-toolkit/Tools~/README.md).
