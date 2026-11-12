@@ -297,17 +297,28 @@ async function testGameCommandBatchmode() {
 			const pidPath = path.join(fixture.tmpDir, `child-${Date.now()}.pid`);
 			const script = 'require("fs").writeFileSync(process.argv[1], String(process.pid)); setInterval(() => {}, 1000);';
 			const plan = { unityPath: process.execPath, args: ['-e', script, pidPath], resultPath: path.join(fixture.tmpDir, 'none.json'), logPath: path.join(fixture.tmpDir, 'none.log') };
+			const ready = new Promise((resolve, reject) => {
+				const watcher = fs.watch(fixture.tmpDir, () => {
+					if (fs.existsSync(pidPath) && fs.readFileSync(pidPath, 'utf8').length > 0) {
+						clearTimeout(timer);
+						watcher.close();
+						resolve();
+					}
+				});
+				const timer = setTimeout(() => {
+					watcher.close();
+					reject(new Error('Owned child did not signal readiness.'));
+				}, 10_000);
+			});
 			const pending = executeBatchmodePlan(plan, timeoutMs, signal);
-			while (!fs.existsSync(pidPath) || fs.readFileSync(pidPath, 'utf8').length === 0) {
-				await sleep(20);
-			}
-			return pending;
+			await ready;
+			return { pending };
 		};
 		const exitObserved = result => result.exitCode != null || result.signal != null;
 
 		await testAsync('game_command batchmode abort terminates the owned child and resolves after it exits', async () => {
 			const controller = new AbortController();
-			const pending = await runOwnedChild(30_000, controller.signal);
+			const { pending } = await runOwnedChild(30_000, controller.signal);
 			controller.abort();
 			const result = await pending;
 
@@ -318,11 +329,12 @@ async function testGameCommandBatchmode() {
 		});
 
 		await testAsync('game_command batchmode timeout reports timed_out after the owned child exits', async () => {
-			const result = await (await runOwnedChild(300));
+			const { pending } = await runOwnedChild(5_000);
+			const result = await pending;
 
 			assert.strictEqual(result.success, false);
 			assert.strictEqual(result.terminationReason, 'timed_out');
-			assert.match(result.error, /timed out after 300ms/);
+			assert.match(result.error, /timed out after 5000ms/);
 			assert.ok(exitObserved(result), 'result must come from the child close event');
 		});
 	} finally {

@@ -94,8 +94,12 @@ export function executeBatchmodePlan(plan: BatchmodeCommandPlan, timeoutMs: numb
 	return new Promise<BatchmodeRunResult>((resolve) => {
 		let finished = false;
 		let exited = false;
+		let closed = false;
+		let exitCode: number | null = null;
+		let exitSignal: NodeJS.Signals | null = null;
+		let resolveClose: () => void;
+		const closePromise = new Promise<void>(done => { resolveClose = done; });
 		let stopReason: 'timed_out' | 'cancelled' | undefined;
-		let cleanupTimer: ReturnType<typeof setTimeout> | undefined;
 		const child = spawn(plan.unityPath, plan.args, { stdio: 'ignore', windowsHide: true, detached: process.platform !== 'win32' });
 
 		const finish = async (exitCode: number | null, exitSignal: NodeJS.Signals | null, failure?: string): Promise<void> => {
@@ -104,7 +108,6 @@ export function executeBatchmodePlan(plan: BatchmodeCommandPlan, timeoutMs: numb
 			}
 			finished = true;
 			clearTimeout(timeoutTimer);
-			clearTimeout(cleanupTimer);
 			abortSignal?.removeEventListener('abort', cancel);
 			const result = await readJsonIfPresent(plan.resultPath);
 			const stopped = stopReason === 'timed_out'
@@ -127,10 +130,15 @@ export function executeBatchmodePlan(plan: BatchmodeCommandPlan, timeoutMs: numb
 				return;
 			}
 			stopReason = reason;
-			const delivered = exited || (child.pid != null && await terminateOwnedProcessTree(child.pid, process.env));
-			cleanupTimer = setTimeout(() => {
-				void finish(null, null, `Unity batchmode command ${reason}; owned-process termination could not be confirmed.`);
-			}, delivered ? CLEANUP_TIMEOUT_MS : 0);
+			const delivered = child.pid == null || (process.platform === 'win32' && exited)
+				? closed
+				: await terminateOwnedProcessTree(child.pid, process.env);
+			const confirmed = closed || await new Promise<boolean>(done => {
+				const timer = setTimeout(() => done(false), CLEANUP_TIMEOUT_MS);
+				void closePromise.then(() => { clearTimeout(timer); done(true); });
+			});
+			await finish(exitCode, exitSignal, delivered && confirmed ? undefined
+				: `Unity batchmode command ${reason}; owned-process termination could not be confirmed.`);
 		};
 
 		const cancel = (): void => { void stop('cancelled'); };
@@ -138,7 +146,14 @@ export function executeBatchmodePlan(plan: BatchmodeCommandPlan, timeoutMs: numb
 		abortSignal?.addEventListener('abort', cancel, { once: true });
 		child.once('error', (error) => { void finish(null, null, error.message); });
 		child.once('exit', () => { exited = true; });
-		child.once('close', (exitCode, exitSignal) => { void finish(exitCode, exitSignal); });
+		child.once('close', (code, childSignal) => {
+			closed = true;
+			exitCode = code;
+			exitSignal = childSignal;
+			resolveClose();
+			if (stopReason == null) { void finish(code, childSignal); }
+		});
+		if (abortSignal?.aborted) { cancel(); }
 	});
 }
 
