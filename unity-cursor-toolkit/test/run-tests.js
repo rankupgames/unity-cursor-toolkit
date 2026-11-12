@@ -2532,6 +2532,12 @@ function testUnityProfilerSafetySource() {
 		assert.ok(disposeForViewSource.includes('resources.Dispose();'), 'stale render textures must be destroyed immediately');
 	});
 
+	test('bridge listens on loopback and batch runs skip automatic start', () => {
+		assert.ok(!hotReloadSource.includes('IPAddress.Any'), 'bridge listeners must not bind every interface');
+		assert.strictEqual(hotReloadSource.split('new TcpListener(IPAddress.Loopback,').length - 1, 3);
+		assert.ok(hotReloadSource.includes('SessionState.SetBool(sessionRunningKey, !Application.isBatchMode);'));
+	});
+
 	test('refresh handling avoids duplicate compilation and bounds queued message bytes', () => {
 		assert.ok(hotReloadSource.includes('private const int MAX_QUEUED_MESSAGE_CHARACTERS = 4 * 1024 * 1024;'));
 		assert.ok(hotReloadSource.includes('EnqueueMessage(line);'));
@@ -3166,6 +3172,38 @@ async function testUnityMcpTools() {
 
 async function testStandaloneMcpServer() {
 	console.log('\n── mcp/server.ts (standalone stdio) ──');
+
+	await testAsync('standalone bridge skips listeners without a toolkit pong and keeps data after the handshake', async () => {
+		const { StandaloneUnityConnection } = require(path.join(outDir, 'mcp', 'standaloneConnection'));
+		const replyOnPing = reply => net.createServer((socket) => socket.once('data', () => socket.write(reply)));
+		const malformed = replyOnPing('Unity debugger listener\n');
+		const wrongCommand = replyOnPing('{"command":"hello"}\n');
+		const partialThenSilent = replyOnPing('{"command":"po');
+		const bridge = net.createServer((socket) => socket.once('data', () => {
+			socket.write('{"command":"po');
+			setTimeout(() => socket.write('ng"}\n{"command":"consoleEntry","message":"after pong"}\n'), 20);
+		}));
+		const servers = [malformed, wrongCommand, partialThenSilent, bridge];
+		const ports = [];
+		for (const server of servers) {
+			ports.push(await listenOnLocalhost(server));
+		}
+		const connection = new StandaloneUnityConnection(ports);
+
+		try {
+			const received = new Promise(resolve => connection.onMessage(resolve));
+			connection.send('noop');
+			const message = await received;
+			assert.strictEqual(connection.port, ports[3]);
+			assert.strictEqual(message.command, 'consoleEntry');
+			assert.strictEqual(message.payload.message, 'after pong');
+		} finally {
+			connection.dispose();
+			for (const server of servers) {
+				await closeServer(server);
+			}
+		}
+	});
 
 	await testAsync('stdio server initializes and lists tools, resources, and prompts', async () => {
 		const closedPort = await getUnusedPort();

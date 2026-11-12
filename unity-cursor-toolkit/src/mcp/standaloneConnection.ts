@@ -14,6 +14,7 @@ import type { ICommandSender } from '../core/interfaces';
 const DEFAULT_PORTS = [55500, 55501, 55502, 55503, 55504] as const;
 const CONNECT_TIMEOUT_MS = 2_000;
 const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_HANDSHAKE_BYTES = 4_096;
 
 interface PendingRequest {
 	resolve: (value: Record<string, unknown> | null) => void;
@@ -113,11 +114,12 @@ export class StandaloneUnityConnection implements ICommandSender {
 		this.destroySocket();
 
 		for (const port of this.ports) {
-			const socket = await this.tryPort(port);
-			if (socket) {
-				this.socket = socket;
+			const handshake = await this.tryPort(port);
+			if (handshake) {
+				this.socket = handshake.socket;
 				this.connectedPort = port;
-				this.attachSocketListeners(socket);
+				this.attachSocketListeners(handshake.socket);
+				this.handleData(handshake.remainder);
 				return true;
 			}
 		}
@@ -125,66 +127,56 @@ export class StandaloneUnityConnection implements ICommandSender {
 		return false;
 	}
 
-	private tryPort(port: number): Promise<net.Socket | null> {
+	/** Accepts a port only after the listener answers the bridge ping with a pong line. */
+	private tryPort(port: number): Promise<{ socket: net.Socket; remainder: string } | null> {
 		return new Promise((resolve) => {
 			const socket = new net.Socket();
+			let buffer = '';
 			let settled = false;
 
-			const settle = (result: net.Socket | null) => {
+			const settle = (remainder: string | null) => {
 				if (settled) {
 					return;
 				}
 
 				settled = true;
+				clearTimeout(timer);
 				socket.removeAllListeners();
 
-				if (result == null) {
+				if (remainder == null) {
 					socket.destroy();
+					resolve(null);
+					return;
 				}
 
-				resolve(result);
+				resolve({ socket, remainder });
 			};
 
-			socket.setTimeout(CONNECT_TIMEOUT_MS);
+			const timer = setTimeout(() => settle(null), CONNECT_TIMEOUT_MS);
 			socket.once('connect', () => {
-				socket.setTimeout(0);
-				settle(socket);
+				socket.write(JSON.stringify({ command: 'ping' }) + '\n');
+			});
+			socket.on('data', (raw: Buffer) => {
+				buffer += raw.toString();
+				const newline = buffer.indexOf('\n');
+				if (newline < 0) {
+					if (buffer.length > MAX_HANDSHAKE_BYTES) {
+						settle(null);
+					}
+					return;
+				}
+
+				const isPong = parseJsonObject(buffer.slice(0, newline))?.command === 'pong';
+				settle(isPong ? buffer.slice(newline + 1) : null);
 			});
 			socket.once('error', () => settle(null));
-			socket.once('timeout', () => settle(null));
+			socket.once('close', () => settle(null));
 			socket.connect(port, 'localhost');
 		});
 	}
 
 	private attachSocketListeners(socket: net.Socket): void {
-		socket.on('data', (raw: Buffer) => {
-			this.dataBuffer += raw.toString();
-			const lines = this.dataBuffer.split('\n');
-			this.dataBuffer = lines.pop() ?? '';
-
-			for (const line of lines) {
-				const parsed = parseJsonObject(line);
-				if (parsed == null) {
-					continue;
-				}
-
-				const command = typeof parsed.command === 'string' ? parsed.command : undefined;
-				if (command == null) {
-					continue;
-				}
-
-				const requestId = typeof parsed._requestId === 'string' ? parsed._requestId : undefined;
-				if (requestId) {
-					this.resolvePendingRequest(requestId, parsed);
-					continue;
-				}
-
-				for (const handler of this.messageHandlers) {
-					handler({ command, payload: parsed });
-				}
-			}
-		});
-
+		socket.on('data', (raw: Buffer) => this.handleData(raw.toString()));
 		socket.on('close', () => {
 			this.destroySocket();
 			this.rejectPendingRequests();
@@ -193,6 +185,34 @@ export class StandaloneUnityConnection implements ICommandSender {
 			this.destroySocket();
 			this.rejectPendingRequests();
 		});
+	}
+
+	private handleData(text: string): void {
+		this.dataBuffer += text;
+		const lines = this.dataBuffer.split('\n');
+		this.dataBuffer = lines.pop() ?? '';
+
+		for (const line of lines) {
+			const parsed = parseJsonObject(line);
+			if (parsed == null) {
+				continue;
+			}
+
+			const command = typeof parsed.command === 'string' ? parsed.command : undefined;
+			if (command == null) {
+				continue;
+			}
+
+			const requestId = typeof parsed._requestId === 'string' ? parsed._requestId : undefined;
+			if (requestId) {
+				this.resolvePendingRequest(requestId, parsed);
+				continue;
+			}
+
+			for (const handler of this.messageHandlers) {
+				handler({ command, payload: parsed });
+			}
+		}
 	}
 
 	private write(payload: Record<string, unknown>): void {
