@@ -49,6 +49,7 @@ export class ViewportStreamMcpTools implements IToolProvider {
 	public readonly toolGroupName = 'viewport';
 
 	private server: http.Server | undefined;
+	private serverReady: Promise<http.Server> | undefined;
 	private clients = new Set<http.ServerResponse>();
 	private port: number | null = null;
 	private session: ViewportSession | undefined;
@@ -147,7 +148,10 @@ export class ViewportStreamMcpTools implements IToolProvider {
 			});
 		}
 
-		await this.ensureServer(requestedPort);
+		const server = await this.ensureServer(requestedPort).catch((error: Error) => error);
+		if (server instanceof Error || this.server !== server) {
+			return jsonResult({ success: false, error: server instanceof Error ? server.message : 'Viewport stream stopped while starting.' }, true);
+		}
 		const streamUrl = `http://127.0.0.1:${this.port}/viewport.mjpg`;
 		this.session = {
 			sessionId,
@@ -167,7 +171,9 @@ export class ViewportStreamMcpTools implements IToolProvider {
 		});
 
 		if (unity == null || isUnityFailure(unity.result)) {
-			await this.closeServer();
+			if (this.session?.sessionId === sessionId) {
+				await this.closeServer();
+			}
 			return jsonResult({
 				success: false,
 				error: unity == null ? 'Unity did not respond to viewport_stream start.' : 'Unity rejected viewport_stream start.',
@@ -213,24 +219,37 @@ export class ViewportStreamMcpTools implements IToolProvider {
 		return jsonResult({ success: true, unity: unity.result });
 	}
 
-	private async ensureServer(requestedPort: number): Promise<void> {
-		if (this.server) {
-			return;
+	/** Shares one pending listen across concurrent starts; a listener that a stop superseded closes itself. */
+	private ensureServer(requestedPort: number): Promise<http.Server> {
+		if (this.serverReady) {
+			return this.serverReady;
 		}
 
-		this.server = http.createServer((request, response) => {
+		const server = http.createServer((request, response) => {
 			void this.handleHttpRequest(request, response);
 		});
-
-		await new Promise<void>((resolve, reject) => {
-			this.server?.once('error', reject);
-			this.server?.listen(requestedPort, '127.0.0.1', () => {
-				this.server?.removeListener('error', reject);
-				const address = this.server?.address() as AddressInfo | null;
-				this.port = address?.port ?? requestedPort;
+		const ready: Promise<http.Server> = new Promise<void>((resolve, reject) => {
+			server.once('error', reject);
+			server.listen(requestedPort, '127.0.0.1', () => {
+				server.removeListener('error', reject);
 				resolve();
 			});
+		}).then(async () => {
+			if (this.serverReady !== ready) {
+				await closeHttpServer(server);
+				throw new Error('Viewport stream stopped while starting.');
+			}
+			this.server = server;
+			this.port = (server.address() as AddressInfo).port;
+			return server;
+		}, (error: Error) => {
+			if (this.serverReady === ready) {
+				this.serverReady = undefined;
+			}
+			throw error;
 		});
+		this.serverReady = ready;
+		return ready;
 	}
 
 	private async handleHttpRequest(request: http.IncomingMessage, response: http.ServerResponse): Promise<void> {
@@ -294,12 +313,16 @@ export class ViewportStreamMcpTools implements IToolProvider {
 		this.clients.clear();
 
 		const server = this.server;
+		const pending = this.serverReady;
 		this.server = undefined;
+		this.serverReady = undefined;
 		this.port = null;
 		this.session = undefined;
 
 		if (server) {
-			await new Promise<void>((resolve) => server.close(() => resolve()));
+			await closeHttpServer(server);
+		} else if (pending) {
+			await pending.catch(() => undefined);
 		}
 	}
 
@@ -320,6 +343,10 @@ export class ViewportStreamMcpTools implements IToolProvider {
 			lastFrame: this.session?.latestFrame
 		};
 	}
+}
+
+function closeHttpServer(server: http.Server): Promise<void> {
+	return new Promise((resolve) => server.close(() => resolve()));
 }
 
 export function buildViewportHostSessionSnapshot(options: {

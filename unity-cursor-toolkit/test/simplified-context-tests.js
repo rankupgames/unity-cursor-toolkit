@@ -105,6 +105,14 @@ async function getUnusedPort() {
 	return port;
 }
 
+function isPortFree(port) {
+	return new Promise((resolve) => {
+		const probe = net.createServer();
+		probe.once('error', () => resolve(false));
+		probe.listen(port, '127.0.0.1', () => probe.close(() => resolve(true)));
+	});
+}
+
 function httpGet(url) {
 	return new Promise((resolve, reject) => {
 		http.get(url, (response) => {
@@ -521,6 +529,31 @@ async function testViewportStreamMcpTools() {
 		assert.strictEqual(start.hostSession.input.kind, 'unityMcp');
 		assert.strictEqual(input.args.inputType, 'key');
 		assert.strictEqual(input.args.key, 'Space');
+		await tools.dispose();
+	});
+
+	await testAsync('viewport_stream listener recovers from a bind failure, shares concurrent starts, and closes on a stop race', async () => {
+		const tools = new ViewportStreamMcpTools({ send() {}, request: async () => ({ result: { success: true } }) });
+		const startStream = port => tools.handleToolCall('viewport_stream', { action: 'start', port });
+
+		const blocker = net.createServer();
+		const busyPort = await listenOnLocalhost(blocker);
+		const failed = parseToolJson(await startStream(busyPort));
+		await closeServer(blocker);
+		assert.strictEqual(failed.success, false);
+
+		const [first, second] = (await Promise.all([startStream(0), startStream(0)])).map(parseToolJson);
+		assert.strictEqual(first.success, true);
+		assert.strictEqual(second.success, true);
+		assert.strictEqual(typeof first.status.port, 'number');
+		assert.strictEqual(second.status.port, first.status.port);
+		await tools.handleToolCall('viewport_stream', { action: 'stop' });
+
+		const racePort = await getUnusedPort();
+		const racingStart = startStream(racePort);
+		await tools.handleToolCall('viewport_stream', { action: 'stop' });
+		assert.strictEqual(parseToolJson(await racingStart).success, false);
+		assert.strictEqual(await isPortFree(racePort), true, 'a stop during start must not leave the listener open');
 		await tools.dispose();
 	});
 
