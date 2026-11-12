@@ -1,0 +1,26 @@
+name: Jenkins CI
+
+on:
+  push:
+    branches: [main, 'Version-*']
+  pull_request_target:
+    branches: [main, 'Version-*']
+  schedule:
+    - cron: '0 11 * * 5'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  submit:
+    uses: ./.github/workflows/jenkins-submit.yml
+    with:
+      source-sha: ${{ github.event.pull_request.head.sha || github.sha }}
+      branch: ${{ github.event.pull_request.head.ref || github.ref_name }}
+      check-type: check
+      pr-number: ${{ github.event_name == 'pull_request_target' && format('{0}', github.event.pull_request.number) || '' }}
+    secrets:
+      JENKINS_TRIGGER_USER: ${{ secrets.JENKINS_TRIGGER_USER }}
+      JENKINS_TRIGGER_TOKEN: ${{ secrets.JENKINS_TRIGGER_TOKEN }}
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}

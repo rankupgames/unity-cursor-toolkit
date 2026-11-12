@@ -53,8 +53,15 @@ requests for open, mergeable, same-repository pull requests from trusted
 contributors. A PR request includes `pullRequest`, its head `branch`, and the
 exact current head `sourceSha`. Eligible new PR branches need no branch-registry
 edit. Forks, changed heads and unmergeable requests fail closed.
-Automatic submission also needs a trigger workflow and paired Jenkins and
-gateway credentials. This lane does not select Instabox overflow. Reuse the shared portable or managed Actions
+`jenkins-check.yml` submits exact revisions through the reviewed local reusable
+`jenkins-submit.yml`. PR events submit the head SHA and PR number without
+checking out PR source. Push, PR, manual and Friday 11:00 UTC triggers preserve
+the existing branch filters and schedule. Jenkins owns execution and results.
+Activation needs the `HOMELAB_JENKINS_URL` repository variable and paired
+`JENKINS_TRIGGER_USER`, `JENKINS_TRIGGER_TOKEN`, `CF_ACCESS_CLIENT_ID` and
+`CF_ACCESS_CLIENT_SECRET` secrets. Disable superseded build workflows before
+enabling Actions. Protect the native Jenkins context after reporter acceptance.
+This lane does not select Instabox overflow. Reuse the shared portable or managed Actions
 adapter after its project-specific tools, credentials and output contract are
 approved. Do not add a second scheduler or an unmanaged worker.
 

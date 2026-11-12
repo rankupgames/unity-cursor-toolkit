@@ -10,6 +10,8 @@ test "$(npm config get min-release-age)" = '7'
 test -f package-lock.json
 
 npm ci
+npx --yes github-actionlint@1.7.12 ../.github/workflows/ci.yml ../.github/workflows/release.yml \
+  ../.github/workflows/jenkins-check.yml ../.github/workflows/jenkins-submit.yml
 npm run validate
 npm run sync:package -- --check
 

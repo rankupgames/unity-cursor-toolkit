@@ -1,0 +1,116 @@
+name: Submit Jenkins check
+on:
+  workflow_call:
+    inputs:
+      source-sha: {required: true, type: string}
+      branch: {required: true, type: string}
+      check-type: {required: true, type: string}
+      machine: {required: false, type: string, default: ''}
+      # Metadata only. A pull_request_target caller passes the number and head SHA, never PR source.
+      pr-number: {required: false, type: string, default: ''}
+    secrets:
+      JENKINS_TRIGGER_USER: {required: true}
+      JENKINS_TRIGGER_TOKEN: {required: true}
+      CF_ACCESS_CLIENT_ID: {required: true}
+      CF_ACCESS_CLIENT_SECRET: {required: true}
+permissions: {}
+jobs:
+  submit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    env:
+      JENKINS_URL: ${{ vars.HOMELAB_JENKINS_URL }}
+      JENKINS_USER: ${{ secrets.JENKINS_TRIGGER_USER }}
+      JENKINS_TOKEN: ${{ secrets.JENKINS_TRIGGER_TOKEN }}
+      CF_ACCESS_CLIENT_ID: ${{ secrets.CF_ACCESS_CLIENT_ID }}
+      CF_ACCESS_CLIENT_SECRET: ${{ secrets.CF_ACCESS_CLIENT_SECRET }}
+      REPOSITORY: ${{ github.repository }}
+      SOURCE_SHA: ${{ inputs.source-sha }}
+      SOURCE_BRANCH: ${{ inputs.branch }}
+      CHECK_TYPE: ${{ inputs.check-type }}
+      MACHINE_CONFIG: ${{ inputs.machine }}
+      PULL_REQUEST: ${{ inputs.pr-number }}
+    steps:
+      - name: Submit typed request
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import base64
+          import json
+          import os
+          import re
+          from urllib.parse import urlencode, urlsplit
+          from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
+
+          class NoRedirect(HTTPRedirectHandler):
+              def redirect_request(self, *args, **kwargs):
+                  return None
+
+          base = os.environ['JENKINS_URL'].rstrip('/')
+          url = urlsplit(base)
+          if (url.scheme != 'https' or not url.hostname or url.username or url.password
+                  or url.query or url.fragment):
+              raise SystemExit('Configured Jenkins HTTPS address is invalid.')
+          source = os.environ['SOURCE_SHA']
+          owner_repo = os.environ['REPOSITORY']
+          if (not re.fullmatch('[a-f0-9]{40}', source)
+                  or not re.fullmatch('[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', owner_repo)):
+              raise SystemExit('Repository or exact source revision is invalid.')
+          request = {'version': 1, 'repository': 'https://github.com/' + owner_repo + '.git',
+                     'branch': os.environ['SOURCE_BRANCH'], 'sourceSha': source,
+                     'lane': os.environ['CHECK_TYPE']}
+          machine_text = os.environ.get('MACHINE_CONFIG', '')
+          if machine_text != '':
+              def unique_object(pairs):
+                  value = {}
+                  for key, item in pairs:
+                      if key in value:
+                          raise SystemExit('Machine configuration contains a duplicate field.')
+                      value[key] = item
+                  return value
+              machine = json.loads(machine_text, object_pairs_hook=unique_object)
+              if (not isinstance(machine, dict) or set(machine) != {
+                      'schemaVersion', 'snapshotId', 'vcpus', 'memoryMiB', 'diskGiB'}
+                      or type(machine['schemaVersion']) is not int or machine['schemaVersion'] != 1
+                      or not isinstance(machine['snapshotId'], str)
+                      or not re.fullmatch('sn_[a-z0-9]{26}', machine['snapshotId'])
+                      or not all(type(machine[key]) is int and low <= machine[key] <= high
+                                 for key, low, high in (('vcpus', 1, 32), ('memoryMiB', 1024, 65536),
+                                                        ('diskGiB', 20, 1024)))):
+                  raise SystemExit('Machine configuration is invalid.')
+              request.update(version=2, machine=machine)
+          pull_request = os.environ.get('PULL_REQUEST', '')
+          if pull_request != '':
+              # The registered lane decides PR admission. Jenkins re-reads the PR from GitHub.
+              if not re.fullmatch('[1-9][0-9]{0,8}', pull_request) or machine_text != '':
+                  raise SystemExit('Pull request submission is invalid.')
+              request.update(version=3, pullRequest=int(pull_request))
+          elif request['lane'] == 'pr':
+              raise SystemExit('The pull request lane requires a pull request number.')
+          payload = json.dumps(request)
+          if len(payload.encode()) > 4096:
+              raise SystemExit('Request exceeds the dispatcher limit.')
+          identity = os.environ['JENKINS_USER'] + ':' + os.environ['JENKINS_TOKEN']
+          access_id = os.environ['CF_ACCESS_CLIENT_ID']
+          access_secret = os.environ['CF_ACCESS_CLIENT_SECRET']
+          if any(not value or any(c in value for c in '\r\n\0') for value in (access_id, access_secret)):
+              raise SystemExit('Paired Cloudflare Access trigger credentials are required.')
+          headers = {'CF-Access-Client-Id': access_id, 'CF-Access-Client-Secret': access_secret,
+                     'Authorization': 'Basic ' + base64.b64encode(identity.encode()).decode(),
+                     'Content-Type': 'application/x-www-form-urlencoded',
+                     'User-Agent': 'Jenkins-CI-Trigger/1.0'}
+          opener = build_opener(ProxyHandler({}), NoRedirect())
+          endpoint = base + '/job/homelab-check-ingress/buildWithParameters'
+          with opener.open(Request(endpoint, data=urlencode({'REQUEST': payload}).encode(),
+                                   headers=headers), timeout=40) as response:
+              if response.status != 201:
+                  raise SystemExit('Jenkins did not acknowledge queue admission.')
+              location = response.headers.get_all('Location', [])
+              expected = base + '/queue/item/'
+              if (len(location) != 1 or not location[0].startswith(expected)
+                      or not re.fullmatch('[1-9][0-9]*/', location[0][len(expected):])
+                      or len(response.read(4097)) > 4096):
+                  raise SystemExit('Ambiguous acknowledgement; reconcile Jenkins queue before retry.')
+          print('Queued: ' + location[0])
+          print('Submission only; use the Jenkins commit status for the check result.')
+          PY
