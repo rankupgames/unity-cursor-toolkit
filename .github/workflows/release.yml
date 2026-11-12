@@ -33,14 +33,14 @@ jobs:
         id: version
         run: |
           TAG="${GITHUB_REF#refs/tags/v}"
-          echo "version=${TAG}" >> $GITHUB_OUTPUT
+          echo "version=${TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Read UPM version
         id: upm
         run: |
           UPM_PKG="../Packages/com.rankupgames.unity-cursor-toolkit/package.json"
           UPM_VERSION=$(node -e "console.log(require('${UPM_PKG}').version)")
-          echo "upm_version=${UPM_VERSION}" >> $GITHUB_OUTPUT
+          echo "upm_version=${UPM_VERSION}" >> "$GITHUB_OUTPUT"
           echo "UPM package version: ${UPM_VERSION}"
 
       - name: Stamp extension version
@@ -103,12 +103,15 @@ jobs:
         run: |
           VERSION="${{ needs.build.outputs.version }}"
           UPM_VERSION="${{ needs.build.outputs.upm_version }}"
-          VSCODE_VSIX=$(ls dist/vscode/*.vsix | head -1)
-          OPENVSX_VSIX=$(ls dist/openvsx/*.vsix | head -1)
-          if [ -z "$VSCODE_VSIX" ] || [ -z "$OPENVSX_VSIX" ]; then
-            echo "::error::Build VSIX artifacts are missing"
+          shopt -s nullglob
+          VSCODE_VSIX_FILES=(dist/vscode/*.vsix)
+          OPENVSX_VSIX_FILES=(dist/openvsx/*.vsix)
+          if [ "${#VSCODE_VSIX_FILES[@]}" -ne 1 ] || [ "${#OPENVSX_VSIX_FILES[@]}" -ne 1 ]; then
+            echo "::error::Exactly one VSIX artifact per marketplace is required"
             exit 1
           fi
+          VSCODE_VSIX=${VSCODE_VSIX_FILES[0]}
+          OPENVSX_VSIX=${OPENVSX_VSIX_FILES[0]}
           COMMIT_SHORT=$(echo "${{ github.sha }}" | cut -c1-8)
           REPO="${{ github.repository }}"
 
@@ -186,11 +189,13 @@ jobs:
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
-          VSIX_FILE=$(ls dist/openvsx/*.vsix | head -1)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No OpenVSX VSIX artifact downloaded"
+          shopt -s nullglob
+          VSIX_FILES=(dist/openvsx/*.vsix)
+          if [ "${#VSIX_FILES[@]}" -ne 1 ]; then
+            echo "::error::Exactly one OpenVSX VSIX artifact is required"
             exit 1
           fi
+          VSIX_FILE=${VSIX_FILES[0]}
           npx ovsx publish "$VSIX_FILE" -p "$OVSX_PAT"
 
       - name: OpenVSX summary
@@ -252,11 +257,13 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          VSIX_FILE=$(ls dist/vscode/*.vsix | head -1)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VS Code Marketplace VSIX artifact downloaded"
+          shopt -s nullglob
+          VSIX_FILES=(dist/vscode/*.vsix)
+          if [ "${#VSIX_FILES[@]}" -ne 1 ]; then
+            echo "::error::Exactly one VS Code Marketplace VSIX artifact is required"
             exit 1
           fi
+          VSIX_FILE=${VSIX_FILES[0]}
           npx vsce publish --packagePath "$VSIX_FILE"
 
       - name: VS Code Marketplace summary

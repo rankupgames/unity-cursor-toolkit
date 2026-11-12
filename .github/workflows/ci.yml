@@ -23,7 +23,7 @@ jobs:
       - name: Check for changes since last build
         id: changes
         run: |
-          echo "has_changes=true" >> $GITHUB_OUTPUT
+          echo "has_changes=true" >> "$GITHUB_OUTPUT"
           if [ "${{ github.event_name }}" = "schedule" ]; then
             echo "Friday scheduled run, building VS Code and OpenVSX packages"
           else
@@ -44,7 +44,7 @@ jobs:
           DAILY_INCREMENT=${DAILY_RUNS:-0}
 
           BUILD_VERSION="0.7.${DAILY_INCREMENT}${TODAY}"
-          echo "build_version=${BUILD_VERSION}" >> $GITHUB_OUTPUT
+          echo "build_version=${BUILD_VERSION}" >> "$GITHUB_OUTPUT"
           echo "Version: ${BUILD_VERSION}"
 
   build:
@@ -131,15 +131,17 @@ jobs:
       - name: Build summary
         if: always()
         run: |
-          echo "## Extension Build Summary" >> $GITHUB_STEP_SUMMARY
-          echo "| Field | Value |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|-------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Version | \`${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Branch | \`${{ github.ref_name }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Trigger | ${{ github.event_name }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| VS Code Artifact | \`vscode-extension-${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| OpenVSX Artifact | \`openvsx-extension-${{ needs.check-changes.outputs.build_version }}\` |" >> $GITHUB_STEP_SUMMARY
-          echo "| Status | ${{ job.status }} |" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Extension Build Summary"
+            echo "| Field | Value |"
+            echo "|-------|-------|"
+            echo "| Version | \`${{ needs.check-changes.outputs.build_version }}\` |"
+            echo "| Branch | \`${{ github.ref_name }}\` |"
+            echo "| Trigger | ${{ github.event_name }} |"
+            echo "| VS Code Artifact | \`vscode-extension-${{ needs.check-changes.outputs.build_version }}\` |"
+            echo "| OpenVSX Artifact | \`openvsx-extension-${{ needs.check-changes.outputs.build_version }}\` |"
+            echo "| Status | ${{ job.status }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
 
   publish-openvsx:
     environment:
@@ -186,11 +188,13 @@ jobs:
         env:
           OVSX_PAT: ${{ secrets.OVSX_PAT }}
         run: |
-          VSIX_FILE=$(ls dist/openvsx/*.vsix | head -1)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No OpenVSX VSIX artifact downloaded"
+          shopt -s nullglob
+          VSIX_FILES=(dist/openvsx/*.vsix)
+          if [ "${#VSIX_FILES[@]}" -ne 1 ]; then
+            echo "::error::Exactly one OpenVSX VSIX artifact is required"
             exit 1
           fi
+          VSIX_FILE=${VSIX_FILES[0]}
           npx ovsx publish "$VSIX_FILE" -p "$OVSX_PAT"
 
       - name: OpenVSX summary
@@ -253,11 +257,13 @@ jobs:
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
-          VSIX_FILE=$(ls dist/vscode/*.vsix | head -1)
-          if [ -z "$VSIX_FILE" ]; then
-            echo "::error::No VS Code Marketplace VSIX artifact downloaded"
+          shopt -s nullglob
+          VSIX_FILES=(dist/vscode/*.vsix)
+          if [ "${#VSIX_FILES[@]}" -ne 1 ]; then
+            echo "::error::Exactly one VS Code Marketplace VSIX artifact is required"
             exit 1
           fi
+          VSIX_FILE=${VSIX_FILES[0]}
           npx vsce publish --packagePath "$VSIX_FILE"
 
       - name: VS Code Marketplace summary
