@@ -48,9 +48,13 @@ bindings until the Jenkins reporter is accepted and the protection change is
 approved. Retire old build triggers as part of that authorized cutover, after
 accounting for active and queued runs. Actions activation is separate.
 
-The accepted dispatcher supports registered Linux branch heads. Automatic PR
-dispatch and the Actions front door need a reviewed admin binding. This lane
-does not select Instabox overflow. Reuse the shared portable or managed Actions
+The shared dispatcher accepts registered Linux branch heads and version-3
+requests for open, mergeable, same-repository pull requests from trusted
+contributors. A PR request includes `pullRequest`, its head `branch`, and the
+exact current head `sourceSha`. Eligible new PR branches need no branch-registry
+edit. Forks, changed heads and unmergeable requests fail closed.
+Automatic submission also needs a trigger workflow and paired Jenkins and
+gateway credentials. This lane does not select Instabox overflow. Reuse the shared portable or managed Actions
 adapter after its project-specific tools, credentials and output contract are
 approved. Do not add a second scheduler or an unmanaged worker.
 
