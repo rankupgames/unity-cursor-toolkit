@@ -6,9 +6,11 @@ import * as fs from 'fs/promises';
 import * as os from 'os';
 import * as path from 'path';
 import { spawn } from 'child_process';
+import { terminateOwnedProcessTree } from '../core/unityCliAdapter';
 import { resolveProjectRoot } from './standaloneProjectTools';
 
 const DEFAULT_TIMEOUT_MS = 120_000;
+const CLEANUP_TIMEOUT_MS = 5_000;
 const ENTRY_METHOD = 'UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run';
 
 export interface BatchmodeCommandPlan {
@@ -28,6 +30,7 @@ export interface BatchmodeRunResult {
 	readonly exitCode: number | null;
 	readonly signal: NodeJS.Signals | null;
 	readonly result?: unknown;
+	readonly terminationReason?: 'timed_out' | 'cancelled';
 	readonly logTail?: string;
 	readonly error?: string;
 }
@@ -77,42 +80,65 @@ export async function buildBatchmodeCommandPlan(args: Record<string, unknown>): 
 	};
 }
 
-export async function runBatchmodeGameCommand(args: Record<string, unknown>): Promise<BatchmodeRunResult> {
-	const timeoutMs = getNumber(args, 'timeoutMs', DEFAULT_TIMEOUT_MS);
+export async function runBatchmodeGameCommand(args: Record<string, unknown>, signal?: AbortSignal): Promise<BatchmodeRunResult> {
 	const plan = await buildBatchmodeCommandPlan(args);
+	return executeBatchmodePlan(plan, getNumber(args, 'timeoutMs', DEFAULT_TIMEOUT_MS), signal);
+}
+
+/** Runs the planned child, stops only its owned process tree on timeout or abort, and resolves after it closes. */
+export function executeBatchmodePlan(plan: BatchmodeCommandPlan, timeoutMs: number, abortSignal?: AbortSignal): Promise<BatchmodeRunResult> {
+	if (abortSignal?.aborted) {
+		return Promise.resolve({ success: false, plan, exitCode: null, signal: null, terminationReason: 'cancelled', error: 'Unity batchmode command was cancelled before it started.' });
+	}
 
 	return new Promise<BatchmodeRunResult>((resolve) => {
-		const child = spawn(plan.unityPath, plan.args, { stdio: 'ignore' });
-		const timer = setTimeout(() => {
-			child.kill('SIGTERM');
-		}, timeoutMs);
+		let finished = false;
+		let exited = false;
+		let stopReason: 'timed_out' | 'cancelled' | undefined;
+		let cleanupTimer: ReturnType<typeof setTimeout> | undefined;
+		const child = spawn(plan.unityPath, plan.args, { stdio: 'ignore', windowsHide: true, detached: process.platform !== 'win32' });
 
-		child.on('error', async (error) => {
-			clearTimeout(timer);
-			resolve({
-				success: false,
-				plan,
-				exitCode: null,
-				signal: null,
-				error: error.message,
-				logTail: await readLogTail(plan.logPath)
-			});
-		});
-
-		child.on('exit', async (exitCode, signal) => {
-			clearTimeout(timer);
+		const finish = async (exitCode: number | null, exitSignal: NodeJS.Signals | null, failure?: string): Promise<void> => {
+			if (finished) {
+				return;
+			}
+			finished = true;
+			clearTimeout(timeoutTimer);
+			clearTimeout(cleanupTimer);
+			abortSignal?.removeEventListener('abort', cancel);
 			const result = await readJsonIfPresent(plan.resultPath);
-			const timedOut = signal === 'SIGTERM' && exitCode == null;
+			const stopped = stopReason === 'timed_out'
+				? `Unity batchmode command timed out after ${timeoutMs}ms; its owned process tree was terminated.`
+				: stopReason === 'cancelled' ? 'Unity batchmode command was cancelled; its owned process tree was terminated.' : undefined;
 			resolve({
-				success: exitCode === 0 && timedOut === false && isFailureResult(result) === false,
+				success: failure == null && stopReason == null && exitCode === 0 && isFailureResult(result) === false,
 				plan,
 				exitCode,
-				signal,
+				signal: exitSignal,
 				result,
-				error: timedOut ? `Unity batchmode command timed out after ${timeoutMs}ms.` : undefined,
+				terminationReason: stopReason,
+				error: failure ?? stopped,
 				logTail: await readLogTail(plan.logPath)
 			});
-		});
+		};
+
+		const stop = async (reason: 'timed_out' | 'cancelled'): Promise<void> => {
+			if (finished || stopReason != null) {
+				return;
+			}
+			stopReason = reason;
+			const delivered = exited || (child.pid != null && await terminateOwnedProcessTree(child.pid, process.env));
+			cleanupTimer = setTimeout(() => {
+				void finish(null, null, `Unity batchmode command ${reason}; owned-process termination could not be confirmed.`);
+			}, delivered ? CLEANUP_TIMEOUT_MS : 0);
+		};
+
+		const cancel = (): void => { void stop('cancelled'); };
+		const timeoutTimer = setTimeout(() => { void stop('timed_out'); }, timeoutMs);
+		abortSignal?.addEventListener('abort', cancel, { once: true });
+		child.once('error', (error) => { void finish(null, null, error.message); });
+		child.once('exit', () => { exited = true; });
+		child.once('close', (exitCode, exitSignal) => { void finish(exitCode, exitSignal); });
 	});
 }
 

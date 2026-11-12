@@ -283,6 +283,40 @@ async function testGameCommandBatchmode() {
 				fs.rmSync(path.dirname(payload.batchmode.resultPath), { recursive: true, force: true });
 			});
 		});
+
+		const { executeBatchmodePlan } = require(path.join(outDir, 'mcp', 'gameCommandBatchmode'));
+		const runOwnedChild = async (timeoutMs, signal) => {
+			const pidPath = path.join(fixture.tmpDir, `child-${Date.now()}.pid`);
+			const script = 'require("fs").writeFileSync(process.argv[1], String(process.pid)); setInterval(() => {}, 1000);';
+			const plan = { unityPath: process.execPath, args: ['-e', script, pidPath], resultPath: path.join(fixture.tmpDir, 'none.json'), logPath: path.join(fixture.tmpDir, 'none.log') };
+			const pending = executeBatchmodePlan(plan, timeoutMs, signal);
+			while (!fs.existsSync(pidPath) || fs.readFileSync(pidPath, 'utf8').length === 0) {
+				await sleep(20);
+			}
+			return pending;
+		};
+		const exitObserved = result => result.exitCode != null || result.signal != null;
+
+		await testAsync('game_command batchmode abort terminates the owned child and resolves after it exits', async () => {
+			const controller = new AbortController();
+			const pending = await runOwnedChild(30_000, controller.signal);
+			controller.abort();
+			const result = await pending;
+
+			assert.strictEqual(result.success, false);
+			assert.strictEqual(result.terminationReason, 'cancelled');
+			assert.match(result.error, /cancelled; its owned process tree was terminated/);
+			assert.ok(exitObserved(result), 'result must come from the child close event');
+		});
+
+		await testAsync('game_command batchmode timeout reports timed_out after the owned child exits', async () => {
+			const result = await (await runOwnedChild(300));
+
+			assert.strictEqual(result.success, false);
+			assert.strictEqual(result.terminationReason, 'timed_out');
+			assert.match(result.error, /timed out after 300ms/);
+			assert.ok(exitObserved(result), 'result must come from the child close event');
+		});
 	} finally {
 		fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
 	}
