@@ -19,6 +19,7 @@ for artifact in 'Plugins/macOS/unterm.dylib' 'Plugins/macOS/unterm-debugger' \
   python3 - "$vendor/$artifact" "$attestation_directory/bundles.jsonl" <<'BUNDLES'
 import hashlib
 import json
+import re
 from pathlib import Path
 import sys
 from urllib.request import Request, urlopen
@@ -31,7 +32,10 @@ request = Request(endpoint, headers={'Accept': 'application/vnd.github+json',
 with urlopen(request, timeout=40) as response:
     payload = response.read(2 * 1024 * 1024 + 1)
     assert len(payload) <= 2 * 1024 * 1024, 'vendor_attestations_oversized'
-    assert response.headers.get('Link') is None, 'vendor_attestations_incomplete'
+    links = ','.join(response.headers.get_all('Link', []))
+    relations = {relation for quoted, bare in re.findall(r'\brel=(?:"([^"]+)"|([^;,\s]+))', links)
+                 for relation in (quoted or bare).split()}
+    assert 'next' not in relations, 'vendor_attestations_incomplete'
 value = json.loads(payload)
 assert isinstance(value, dict) and isinstance(value.get('attestations'), list), 'vendor_attestations_invalid'
 attestations = value['attestations']
