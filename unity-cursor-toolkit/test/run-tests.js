@@ -2532,6 +2532,12 @@ function testUnityProfilerSafetySource() {
 		assert.ok(disposeForViewSource.includes('resources.Dispose();'), 'stale render textures must be destroyed immediately');
 	});
 
+	test('bridge listens on loopback and batch runs skip automatic start', () => {
+		assert.ok(!hotReloadSource.includes('IPAddress.Any'), 'bridge listeners must not bind every interface');
+		assert.strictEqual(hotReloadSource.split('new TcpListener(IPAddress.Loopback,').length - 1, 3);
+		assert.ok(hotReloadSource.includes('SessionState.SetBool(sessionRunningKey, !Application.isBatchMode);'));
+	});
+
 	test('refresh handling avoids duplicate compilation and bounds queued message bytes', () => {
 		assert.ok(hotReloadSource.includes('private const int MAX_QUEUED_MESSAGE_CHARACTERS = 4 * 1024 * 1024;'));
 		assert.ok(hotReloadSource.includes('EnqueueMessage(line);'));
