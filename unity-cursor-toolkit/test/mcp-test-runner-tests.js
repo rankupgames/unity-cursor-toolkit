@@ -203,7 +203,12 @@ async function main() {
    socket.on('data', bytes => {
     input += bytes.toString(); const lines = input.split('\n'); input = lines.pop();
     for (const line of lines) {
-     const request = JSON.parse(line), args = request.args;
+     const request = JSON.parse(line);
+     if (request.command === 'ping') {
+      socket.write(JSON.stringify({ command: 'pong' }) + '\n');
+      continue;
+     }
+     const args = request.args;
      const result = args.action === 'capabilities' ? capabilities : snapshot(args, args.action === 'cancel' ? 'cancelled' : 'running');
      if (args.action === 'cancel') cancellationSeen = true;
      socket.write(JSON.stringify({ command: 'mcpToolResult', _requestId: request._requestId, result }) + '\n');
