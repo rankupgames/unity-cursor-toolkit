@@ -153,7 +153,7 @@ export class ViewportStreamMcpTools implements IToolProvider {
 			return jsonResult({ success: false, error: server instanceof Error ? server.message : 'Viewport stream stopped while starting.' }, true);
 		}
 		const streamUrl = `http://127.0.0.1:${this.port}/viewport.mjpg`;
-		this.session = {
+		const session: ViewportSession = {
 			sessionId,
 			startedAt: new Date().toISOString(),
 			host,
@@ -164,16 +164,18 @@ export class ViewportStreamMcpTools implements IToolProvider {
 			streamUrl,
 			hostSession: buildViewportHostSessionSnapshot({ sessionId, host, view, captureMode, width, height, fps, quality, streamUrl })
 		};
+		this.session = session;
 
 		const unity = await this.commandSender.request('mcpToolCall', {
 			toolName: 'viewport_stream',
 			args: { action: 'start', sessionId, width, height, fps, quality, host, view, captureMode }
 		});
 
+		if (this.session !== session || this.server !== server) {
+			return jsonResult({ success: false, error: 'Viewport stream start was superseded.' }, true);
+		}
 		if (unity == null || isUnityFailure(unity.result)) {
-			if (this.session?.sessionId === sessionId) {
-				await this.closeServer();
-			}
+			await this.closeServer();
 			return jsonResult({
 				success: false,
 				error: unity == null ? 'Unity did not respond to viewport_stream start.' : 'Unity rejected viewport_stream start.',

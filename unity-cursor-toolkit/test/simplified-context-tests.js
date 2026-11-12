@@ -555,10 +555,11 @@ async function testViewportStreamMcpTools() {
 		assert.strictEqual(failed.success, false);
 
 		const [first, second] = (await Promise.all([startStream(0), startStream(0)])).map(parseToolJson);
-		assert.strictEqual(first.success, true);
+		assert.strictEqual(first.success, false);
+		assert.match(first.error, /superseded/);
 		assert.strictEqual(second.success, true);
-		assert.strictEqual(typeof first.status.port, 'number');
-		assert.strictEqual(second.status.port, first.status.port);
+		assert.strictEqual(typeof second.status.port, 'number');
+		assert.strictEqual((await httpGet(`http://127.0.0.1:${second.status.port}/status.json`)).statusCode, 200);
 		await tools.handleToolCall('viewport_stream', { action: 'stop' });
 
 		const racePort = await getUnusedPort();
