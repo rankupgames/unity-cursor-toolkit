@@ -65,7 +65,11 @@ This lane does not select Instabox overflow. Reuse the shared portable or manage
 adapter after its project-specific tools, credentials and output contract are
 approved. Do not add a second scheduler or an unmanaged worker.
 
-Vendor attestation verification and its Node 26 toolchain remain separate gates.
+`ci/jenkins/vendor.sh` preserves full validation on Node 26.4.0 and verifies the
+five existing fork artifacts against their exact source commit, source ref and
+signer workflow. It rejects attestations from self-hosted runners. Public bundles
+keep GitHub credentials outside PR execution. The Node package is pinned and
+uses the same seven-day npm age gate without replacing worker tools.
 Windows/macOS Unity runtime proofs require compatible workers. Linux validation
 does not prove native Unity compatibility. Release approvals and marketplace
 publication remain in their existing separate scope.

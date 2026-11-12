@@ -14,6 +14,7 @@ npx --yes github-actionlint@1.7.12 ../.github/workflows/ci.yml ../.github/workfl
   ../.github/workflows/jenkins-check.yml ../.github/workflows/jenkins-submit.yml
 npm run validate
 npm run sync:package -- --check
+bash ../ci/jenkins/vendor.sh
 
 # Keep the authored version. This lane neither stamps nor publishes releases.
 node <<'NODE'
