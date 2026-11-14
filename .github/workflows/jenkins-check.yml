@@ -1,12 +1,7 @@
-name: Jenkins CI
+name: Legacy Jenkins bootstrap
 
 on:
-  push:
-    branches: [main, 'Version-*']
-  pull_request_target:
-    branches: [main, 'Version-*']
-  schedule:
-    - cron: '0 11 * * 5'
+  # Remove after ordinary repository-owned workflow adoption is proved.
   workflow_dispatch:
 
 permissions: {}

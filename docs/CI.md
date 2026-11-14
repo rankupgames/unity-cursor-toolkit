@@ -1,75 +1,59 @@
-# Jenkins checks
+# Repository-owned Jenkins CI
 
-The root `Jenkinsfile` uses the shared `homelabPipeline` library. Its registered
-`check` lane uses the existing Linux `small-web` profile and a 30-minute timeout.
-The administrator pins the library, source revision and read-only SCM credential.
-The job must load the root Jenkinsfile at the same `SOURCE_SHA` it checks out.
+`.github/workflows/jenkins.yml` is the application CI configuration. Its literal
+`env.JENKINS_CI` JSON declares the `check` lane, existing required status
+`jenkins/unity-cursor-toolkit/check`, Linux `small-web` profile, timeout,
+command and artifact path. The local `jenkins-submit.yml` is the generic
+submission transport. Actions sends metadata without checking out PR source.
 
-`bash ci/jenkins/check.sh` runs only inside Jenkins. It checks the profile's Node
-24.21.0 and npm 11.19.0 tools, the seven-day age gate, and the committed lockfile.
-It then runs `npm ci`, full `npm run validate`, package-sync validation, UPM
-metadata validation and VSIX packaging. The VSIX stays in the isolated worker
-workspace at `unity-cursor-toolkit/dist/jenkins/unity-cursor-toolkit.vsix`.
-The current shared local lane does not archive that file to the Jenkins run.
-This lane creates no containers and publishes no packages or GitHub statuses.
+The platform reads the workflow and source at the exact committed revision.
+Same-repository PR submissions include their number and exact head SHA.
+The lane uses `local-first`: one admitted local check, with overflow only after
+a clean busy result. A started failure does not retry on another route.
+Fork execution is not admitted by this lane.
 
-## Submit reviewed source
+`bash ci/jenkins/check.sh` uses the existing extension checks and package entry
+points. It requires age-gated npm, installs the committed lockfile, lints
+workflows, runs full validation, checks package sync and UPM metadata, verifies
+vendor provenance, and packages the authored version without publishing.
+The artifact contract is `unity-cursor-toolkit/dist/jenkins/*.vsix`.
+`vendor.sh` retains the existing Node 26 validation and five artifact attestations.
+Git preserves exact vendor and notice bytes on Windows so reviewed hashes remain valid.
 
-Generate a typed request from the repo root:
+Private controller policy owns runtime pins, credentials, worker bindings and
+capacity. The workflow contains only secret and variable references.
+No project registration, project Jenkinsfile or `.rug-service/ci.json` is needed
+after adoption. Release and marketplace approvals remain separate.
+
+## Local checks
+
+Run from `unity-cursor-toolkit/`, without Jenkins admission:
 
 ```sh
-node ci/jenkins/request.js --branch <approved-branch> --source-sha <40-hex-commit> --lane check
+npm ci
+npm run validate
+npm run sync:package -- --check
+npx --no-install vsce package --no-dependencies --out <artifact-path>.vsix
 ```
 
-This command only prints JSON. Send it through the existing approved admin
-binding to `check-lanes.py dispatch SITE -`. Keep `SITE`, the canonical writer
-state and all credentials on that admin host. Do not call Jenkins build APIs
-from this repository. The shared dispatcher verifies registration and the current
-branch head, handles admission, and uses the external reporter for GitHub status.
+From the repository root, lint the workflows:
 
-The shared registry entry needs this repository, the approved branch, existing
-SCM/library credential references, an existing protected parent folder, and one
-lane: `id=check`, `profile=small-web`, `runTimeoutSeconds=1800`,
-`context=jenkins/unity-cursor-toolkit/check`, `ownedContainers=[]`.
-Select the child-folder name during registration. Keep its job disabled outside
-the administrative dispatch lifecycle.
+```sh
+npx --yes github-actionlint@1.7.12 .github/workflows/ci.yml .github/workflows/release.yml .github/workflows/jenkins.yml .github/workflows/jenkins-submit.yml
+```
 
-Resolve the accepted immutable shared revision, approved job placement and admin
-binding through the infrastructure owner. Keep private runbooks, host addresses,
-job paths, credential identities and reporter state outside this public repo.
-Register and dispatch only after the source and registry changes are approved
-and published. A passing result needs the exact tested SHA and native Jenkins
-build URL. Retain failures, skipped checks and cleanup limits.
+## Adoption boundary
 
-## Cutover boundaries
+The legacy loader remains for bootstrap. `jenkins-check.yml` is manual-only,
+so ordinary events submit through `jenkins.yml` once.
+After ordinary default-branch and PR runs prove the exact source, trusted
+pending-to-terminal status, native build URL, route, artifact and owned cleanup,
+remove the legacy `Jenkinsfile`, `ci/jenkins/request.js`, its tests and old
+`jenkins-check.yml` trigger. Preserve release gates and active attempts.
+Do not dispatch the legacy workflow during ordinary adoption proof.
 
-This first lane does not replace the required Actions checks. Preserve their
-bindings until the Jenkins reporter is accepted and the protection change is
-approved. Retire old build triggers as part of that authorized cutover, after
-accounting for active and queued runs. Actions activation is separate.
-
-The shared dispatcher accepts registered Linux branch heads and version-3
-requests for open, mergeable, same-repository pull requests from trusted
-contributors. A PR request includes `pullRequest`, its head `branch`, and the
-exact current head `sourceSha`. Eligible new PR branches need no branch-registry
-edit. Forks, changed heads and unmergeable requests fail closed.
-`jenkins-check.yml` submits exact revisions through the reviewed local reusable
-`jenkins-submit.yml`. PR events submit the head SHA and PR number without
-checking out PR source. Push, PR, manual and Friday 11:00 UTC triggers preserve
-the existing branch filters and schedule. Jenkins owns execution and results.
-Activation needs the `HOMELAB_JENKINS_URL` repository variable and paired
-`JENKINS_TRIGGER_USER`, `JENKINS_TRIGGER_TOKEN`, `CF_ACCESS_CLIENT_ID` and
-`CF_ACCESS_CLIENT_SECRET` secrets. Disable superseded build workflows before
-enabling Actions. Protect the native Jenkins context after reporter acceptance.
-This lane does not select Instabox overflow. Reuse the shared portable or managed Actions
-adapter after its project-specific tools, credentials and output contract are
-approved. Do not add a second scheduler or an unmanaged worker.
-
-`ci/jenkins/vendor.sh` preserves full validation on Node 26.4.0 and verifies the
-five existing fork artifacts against their exact source commit, source ref and
-signer workflow. It rejects attestations from self-hosted runners. Public bundles
-keep GitHub credentials outside PR execution. The Node package is pinned and
-uses the same seven-day npm age gate without replacing worker tools.
-Windows/macOS Unity runtime proofs require compatible workers. Linux validation
-does not prove native Unity compatibility. Release approvals and marketplace
-publication remain in their existing separate scope.
+The platform workflow route currently rejects Windows. Linux validation and VSIX
+packaging do not qualify Unity Editor, Windows or macOS package execution.
+Keep existing native Unity requirements until matching workers are qualified.
+Use the existing compatibility and package build commands. Do not add another
+Unity harness or remove Unity assets, caches or proof artifacts during migration.

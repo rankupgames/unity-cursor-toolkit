@@ -3,15 +3,15 @@ set -euo pipefail
 
 cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../../unity-cursor-toolkit"
 
-# Match the existing small-web profile. Do not install or replace worker tools.
-test "$(node --version)" = 'v24.21.0'
-test "$(npm --version)" = '11.19.0'
+# The administrator supplies the runtime. Require the native dependency age gate.
+node -e "const v=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim().split('.').map(Number); if(v[0]<11 || (v[0]===11 && (v[1]<14 || (v[1]===14 && v[2]<1)))) throw new Error('npm 11.14.1 or newer is required')"
 test "$(npm config get min-release-age)" = '7'
 test -f package-lock.json
 
 npm ci
 npx --yes github-actionlint@1.7.12 ../.github/workflows/ci.yml ../.github/workflows/release.yml \
-  ../.github/workflows/jenkins-check.yml ../.github/workflows/jenkins-submit.yml
+  ../.github/workflows/jenkins.yml ../.github/workflows/jenkins-submit.yml \
+  ../.github/workflows/jenkins-check.yml
 npm run validate
 npm run sync:package -- --check
 bash ../ci/jenkins/vendor.sh
