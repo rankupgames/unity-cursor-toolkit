@@ -53,11 +53,13 @@ jobs:
               raise SystemExit('Configured Jenkins HTTPS address is invalid.')
           source = os.environ['SOURCE_SHA']
           owner_repo = os.environ['REPOSITORY']
+          source_branch = os.environ.get('SOURCE_BRANCH', '')
           if (not re.fullmatch('[a-f0-9]{40}', source)
-                  or not re.fullmatch('[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', owner_repo)):
-              raise SystemExit('Repository or exact source revision is invalid.')
+                  or not re.fullmatch('[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+', owner_repo)
+                  or not re.fullmatch('[A-Za-z0-9][A-Za-z0-9._/-]{0,127}', source_branch)):
+              raise SystemExit('Repository, branch or exact source revision is invalid.')
           request = {'version': 1, 'repository': 'https://github.com/' + owner_repo + '.git',
-                     'branch': os.environ['SOURCE_BRANCH'], 'sourceSha': source,
+                     'branch': source_branch, 'sourceSha': source,
                      'lane': os.environ['CHECK_TYPE']}
           machine_text = os.environ.get('MACHINE_CONFIG', '')
           if machine_text != '':
@@ -90,7 +92,11 @@ jobs:
           payload = json.dumps(request)
           if len(payload.encode()) > 4096:
               raise SystemExit('Request exceeds the dispatcher limit.')
-          identity = os.environ['JENKINS_USER'] + ':' + os.environ['JENKINS_TOKEN']
+          trigger_user = os.environ.get('JENKINS_USER', '')
+          trigger_token = os.environ.get('JENKINS_TOKEN', '')
+          if any(not value or any(c in value for c in '\r\n\0') for value in (trigger_user, trigger_token)):
+              raise SystemExit('Paired Jenkins trigger credentials are required.')
+          identity = trigger_user + ':' + trigger_token
           access_id = os.environ['CF_ACCESS_CLIENT_ID']
           access_secret = os.environ['CF_ACCESS_CLIENT_SECRET']
           if any(not value or any(c in value for c in '\r\n\0') for value in (access_id, access_secret)):

@@ -1,12 +1,11 @@
-name: Jenkins CI
+name: Legacy Jenkins bootstrap
 
 on:
+  # Retain version-branch coverage until its Jenkins route is qualified.
   push:
-    branches: [main, 'Version-*']
+    branches: ['Version-*']
   pull_request_target:
-    branches: [main, 'Version-*']
-  schedule:
-    - cron: '0 11 * * 5'
+    branches: ['Version-*']
   workflow_dispatch:
 
 permissions: {}
