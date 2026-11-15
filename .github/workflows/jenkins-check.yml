@@ -1,7 +1,11 @@
 name: Legacy Jenkins bootstrap
 
 on:
-  # Remove after ordinary repository-owned workflow adoption is proved.
+  # Retain version-branch coverage until its Jenkins route is qualified.
+  push:
+    branches: ['Version-*']
+  pull_request_target:
+    branches: ['Version-*']
   workflow_dispatch:
 
 permissions: {}

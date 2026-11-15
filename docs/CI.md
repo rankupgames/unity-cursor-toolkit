@@ -44,12 +44,22 @@ npx --yes github-actionlint@1.7.12 .github/workflows/ci.yml .github/workflows/re
 
 ## Adoption boundary
 
-The legacy loader remains for bootstrap. `jenkins-check.yml` is manual-only,
-so ordinary events submit through `jenkins.yml` once.
+Lane sizing requires full-build CPU and aggregate memory measurements, filesystem
+capacity and minimum free space, plus workspace, toolchain, temporary and artifact
+growth. Declare supported `resources.vcpus`, `memoryMiB` and `diskGiB` with
+measured headroom and the required free-space floor. Verify actual overflow
+allocation and cleanup. Missing measurements or refused resource requests leave
+sizing unqualified. Do not omit required fields to bypass admission.
+
+The legacy loader remains for bootstrap. `jenkins.yml` handles `main` events.
+`jenkins-check.yml` retains `Version-*` submissions and manual bootstrap.
+The hosted build, release and native Unity workflow definitions stay intact.
 After ordinary default-branch and PR runs prove the exact source, trusted
 pending-to-terminal status, native build URL, route, artifact and owned cleanup,
-remove the legacy `Jenkinsfile`, `ci/jenkins/request.js`, its tests and old
-`jenkins-check.yml` trigger. Preserve release gates and active attempts.
+remove legacy files only when their corresponding coverage has migrated.
+This includes `Jenkinsfile`, `ci/jenkins/request.js`, its tests and the old
+`jenkins-check.yml` trigger. Preserve version-branch and native coverage,
+release gates and active attempts until matching Jenkins routes prove parity.
 Do not dispatch the legacy workflow during ordinary adoption proof.
 
 The platform workflow route currently rejects Windows. Linux validation and VSIX
