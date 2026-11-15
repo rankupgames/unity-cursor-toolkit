@@ -13,7 +13,7 @@ permissions: {}
 
 env:
   JENKINS_CI: >-
-    {"schemaVersion":1,"project":"unity-cursor-toolkit","lanes":{"check":{"status":"jenkins/unity-cursor-toolkit/check","runner":{"os":"linux","profile":"small-web"},"execution":"local-first","pullRequests":"same-repository","timeoutMinutes":60,"command":"bash ci/jenkins/check.sh","cleanup":"","artifacts":"unity-cursor-toolkit/dist/jenkins/*.vsix"}}}
+    {"schemaVersion":1,"project":"unity-cursor-toolkit","lanes":{"check":{"status":"jenkins/unity-cursor-toolkit/check","runner":{"os":"linux","profile":"small-web"},"resources":{"vcpus":8,"memoryMiB":16384,"diskGiB":40},"execution":"local-first","pullRequests":"same-repository","timeoutMinutes":60,"command":"bash ci/jenkins/check.sh","cleanup":"","artifacts":"unity-cursor-toolkit/dist/jenkins/*.vsix"}}}
 
 jobs:
   check:
