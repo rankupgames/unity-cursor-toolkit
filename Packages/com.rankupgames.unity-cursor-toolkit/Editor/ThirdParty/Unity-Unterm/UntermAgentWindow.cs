@@ -1141,13 +1141,9 @@ namespace Unterm.Editor
                 }
             }
 
-            // Escape denies a pending permission request; with none pending it
-            // interrupts the in-flight turn (resolved on the native side).
             if (e.keyCode == KeyCode.Escape)
             {
-                _native.AgentviewEscape(Vid);
-                RenderView();
-                Repaint();
+                _native.AgentviewInterrupt(Vid);
                 e.Use();
                 return;
             }
