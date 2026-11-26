@@ -9,6 +9,18 @@ silently substitute a newer Editor when an exact project version is missing.
 
 Use this for flows such as login steps, server selection, menu navigation, mission setup, debug-only content unlocks, or deterministic test setup that should follow the same internal handlers a player-triggered UI path uses.
 
+## Game Flow in the Editor
+
+Open **Tools > Unity Cursor Toolkit > Game Flow** and enable the controls
+for the current Editor session. The window lists project commands named
+`flow.*` or `*.flow.*`. Each command runs in its registered Edit or Play Mode. The window shows
+its latest status and result. Use **Cancel** to stop the active run. Turning
+off the controls also cancels a run started from the window. Reopen the
+window to check or cancel that run.
+
+Projects register their own destinations, arguments, and diagnostics through
+the existing command registry.
+
 ## Unity Package Side
 
 The UPM package provides `UnityCursorToolkit.AgentCommands` in the runtime assembly. No scene component is required. During play mode, the hidden command runner is created only when a command is scheduled.
