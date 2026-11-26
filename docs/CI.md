@@ -7,8 +7,8 @@ Marketplace. A VS Code Marketplace failure does not block Open VSX.
 Marketplace uses Trusted Publishing policies for ci.yml and release.yml in the
 release-approval environment.
 
-The tag release workflow builds the extension for both registries and attaches
-the UPM package to the GitHub release for a version tag.
+The tag release workflow builds both VSIX files and attaches them to the GitHub
+release. The release notes link to the UPM package in the tagged source.
 
 The Unity-Unterm vendor workflow verifies source provenance on pull requests.
 Dispatch it with run_native enabled for the licensed macOS and Windows checks.
