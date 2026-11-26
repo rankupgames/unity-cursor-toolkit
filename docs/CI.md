@@ -1,69 +1,27 @@
-# Repository-owned Jenkins CI
+# Build and release
 
-`.github/workflows/jenkins.yml` is the application CI configuration. Its literal
-`env.JENKINS_CI` JSON declares the `check` lane, existing required status
-`jenkins/unity-cursor-toolkit/check`, Linux `small-web` profile, timeout,
-command and artifact path. The local `jenkins-submit.yml` is the generic
-submission transport. Actions sends metadata without checking out PR source.
+GitHub Actions validates and packages the extension on pull requests and pushes
+to main and Version-* branches. The weekly build runs on Friday at 11:00 UTC.
+The release-approval environment controls publication to Open VSX and VS Code
+Marketplace. A VS Code Marketplace failure does not block Open VSX.
 
-The platform reads the workflow and source at the exact committed revision.
-Same-repository PR submissions include their number and exact head SHA.
-The lane uses `local-first`: one admitted local check, with overflow only after
-a clean busy result. A started failure does not retry on another route.
-Fork execution is not admitted by this lane.
+The tag release workflow builds the extension for both registries and attaches
+the UPM package to the GitHub release for a version tag.
 
-`bash ci/jenkins/check.sh` uses the existing extension checks and package entry
-points. It requires age-gated npm, installs the committed lockfile, lints
-workflows, runs full validation, checks package sync and UPM metadata, verifies
-vendor provenance, and packages the authored version without publishing.
-The artifact contract is `unity-cursor-toolkit/dist/jenkins/*.vsix`.
-`vendor.sh` retains the existing Node 26 validation and five artifact attestations.
-Git preserves exact vendor and notice bytes on Windows so reviewed hashes remain valid.
-
-Private controller policy owns runtime pins, credentials, worker bindings and
-capacity. The workflow contains only secret and variable references.
-No project registration, project Jenkinsfile or `.rug-service/ci.json` is needed
-after adoption. Release and marketplace approvals remain separate.
+The Unity-Unterm vendor workflow verifies source provenance on pull requests.
+Dispatch it manually for native checks on the licensed macOS and Windows runners.
 
 ## Local checks
 
-Run from `unity-cursor-toolkit/`, without Jenkins admission:
+Run from unity-cursor-toolkit/:
 
-```sh
-npm ci
-npm run validate
-npm run sync:package -- --check
-npx --no-install vsce package --no-dependencies --out <artifact-path>.vsix
-```
+    npm ci
+    npm run validate
+    npm run sync:package -- --check
+    npx --no-install vsce package --no-dependencies --out <artifact-path>.vsix
 
-From the repository root, lint the workflows:
+Run from the repository root:
 
-```sh
-npx --yes github-actionlint@1.7.12 .github/workflows/ci.yml .github/workflows/release.yml .github/workflows/jenkins.yml .github/workflows/jenkins-submit.yml
-```
+    npx --yes github-actionlint@1.7.12 .github/workflows/ci.yml .github/workflows/release.yml .github/workflows/unity-unterm-vendor.yml
 
-## Adoption boundary
-
-Lane sizing requires full-build CPU and aggregate memory measurements, filesystem
-capacity and minimum free space, plus workspace, toolchain, temporary and artifact
-growth. Declare supported `resources.vcpus`, `memoryMiB` and `diskGiB` with
-measured headroom and the required free-space floor. Verify actual overflow
-allocation and cleanup. Missing measurements or refused resource requests leave
-sizing unqualified. Do not omit required fields to bypass admission.
-
-The legacy loader remains for bootstrap. `jenkins.yml` handles `main` events.
-`jenkins-check.yml` retains `Version-*` submissions and manual bootstrap.
-The hosted build, release and native Unity workflow definitions stay intact.
-After ordinary default-branch and PR runs prove the exact source, trusted
-pending-to-terminal status, native build URL, route, artifact and owned cleanup,
-remove legacy files only when their corresponding coverage has migrated.
-This includes `Jenkinsfile`, `ci/jenkins/request.js`, its tests and the old
-`jenkins-check.yml` trigger. Preserve version-branch and native coverage,
-release gates and active attempts until matching Jenkins routes prove parity.
-Do not dispatch the legacy workflow during ordinary adoption proof.
-
-The platform workflow route currently rejects Windows. Linux validation and VSIX
-packaging do not qualify Unity Editor, Windows or macOS package execution.
-Keep existing native Unity requirements until matching workers are qualified.
-Use the existing compatibility and package build commands. Do not add another
-Unity harness or remove Unity assets, caches or proof artifacts during migration.
+See [local Unity compatibility checks](UNITY_COMPATIBILITY.md) for exact Editor verification.
