@@ -129,6 +129,48 @@ async function main() {
   assert.strictEqual((await monitor.poll()).state, 'compiled');
   monitor.dispose();
  });
+ await test('a new compile replaces the active request and ignores its old poll', async () => {
+  let now = Date.now();
+  let recorded;
+  let completeOldProbe;
+  const calls = [];
+  const monitor = new EditorRecoveryMonitor({ send() {}, request: (_, args) => {
+   calls.push(args.toolName);
+   if (args.toolName !== 'project_info') return Promise.resolve(null);
+   return new Promise(resolve => { completeOldProbe = resolve; });
+  } }, { projectRoot: root, automatic: false, now: () => now, readValidation: () => recorded });
+  monitor.observe('project_info', project);
+  monitor.observe('editor_validation', { ...project, requestId: 'a', requestedUtc: new Date(now).toISOString(), pending: true });
+  const oldPoll = monitor.poll();
+  now += 1000;
+  monitor.observe('editor_validation', { ...project, projectPath: root + '-other', requestId: 'foreign', pending: true });
+  assert.strictEqual(monitor.status.requestId, 'a');
+  monitor.observe('editor_validation', { ...project, requestId: 'b', requestedUtc: new Date(now).toISOString(), pending: true });
+  monitor.observe('editor_validation', { ...project, requestId: 'a', requestedUtc: new Date(now - 1000).toISOString(), pending: true });
+  completeOldProbe({ result: project });
+  const current = await oldPoll;
+  assert.strictEqual(current.requestId, 'b');
+  assert.strictEqual(current.bridgeRecovered, false);
+  recorded = { ...project, requestId: 'b', capturedUtc: new Date(now).toISOString(), status: 'failed', errorCount: 1 };
+  assert.strictEqual((await monitor.poll()).state, 'compile_failed');
+  assert.deepStrictEqual(calls, ['project_info']);
+  monitor.dispose();
+ });
+ await test('a late observer accepts saved diagnostics from the selected request start', async () => {
+  const now = Date.now();
+  const requestedUtc = new Date(now - 5000).toISOString();
+  let recorded = { ...project, requestId: 'current', capturedUtc: new Date(now - 6000).toISOString(),
+   compilationStarted: true, compilationFinished: true, diagnosticsComplete: true, errorCount: 0 };
+  const monitor = new EditorRecoveryMonitor({ send() {}, request: async () => null },
+   { projectRoot: root, automatic: false, now: () => now, readValidation: () => recorded });
+  monitor.observe('editor_validation', { ...project, requestId: 'current', requestedUtc, pending: true });
+  assert.strictEqual((await monitor.poll()).state, 'waiting');
+  recorded = { ...recorded, capturedUtc: new Date(now - 2000).toISOString() };
+  const pending = await monitor.poll();
+  assert.strictEqual(pending.state, 'waiting_for_main_thread');
+  assert.strictEqual(pending.compileSucceeded, false);
+  monitor.dispose();
+ });
  for (const defect of ['compiler-error', 'project-mismatch', 'deadline', 'disposed']) await test('recovery stops on ' + defect, async () => {
   let now = 0, focuses = 0;
   const monitor = new EditorRecoveryMonitor({ send() {}, request: async () => defect === 'project-mismatch' ? { result: { projectPath: root + '-other' } } : null },
