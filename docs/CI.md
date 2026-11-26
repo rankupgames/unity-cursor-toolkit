@@ -9,7 +9,7 @@ The tag release workflow builds the extension for both registries and attaches
 the UPM package to the GitHub release for a version tag.
 
 The Unity-Unterm vendor workflow verifies source provenance on pull requests.
-Dispatch it manually for native checks on the licensed macOS and Windows runners.
+Dispatch it with run_native enabled for the licensed macOS and Windows checks.
 
 ## Local checks
 
