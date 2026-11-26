@@ -80,7 +80,7 @@ The Editor host creates no scene object and has no idle update callback. Discove
 
 Runtime handlers retain Unity wait semantics, including nested/custom iterators and opaque Unity waits. A realtime 300-second deadline also bounds opaque waits while `timeScale` is zero. There are at most 16 active runs, 128 retained statuses, 128 nested iterators and 1,024 immediate advances per frame. The runtime component is disabled when no commands are active. No command is replayed after reload; its old run status is unavailable after that host is destroyed.
 
-Cancellation executes on Unity's main thread. It cannot preempt a blocked `MoveNext` or a stopped Editor main thread. Independently started coroutines and resources outside entered handlers are not owned by this stack. The native lifecycle smoke validates the callback bodies; an actual domain reload and each game's input-device release remain separate live-flow checks.
+Cancellation runs on Unity's main thread. A request made inside a handler callback takes effect after that callback returns. A blocked callback delays cleanup. The runner owns the entered iterator stack. Verify cleanup for independently started coroutines and project-specific input devices in the target project.
 
 ## Consumer lifetime
 

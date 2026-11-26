@@ -33,7 +33,7 @@ namespace UnityCursorToolkit.AgentCommands
 		private bool shuttingDown;
 		private bool ticking;
 
-		/// <summary>Cancellation unwinds entered nested iterators before returning.</summary>
+		/// <summary>Cancellation unwinds entered nested iterators after their active callbacks return.</summary>
 		public static bool SupportsDeterministicCancellation => true;
 
 #if UNITY_EDITOR
@@ -99,7 +99,7 @@ namespace UnityCursorToolkit.AgentCommands
 				: AgentCommandRunSnapshot.Rejected(string.Empty, "Unknown game command run: " + runId);
 		}
 
-		/// <summary>Disposes entered handlers inside-out, even when Unity does not dispose a stopped coroutine.</summary>
+		/// <summary>Disposes entered handlers inside-out. A reentrant request finishes after the active callback returns.</summary>
 		public static AgentCommandRunSnapshot Cancel(string runId)
 		{
 			RunState state;
@@ -108,8 +108,8 @@ namespace UnityCursorToolkit.AgentCommands
 			if (!state.IsTerminal)
 			{
 				var coroutine = state.Coroutine;
-				state.Finish(AgentCommandStatus.Canceled, AgentCommandResult.Failure("Command run canceled."));
-				if (coroutine != null && instance) instance.StopCoroutine(coroutine);
+				if (state.RequestCancellation("Command run canceled.") && coroutine != null && instance)
+					instance.StopCoroutine(coroutine);
 				if (instance) instance.TrimRetainedRuns();
 			}
 			return state.Snapshot();
@@ -197,9 +197,10 @@ namespace UnityCursorToolkit.AgentCommands
 			for (int i = runOrder.Count - 1; i >= 0; i--)
 			{
 				RunState state = runs[runOrder[i]];
-				if (!state.IsTerminal) state.Finish(AgentCommandStatus.Canceled, AgentCommandResult.Failure(reason));
+				Coroutine coroutine = state.Coroutine;
+				if (state.RequestCancellation(reason) && coroutine != null)
+					StopCoroutine(coroutine);
 			}
-			StopAllCoroutines();
 		}
 
 		private void Completed()
@@ -267,6 +268,8 @@ namespace UnityCursorToolkit.AgentCommands
 			private AgentCommandResult result;
 			private bool started;
 			private bool closing;
+			private bool advancing;
+			private string pendingCancellation;
 			internal bool IsTerminal => status == AgentCommandStatus.Succeeded || status == AgentCommandStatus.Failed || status == AgentCommandStatus.Canceled;
 
 			internal RunState(string runId, string name, AgentCommandHandler handler, AgentCommandContext context, AgentCommandRunner owner)
@@ -279,10 +282,39 @@ namespace UnityCursorToolkit.AgentCommands
 				Deadline = Now + MaximumRunSeconds;
 			}
 
+			internal bool RequestCancellation(string reason)
+			{
+				if (IsTerminal || closing) return false;
+				if (advancing)
+				{
+					pendingCancellation = pendingCancellation ?? reason;
+					return false;
+				}
+				Finish(AgentCommandStatus.Canceled, AgentCommandResult.Failure(reason));
+				return true;
+			}
+
 			internal bool Advance(bool synchronous, out object yielded)
 			{
 				yielded = null;
-				if (IsTerminal || closing) return false;
+				if (IsTerminal || closing || advancing) return false;
+				advancing = true;
+				try { return AdvanceOwned(synchronous, out yielded); }
+				finally
+				{
+					advancing = false;
+					if (pendingCancellation != null)
+					{
+						string reason = pendingCancellation;
+						pendingCancellation = null;
+						Finish(AgentCommandStatus.Canceled, AgentCommandResult.Failure(reason));
+					}
+				}
+			}
+
+			private bool AdvanceOwned(bool synchronous, out object yielded)
+			{
+				yielded = null;
 				status = AgentCommandStatus.Running;
 				// The handler and its iterators are the extension boundary. Failures must still release every entered scope.
 				try
@@ -295,6 +327,7 @@ namespace UnityCursorToolkit.AgentCommands
 					}
 					for (int advances = 0; advances < MaximumImmediateAdvances; advances++)
 					{
+						if (pendingCancellation != null) return false;
 #if UNITY_EDITOR
 						if (synchronous && (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating))
 						{
@@ -314,7 +347,9 @@ namespace UnityCursorToolkit.AgentCommands
 							return false;
 						}
 						var top = stack[stack.Count - 1];
-						if (!top.MoveNext())
+						bool moved = top.MoveNext();
+						if (pendingCancellation != null) return false;
+						if (!moved)
 						{
 							stack.RemoveAt(stack.Count - 1);
 							try { (top as IDisposable)?.Dispose(); }
@@ -327,6 +362,7 @@ namespace UnityCursorToolkit.AgentCommands
 						}
 						if (IsTerminal || closing) return false;
 						var current = top.Current;
+						if (pendingCancellation != null) return false;
 						var nested = current as IEnumerator;
 						if (nested != null)
 						{

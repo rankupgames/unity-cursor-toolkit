@@ -97,6 +97,21 @@ namespace UnityCursorToolkit.InternalSmoke
 				Require(timedOut.Status == AgentCommandStatus.Failed && timedOut.Result.Message.Contains("command_timeout"), "Opaque Unity wait escaped the realtime timeout.");
 				ReleasedOnce(timeout);
 
+				var reentrant = new Counts();
+				var reentrantRun = Schedule("reentrant", reentrant, "pending");
+				AgentCommandStatus statusDuringCallback = AgentCommandStatus.Pending;
+				reentrant.OnNextMove = () =>
+				{
+					statusDuringCallback = AgentCommandRunner.Cancel(reentrantRun.RunId).Status;
+					Require(reentrant.Held && reentrant.Disposed == 0, "Cancellation disposed an iterator while MoveNext was active.");
+				};
+				object reentrantState = states[reentrantRun.RunId];
+				reentrantState.GetType().GetMethod("Advance", PrivateInstance).Invoke(reentrantState, new object[] { false, null });
+				Require(statusDuringCallback == AgentCommandStatus.Running, "Reentrant cancellation finished before its iterator callback returned.");
+				Require(AgentCommandRunner.GetStatus(reentrantRun.RunId).Status == AgentCommandStatus.Canceled,
+					"Deferred cancellation did not finish when its iterator callback returned.");
+				ReleasedOnce(reentrant);
+
 				var disabled = new Counts();
 				var disabledRun = Schedule("disabled", disabled, "pending");
 				owner.enabled = false;
@@ -116,14 +131,14 @@ namespace UnityCursorToolkit.InternalSmoke
 				typeof(AgentCommandRunner).GetMethod("CancelBeforeReload", PrivateStatic).Invoke(null, null);
 				ReleasedOnce(reload);
 				Require(Runner() == null, "Reload cleanup retained its hidden scene host.");
-				WriteResult("play", true, 8);
-				Debug.Log("Command lifecycle runtime smoke passed: nested finally/disposal, repeat cancel, completion, handler/cleanup failure, realtime timeout, host disable and lifecycle callbacks. Actual domain reload wiring and game-specific device release still need their live flow.");
+				WriteResult("play", true, 9);
+				Debug.Log("Command lifecycle runtime smoke passed: nested disposal, repeated and reentrant cancellation, completion, handler and cleanup failure, realtime timeout, host disable, and lifecycle callbacks.");
 			}
 			finally
 			{
 				// This smoke required an unused host; release only its own runner even if an assertion fails.
 				if (Runner()) UnityEngine.Object.DestroyImmediate(Runner().gameObject);
-				foreach (string name in new[] { "cancel", "complete", "failure", "cleanup", "timeout", "disabled", "play_exit", "reload" })
+				foreach (string name in new[] { "cancel", "complete", "failure", "cleanup", "timeout", "reentrant", "disabled", "play_exit", "reload" })
 					AgentCommandRegistry.Unregister(PlayPrefix + name);
 			}
 		}
@@ -439,6 +454,7 @@ namespace UnityCursorToolkit.InternalSmoke
 			internal int Entered;
 			internal int Disposed;
 			internal int Finally;
+			internal Action OnNextMove;
 		}
 
 		private sealed class Probe : IEnumerator, IDisposable
@@ -450,6 +466,7 @@ namespace UnityCursorToolkit.InternalSmoke
 			public bool MoveNext()
 			{
 				counts.Entered++;
+				counts.OnNextMove?.Invoke();
 				if (mode == "throw") throw new InvalidOperationException("Owned nested failure.");
 				return mode != "complete";
 			}
