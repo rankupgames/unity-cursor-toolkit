@@ -124,8 +124,14 @@
       }
     ],
     "commands": [
-      { "command": "unity-cursor-toolkit.tests.list", "title": "Unity Toolkit: List Tests" },
-      { "command": "unity-cursor-toolkit.tests.run", "title": "Unity Toolkit: Run Tests" },
+      {
+        "command": "unity-cursor-toolkit.tests.list",
+        "title": "Unity Toolkit: List Tests"
+      },
+      {
+        "command": "unity-cursor-toolkit.tests.run",
+        "title": "Unity Toolkit: Run Tests"
+      },
       {
         "command": "unity-cursor-toolkit.doctor",
         "title": "Unity Toolkit: Unity CLI Doctor"
@@ -426,7 +432,7 @@
   "devDependencies": {
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.60.0",
-    "@vscode/vsce": "^4.0.0",
+    "@vscode/vsce": "^4.1.1",
     "esbuild": "^0.25.0",
     "fs-extra": "^10.0.0",
     "ovsx": "^0.10.11",
