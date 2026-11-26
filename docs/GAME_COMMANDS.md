@@ -13,13 +13,26 @@ Use this for flows such as login steps, server selection, menu navigation, missi
 
 Open **Tools > Unity Cursor Toolkit > Game Flow** and enable the controls
 for the current Editor session. The window lists project commands named
-`flow.*` or `*.flow.*`. Each command runs in its registered Edit or Play Mode. The window shows
+`flow.*` or `*.flow.*` and commands with authored destinations. Each command
+runs in its registered Edit or Play Mode. The window shows
 its latest status and result. Use **Cancel** to stop the active run. Turning
 off the controls also cancels a run started from the window. Reopen the
 window to check or cancel that run.
 
-Projects register their own destinations, arguments, and diagnostics through
-the existing command registry.
+Use the optional `flowDestinations` argument on `AgentCommandRegistry.Register`
+to list project-owned destinations under a command. Each `GameFlowDestination`
+has a stable ID, category, label, and command arguments. Supply an unavailable
+reason to prevent the window from running that destination and show the reason
+to the user. Use **Custom arguments** to enter command arguments directly.
+
+A route handler can yield `GameFlowRoute.Run(context, selectStep)`. Its selector
+reads project state and returns `GameFlowStep.Act`, `Wait`, or `Finish`.
+Keep the state key stable until the observed state changes. The runner limits
+actions, times out a wait against realtime, and releases entered actions on
+cancellation. Use the progress message on a step or call
+`context.ReportProgress` to show the current operation in the window and
+command status. Project code owns the destination catalog, valid transitions,
+and action handlers.
 
 ## Unity Package Side
 

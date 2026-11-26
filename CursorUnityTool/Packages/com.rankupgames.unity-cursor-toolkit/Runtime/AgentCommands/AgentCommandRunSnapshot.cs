@@ -36,6 +36,9 @@ namespace UnityCursorToolkit.AgentCommands
 		/// </summary>
 		public AgentCommandResult Result { get; }
 
+		/// <summary>The latest progress message, when supplied by the handler.</summary>
+		public string Progress { get; }
+
 		/// <summary>
 		/// Creates a status snapshot for a command run.
 		/// </summary>
@@ -44,11 +47,18 @@ namespace UnityCursorToolkit.AgentCommands
 		/// <param name="status">Current command execution status.</param>
 		/// <param name="result">Optional completion payload when the command has ended.</param>
 		public AgentCommandRunSnapshot(string runId, string commandName, AgentCommandStatus status, AgentCommandResult result)
+			: this(runId, commandName, status, result, string.Empty)
+		{
+		}
+
+		internal AgentCommandRunSnapshot(string runId, string commandName, AgentCommandStatus status,
+			AgentCommandResult result, string progress)
 		{
 			RunId = runId ?? string.Empty;
 			CommandName = commandName ?? string.Empty;
 			Status = status;
 			Result = result;
+			Progress = progress;
 		}
 
 		/// <summary>
@@ -75,6 +85,8 @@ namespace UnityCursorToolkit.AgentCommands
 			AgentCommandJson.AppendProperty(builder, "commandName", CommandName).Append(",");
 			AgentCommandJson.AppendProperty(builder, "executionMode", new AgentCommandDescriptor(CommandName, string.Empty).ExecutionMode).Append(",");
 			AgentCommandJson.AppendProperty(builder, "status", Status.ToString()).Append(",");
+			if (!string.IsNullOrEmpty(Progress))
+				AgentCommandJson.AppendProperty(builder, "progress", Progress).Append(",");
 			builder.Append("\"result\":");
 			if (Result == null)
 			{

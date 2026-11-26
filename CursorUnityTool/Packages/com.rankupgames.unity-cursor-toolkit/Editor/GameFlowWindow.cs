@@ -11,6 +11,7 @@ namespace UnityCursorToolkit
 		private const string EnabledKey = "UnityCursorToolkit.GameFlow.Enabled";
 		private const string RunIdKey = "UnityCursorToolkit.GameFlow.RunId";
 		private string commandName;
+		private string destinationId;
 		private string arguments = "{}";
 		private AgentCommandRunSnapshot run;
 		private Vector2 scrollPosition;
@@ -79,25 +80,61 @@ namespace UnityCursorToolkit
 				if (commandName != command.Name)
 				{
 					commandName = command.Name;
+					destinationId = null;
 					arguments = "{}";
 				}
 
 				if (!string.IsNullOrEmpty(command.Description))
 					EditorGUILayout.LabelField(command.Description, EditorStyles.wordWrappedLabel);
 
-				EditorGUILayout.LabelField("Arguments (JSON)");
-				arguments = EditorGUILayout.TextArea(arguments, GUILayout.MinHeight(52));
+				string runArguments = DrawArguments(command);
 				bool changingMode = EditorApplication.isPlaying != EditorApplication.isPlayingOrWillChangePlaymode;
 				bool ready = !changingMode && !EditorApplication.isCompiling && !EditorApplication.isUpdating &&
 					EditorApplication.isPlaying == command.RequiresPlayMode;
-				using (new EditorGUI.DisabledScope(!ready))
+				using (new EditorGUI.DisabledScope(!ready || runArguments == null))
 				{
 					if (GUILayout.Button("Run"))
-						StartRun();
+						StartRun(runArguments);
 				}
 				if (!ready)
 					EditorGUILayout.LabelField(command.RequiresPlayMode ? "Requires Play Mode." : "Requires Edit Mode.");
 			}
+		}
+
+		private string DrawArguments(AgentCommandDescriptor command)
+		{
+			var destinations = command.FlowDestinations;
+			if (destinations.Count > 0)
+			{
+				var choices = new string[destinations.Count + 1];
+				choices[0] = "Custom arguments";
+				int selected = destinationId == null ? 1 : 0;
+				for (int i = 0; i < destinations.Count; i++)
+				{
+					GameFlowDestination item = destinations[i];
+					choices[i + 1] = item.Category + " / " + item.Label;
+					if (!string.IsNullOrEmpty(item.UnavailableReason))
+						choices[i + 1] += " (Unavailable)";
+					if (item.Id == destinationId)
+						selected = i + 1;
+				}
+
+				selected = EditorGUILayout.Popup("Destination", selected, choices);
+				if (selected > 0)
+				{
+					GameFlowDestination item = destinations[selected - 1];
+					destinationId = item.Id;
+					if (string.IsNullOrEmpty(item.UnavailableReason))
+						return item.ArgumentsJson;
+					EditorGUILayout.HelpBox(item.UnavailableReason, MessageType.Info);
+					return null;
+				}
+				destinationId = string.Empty;
+			}
+
+			EditorGUILayout.LabelField("Arguments (JSON)");
+			arguments = EditorGUILayout.TextArea(arguments, GUILayout.MinHeight(52));
+			return arguments;
 		}
 
 		private void DrawResult()
@@ -106,6 +143,8 @@ namespace UnityCursorToolkit
 				return;
 
 			EditorGUILayout.LabelField(run.Status.ToString(), EditorStyles.boldLabel);
+			if (!string.IsNullOrEmpty(run.Progress))
+				EditorGUILayout.LabelField(run.Progress, EditorStyles.wordWrappedLabel);
 			AgentCommandResult result = run.Result;
 			if (!string.IsNullOrEmpty(result?.Message))
 				EditorGUILayout.HelpBox(result.Message, result.Success ? MessageType.Info : MessageType.Warning);
@@ -116,9 +155,9 @@ namespace UnityCursorToolkit
 				CancelRun();
 		}
 
-		private void StartRun()
+		private void StartRun(string runArguments)
 		{
-			run = AgentCommandRunner.Run(commandName, arguments);
+			run = AgentCommandRunner.Run(commandName, runArguments);
 			SessionState.SetString(RunIdKey, run.RunId);
 		}
 
@@ -140,7 +179,8 @@ namespace UnityCursorToolkit
 
 		private static bool IsFlowCommand(AgentCommandDescriptor command)
 		{
-			return command.Name.StartsWith("flow.", StringComparison.Ordinal) ||
+			return command.FlowDestinations.Count > 0 ||
+				command.Name.StartsWith("flow.", StringComparison.Ordinal) ||
 				command.Name.IndexOf(".flow.", StringComparison.Ordinal) >= 0;
 		}
 	}

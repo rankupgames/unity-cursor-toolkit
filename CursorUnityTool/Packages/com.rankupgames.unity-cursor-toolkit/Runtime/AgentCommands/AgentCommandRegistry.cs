@@ -31,6 +31,17 @@ namespace UnityCursorToolkit.AgentCommands
 		/// <param name="handler">Coroutine handler that executes the command.</param>
 		public static void Register(string name, string description, AgentCommandHandler handler)
 		{
+			Register(name, description, handler, null);
+		}
+
+		/// <summary>Registers a command and its optional Game Flow destinations as one entry.</summary>
+		/// <param name="name">Stable command identifier.</param>
+		/// <param name="description">Description for command discovery.</param>
+		/// <param name="handler">Coroutine that executes the command.</param>
+		/// <param name="flowDestinations">Destinations available in the Editor window.</param>
+		public static void Register(string name, string description, AgentCommandHandler handler,
+			IEnumerable<GameFlowDestination> flowDestinations)
+		{
 			if (string.IsNullOrEmpty(name))
 			{
 				throw new ArgumentException("Command name is required.", "name");
@@ -41,7 +52,7 @@ namespace UnityCursorToolkit.AgentCommands
 				throw new ArgumentNullException("handler");
 			}
 
-			AgentCommandDescriptor descriptor = new AgentCommandDescriptor(name, description);
+			AgentCommandDescriptor descriptor = new AgentCommandDescriptor(name, description, flowDestinations);
 			registrations[name] = new AgentCommandRegistration(descriptor, handler);
 		}
 
