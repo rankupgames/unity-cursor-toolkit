@@ -209,7 +209,7 @@ jobs:
         if: always()
         run: echo "| OpenVSX \`${{ needs.check-changes.outputs.build_version }}\` | ${{ job.status }} |" >> "$GITHUB_STEP_SUMMARY"
 
-  # VS Code Marketplace is best-effort: a missing token or publish failure is reported but does not fail the run.
+  # VS Code Marketplace is best-effort: a publish failure is reported but does not fail the run.
   publish-vscode:
     environment:
       name: release-approval
@@ -219,51 +219,35 @@ jobs:
     continue-on-error: true
     permissions:
       contents: read
+      id-token: write
     defaults:
       run:
         working-directory: unity-cursor-toolkit
     steps:
       - uses: actions/checkout@v6
-
-      - name: Check VS Code Marketplace token
-        id: token
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
-        run: |
-          if [ -n "$VSCE_PAT" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "available=false" >> "$GITHUB_OUTPUT"
-            echo "::warning::VSCE_PAT is unavailable. VS Code Marketplace publish skipped."
-          fi
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-node@v6
-        if: steps.token.outputs.available == 'true'
         with:
           node-version: 24
           cache: npm
           cache-dependency-path: unity-cursor-toolkit/package-lock.json
 
       - name: Use npm 11.14.1
-        if: steps.token.outputs.available == 'true'
         run: |
           npm install -g npm@11.14.1
           npm --version
 
-      - if: steps.token.outputs.available == 'true'
-        run: npm ci
+      - run: npm ci
 
       - uses: actions/download-artifact@v8
-        if: steps.token.outputs.available == 'true'
         with:
           name: vscode-extension-${{ needs.check-changes.outputs.build_version }}
           path: unity-cursor-toolkit/dist/vscode
 
       - name: Publish to VS Code Marketplace
         id: publish
-        if: steps.token.outputs.available == 'true'
-        env:
-          VSCE_PAT: ${{ secrets.VSCE_PAT }}
         run: |
           shopt -s nullglob
           VSIX_FILES=(dist/vscode/*.vsix)
@@ -272,14 +256,12 @@ jobs:
             exit 1
           fi
           VSIX_FILE=${VSIX_FILES[0]}
-          npx vsce publish --packagePath "$VSIX_FILE"
+          npx --no-install vsce publish --oidc --packagePath "$VSIX_FILE"
 
       - name: VS Code Marketplace summary
         if: always()
         run: |
-          if [ "${{ steps.token.outputs.available }}" != "true" ]; then
-            RESULT="skipped (VSCE_PAT unavailable)"
-          elif [ "${{ steps.publish.outcome }}" = "success" ]; then
+          if [ "${{ steps.publish.outcome }}" = "success" ]; then
             RESULT="published"
           else
             RESULT="failed"
