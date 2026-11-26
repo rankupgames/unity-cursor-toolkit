@@ -167,7 +167,7 @@ namespace Unterm.Editor
         private AvPollFn _avPoll; private AvVoidFn _avRender; private AvResizeFn _avResize; private AvThemeFn _avSetTheme; private AvFontsFn _avSetFonts;
         private AvPtrFn _avPanelTexture; private AvPtrFn _avInputTexture;
         private AvFloatFn _avContentHeight; private AvFloatFn _avInputHeight; private AvF1Fn _avSetScroll; private AvCaretFn _avCaret;
-        private AvVoidFn _avInterrupt; private AvBufFn _avSessionId; private AvBufFn _avTitle;
+        private AvVoidFn _avInterrupt; private AvVoidFn _avEscape; private AvBufFn _avSessionId; private AvBufFn _avTitle;
         private AvBufFn _avTakeHostCommand; private AvTokenFn _avPanelTokenAt; private AvStampAtFn _avPanelStampAt;
         private FormatRelativeFn _formatRelative;
         private SessionsQueryFn _sessionsQuery; private SessionsPollFn _sessionsPoll; private SessionsGenFn _sessionsGen;
@@ -305,6 +305,7 @@ namespace Unterm.Editor
             _avSetScroll = Sym<AvF1Fn>("unterm_agentview_set_scroll");
             _avCaret = Sym<AvCaretFn>("unterm_agentview_caret");
             _avInterrupt = Sym<AvVoidFn>("unterm_agentview_interrupt");
+            _avEscape = Sym<AvVoidFn>("unterm_agentview_escape");
             _avSetPermissionMode = Sym<AvStrFn>("unterm_agentview_set_permission_mode");
             _avPermissionMode = Sym<AvBufFn>("unterm_agentview_permission_mode");
             _avSetModel = Sym<AvStrFn>("unterm_agentview_set_model");
@@ -556,6 +557,7 @@ namespace Unterm.Editor
         public void AgentviewCaret(ulong id, out float x, out float y, out float w, out float h) =>
             _avCaret(id, out x, out y, out w, out h);
         public void AgentviewInterrupt(ulong id) { if (id != 0) _avInterrupt(id); }
+        public void AgentviewEscape(ulong id) { if (id != 0) _avEscape(id); }
         /// Permission mode: "default" / "auto" / "plan" / "acceptEdits".
         public void AgentviewSetPermissionMode(ulong id, string mode) { if (id != 0) _avSetPermissionMode(id, mode ?? "default"); }
         public string AgentviewPermissionMode(ulong id) { var p = _avPermissionMode(id, out UIntPtr len); return Utf8(p, len); }
@@ -790,7 +792,7 @@ namespace Unterm.Editor
             _avPoll = null; _avRender = null; _avResize = null; _avSetTheme = null; _avSetFonts = null;
             _avPanelTexture = null; _avInputTexture = null;
             _avContentHeight = null; _avInputHeight = null; _avSetScroll = null; _avCaret = null;
-            _avInterrupt = null; _avSessionId = null; _avTitle = null; _avTakeHostCommand = null; _avPanelTokenAt = null;
+            _avInterrupt = null; _avEscape = null; _avSessionId = null; _avTitle = null; _avTakeHostCommand = null; _avPanelTokenAt = null;
             _avPanelStampAt = null; _formatRelative = null; _sessionsQuery = null; _sessionsPoll = null; _sessionsGen = null;
             _avSetBrowsing = null; _avBrowseHover = null; _avBrowseToggleArchived = null; _avBrowseArchivedCount = null; _sessionsOpenElsewhere = null;
             _avSetPermissionMode = null; _avPermissionMode = null; _avSetModel = null; _avModel = null;

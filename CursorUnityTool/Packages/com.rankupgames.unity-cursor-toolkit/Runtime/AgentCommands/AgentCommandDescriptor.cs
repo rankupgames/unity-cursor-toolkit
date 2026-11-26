@@ -27,11 +27,12 @@ namespace UnityCursorToolkit.AgentCommands
 		/// </summary>
 		public string Description { get; }
 
-		/// <summary>Editor-prefixed commands execute synchronously outside Play Mode.</summary>
-		public bool RequiresEditMode => Name != null && Name.StartsWith("editor.", StringComparison.Ordinal);
+		/// <summary>editor.* commands are synchronous authoring operations and are excluded from player execution.</summary>
+		public bool RequiresPlayMode => string.IsNullOrEmpty(Name) || !Name.StartsWith("editor.", StringComparison.Ordinal);
 
-		/// <summary>All other commands retain their Play Mode coroutine contract.</summary>
-		public bool RequiresPlayMode => !RequiresEditMode;
+		/// <summary>The host contract used for command execution.</summary>
+		public string ExecutionMode => RequiresPlayMode ? "play" : "editorSynchronous";
+
 
 		/// <summary>
 		/// True when this command is intended as a viewport input adapter.
@@ -64,11 +65,11 @@ namespace UnityCursorToolkit.AgentCommands
 			builder.Append("{");
 			AgentCommandJson.AppendProperty(builder, "name", Name).Append(",");
 			AgentCommandJson.AppendProperty(builder, "description", Description).Append(",");
+			AgentCommandJson.AppendProperty(builder, "executionMode", ExecutionMode).Append(",");
 			AgentCommandJson.AppendProperty(builder, "requiresPlayMode", RequiresPlayMode).Append(",");
-			AgentCommandJson.AppendProperty(builder, "requiresEditMode", RequiresEditMode).Append(",");
-			AgentCommandJson.AppendProperty(builder, "supportsBatchmode", false).Append(",");
+			AgentCommandJson.AppendProperty(builder, "supportsBatchmode", !RequiresPlayMode).Append(",");
 			AgentCommandJson.AppendProperty(builder, "supportsViewportInput", SupportsViewportInput).Append(",");
-			builder.Append(RequiresEditMode ? "\"supportedHosts\":[\"editor\",\"auto\"]" : "\"supportedHosts\":[\"editor\",\"player\",\"auto\"]");
+			builder.Append(RequiresPlayMode ? "\"supportedHosts\":[\"editor\",\"player\",\"auto\"]" : "\"supportedHosts\":[\"editor\",\"editorBatchmode\"]");
 			builder.Append("}");
 		}
 	}

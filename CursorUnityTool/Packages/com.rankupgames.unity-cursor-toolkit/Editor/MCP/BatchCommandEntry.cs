@@ -42,12 +42,9 @@ namespace UnityCursorToolkit.AgentCommands
 					}
 					else
 					{
-						AgentCommandDescriptor descriptor;
-						AgentCommandHandler handler;
-						result = AgentCommandRegistry.TryGet(commandName, out descriptor, out handler) && descriptor.RequiresEditMode
-							? Error("editor_host_required: editor commands do not support the editorBatchmode host.")
-							: AgentCommandRunner.Run(commandName, commandArgsJson).ToJson();
-						exitCode = result.Contains("\"success\":false") ? 1 : 0;
+						AgentCommandRunSnapshot snapshot = AgentCommandRunner.Run(commandName, commandArgsJson);
+						result = snapshot.ToJson();
+						exitCode = snapshot.Status == AgentCommandStatus.Succeeded ? 0 : 1;
 					}
 				}
 				else
@@ -59,13 +56,9 @@ namespace UnityCursorToolkit.AgentCommands
 			}
 			catch (Exception ex)
 			{
+				exitCode = 1;
 				result = Error(ex.Message);
 				WriteResult(resultPath, result);
-			}
-
-			if (result.Contains("\"success\":false"))
-			{
-				exitCode = 1;
 			}
 
 			EditorApplication.Exit(exitCode);

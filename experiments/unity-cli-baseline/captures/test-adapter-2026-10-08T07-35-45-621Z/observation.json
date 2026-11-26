@@ -1,0 +1,148 @@
+{
+  "observedAt": "2026-10-08T07:35:45.622Z",
+  "passed": true,
+  "cases": [
+    {
+      "mode": "EditMode",
+      "test": "CliEditTests.Passing",
+      "elapsedMs": 42234,
+      "result": {
+        "success": true,
+        "backend": "cli",
+        "runId": "cli-4f9bbca4f974f3c531c909de9b1e21c2",
+        "status": "completed",
+        "editorVersion": "6000.6.4f1",
+        "mode": "EditMode",
+        "selection": [
+          "CliEditTests.Passing"
+        ],
+        "tests": [
+          {
+            "id": "1002",
+            "fullName": "CliEditTests.Passing",
+            "status": "passed",
+            "durationMs": 15.143,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 42.4888
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "mode": "EditMode",
+      "test": "CliEditTests.DeliberateFailure",
+      "elapsedMs": 8662,
+      "result": {
+        "success": false,
+        "backend": "cli",
+        "runId": "cli-1d75f11dc07e478ce5824fcc74613fa2",
+        "status": "failed",
+        "editorVersion": "6000.6.4f1",
+        "mode": "EditMode",
+        "selection": [
+          "CliEditTests.DeliberateFailure"
+        ],
+        "tests": [
+          {
+            "id": "1003",
+            "fullName": "CliEditTests.DeliberateFailure",
+            "status": "failed",
+            "durationMs": 9.359,
+            "message": "CLI_PROOF_EXPECTED_FAILURE",
+            "stackTrace": "at CliEditTests.DeliberateFailure () [0x00001] in <project>\\Assets\\Tests\\EditMode\\CliEditTests.cs:6\r\n"
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 0,
+          "failed": 1,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 41.936099999999996
+        },
+        "error": {
+          "code": "tests_failed",
+          "message": "Unity CLI test operation failed (tests_failed).",
+          "recovery": "Inspect the normalized test failures.",
+          "exitCode": 8,
+          "nativeCode": "TESTS_FAILED"
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "mode": "PlayMode",
+      "test": "CliPlayTests.Passing",
+      "elapsedMs": 12012,
+      "result": {
+        "success": true,
+        "backend": "cli",
+        "runId": "cli-5cc83980edba7912878a3eecd7a6e125",
+        "status": "completed",
+        "editorVersion": "6000.6.4f1",
+        "mode": "PlayMode",
+        "selection": [
+          "CliPlayTests.Passing"
+        ],
+        "tests": [
+          {
+            "id": "1002",
+            "fullName": "CliPlayTests.Passing",
+            "status": "passed",
+            "durationMs": 14.116999999999999,
+            "message": "",
+            "stackTrace": ""
+          }
+        ],
+        "summary": {
+          "total": 1,
+          "passed": 1,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 41.323699999999995
+        }
+      },
+      "editorsRemaining": []
+    }
+  ],
+  "editorsRemaining": [],
+  "fixtureRemoved": true,
+  "sources": [
+    {
+      "file": "unityCliTestAdapter.ts",
+      "sha256": "12ee1434caa51a19fba8b691d9849b5e1eea4bee2d56cf241323c926b03f366b"
+    },
+    {
+      "file": "unityTestTypes.ts",
+      "sha256": "071ae65ec104cb2f61c40a1ef6f911e2f4497504a5f7262a7f866974114ea1e7"
+    },
+    {
+      "file": "unityTestPrivacy.ts",
+      "sha256": "815eed083df5b37677bd3d7a287b84cc1971e38585d21cc98a35596e9b7f52cf"
+    }
+  ],
+  "editorVersion": "6000.6.4f1",
+  "packages": [
+    {
+      "name": "com.unity.ext.nunit",
+      "source": "local"
+    },
+    {
+      "name": "com.unity.test-framework",
+      "source": "local"
+    }
+  ]
+}

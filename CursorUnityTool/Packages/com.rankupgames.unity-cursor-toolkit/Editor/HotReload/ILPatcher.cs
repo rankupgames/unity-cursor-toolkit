@@ -22,12 +22,19 @@ using System.Runtime.InteropServices;
 
 using UnityEngine;
 using UnityEditor;
+using UnityCursorToolkit.Core;
 
 namespace UnityCursorToolkit.HotReload
 {
 	public static class ILPatcher
 	{
 		public static event Action<PatchResult> OnPatchCompleted;
+
+		static ILPatcher()
+		{
+			AssemblyReloadEvents.beforeAssemblyReload += referenceAssemblies.Clear;
+			UnityEditor.Compilation.CompilationPipeline.compilationFinished += context => referenceAssemblies.Clear();
+		}
 
 		private static string cscPath;
 		private static string monoHostPath; // Set when csc needs to be invoked via mono
@@ -46,6 +53,14 @@ namespace UnityCursorToolkit.HotReload
 
 			try
 			{
+				if (RuntimeCapabilities.IsCoreCLR || !RuntimeCapabilities.HasDomainReload)
+				{
+					result.ErrorCode = PatchErrorCode.CapabilityUnavailable;
+					result.FallbackReason = "This Editor runtime does not support Mono IL patching. Use Unity's script reload instead.";
+					UnityEngine.Debug.LogError($"(ILPatcher - TryPatch) {result.FallbackReason}");
+					return result;
+				}
+
 				if (EditorApplication.isPlaying == false)
 				{
 					result.Success = false;
@@ -263,7 +278,7 @@ namespace UnityCursorToolkit.HotReload
 			}
 
 			// Add all currently loaded assemblies as references
-			foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+			foreach (Assembly asm in AssemblyEnumerator.GetLoaded())
 			{
 				try
 				{
@@ -377,6 +392,9 @@ namespace UnityCursorToolkit.HotReload
 
 		private static int ApplyPatches(string tempDllPath, string[] changedFiles)
 		{
+#if UNITY_7000_0_OR_NEWER
+			throw new NotSupportedException("Mono IL patching is unavailable in this Editor. Use Unity's script reload instead.");
+#else
 			byte[] dllBytes = File.ReadAllBytes(tempDllPath);
 			Assembly patchAssembly = Assembly.Load(dllBytes);
 			int patchedCount = 0;
@@ -421,11 +439,12 @@ namespace UnityCursorToolkit.HotReload
 			catch (Exception ex) { UnityEngine.Debug.LogWarning($"(ILPatcher - ApplyPatches) Failed to clean temp DLL: {ex.Message}"); }
 
 			return patchedCount;
+#endif
 		}
 
 		private static Type FindOriginalType(string fullName)
 		{
-			foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+			foreach (Assembly asm in AssemblyEnumerator.GetLoaded())
 			{
 				Type t = asm.GetType(fullName);
 				if (t != null)
@@ -520,7 +539,7 @@ namespace UnityCursorToolkit.HotReload
 			}
 
 			// Call static OnScriptHotReloadNoInstance() on all types that have it
-			foreach (Assembly asm in AppDomain.CurrentDomain.GetAssemblies())
+			foreach (Assembly asm in AssemblyEnumerator.GetLoaded())
 			{
 				try
 				{
@@ -544,12 +563,19 @@ namespace UnityCursorToolkit.HotReload
 		#endregion
 	}
 
+	public enum PatchErrorCode
+	{
+		None,
+		CapabilityUnavailable
+	}
+
 	public class PatchResult
 	{
 		public bool Success;
 		public int PatchedMethodCount;
 		public long ElapsedMs;
 		public string FallbackReason;
+		public PatchErrorCode ErrorCode;
 	}
 }
 

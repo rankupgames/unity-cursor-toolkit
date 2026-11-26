@@ -24,15 +24,24 @@ namespace UnityCursorToolkit.MCP
 
 		public string HandleCommand(string argsJson)
 		{
+			EditorValidationState.ObserveMainThread();
 			var sb = new StringBuilder();
 			sb.Append("{");
 			sb.Append("\"unityVersion\":\"").Append(Escape(Application.unityVersion)).Append("\",");
+			sb.Append("\"runtime\":{");
+			sb.Append("\"isCoreCLR\":").Append(RuntimeCapabilities.IsCoreCLR ? "true" : "false").Append(",");
+			sb.Append("\"hasDomainReload\":").Append(RuntimeCapabilities.HasDomainReload ? "true" : "false").Append("},");
 			sb.Append("\"activeScene\":\"").Append(Escape(UnityEngine.SceneManagement.SceneManager.GetActiveScene().path)).Append("\",");
 			sb.Append("\"buildTarget\":\"").Append(Escape(EditorUserBuildSettings.activeBuildTarget.ToString())).Append("\",");
 			sb.Append("\"platform\":\"").Append(Escape(Application.platform.ToString())).Append("\",");
 			sb.Append("\"isPlaying\":").Append(Application.isPlaying ? "true" : "false").Append(",");
 			sb.Append("\"isPaused\":").Append(EditorApplication.isPaused ? "true" : "false").Append(",");
-			sb.Append("\"projectPath\":\"").Append(Escape(GetProjectPath())).Append("\"");
+			sb.Append("\"projectPath\":\"").Append(Escape(GetProjectPath())).Append("\",");
+			sb.Append("\"editorPid\":").Append(EditorValidationState.EditorPid).Append(",");
+			sb.Append("\"domainId\":\"").Append(EditorValidationState.DomainId).Append("\",");
+			sb.Append("\"isCompiling\":").Append(EditorApplication.isCompiling ? "true" : "false").Append(",");
+			sb.Append("\"isUpdating\":").Append(EditorApplication.isUpdating ? "true" : "false").Append(",");
+			sb.Append("\"mainThreadObservedUtc\":\"").Append(EditorValidationState.MainThreadObservedUtc).Append("\"");
 			sb.Append("}");
 			return sb.ToString();
 		}

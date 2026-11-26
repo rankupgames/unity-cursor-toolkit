@@ -134,13 +134,6 @@ namespace UnityCursorToolkit
 #endif
 	}
 
-	internal sealed class LoadedSceneSnapshot
-	{
-		internal string name;
-		internal string path;
-		internal bool isActive;
-	}
-
 	internal sealed class ProfilerSnapshotSession
 	{
 		internal string id;
@@ -149,7 +142,7 @@ namespace UnityCursorToolkit
 		internal string capturedUtc;
 		internal string unityVersion;
 		internal string activeScene;
-		// Normal loaded scenes in SceneManager order; excludes DontDestroyOnLoad. Unsaved paths are empty.
+		// SceneManager order; includes unsaved loaded scenes, excludes the special DontDestroyOnLoad scene.
 		internal List<LoadedSceneSnapshot> loadedScenes = new List<LoadedSceneSnapshot>();
 		internal bool isPlaying;
 		internal bool isPaused;
@@ -181,7 +174,16 @@ namespace UnityCursorToolkit
 			ProfilerSnapshotJson.Prop(sb, "capturedUtc", capturedUtc).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "unityVersion", unityVersion).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "activeScene", activeScene).Append(",");
-			AppendLoadedScenes(sb);
+			sb.Append("\"loadedScenes\":[");
+			for (int i = 0; i < loadedScenes.Count; i++)
+			{
+				if (i > 0) sb.Append(",");
+				sb.Append("{");
+				ProfilerSnapshotJson.Prop(sb, "name", loadedScenes[i].name).Append(",");
+				ProfilerSnapshotJson.Prop(sb, "path", loadedScenes[i].path).Append(",");
+				sb.Append("\"isActive\":").Append(ProfilerSnapshotJson.Bool(loadedScenes[i].isActive)).Append("}");
+			}
+			sb.Append("],");
 			ProfilerSnapshotJson.Prop(sb, "bottleneck", bottleneck).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "sessionPath", sessionPath).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "consoleTranscriptPath", consoleTranscriptPath).Append(",");
@@ -202,21 +204,6 @@ namespace UnityCursorToolkit
 			AppendWarnings(sb);
 			sb.Append("}");
 			return sb.ToString();
-		}
-
-		private void AppendLoadedScenes(StringBuilder sb)
-		{
-			sb.Append("\"loadedScenes\":[");
-			for (int i = 0; i < loadedScenes.Count; i++)
-			{
-				if (i > 0) sb.Append(",");
-				LoadedSceneSnapshot scene = loadedScenes[i];
-				sb.Append("{");
-				ProfilerSnapshotJson.Prop(sb, "name", scene.name).Append(",");
-				ProfilerSnapshotJson.Prop(sb, "path", scene.path).Append(",");
-				sb.Append("\"isActive\":").Append(ProfilerSnapshotJson.Bool(scene.isActive)).Append("}");
-			}
-			sb.Append("],");
 		}
 
 		private void AppendMetrics(StringBuilder sb, bool includeRaw)
@@ -420,11 +407,10 @@ namespace UnityCursorToolkit
 			sb.AppendLine("unityVersion: " + session.unityVersion);
 			sb.AppendLine("activeScene: " + session.activeScene);
 			sb.AppendLine("loadedScenes:");
-			foreach (LoadedSceneSnapshot scene in session.loadedScenes)
+			for (int i = 0; i < session.loadedScenes.Count; i++)
 			{
-				sb.AppendLine("- " + ProfilerSnapshotJson.Escape(scene.name)
-					+ " | " + (string.IsNullOrEmpty(scene.path) ? "<unsaved>" : ProfilerSnapshotJson.Escape(scene.path))
-					+ (scene.isActive ? " | active" : string.Empty));
+				LoadedSceneSnapshot scene = session.loadedScenes[i];
+				sb.AppendLine("  - " + scene.name + " | " + scene.path + " | active:" + ProfilerSnapshotJson.Bool(scene.isActive));
 			}
 			sb.AppendLine("storedPath: " + session.sessionPath);
 			sb.AppendLine("consoleTranscriptPath: " + EmptyFallback(session.consoleTranscriptPath));

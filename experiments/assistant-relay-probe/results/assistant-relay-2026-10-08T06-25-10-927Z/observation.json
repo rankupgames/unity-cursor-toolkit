@@ -1,0 +1,217 @@
+{
+  "packageVersion": "2.20.0-pre.1",
+  "archiveSha256": "e19d67ccc57145fbeecd3f3958babe9c1578cd0023e8830b391178ee49456a3e",
+  "registry": "https://packages.unity.com/com.unity.ai.assistant",
+  "published": "2026-09-23T13:36:53.179Z",
+  "minimumEditorVersion": "6000.0.60f1",
+  "editorVersion": "6000.3.9f1",
+  "productVersion": "6000.3.9f1_7a9955a4f2fa",
+  "serverDate": "2026-10-08T06:25:11.000Z",
+  "policyTests": {
+    "refused": [
+      {
+        "name": "Unity_RunCommand",
+        "args": {
+          "Code": "System.IO.File.WriteAllText(\"sentinel\",\"changed\")"
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_policy_escape\",\"message\":\"Arbitrary C# execution is refused, including dryRun.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_RunCommand",
+        "args": {
+          "Code": "arbitrary C#",
+          "dryRun": true
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_policy_escape\",\"message\":\"Arbitrary C# execution is refused, including dryRun.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_ReadConsole",
+        "args": {
+          "Action": "Clear",
+          "dryRun": true
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_read_only\",\"message\":\"Read-only mode blocks this action.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_ReadConsole",
+        "args": {
+          "Action": "get"
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_unclassified_action\",\"message\":\"An exact classified Action is required.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_ReadConsole",
+        "args": {},
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_unclassified_action\",\"message\":\"An exact classified Action is required.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unknown",
+        "args": {
+          "Action": "Get"
+        },
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unknown tool: assistantRelay/Unknown. Available tools: coreclr_migration, manage_scene, manage_gameobject, manage_component, manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, project_info, editor_validation, game_command, profiler_snapshot, build_trigger, batch_execute, unity_context, viewport_stream, read_console, clear_console, resolve_meta, assistantRelay/Unity_ReadConsole, assistantRelay/Unity_RunCommand"
+            }
+          ],
+          "isError": true
+        }
+      }
+    ],
+    "allowed": {
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"read\"}]}}"
+        }
+      ]
+    },
+    "faults": [
+      {
+        "kind": "spawn",
+        "code": "relay_start_failed"
+      },
+      {
+        "kind": "timeout",
+        "code": "relay_timeout"
+      },
+      {
+        "kind": "exit",
+        "code": "relay_unexpected_exit"
+      },
+      {
+        "kind": "exit-after-ready",
+        "code": "relay_unexpected_exit"
+      }
+    ],
+    "legacyGate": "2019.4 denied before child construction; shipped code unchanged"
+  },
+  "changes": [
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Settings/MCPConstants.cs",
+      "symbol": "relayBaseDirectoryName",
+      "old": "public static string relayBaseDirectoryName = \".unity/relay\";",
+      "replacement": "public static string relayBaseDirectoryName = Environment.GetEnvironmentVariable(\"UCT_ASSISTANT_RELAY_DIR\") ?? throw new InvalidOperationException(\"Owned relay path required\");"
+    },
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Settings/MCPConstants.cs",
+      "symbol": "mcpBaseDirectoryName",
+      "old": "public static string mcpBaseDirectoryName = \".unity/mcp\";",
+      "replacement": "public static string mcpBaseDirectoryName = Environment.GetEnvironmentVariable(\"UCT_ASSISTANT_MCP_DIR\") ?? throw new InvalidOperationException(\"Owned MCP path required\");"
+    },
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Settings/MCPConstants.cs",
+      "symbol": "prefProjectSettings",
+      "old": "public const string prefProjectSettings = \"Unity.AI.MCP.ProjectSettings.v2\";",
+      "replacement": "public const string prefProjectSettings = \"UCT.Assistant.Proof.c11684d8-9b93-4178-a040-ff9839852e43.MCPSettings\";"
+    },
+    {
+      "relative": "Editor/Assistant/Relay/RelayPersistenceService.cs",
+      "symbol": "k_KeyPrefix",
+      "old": "const string k_KeyPrefix = \"Unity.AI.Gateway.Relay.\";",
+      "replacement": "const string k_KeyPrefix = \"UCT.Assistant.Proof.c11684d8-9b93-4178-a040-ff9839852e43.Relay.\";"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Settings/MCPConstants.cs",
+      "originalSha256": "41659294a8af8e6e2b39469cb941aefbaa70939d49948dbbcfd5b391b82f21da",
+      "modifiedSha256": "c25cc0efb2c092435965175bfda15c853b6e5114ed48f39a7f16df84719e6a29"
+    },
+    {
+      "relative": "Editor/Assistant/Relay/RelayPersistenceService.cs",
+      "originalSha256": "b3cd6ecf745bdaf5e27fd41c21a5f1c396286b16c8fd22f1374eb4ecd1b07081",
+      "modifiedSha256": "cc5c148999e1c840facb76a9300b1db4e72e68c2a73ca18e2dd18055c91ee2b5"
+    }
+  ],
+  "immutableHashes": [
+    {
+      "relative": "RelayApp~/relay_win.exe",
+      "sha256": "0cd32f102a64fc8585671ec3ce82a78046011452a2b6d5f655d90e26369e014b"
+    },
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Tools/ReadConsole.cs",
+      "sha256": "83c8ca59bd19dfba46cf4afd2da7d43684e7c10db5bc4011b82603944a1f17d9"
+    },
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Tools/RunCommand.cs",
+      "sha256": "359056413fc062c900fb0402ec99bd08b04768023fc04ec624a9f1d4d05ec732"
+    }
+  ],
+  "defaultInstallBehaviorProved": false,
+  "coreclrCompatibilityProved": false,
+  "paidAiInvocation": false,
+  "bootstrap": {
+    "version": "6000.3.9f1",
+    "coreLibrary": "mscorlib",
+    "pid": 49960,
+    "isBatchMode": true,
+    "isMono": true,
+    "statusDirectory": "<fixture>\\status",
+    "packageVersion": "2.20.0-pre.1",
+    "at": "2026-10-08T06:26:27.2459567Z"
+  },
+  "editorStartupMilliseconds": 70863,
+  "editorPid": 49960,
+  "relayPid": 42104,
+  "passed": false,
+  "error": {
+    "code": "relay_empty_catalog",
+    "message": "Assistant returned no tools."
+  },
+  "childExit": {
+    "exited": true,
+    "code": 0,
+    "signal": null
+  },
+  "editorExit": {
+    "code": 0,
+    "signal": null
+  },
+  "remainingOwnedProcesses": [],
+  "normalEditorExit": true,
+  "deletedOwnedPrefs": []
+}

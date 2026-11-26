@@ -1,0 +1,87 @@
+[INFO ] [Unity Mcp Server] mcp.startup workingDir=<fixture>
+[INFO ] [Unity Mcp Server] log === MCP SERVER STARTED ===
+[INFO ] [Unity Mcp Server] log PID=45936 execPath=<fixture>\relay\relay_win.exe
+[INFO ] [Unity Mcp Server] log argv: ["bun","B:/~BUN/root/relay_win.exe","--mcp","--project-path","<fixture>","--instance-id","63796"]
+[INFO ] [Unity Mcp Server] log Working directory: <fixture>
+[INFO ] [Unity Mcp Server] log Approval token: {"fromEnv":false}
+[INFO ] [Unity Mcp Server] log Project path: (not specified)
+[INFO ] [Unity Mcp Server] log Instance ID: (not specified)
+[INFO ] [Unity Mcp Server] log MCP server initializing...
+[INFO ] [Unity Mcp Server] log Initializing unity-mcp-server v1.0.0
+[INFO ] [Unity Mcp Server] log Discovery filter: projectPath=<fixture>, editorPid=63796
+[INFO ] [Unity Mcp Server] log Unity MCP Server started
+[INFO ] [Unity Mcp Server] log Client connected: uct-private-assistant-probe 1.0
+[INFO ] [Unity Mcp Server] connection.established connectionType=Named Pipe path=\\.\pipe\unity-mcp-9670526e-63796
+[INFO ] [Unity Mcp Server] log Sending client info to Unity: {"name":"uct-private-assistant-probe","version":"1.0","title":"uct-private-assistant-probe"}
+[INFO ] [Unity Mcp Server] log Connected to Unity and discovered tools
+[INFO ] [Unity Mcp Server] tool_call.execute toolName=Unity_ReadConsole hasOutputSchema=false
+[INFO ] [Unity Mcp Server] log [MCP Approval] Tool call: Unity_ReadConsole, mcpApprovalRequired: false, hasApprovalMethod: true
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole: success=true, hasData=true, hasResult=false
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole data preview: [{"Message":"UCT_ASSISTANT_PROBE_SENTINEL","Type":"Log","File":"Assets/Editor/AssistantRelayProbe.cs","Line":57,"StackTrace":"UnityEngine.Debug:Log (object)\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()"}]
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole message: Retrieved 1 log entries.
+[INFO ] [Unity Mcp Server] log [MCP Result] Unity_ReadConsole: {
+  "success": true,
+  "message": "Retrieved 1 log entries.",
+  "data": [
+    {
+      "Message": "UCT_ASSISTANT_PROBE_SENTINEL",
+      "Type": "Log",
+      "File": "Assets/Editor/AssistantRelayProbe.c...
+[INFO ] [Unity Mcp Server] tool_call.execute (31ms) success=true
+[INFO ] [Unity Mcp Server] tool_call.execute toolName=Unity_ReadConsole hasOutputSchema=false
+[INFO ] [Unity Mcp Server] log [MCP Approval] Tool call: Unity_ReadConsole, mcpApprovalRequired: false, hasApprovalMethod: true
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole: success=true, hasData=true, hasResult=false
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole data preview: [{"Message":"UCT_ASSISTANT_PROBE_SENTINEL","Type":"Log","File":"Assets/Editor/AssistantRelayProbe.cs","Line":57,"StackTrace":"UnityEngine.Debug:Log (object)\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()"}]
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole message: Retrieved 1 log entries.
+[INFO ] [Unity Mcp Server] log [MCP Result] Unity_ReadConsole: {
+  "success": true,
+  "message": "Retrieved 1 log entries.",
+  "data": [
+    {
+      "Message": "UCT_ASSISTANT_PROBE_SENTINEL",
+      "Type": "Log",
+      "File": "Assets/Editor/AssistantRelayProbe.c...
+[INFO ] [Unity Mcp Server] tool_call.execute (4ms) success=true
+[INFO ] [Unity Mcp Server] tool_call.execute toolName=Unity_ReadConsole hasOutputSchema=false
+[INFO ] [Unity Mcp Server] log [MCP Approval] Tool call: Unity_ReadConsole, mcpApprovalRequired: false, hasApprovalMethod: true
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole: success=true, hasData=true, hasResult=false
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole data preview: [{"Message":"UCT_ASSISTANT_PROBE_SENTINEL","Type":"Log","File":"Assets/Editor/AssistantRelayProbe.cs","Line":57,"StackTrace":"UnityEngine.Debug:Log (object)\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()"}]
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole message: Retrieved 1 log entries.
+[INFO ] [Unity Mcp Server] log [MCP Result] Unity_ReadConsole: {
+  "success": true,
+  "message": "Retrieved 1 log entries.",
+  "data": [
+    {
+      "Message": "UCT_ASSISTANT_PROBE_SENTINEL",
+      "Type": "Log",
+      "File": "Assets/Editor/AssistantRelayProbe.c...
+[INFO ] [Unity Mcp Server] tool_call.execute (3ms) success=true
+[INFO ] [Unity Mcp Server] tool_call.execute toolName=Unity_ReadConsole hasOutputSchema=false
+[INFO ] [Unity Mcp Server] log [MCP Approval] Tool call: Unity_ReadConsole, mcpApprovalRequired: false, hasApprovalMethod: true
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole: success=true, hasData=true, hasResult=false
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole data preview: [{"Message":"UCT_ASSISTANT_PROBE_SENTINEL","Type":"Log","File":"Assets/Editor/AssistantRelayProbe.cs","Line":57,"StackTrace":"UnityEngine.Debug:Log (object)\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()"}]
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole message: Retrieved 1 log entries.
+[INFO ] [Unity Mcp Server] log [MCP Result] Unity_ReadConsole: {
+  "success": true,
+  "message": "Retrieved 1 log entries.",
+  "data": [
+    {
+      "Message": "UCT_ASSISTANT_PROBE_SENTINEL",
+      "Type": "Log",
+      "File": "Assets/Editor/AssistantRelayProbe.c...
+[INFO ] [Unity Mcp Server] tool_call.execute (3ms) success=true
+[INFO ] [Unity Mcp Server] tool_call.execute toolName=Unity_ReadConsole hasOutputSchema=false
+[INFO ] [Unity Mcp Server] log [MCP Approval] Tool call: Unity_ReadConsole, mcpApprovalRequired: false, hasApprovalMethod: true
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole: success=true, hasData=true, hasResult=false
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole data preview: [{"Message":"UCT_ASSISTANT_PROBE_SENTINEL","Type":"Log","File":"Assets/Editor/AssistantRelayProbe.cs","Line":57,"StackTrace":"UnityEngine.Debug:Log (object)\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()"}]
+[INFO ] [Unity Mcp Server] log [Tool Response] Unity_ReadConsole message: Retrieved 1 log entries.
+[INFO ] [Unity Mcp Server] log [MCP Result] Unity_ReadConsole: {
+  "success": true,
+  "message": "Retrieved 1 log entries.",
+  "data": [
+    {
+      "Message": "UCT_ASSISTANT_PROBE_SENTINEL",
+      "Type": "Log",
+      "File": "Assets/Editor/AssistantRelayProbe.c...
+[INFO ] [Unity Mcp Server] tool_call.execute (3ms) success=true
+[INFO ] [Unity Mcp Server] log Shutting down Unity MCP Server...

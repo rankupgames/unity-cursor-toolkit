@@ -1,0 +1,1226 @@
+VBCSCompilerPreWarmer: watching VBCSCompiler (PID 19844)
+VBCSCompilerPreWarmer: pre-warm launched (dotnet PID 7264)
+VBCSCompiler prewarm took 16.65 ms
+<private or licensing line omitted>
+Built from 'trunk' branch; Version is '7000.0.0a7 (581996e1a8f7) revision 5773718'; Using compiler version '195136248'; Build Type 'Release'
+OS: 'Windows 10  (10.0.19045) 64bit Enterprise' Language: 'en' Physical Memory: 32702 MB
+BatchMode: 0, IsHumanControllingUs: 1, StartBugReporterOnCrash: 1, Is64bit: 1
+<private or licensing line omitted>
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-08T17:25:09Z
+<private or licensing line omitted>
+
+COMMAND LINE ARGUMENTS:
+<unity-install>\Unity.exe
+-projectPath
+<owned-project>
+-executeMethod
+UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike.Run
+-uctSpikeResultPath
+<owned-project>\run-2\result.json
+-uctSpikeOutputDir
+<owned-project>\run-2\frames
+-uctSpikeAutoQuit
+false
+-uctSpikeOwned
+true
+-uctSpikeStopPath
+<owned-project>\run-2\stop
+-uctSpikeTimeout
+300
+-uctSpikePort
+63638
+-uctSpikeHiddenGate
+true
+-uctSpikePrefs
+<nonce>,<nonce>
+-silent-crashes
+-logFile
+<owned-project>\run-2\Editor.log
+Successfully changed project path to: <owned-project>
+<owned-project>
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "<nonce>=262144"
+    "<nonce>=262144"
+    "<nonce>=262144"
+    "<nonce>=262144"
+    "<nonce>=262144"
+    "<nonce>=65536"
+    "<nonce>=65536"
+    "<nonce>=32768"
+    "<nonce>=262144"
+    "<nonce>=32768"
+    "<nonce>=33554432"
+    "<nonce>=16777216"
+    "<nonce>=16777216"
+    "<nonce>=262144"
+    "<nonce>=262144"
+    "<nonce>=262144"
+    "<nonce>=32768"
+    "<nonce>=16"
+    "<nonce>=8"
+    "<nonce>=33554432"
+    "<nonce>=8"
+    "<nonce>=16777216"
+    "<nonce>=16777216"
+    "<nonce>=1"
+    "<nonce>=16777216"
+    "<nonce>=16777216"
+    "<nonce>=4194304"
+    "<nonce>=2097152"
+    "<nonce>=16"
+    "<nonce>=8"
+    "<nonce>=33554432"
+    "<nonce>=8"
+    "<nonce>=16777216"
+    "<nonce>=1048576"
+    "<nonce>=16777216"
+    "<nonce>=2097152"
+    "<nonce>=1048576"
+    "<nonce>=262144"
+Logging is directed to a specific file, skipping project log.
+Player connection [22032]  Target information:
+
+Player connection [22032]  * "[IP] <address> [Port] 55504 [ProcessId] 18488 [Flags] 130 [Guid] 1964930055 [EditorId] 1964930055 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [22032]  * "[IP] <address> [Port] 55504 [ProcessId] 18488 [Flags] 130 [Guid] 1964930055 [EditorId] 1964930055 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [22032]  * "[IP] <address> [Port] 55504 [ProcessId] 18488 [Flags] 130 [Guid] 1964930055 [EditorId] 1964930055 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [22032]  * "[IP] <address> [Port] 55504 [ProcessId] 18488 [Flags] 130 [Guid] 1964930055 [EditorId] 1964930055 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [22032]  * "[IP] <address> [Port] 55504 [ProcessId] 18488 [Flags] 130 [Guid] 1964930055 [EditorId] 1964930055 [Version] 1048832 [Id] WindowsEditor(7,<host>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [22032] Host joined multi-casting on [<address>:54997]...
+Player connection [22032] Host joined alternative multi-casting on [<address>:34997]...
+Input System module state changed to: Initialized.
+Starting IPC server.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+  Version:                 1.19.0-rc.1+a1d64c6
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+[Package Manager] Connected to IPC stream "Upm-18488" after 0.4 seconds.
+<private or licensing line omitted>
+Library Redirect Path: Library/
+Initialising UDS system complete:
+  - System type: Client
+  - Resource namespace: <nonce>
+  - Shared memory size: 1073741824
+  - Command buffer id: 1052576
+  - Command buffer size: 8192
+  - Hashmap size: 4194304
+  - Service connected: false
+Launching Unity Data Store - <unity-install>/Data/Tools/Unity.DataStore.exe
+Unity Data Store artifact dir = Library/DataStore, working dir = <owned-project>Unity Data Store running and initialised
+Refreshing native plugins compatible for Editor in 7.50 ms, found 1 plugins.
+[Physics::Module] Selected backend (deferred post-plugins).
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Initialize engine version: 7000.0.0a7 (581996e1a8f7)
+[EntityIdStore] init: VM path (explicit commit), pageSize=4096, blockCount=262144, entitiesPerBlock=1024, blocksPerSlotPage=0, slots reserved=4294967296 bytes
+[Subsystems] Discovering subsystems at path <unity-install>/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path <owned-project>/Assets
+[D3D12 Device Filter] Vendor Name: NVIDIA
+[D3D12 Device Filter] Device Name: NVIDIA GeForce RTX 3080
+[D3D12 Device Filter] Driver Version: 32.0.16.1047
+[D3D12 Device Filter] Feature Level: 12.2
+[D3D12 Device Filter] Graphics Memory: 10053 MB
+[D3D12 Device Filter] Processor Count: 8
+[D3D12 Device Filter] Device Type: Discrete
+GfxDevice: creating device client; kGfxThreadingModeSplitJobs
+d3d12: failed to query info queue interface (0x80004002).
+Direct3D:
+    Version:         Direct3D 12 [level 12.2]
+    Renderer:        NVIDIA GeForce RTX 3080 (ID=0x2206)
+    Vendor:          NVIDIA
+    VRAM:            10053 MB
+    App VRAM Budget: 9285 MB
+    Driver:          32.0.16.1047
+Initialize CoreCLR
+Initialized ClrProfiler
+CodeReloadManager initialized
+Registering Unity assembly bundles:
+	<unity-install>/Data/Managed/UnityEngine/modules-assemblybundle.json
+	<unity-install>/Data/PlaybackEngines/WindowsStandaloneSupport/assemblybundle.json
+ImportWorker Server TCP listen port: 0
+<nonce> - disconnected - :0
+Begin MonoManager ReloadAssembly
+Loaded Assemblies : TypeCache.Refresh : performing complete scan for 1-st domain.
+Loaded Assemblies : TypeCache.Refresh : scanning 174 assemblies
+Loaded Assemblies : TypeCache.Refresh : initializing pseudo-attribute cache
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.XRModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.WindModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.VirtualTexturingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.VideoModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.VehiclesModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.VectorGraphicsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.VFXModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UpbUnityAllocModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityWebRequestWWWModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityWebRequestTextureModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityWebRequestModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityWebRequestAudioModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.<nonce>'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityCurlModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityConsentModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityConnectModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityAnalyticsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UnityAnalyticsCommonModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UmbraModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UIElementsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.UICommonModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.U2DRuntimeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TimelineFoundationModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TilemapModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TextRenderingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TextCoreTextEngineModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TextCoreFontEngineModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TetgenModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TerrainPhysicsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TerrainModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.TLSModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.SubsystemsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.StreamingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.SpriteShapeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.SpriteMaskModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.SmartStringsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ShaderVariantAnalyticsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ScriptingReflectionModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ScriptingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ScreenCaptureModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.<nonce>'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.RenderAs2DModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.PropertiesModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.PhysicsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.PhysicsCore2DModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.PhysicsBackendPhysXModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.Physics2DModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.PerformanceReportingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ParticleSystemModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.NVIDIAModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.MultiplayerModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.MetalFXModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.MathematicsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.MarshallingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ManagedKernelModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.LocalizationRuntimeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.LocalizationModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.JSONSerializeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.InsightsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.InputModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.InputLegacyModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.InputForUIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ImageConversionModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.IdentifiersModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.IMGUIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.HotReloadModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.HierarchyModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.HierarchyCoreModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.GridModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.<nonce>'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.GameCenterModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.GIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.EntitiesModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.DirectorModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.DSPGraphModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.CrashReportingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.CoreModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ContentLoadModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.CommandStateObserverModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ClusterRendererModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ClusterInputModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.ClothModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.BurstModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.AudioModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.AssetBundleModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.AnimationModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.AndroidJNIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.AdaptivePerformanceModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.AccessibilityModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.AMDModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine.AIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEngine'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.XRModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.WindowsStandalone.Extensions'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.VideoModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.VectorGraphicsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.VFXModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.UnityConnectModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.UmbraModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.UIToolkitAuthoringModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.UIElementsSamplesModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.UIElementsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.UIBuilderModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.UIAutomationModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.U2DModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.TreeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.TimelineFoundationModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.TilemapModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.TextRenderingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.TextCoreTextEngineModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.TextCoreFontEngineModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.TerrainModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.SpriteShapeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.SpriteMaskModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.SmartStringsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.SketchUpModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.ShaderPreprocessorModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.ShaderCompilationModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.ShaderBuildSettingsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.SceneViewModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.SceneTemplateModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.SafeModeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.QuickSearchModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.QuickInstallModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.PropertiesModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.ProjectAuditorModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.PresetsUIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.PlayModeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.PhysicsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.PhysicsCore2DModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.Physics2DModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.MultiplayerModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.MediaModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.MathematicsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.LocalizationRuntimeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.LightingModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.JobsProfilerModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.HierarchyModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.GridModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.GridAndSnapModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.<nonce>'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.GraphViewModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.GraphToolkitModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.GenericRemoteModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.GIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.EmbreeModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.EditorToolbarModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.DiagnosticsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.DeviceSimulatorModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.CoreModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.CoreBusinessMetricsModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.ContentLoadModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.CommandStateObserverModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.ClothModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.BurstModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.BuildProfileModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.BuildAnalysisModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.AssetComplianceModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.AnimationWindowModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.AdaptivePerformanceModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.AccessibilityModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.AcceleratorClientModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.AIModule'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Cecil.Pdb'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Cecil.Mdb'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Cecil'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'acceleratorclientcore'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.AcceleratorClient.Bootstrap'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.AcceleratorClient'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Scripting'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Scripting.ObjectTransfer'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Private.Scripting'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.Collections.NonGeneric'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Collections.NonGeneric'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'ExCSS.Unity'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'ExCSS.Unity'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.Net.Http'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Net.Http'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.Private.CoreLib'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Private.CoreLib'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.Net.Primitives'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Net.Primitives'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'Bee.BeeDriver2'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Bee.BeeDriver2'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.Net.Sockets'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Net.Sockets'
+Loaded Assemblies : Dependency graph rebuilt
+Loaded Assemblies : TypeCache.Refresh : DONE! age = 0
+Registering precompiled unity dll's ...
+Register platform support module: <unity-install>/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+Registered in 0.001514 seconds.
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+[MODES] Loading mode Default (0) for <nonce>
+Package Manager log level set to [2]
+Native extension for WindowsStandalone target not found
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:True
+Scripting: successfully reloaded assembly
+Domain Reload Profiling: 2195ms
+	BeginReloadAssembly (1375ms)
+		CreateAndSetChildDomain (3ms)
+	<nonce> (20ms)
+	initialDomainReloadingComplete (51ms)
+	LoadAllAssembliesAndSetupDomain (36ms)
+		LoadAssemblies (251ms)
+		<nonce> (4ms)
+		TypeCache.Refresh (894ms)
+			TypeCache.ScanAssembly (829ms)
+		AnalyzeDomain (2ms)
+	FinalizeReload (713ms)
+		SetupLoadedEditorAssemblies (0ms)
+			<nonce> (92ms)
+			<nonce> (74ms)
+			<nonce> (151ms)
+	Serialization: 47ms
+		Read: 47ms, 3655190 bytes
+		Write: 0ms, 0 bytes
+<private or licensing line omitted>
+Application.AssetDatabase Initial Refresh Start
+[Package Manager] Restoring resolved packages state from cache
+<private or licensing line omitted>
+[Package Manager] Registered 47 packages:
+  Packages from [https://packages.unity.com]:
+    com.unity.nuget.newtonsoft-json@3.2.2 (location: <owned-project>\Library\PackageCache\com.unity.nuget.newtonsoft-json@4dfd81071c64)
+    com.unity.searcher@4.9.5 (location: <owned-project>\Library\PackageCache\com.unity.searcher@a463122f2c00)
+  Built-in packages:
+    com.unity.modules.accessibility@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.accessibility)
+    com.unity.modules.adaptiveperformance@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.adaptiveperformance)
+    com.unity.modules.ai@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.ai)
+    com.unity.modules.androidjni@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.androidjni)
+    com.unity.modules.animation@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.animation)
+    com.unity.modules.assetbundle@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.assetbundle)
+    com.unity.modules.audio@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.audio)
+    com.unity.modules.cloth@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.cloth)
+    com.unity.modules.director@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.director)
+    com.unity.modules.imageconversion@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.imageconversion)
+    com.unity.modules.imgui@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.imgui)
+    com.unity.modules.jsonserialize@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.jsonserialize)
+    com.unity.modules.particlesystem@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.particlesystem)
+    com.unity.modules.physics@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.physics)
+    com.unity.modules.physics2d@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.physics2d)
+    com.unity.modules.screencapture@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.screencapture)
+    com.unity.modules.terrain@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.terrain)
+    com.unity.modules.terrainphysics@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.terrainphysics)
+    com.unity.modules.tilemap@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.tilemap)
+    com.unity.modules.ui@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.ui)
+    com.unity.modules.uielements@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.uielements)
+    com.unity.modules.umbra@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.umbra)
+    com.unity.modules.unityanalytics@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.unityanalytics)
+    com.unity.modules.unitywebrequest@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.unitywebrequest)
+    com.unity.modules.unitywebrequestassetbundle@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.unitywebrequestassetbundle)
+    com.unity.modules.unitywebrequestaudio@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.unitywebrequestaudio)
+    com.unity.modules.unitywebrequesttexture@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.unitywebrequesttexture)
+    com.unity.modules.unitywebrequestwww@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.unitywebrequestwww)
+    com.unity.modules.vectorgraphics@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.vectorgraphics)
+    com.unity.modules.vehicles@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.vehicles)
+    com.unity.modules.video@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.video)
+    com.unity.modules.wind@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.wind)
+    com.unity.modules.xr@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.xr)
+    com.unity.render-pipelines.universal@17.7.0 (location: <owned-project>\Library\PackageCache\com.unity.render-pipelines.universal@85bd630781d8)
+    com.unity.render-pipelines.core@17.7.0 (location: <owned-project>\Library\PackageCache\com.unity.render-pipelines.core@3fc06b7e0438)
+    com.unity.shadergraph@17.7.0 (location: <owned-project>\Library\PackageCache\com.unity.shadergraph@3f2d776ca222)
+    com.unity.render-pipelines.universal-config@17.7.0 (location: <owned-project>\Library\PackageCache\com.unity.render-pipelines.universal-config@767fc04a69c2)
+    com.unity.modules.subsystems@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.subsystems)
+    com.unity.modules.hierarchycore@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.hierarchycore)
+    com.unity.modules.physicscore2d@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.modules.physicscore2d)
+    com.unity.graph-authoring@1.0.0 (location: <owned-project>\Library\PackageCache\com.unity.graph-authoring@38ddf7550e34)
+    com.unity.burst@2.0.0 (location: <owned-project>\Library\PackageCache\com.unity.burst@626e66ab421b)
+    com.unity.collections@6.7.0 (location: <owned-project>\Library\PackageCache\com.unity.collections@3ec4cc1d6c76)
+    com.unity.profiling.core@1.0.3 (location: <owned-project>\Library\PackageCache\com.unity.profiling.core@e5b83a35e7fd)
+  Embedded packages:
+    com.rankupgames.unity-cursor-toolkit@file:<owned-project>\Packages\com.rankupgames.unity-cursor-toolkit (location: <owned-project>\Packages\com.rankupgames.unity-cursor-toolkit)
+[Subsystems] No new subsystems found in resolved package list.
+[Package Manager] Done registering packages in 0.01 seconds
+Starting: <unity-install>\Data\Tools\BuildPipeline\bee_backend.exe --ipc --defer-dag-verification --dagfile="Library/Bee/1900b0aEDbg.dag" --continue-on-failure --profile="Library/Bee/backend1.traceevents" ScriptAssemblies
+WorkingDir: <owned-project>
+ExitCode: 0 Duration: 0s135ms
+[440/543    0s] ILPP-Configuration Library/ilpp-configuration.nevergeneratedoutput
+*** Tundra build success (0.11 seconds), 1 items updated, 543 evaluated
+AssetDatabase: script compilation time: 0.511613s
+Begin MonoManager ReloadAssembly
+Total cache size 266355010
+Total cache size after purge 266355010, took 00:00:00.3348095
+Loaded Assemblies : TypeCache.Refresh : partial scan of changed assemblies
+Loaded Assemblies : Detect changed : assembly 'Assembly-CSharp-Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Core.Editor.Shared' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Core.Runtime.Shared' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Core.ShaderLibrary' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.GPUDriven.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Universal.2D.Editor.Overrides' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Universal.2D.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Universal.Config.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Universal.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Universal.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Universal.Shaders' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.Rendering.LightTransport.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.Searcher.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.ShaderGraph.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.ShaderGraph.Utilities' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.SurfaceCache.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.UnifiedRayTracing.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'UnityCursorToolkit.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Core.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipelines.Core.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'UnityCursorToolkit.Vendor.Unterm.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.RenderPipeline.Universal.ShaderLibrary' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Microsoft.CodeAnalysis' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Microsoft.CodeAnalysis.CSharp' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Newtonsoft.Json' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.Burst' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.Collections' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.Collections.LowLevel.ILSupport' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.GraphAuthoring.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.InternalAPIEditorBridge.ShaderGraph.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.InternalAPIEngineBridge.ObjectDispatcher.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.InternalAPIEngineBridge.RenderPipelines.Core.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.InternalAPIEngineBridge.RenderPipelines.Core.Runtime.Shared' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.PathTracing.Editor' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.PathTracing.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'Unity.Profiling.Core' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'UnityCursorToolkit.Runtime' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : assembly 'UnityEditor.Graphs' marked not up-to-date due to it is NEW
+Loaded Assemblies : Detect changed : detected 174 up-to-date assemblies and 39 non-up-to-date assemblies
+Loaded Assemblies : Detect changed : AllLoadedAssembliesAreUnchanged = false
+Loaded Assemblies : Detect changed : <nonce> = false
+Loaded Assemblies : TypeCache.Refresh : initializing pseudo-attribute cache
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Assembly-CSharp-Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Core.Editor.Shared'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Core.Runtime.Shared'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Core.ShaderLibrary'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.GPUDriven.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.ShaderGraph.ShaderGraphLibrary'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Universal.2D.Editor.Overrides'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Universal.2D.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Universal.Config.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Universal.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Universal.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Universal.Shaders'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Rendering.LightTransport.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Searcher.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.ShaderGraph.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.ShaderGraph.Utilities'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.SurfaceCache.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.UnifiedRayTracing.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityCursorToolkit.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Core.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipelines.Core.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityCursorToolkit.Vendor.Unterm.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.RenderPipeline.Universal.ShaderLibrary'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Microsoft.CodeAnalysis'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Microsoft.CodeAnalysis.CSharp'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Newtonsoft.Json'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Burst'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Collections'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Collections.LowLevel.ILSupport'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.GraphAuthoring.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.InternalAPIEditorBridge.ShaderGraph.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.InternalAPIEngineBridge.ObjectDispatcher.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.InternalAPIEngineBridge.RenderPipelines.Core.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.InternalAPIEngineBridge.RenderPipelines.Core.Runtime.Shared'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.PathTracing.Editor'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.PathTracing.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'Unity.Profiling.Core'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityCursorToolkit.Runtime'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'UnityEditor.Graphs'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.ComponentModel.TypeConverter'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.ComponentModel.TypeConverter'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Private.CoreLib'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.Linq.Expressions'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Linq.Expressions'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.Reflection.Metadata'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Reflection.Metadata'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.IO.Compression'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.IO.Compression'
+Loaded Assemblies : TypeCache.Refresh : creating new Records for additional assembly 'System.Runtime.Serialization.Formatters'
+Loaded Assemblies : TypeCache.Refresh : scanning assembly 'System.Runtime.Serialization.Formatters'
+Loaded Assemblies : Dependency graph rebuilt
+Loaded Assemblies : TypeCache.Refresh : DONE! age = 0
+Out-of-process importers: 'AudioImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'ComputeShaderImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'FBXImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'Mesh3DSImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'NativeFormatImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'PrefabImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'RayTracingShaderImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'ShaderImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'TextScriptImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'TextureImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'TrueTypeFontImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'VideoClipImporter' will import out-of-process when Parallel Import is enabled
+Out-of-process importers: 'VisualEffectImporter' will import out-of-process when Parallel Import is enabled
+'Packages/com.unity.render-pipelines.core/Editor/Deprecated.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.render-pipelines.core/Editor/Deprecated.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+[MODES] ModeService[none].Initialize
+[MODES] ModeService[none].LoadModes
+Native extension for WindowsStandalone target not found
+[MCPBridge] Registered 17 tool(s): manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, build_trigger, editor_validation, game_command, project_info, manage_scene, manage_gameobject, manage_component, coreclr_migration, test_runner, viewport_stream, profiler_snapshot
+UnityEngine.DebugLogHandler.Internal_Log_Injected(LogType, LogOption, ManagedSpanWrapper&, EntityId)
+UnityEngine.DebugLogHandler.Internal_Log(LogType, LogOption, String, Object)
+UnityEngine.DebugLogHandler.LogFormat(LogType, Object, String, Object[])
+UnityEngine.Logger.Log(LogType, Object)
+UnityEngine.Debug.Log(Object)
+UnityCursorToolkit.MCP.MCPBridge.Initialize() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\MCP\MCPBridge.cs:line 128
+Unity.Scripting.LifecycleManagement.ScopeTransitionHelper.ExecuteMethodsInOrder(Type, IReadOnlyList`1)
+Unity.Scripting.LifecycleManagement.ScopeTransitionHelper.ExecuteMethodsInOrder(ReadOnlyAssemblyList)
+Unity.Scripting.LifecycleManagement.CodeInitializedScope.Enter(ScopeTransitionHelper)
+Unity.Scripting.LifecycleManagement.LifecycleScopeBase.OnEnter(ScopeTransitionHelper)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScope.OnEnter(ScopeTransitionHelper)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopesTracker.TryEnterScope(LifecycleScope)
+Unity.Scripting.LifecycleManagement.ScopeTransitionRequest.Transition(ActiveLifecycleScopesTracker)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopesTracker.ExecuteTransitions(Boolean)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopesTracker.CreateScopeTransitionRequest(LifecycleScope, ScopeTransitionType, Boolean)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopesTracker.RequestEnterScope(LifecycleScope)
+Unity.Scripting.LifecycleManagement.LifecycleController.EnterScope(LifecycleScope)
+Unity.Private.Scripting.AssemblyLoader.CodeReloadLifecycleController.EnterCodeInitializedScope()
+Unity.Private.Scripting.CodeReload.NativeCodeReloadContext.InvokeAll(IReadOnlyList`1, CodeReloadContext)
+Unity.Private.Scripting.CodeReload.CodeReloadScope.Exit(ScopeTransitionHelper)
+Unity.Scripting.LifecycleManagement.LifecycleScopeBase.OnExit(ScopeTransitionHelper)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopeWithContext`1.OnExit(ScopeTransitionHelper)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopesTracker.TryExitScope(LifecycleScopeWithContext`1, T, Boolean)
+Unity.Scripting.LifecycleManagement.<nonce>`1.Transition(ActiveLifecycleScopesTracker)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopesTracker.ExecuteTransitions(Boolean)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopesTracker.CreateScopeTransitionRequest(LifecycleScopeWithContext`1, ScopeTransitionType, Boolean)
+Unity.Scripting.LifecycleManagement.ActiveLifecycleScopesTracker.RequestExitScope(LifecycleScopeWithContext`1, Boolean)
+Unity.Scripting.LifecycleManagement.LifecycleController.ExitScope(LifecycleScopeWithContext`1)
+Unity.Private.Scripting.CodeReload.CodeReloadManager.OnEndCodeReload(CodeReloadScope)
+Unity.Private.Scripting.CodeReload.CodeReloadManager.InternalEndReload()
+Unity.Private.Scripting.CodeReload.CodeReloadManager.EndReload()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/MCP/MCPBridge.cs Line: 128)
+
+ScheduleIndexationOnStartup MainProcess:True IndexOnStartup:True
+Scripting: successfully reloaded assembly
+Domain Reload Profiling: 3053ms
+	BeginReloadAssembly (1323ms)
+		DisableScriptedObjects (23ms)
+	<nonce> (13ms)
+	initialDomainReloadingComplete (60ms)
+	LoadAllAssembliesAndSetupDomain (90ms)
+		LoadAssemblies (352ms)
+		TypeCache.Refresh (541ms)
+			TypeCache.ScanAssembly (525ms)
+		AnalyzeDomain (42ms)
+			BuildScriptInfoCaches (39ms)
+	FinalizeReload (1566ms)
+		SetupLoadedEditorAssemblies (0ms)
+			SetLoadedEditorAssemblies (3ms)
+			<nonce> (70ms)
+			<nonce> (118ms)
+			<nonce> (19ms)
+			AfterProcessingInitializeOnLoad (5ms)
+		<nonce> (19ms)
+	Serialization: 373ms
+		Read: 303ms, 7952004 bytes
+		Write: 69ms, 171409 bytes
+Starting new worker id: 0 with log in <owned-project>/Logs/AssetImportWorkerHW0.log
+
+Asset Pipeline Refresh (id=<nonce>): Total: 3.984 seconds - Initiated by InitialRefreshV2(ForceSynchronousImport)
+	(Values over 0.05ms)
+	Summary:
+		Imports: total=0 (actual=0, local cache=0, cache server=0)
+		Asset DB Process Time: managed=0 ms, native=1901 ms
+		Asset DB Callback time: managed=16 ms, native=15 ms
+		Scripting: domain reloads=1, domain reload time=1538 ms, compile time=513 ms, other=0 ms
+		Serialization: total=383.303 ms / 7983.7 KB (read=308.974 ms / 7786.1 KB, write=74.329 ms / 197.6 KB)
+		Project Asset Count: scripts=649, non-scripts=1479
+		Asset File Changes: new=0, changed=0, moved=0, deleted=0
+		Scan Filter Count: 0
+	InvokePackagesCallback: 18.808ms
+	ApplyChangesToAssetFolders: 0.801ms
+	Scan: 44.915ms
+	Collect global state as custom dependencies: 14.520ms
+	<nonce>: 13.153ms
+	<nonce>: 73.067ms
+	CategorizeAssets: 80.335ms
+	CompileScripts: 512.506ms
+	ImportOutOfDateAssets: 1581.532ms (1570.011ms without children)
+		UnloadImportedAssets: 0.729ms
+		<nonce>: 0.387ms
+		ImportSchedulerStart: 10.369ms
+	PostProcessAllAssets: 16.498ms
+		MonoPostProcessAllAssets: 16.407ms
+			<nonce>.OnPostprocessAllAssets 10.536ms
+			SpeedTree9Postprocessor.OnPostprocessAllAssets 1.016ms
+			EditModeScopePostprocessor.OnPostprocessAllAssets 0.904ms
+			<nonce>.OnPostprocessAllAssets 0.096ms
+			SyncVS.PostprocessSyncProject 0.066ms
+	UnloadStreamsBegin: 2.041ms
+	PersistCurrentRevisions: 0.081ms
+	GenerateScriptTypeHashes: 22.950ms
+	<nonce>: 30.128ms
+	Untracked: 1612.604ms
+
+Application.AssetDatabase Initial Refresh End
+Launched and connected shader compiler UnityShaderCompiler.exe after 0.03 seconds
+Scanning for USB devices : 3.816ms
+Initializing Unity extensions:
+Unloading 18 Unused Serialized files (Serialized files now loaded: 0)
+Loaded scene 'Assets/UCTViewportProof.unity'
+	Deserialize:            1.078 ms
+	Integration:            62.206 ms
+	Integration of assets:  2.233 ms
+	Thread Wait Time:       0.025 ms
+	Total Operation Time:   65.542 ms
+Unloading 2377 unused Assets / (4.9 MB). Loaded Objects now: 3492.
+Memory consumption went from 207.9 MB to 203.0 MB.
+Total: 18.736800 ms (FindLiveObjects: 0.470800 ms CreateObjectMapping: 0.318500 ms MarkObjects: 15.510500 ms  DeleteObjects: 2.280600 ms)
+
+[LAYOUT] About to load UserSettings\Layouts\default-7000.dwlt, keepMainWindow=False
+Loading style catalogs (6)
+	StyleSheets/Extensions/base/common.uss
+	UIPackageResources/StyleSheets/Default/Variables/Public/common.uss
+	StyleSheets/Northstar/common.uss
+	StyleSheets/Extensions/fonts/inter.uss
+	StyleSheets/Extensions/base/dark.uss
+	UIPackageResources/StyleSheets/Default/Northstar/Palette/dark.uss
+[LAYOUT] Removed un-parented EditorWindow while reading window layout window #19, type=UnityEditor.FallbackEditorWindow entityId=19194:256
+[LAYOUT] About to save layout <owned-project>\UserSettings\Layouts\default-7000.dwlt
+[LAYOUT] About to save layout <user-home>/AppData/Roaming/Unity/Editor-7.x/Preferences\Layouts\current\default-7000.dwlt
+[MODES] ModeService[default].InitializeCurrentMode
+[MODES] ModeService[default].RaiseModeChanged(default, default)
+Failed to extract CoreCLR stacktrace from Log message
+This project uses Input Manager, which is marked for deprecation. To manage input in your project, use the <a href="https://docs.unity3d.com/Packages/com.unity.inputsystem@latest">Input System package</a> instead.
+Serialization during EditorStartup: 565.13 ms / 24328.5 KB (read 477.46 ms / 24009.5 KB, write 87.67 ms / 318.9 KB)
+	DomainReload: 420.66 ms / 11502.5 KB (read 351.10 ms / 11335.2 KB, write 69.56 ms / 167.4 KB)
+[UCTSpike] Started. Output: <owned-project>\run-2\frames
+UnityEngine.DebugLogHandler.Internal_Log_Injected(LogType, LogOption, ManagedSpanWrapper&, EntityId)
+UnityEngine.DebugLogHandler.Internal_Log(LogType, LogOption, String, Object)
+UnityEngine.DebugLogHandler.LogFormat(LogType, Object, String, Object[])
+UnityEngine.Logger.Log(LogType, Object)
+UnityEngine.Debug.Log(Object)
+UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike.Begin(Boolean) in Assets\Editor\UCTEditorWindowCaptureSpike.cs:line 142
+UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike.Run() in Assets\Editor\UCTEditorWindowCaptureSpike.cs:line 98
+
+(Filename: Assets/Editor/UCTEditorWindowCaptureSpike.cs Line: 142)
+
+<RI> Initializing input.
+<RI> Input initialized.
+[Project] Loading completed in 9.331 seconds
+	Project init time: 				7.900 seconds
+		Template init time: 		0.000 seconds
+		Package Manager init time: 		0.415 seconds
+		Asset Database init time: 		0.303 seconds
+		Global illumination init time: 	0.003 seconds
+		Assemblies load time: 			2.256 seconds
+		Unity extensions init time: 	0.010 seconds
+		Asset Database refresh time: 	3.984 seconds
+	Scene opening time: 			1.272 seconds
+##utp:{"type":"ProjectInfo","version":2,"phase":"Immediate","time":1791480318314,"processId":18488,"projectLoad":9.331455,"projectInit":7.900132,"templateInit":0.0,"packageManagerInit":0.4150089,"assetDatabaseInit":0.3029544,"globalIlluminationInit":0.0026658,"assembliesLoad":2.2558527,"unityExtensionsInit":0.0095184,"assetDatabaseRefresh":3.9842582,"sceneOpening":1.2722927}
+##utp:{"type":"EditorInfo","version":2,"phase":"Immediate","time":1791480318314,"processId":18488,"editorVersion":"7000.0.0a7 (581996e1a8f7)","branch":"trunk","buildType":"Release","platform":"Windows"}
+Timings:
+ - All                                      :      54ms
+   - Discover Methods to Compile            :    4243ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :      20ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.UnifiedRayTracing.ComputeTerrainMeshJob, Unity.UnifiedRayTracing.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.UnifiedRayTracing.ComputeTerrainMeshJob&, Unity.UnifiedRayTracing.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Timings:
+ - All                                      :      77ms
+   - Discover Methods to Compile            :    4243ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :      24ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+Unity.Jobs.IJobExtensions+JobStruct`1[[Unity.Collections.SortJob`2+SegmentSortMerge[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Unity.Collections.NativeSortExtension+DefaultComparer`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(Unity.Collections.SortJob`2+SegmentSortMerge[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Unity.Collections.NativeSortExtension+DefaultComparer`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[Unity.Collections.SortJob`2+SegmentSort[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Unity.Collections.NativeSortExtension+DefaultComparer`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(Unity.Collections.SortJob`2+SegmentSort[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Unity.Collections.NativeSortExtension+DefaultComparer`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.CullingJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.CullingJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[Unity.Collections.SortJob`2+SegmentSort[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Unity.Collections.NativeSortExtension+DefaultComparer`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(Unity.Collections.SortJob`2+SegmentSort[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Unity.Collections.NativeSortExtension+DefaultComparer`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobExtensions+JobStruct`1[[Unity.Collections.SortJob`2+SegmentSortMerge[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Unity.Collections.NativeSortExtension+DefaultComparer`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(Unity.Collections.SortJob`2+SegmentSortMerge[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e],[Unity.Collections.NativeSortExtension+DefaultComparer`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Timings:
+ - All                                      :      77ms
+   - Discover Methods to Compile            :    4241ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :      18ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.ReflectionProbeMinMaxZJob, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.ReflectionProbeMinMaxZJob&, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobExtensions+JobStruct`1[[UnityEngine.Rendering.Universal.DecalCreateDrawCallSystem+DrawCallJob, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.DecalCreateDrawCallSystem+DrawCallJob&, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.LightMinMaxZJob, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.LightMinMaxZJob&, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Jobs.<nonce>+TransformParallelForLoopStruct`1[[UnityEngine.Rendering.Universal.DecalUpdateCachedSystem+UpdateTransformsJob, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.DecalUpdateCachedSystem+UpdateTransformsJob&, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Timings:
+ - All                                      :      54ms
+   - Discover Methods to Compile            :    4243ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :      20ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.TilingJob, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.TilingJob&, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Timings:
+ - All                                      :      55ms
+   - Discover Methods to Compile            :    4243ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :      20ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.ZBinningJob, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.ZBinningJob&, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.Universal.TileRangeExpansionJob, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.Universal.TileRangeExpansionJob&, Unity.RenderPipelines.Universal.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Timings:
+ - All                                      :      77ms
+   - Discover Methods to Compile            :    4243ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :      22ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.InstanceDataSystem+UpdateRendererInstancesJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+UpdateRendererInstancesJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForBatchExtensions+JobParallelForBatchProducer`1[[UnityEngine.Rendering.InstanceDataSystem+<nonce>, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+<nonce>&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.InstanceCullingBatcherBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::UpdateMaterialData(Unity.Collections.NativeArray`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.GPUDrivenMaterialData, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.GPUDrivenMaterial, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeHashSet`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.InstancesToGPUIndicesJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstancesToGPUIndicesJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobExtensions+JobStruct`1[[UnityEngine.Rendering.PrefixSumDrawInstancesJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.PrefixSumDrawInstancesJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForBatchExtensions+JobParallelForBatchProducer`1[[UnityEngine.Rendering.FindMaterialDrawInstancesJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.FindMaterialDrawInstancesJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.InstanceDataSystem+<nonce>, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+<nonce>&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.InstanceDataSystemBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::FreeInstances(Unity.Collections.NativeArray`1[[UnityEngine.Rendering.InstanceHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.InstanceAllocators*, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.RenderWorld&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.InstanceHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.InstanceCullingBatcherBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::UpdateMeshData(Unity.Collections.NativeArray`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.GPUDrivenMeshData, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.GPUDrivenSubMesh, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.MeshInfo, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeHashSet`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobParallelForBatchExtensions+JobParallelForBatchProducer`1[[UnityEngine.Rendering.InstanceDataSystem+ProbesUpdateJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+ProbesUpdateJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForBatchExtensions+JobParallelForBatchProducer`1[[UnityEngine.Rendering.FindDrawInstancesJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.FindDrawInstancesJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.InstanceDataSystem+QueryRendererInstancesJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+QueryRendererInstancesJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.InstanceDataSystemBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::ComputeTotalTreeCount(Unity.Collections.NativeArray`1[[UnityEngine.Rendering.InternalMeshRendererSettings, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.RegisterNewMaterialsJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.RegisterNewMaterialsJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.RegisterNewMeshesJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.RegisterNewMeshesJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.CPUDrawInstanceDataBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::RemoveDrawInstanceIndices(Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.DrawInstance, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.Rendering.RangeKey, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null],[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.Rendering.DrawKey, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null],[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.DrawRange, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.DrawBatch, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.InstanceCullingBatcherBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::CreateDrawBatches(Unity.Collections.NativeArray`1[[UnityEngine.Rendering.InstanceHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.RenderWorld&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.MeshInfo, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.GPUDrivenMaterial, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.Rendering.RangeKey, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null],[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.DrawRange, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.Rendering.DrawKey, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null],[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.DrawBatch, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.DrawInstance, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.InstanceDataSystem+MotionUpdateJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+MotionUpdateJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForBatchExtensions+JobParallelForBatchProducer`1[[UnityEngine.Rendering.InstanceDataSystem+<nonce>, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+<nonce>&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.WriteGPUComponentDataJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.WriteGPUComponentDataJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.BuildDrawListsJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.BuildDrawListsJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.InstanceDataSystemBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::AllocateInstances(UnityEngine.Rendering.InstanceAllocatorVariant, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.JaggedSpan`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.GPUArchetypeHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.InstanceAllocators*, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.RenderWorld&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.InstanceHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.InstanceHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.InstanceDataSystem+TransformUpdateJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+TransformUpdateJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForBatchExtensions+JobParallelForBatchProducer`1[[UnityEngine.Rendering.InstanceDataSystem+QuerySortedMeshInstancesJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+QuerySortedMeshInstancesJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.InstanceDataSystem+<nonce>, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.InstanceDataSystem+<nonce>&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Timings:
+ - All                                      :      77ms
+   - Discover Methods to Compile            :    4241ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :      19ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::CalculateEdgesFromTriangles(Unity.Collections.NativeArray`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Collections.NativeArray`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::ClipEdges(Unity.Collections.NativeArray`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Single, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Collections.NativeArray`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::CalculateLocalBounds(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Bounds&, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::IsTriangleReversed(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::<nonce>(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[Unity.Mathematics.float2, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::<nonce>(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowUtility+ShadowMeshVertex, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Bounds&, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::<nonce>(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowUtility+ShadowMeshVertex, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Bounds&, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::ReverseWindingOrder(Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::CalculateVertices(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[Unity.Mathematics.float2, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowUtility+ShadowMeshVertex, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::<nonce>(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::<nonce>(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::GetPathInfo(Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32&, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32&, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32&, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32&, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::GetVertexReferenceStats(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Boolean&, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32&, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowUtility+RemappingInfo, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::<nonce>(Unity.Collections.NativeArray`1[[Unity.Mathematics.float3, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[Unity.Mathematics.float2, UnityEngine.MathematicsModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::CalculateEdgesFromLines(Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::GetNextShapeStart(System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32*, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::GetClosedPathCount(Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.Universal.ShadowUtility, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::GenerateInteriorMesh(Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowUtility+ShadowMeshVertex, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowEdge, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.Universal.ShadowUtility+ShadowMeshVertex, Unity.RenderPipelines.Universal.2D.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32&, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32&, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Timings:
+ - All                                      :       5ms
+   - Discover Methods to Compile            :    4219ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :       1ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.ParallelSortExtensions+RadixSortBucketCountJob`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.ParallelSortExtensions+RadixSortBucketCountJob`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.ParallelSortExtensions+RadixSortBucketSortJob`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.ParallelSortExtensions+RadixSortBucketSortJob`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.ParallelSortExtensions+RadixSortBatchPrefixSumJob`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.ParallelSortExtensions+RadixSortBatchPrefixSumJob`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.ParallelSortExtensions+RadixSortBucketSortJob`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.ParallelSortExtensions+RadixSortBucketSortJob`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.ParallelSortExtensions+RadixSortBatchPrefixSumJob`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.ParallelSortExtensions+RadixSortBatchPrefixSumJob`1[[System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.ParallelSortExtensions+RadixSortBucketCountJob`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.ParallelSortExtensions+RadixSortBucketCountJob`1[[System.UInt64, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Timings:
+ - All                                      :      10ms
+   - Discover Methods to Compile            :    4223ms
+     - Find Entrypoints                     :   26988ms
+     - Group Entrypoints                    :      25ms
+     - Calculate Hash of C# IL              :       5ms
+   - C# IL -> LLVM IR module                :       0ms
+     - Parse C# IL from assemblies          :       0ms
+     - Transform C# IL                      :       0ms
+     - Produce LLVM IR module               :       0ms
+   - LLVM IR module transformations         :       0ms
+     - Add target CPU info to module        :       0ms
+     - Optimizations on module              :       0ms
+     - Cleanup module                       :       0ms
+     - Verify module is valid               :       0ms
+   - Extract used static readonly variables :       0ms
+   - LLVM IR module -> DLL                  :       0ms
+     - Splice into per-entry-point modules  :       0ms
+     - LLVM IR modules -> object files      :       0ms
+     - Get objects from object cache        :       0ms
+     - Link object files -> DLL             :       0ms
+     - Add objects to object cache          :       0ms
+   - Dump                                   :       0ms
+
+Counters:
+- Number of Functions                      :         0
+  - Entry Points (job or function pointer) :         0
+  - Declaring Type or Function is Generic  :         0
+- Number of Instructions                   :         0
+
+
+While compiling job:
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.MeshRendererProcessor+GatherLocalBoundsGPUDataJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.MeshRendererProcessor+GatherLocalBoundsGPUDataJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.CullSceneViewHiddenRenderersJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.CullSceneViewHiddenRenderersJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.FindNonRegisteredInstanceIDsJob`1[[UnityEngine.Rendering.MeshInfo, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.FindNonRegisteredInstanceIDsJob`1[[UnityEngine.Rendering.MeshInfo, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobExtensions+JobStruct`1[[UnityEngine.Rendering.DrawCommandOutputFiltering, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.DrawCommandOutputFiltering&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.MeshRendererProcessorBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::ComputeInstanceGPUArchetypes(Unity.Collections.NativeReference`1[[UnityEngine.Rendering.GPUArchetypeManager, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.DefaultGPUComponents&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.MeshRendererUpdateBatch*, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.GPUComponentSet&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.GPUArchetypeHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.JaggedJobRangeBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::ComputeRanges(System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Boolean, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Collections.NativeArray`1[[Unity.Collections.LowLevel.Unsafe.UntypedUnsafeList, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.JaggedJobRange, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.InstanceCullerBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::SetupCullingJobInput(System.Single, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Single, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|UnityEngine.Rendering.BatchCullingContext*, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.ReceiverPlanes*, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.ReceiverSphereCuller*, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.FrustumPlaneCuller*, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Single*, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.Single*, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.WorldProcessorBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::FindOnlyUsedMeshes(Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.MeshInfo, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.Allocator, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobForExtensions+ForJobStruct`1[[UnityEngine.Rendering.ParallelSortExtensions+RadixSortPrefixSumJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.ParallelSortExtensions+RadixSortPrefixSumJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.AnimateCrossFadeJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.AnimateCrossFadeJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.MeshRendererProcessorBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::DidGPUArchetypeChange(Unity.Collections.NativeReference`1[[UnityEngine.Rendering.GPUArchetypeManager, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.DefaultGPUComponents&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.InstanceHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.MeshRendererUpdateBatch*, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.RenderWorld&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.GPUComponentSet&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.LODGroupDataSystemBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::FreeLODGroupData(Unity.Collections.NativeArray`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.LODGroupData, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.GPUInstanceIndex, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.GPUInstanceIndex, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobExtensions+JobStruct`1[[UnityEngine.Rendering.PrefixSumDrawsAndInstances, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.PrefixSumDrawsAndInstances&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.AllocateBinsPerBatch, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.AllocateBinsPerBatch&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.WorldProcessorBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::FindUnsupportedRenderers(Unity.Collections.NativeArray`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.EmbeddedArray32`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+UnityEngine.Rendering.WorldProcessorBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::ClassifyMaterials(Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.GPUDrivenMaterial, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.GPUDrivenMaterialData, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.Allocator, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.DrawCommandOutputPerBatch, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.DrawCommandOutputPerBatch&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.UpdateLODGroupTransformJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.UpdateLODGroupTransformJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.LODGroupDataSystemBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::<nonce>(UnityEngine.Rendering.JaggedSpan`1[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.LODGroupData, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.LODGroupCullingData, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeParallelHashMap`2[[UnityEngine.EntityId, UnityEngine.EntitiesModule, Version=<address>, Culture=neutral, PublicKeyToken=null],[UnityEngine.Rendering.GPUInstanceIndex, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeList`1[[UnityEngine.Rendering.GPUInstanceIndex, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.GPUInstanceIndex, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.FindNonRegisteredInstanceIDsJob`1[[UnityEngine.Rendering.GPUDrivenMaterial, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]], Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.FindNonRegisteredInstanceIDsJob`1[[UnityEngine.Rendering.GPUDrivenMaterial, UnityEngine.CoreModule, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.MeshRendererProcessorBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::AnyInstanceUseBlendProbes(Unity.Collections.NativeArray`1[[UnityEngine.Rendering.InstanceHandle, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.RenderWorld&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity.Jobs.IJobParallelForExtensions+ParallelForJobStruct`1[[UnityEngine.Rendering.UpdateLODGroupDataJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.UpdateLODGroupDataJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForBatchExtensions+JobParallelForBatchProducer`1[[UnityEngine.Rendering.CompactVisibilityMasksJob, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.CompactVisibilityMasksJob&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+Unity.Jobs.IJobParallelForBatchExtensions+JobParallelForBatchProducer`1[[UnityEngine.Rendering.MeshRendererProcessor+<nonce>, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]], UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null::Execute(UnityEngine.Rendering.MeshRendererProcessor+<nonce>&, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|System.IntPtr, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e|Unity.Jobs.LowLevel.Unsafe.JobRanges&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|System.Int32, System.Private.CoreLib, Version=<address>, Culture=neutral, PublicKeyToken=7cec85d7bea7798e)
+UnityEngine.Rendering.MeshRendererProcessorBurst, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null::<nonce>(Unity.Collections.NativeReference`1[[UnityEngine.Rendering.GPUArchetypeManager, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.GPUComponentJaggedUpdate, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|Unity.Collections.NativeArray`1[[UnityEngine.Rendering.MeshRendererProcessor+GPUComponentUploadSource, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null]]&, UnityEngine.ManagedKernelModule, Version=<address>, Culture=neutral, PublicKeyToken=null|UnityEngine.Rendering.GPUComponentSet*, Unity.RenderPipelines.GPUDriven.Runtime, Version=<address>, Culture=neutral, PublicKeyToken=null)
+Unity Hot Reload server listening on port 63638
+UnityEngine.DebugLogHandler.Internal_Log_Injected(LogType, LogOption, ManagedSpanWrapper&, EntityId)
+UnityEngine.DebugLogHandler.Internal_Log(LogType, LogOption, String, Object)
+UnityEngine.DebugLogHandler.LogFormat(LogType, Object, String, Object[])
+UnityEngine.Logger.Log(LogType, Object)
+UnityEngine.Debug.Log(Object)
+UnityCursorToolkit.<>c.<<nonce>>b__81_1() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\HotReloadHandler.cs:line 1465
+UnityCursorToolkit.HotReloadHandler.OnEditorUpdate() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\HotReloadHandler.cs:line 605
+UnityEditor.EditorApplication.Internal_CallUpdateFunctions()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 1465)
+
+Created GICache directory at G:/Unity Launcher/GiCache. Took: 0.016s, timestamps: [10.202 - 10.219]
+<private or licensing line omitted>
+Unloading 9 Unused Serialized files (Serialized files now loaded: 0)
+Unloading 54 unused Assets / (16.8 MB). Loaded Objects now: 4549.
+Memory consumption went from 314.3 MB to 297.4 MB.
+Total: 23.519100 ms (FindLiveObjects: 0.473300 ms CreateObjectMapping: 0.136100 ms MarkObjects: 18.373600 ms  DeleteObjects: 4.374300 ms)
+
+Importing 'GUID: <nonce> - Path: ProjectSettings/QualitySettings.asset' with importer (LibraryAssetImporter)
+Imported 'GUID: <nonce>' -> (Import Result ID: '<nonce>') in 0.004 seconds [static and dynamic dependencies]. Details - ImportResultOutputID=<nonce> DependenciesID=<nonce> StaticDependenciesID=<nonce>
+Asset Pipeline Refresh (id=<nonce>): Total: 0.080 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+Importing 'GUID: <nonce> - Path: Assets/UCTViewportProof.unity' with importer (DefaultImporter)
+Imported 'GUID: <nonce>' -> (Import Result ID: '<nonce>') in 0.002 seconds [static and dynamic dependencies]. Details - ImportResultOutputID=<nonce> DependenciesID=<nonce> StaticDependenciesID=<nonce>
+Asset Pipeline Refresh (id=<nonce>): Total: 0.050 seconds - Initiated by StopAssetImportingV2(NoUpdateAssetOptions)
+<private or licensing line omitted>
+<private or licensing line omitted>
+Worker ready: AssetImportWorkerHW0 0
+Restarting Unity Hot Reload server after domain reload...
+UnityEngine.DebugLogHandler.Internal_Log_Injected(LogType, LogOption, ManagedSpanWrapper&, EntityId)
+UnityEngine.DebugLogHandler.Internal_Log(LogType, LogOption, String, Object)
+UnityEngine.DebugLogHandler.LogFormat(LogType, Object, String, Object[])
+UnityEngine.Logger.Log(LogType, Object)
+UnityEngine.Debug.Log(Object)
+UnityCursorToolkit.HotReloadHandler.StartWithoutMutex() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\HotReloadHandler.cs:line 253
+UnityCursorToolkit.<>c.<InitializeLifecycle>b__46_0() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\HotReloadHandler.cs:line 152
+UnityEditor.EditorApplication.Internal_CallDelayFunctions()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 253)
+
+Start Indexing on Editor startup
+[Indexing] Starting Initial Indexing for Assets
+Unity Hot Reload server listening on port 63638
+UnityEngine.DebugLogHandler.Internal_Log_Injected(LogType, LogOption, ManagedSpanWrapper&, EntityId)
+UnityEngine.DebugLogHandler.Internal_Log(LogType, LogOption, String, Object)
+UnityEngine.DebugLogHandler.LogFormat(LogType, Object, String, Object[])
+UnityEngine.Logger.Log(LogType, Object)
+UnityEngine.Debug.Log(Object)
+UnityCursorToolkit.<>c.<ListenerThreadFunction>b__60_2() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\HotReloadHandler.cs:line 712
+UnityCursorToolkit.HotReloadHandler.OnEditorUpdate() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\HotReloadHandler.cs:line 605
+UnityEditor.EditorApplication.Internal_CallUpdateFunctions()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 712)
+
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+<private or licensing line omitted>
+Starting new worker id: 1 with log in <owned-project>/Logs/AssetImportWorkerHW1.log
+[UCTSpike] Result written: <owned-project>\run-2\result.json
+UnityEngine.DebugLogHandler.Internal_Log_Injected(LogType, LogOption, ManagedSpanWrapper&, EntityId)
+UnityEngine.DebugLogHandler.Internal_Log(LogType, LogOption, String, Object)
+UnityEngine.DebugLogHandler.LogFormat(LogType, Object, String, Object[])
+UnityEngine.Logger.Log(LogType, Object)
+UnityEngine.Debug.Log(Object)
+UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike.Finish(String) in Assets\Editor\UCTEditorWindowCaptureSpike.cs:line 472
+UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike.Step() in Assets\Editor\UCTEditorWindowCaptureSpike.cs:line 209
+UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike.Tick() in Assets\Editor\UCTEditorWindowCaptureSpike.cs:line 167
+UnityEditor.EditorApplication.Internal_CallUpdateFunctions()
+
+(Filename: Assets/Editor/UCTEditorWindowCaptureSpike.cs Line: 472)
+
+[Worker0] Imported GUID: <nonce> - Path: Assets/UCTViewportProof.unity - Importer: ScriptedImporter/UnityEditor.QuickSearchModule:UnityEditor.Search:ASIAI0B -> (Import Result ID: '<nonce>') in 0.1181968 seconds
+Worker ready: AssetImportWorkerHW1 1
+TrimDiskCacheJob: Current cache size 3mb
+MonoPathRemapper: Attempts to remap: 939931; Successful remaps: 8510
+Serialized file version minimum: 0, current 26
+[LAYOUT] About to save layout <owned-project>\UserSettings\Layouts\default-7000.dwlt
+[LAYOUT] About to save layout <user-home>/AppData/Roaming/Unity/Editor-7.x/Preferences\Layouts\current\default-7000.dwlt
+Stopping Unity Hot Reload server...
+UnityEngine.DebugLogHandler.Internal_Log_Injected(LogType, LogOption, ManagedSpanWrapper&, EntityId)
+UnityEngine.DebugLogHandler.Internal_Log(LogType, LogOption, String, Object)
+UnityEngine.DebugLogHandler.LogFormat(LogType, Object, String, Object[])
+UnityEngine.Logger.Log(LogType, Object)
+UnityEngine.Debug.Log(Object)
+UnityCursorToolkit.HotReloadHandler.Stop() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\HotReloadHandler.cs:line 314
+UnityCursorToolkit.HotReloadHandler.OnEditorQuitting() in .\Packages\com.rankupgames.unity-cursor-toolkit\Editor\HotReloadHandler.cs:line 564
+UnityEditor.EditorApplication.Internal_EditorApplicationQuit()
+UnityEditor.EditorApplication.Exit_Injected(Int32, Byte&)
+UnityEditor.EditorApplication.Exit(Int32)
+UnityCursorToolkit.InternalSmoke.UCTEditorWindowCaptureSpike.Tick() in Assets\Editor\UCTEditorWindowCaptureSpike.cs:line 150
+UnityEditor.EditorApplication.Internal_CallUpdateFunctions()
+
+(Filename: ./Packages/com.rankupgames.unity-cursor-toolkit/Editor/HotReloadHandler.cs Line: 314)
+
+'Packages/com.unity.render-pipelines.core/Editor/Deprecated.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+'Packages/com.unity.render-pipelines.core/Editor/Deprecated.cs' contains partial class of Unity.Object, exactly 1 of the partial classes needs to be in a file with the same filename. This is to know the one that can be referenced from ie. GameObjects
+[Physics::Module] Cleanup current backend.
+[Physics::Module] Id: 0xf2b8ea05
+Input System module state changed to: ShutdownInProgress.
+Input Polling Thread exited.
+Input System module state changed to: Shutdown.
+<private or licensing line omitted>
+<private or licensing line omitted>
+Shut down.
+Lingering sessions upon destruction of worker manager
+Unity Data Store service was successfully shut down
+UDS shutting down local client system
+Shut down UDS service system complete
+<nonce> - disconnected - :0
+Cleanup CoreCLR
+CodeReloadManager destroyed
+VBCSCompilerPreWarmer: requested VBCSCompiler shutdown
+Checking for leaked weakptr:
+  Found no leaked weakptrs.
+[Package Manager] Server process was shutdown
+<private or licensing line omitted>

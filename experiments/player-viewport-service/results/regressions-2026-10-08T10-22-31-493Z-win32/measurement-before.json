@@ -1,0 +1,9 @@
+{
+  "observedAt": "2026-10-08T10:30:32.196Z",
+  "scope": "Reconstructed confirmed immediate pre-fix frame guard/bytes and window/drain lines; all other current owner logic retained",
+  "sourceSha256": "1ccb4856f8593cf5f422fdbeae5b3a44e9094cb3aa4e35c16e82196099a1776b",
+  "exitCode": 1,
+  "stdout": "PASS normal\nPASS wrong-pid\nPASS foreign-stream\nPASS no-stop-ack\nPASS invalid-jpeg\nPASS malformed-status\nPlayer protocol regressions: 6/8 passed\n",
+  "stderr": "FAIL measurement-boundary: Expected values to be strictly equal:\n+ actual - expected\n\n+ 'bytes is not defined'\n- null\n\nFAIL measurement-boundary: window ends before drain/stop\n",
+  "boundary": "Full measure main via VM+owned spawn mock, realTCP; no production hooks"
+}

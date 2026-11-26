@@ -1,0 +1,29 @@
+{
+  "observedAt": "2026-10-08T09:47:22.684Z",
+  "passed": false,
+  "editorVersion": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "platform": "win32",
+  "deadlineSeconds": 60,
+  "normalStopWaitSeconds": 30,
+  "modalClass": "EditorSoftwareTermsWindowClass",
+  "modalPresentSamples": 12,
+  "visibleClasses": [
+    "EditorSoftwareTermsWindowClass",
+    "RICHEDIT50W",
+    "Static",
+    "Button"
+  ],
+  "textCategories": [
+    "terms",
+    "Unity"
+  ],
+  "knownButtonLabels": [],
+  "buttonLabelLimit": "No labels matched fixed safe standard-button allowlist; raw labels/account text not captured",
+  "noClicks": true,
+  "probeEntry": false,
+  "forcedCleanup": true,
+  "ownedPidsRemaining": [],
+  "termsConsentRequired": true,
+  "limits": "Observed owned GUI modal; no claim licensing negotiation505 caused failure; no hidden cost or Unity7 API proof"
+}
