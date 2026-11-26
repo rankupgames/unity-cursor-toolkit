@@ -1,4 +1,4 @@
-# Runtime Game Commands
+# Game Commands
 
 Runtime game commands let a Unity project expose project-owned gameplay workflows to MCP agents without UI automation. The command lives in the game code, runs on Unity's main thread, and can wait across frames or network responses through a coroutine.
 
@@ -8,6 +8,31 @@ are planned under the [roadmap](ROADMAP.md); do not
 silently substitute a newer Editor when an exact project version is missing.
 
 Use this for flows such as login steps, server selection, menu navigation, mission setup, debug-only content unlocks, or deterministic test setup that should follow the same internal handlers a player-triggered UI path uses.
+
+## Game Flow in the Editor
+
+Open **Tools > Unity Cursor Toolkit > Game Flow** and enable the controls
+for the current Editor session. The window lists project commands named
+`flow.*` or `*.flow.*` and commands with authored destinations. Each command
+runs in its registered Edit or Play Mode. The window shows
+its latest status and result. Use **Cancel** to stop the active run. Turning
+off the controls also cancels a run started from the window. Reopen the
+window to check or cancel that run.
+
+Use the optional `flowDestinations` argument on `AgentCommandRegistry.Register`
+to list project-owned destinations under a command. Each `GameFlowDestination`
+has a stable ID, category, label, and command arguments. Supply an unavailable
+reason to prevent the window from running that destination and show the reason
+to the user. Use **Custom arguments** to enter command arguments directly.
+
+A route handler can yield `GameFlowRoute.Run(context, selectStep)`. Its selector
+reads project state and returns `GameFlowStep.Act`, `Wait`, or `Finish`.
+Keep the state key stable until the observed state changes. The runner limits
+actions, times out a wait against realtime, and releases entered actions on
+cancellation. Use the progress message on a step or call
+`context.ReportProgress` to show the current operation in the window and
+command status. Project code owns the destination catalog, valid transitions,
+and action handlers.
 
 ## Unity Package Side
 
@@ -20,10 +45,13 @@ using System.Collections;
 using UnityEngine;
 using UnityCursorToolkit.AgentCommands;
 
-public static class ExampleAgentCommands
+public static partial class ExampleAgentCommands
 {
 	private const string CommandName = "auth.select_us_east";
 
+	#if UNITY_7000_0_OR_NEWER
+	[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+	#endif
 	[RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
 	private static void Register()
 	{
@@ -32,6 +60,14 @@ public static class ExampleAgentCommands
 			"Selects the US East server through the game's server selection handler.",
 			SelectUsEastServer);
 	}
+
+	#if UNITY_7000_0_OR_NEWER
+	[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+	private static void Unregister()
+	{
+		AgentCommandRegistry.Unregister(CommandName);
+	}
+	#endif
 
 	private static IEnumerator SelectUsEastServer(AgentCommandContext context)
 	{
@@ -43,7 +79,76 @@ public static class ExampleAgentCommands
 }
 ```
 
-Registered commands require play mode because they run through a hidden `MonoBehaviour` coroutine runner on Unity's main thread.
+Commands without the `editor.` prefix require Play Mode. Names beginning with `editor.` use a synchronous Editor-only host and require idle Edit Mode. Their descriptors and run snapshots report `executionMode: "editorSynchronous"`; ordinary commands report `"play"`. Existing registration calls and MCP argument aliases are unchanged.
+
+## Synchronous Editor Commands
+
+Register authoring commands from an Editor assembly with `InitializeOnLoadMethod` or `InitializeOnLoad`. Keep the handler an `IEnumerator`, but finish it synchronously with `yield break`. Nested iterators may finish synchronously; yielding a frame, `YieldInstruction`, `AsyncOperation`, or waiting `CustomYieldInstruction` fails the run and disposes entered iterators. Compilation, Asset Database updates and Play transitions reject the call.
+
+The Editor host creates no scene object and has no idle update callback. Discovery reports `requiresPlayMode: false` and `supportsBatchmode: true` for this prefix. A player rejects `editor.*` execution even if a registration was accidentally included in a build. Game-authored diagnostics should still be excluded from shipped builds.
+
+## Cancellation and Lifetime
+
+`AgentCommandRunner.SupportsDeterministicCancellation` and the catalog's `capabilities.deterministicCancellation` advertise the entered-iterator ownership contract. Use `try`/`finally` in handlers to release held input, virtual devices and other run-owned resources. The runner owns nested `IEnumerator` values and disposes them inside-out exactly once after completion, failure, cancellation, host disable/destruction, Play exit, or assembly reload. One throwing disposer does not prevent outer cleanup; it makes the final status `Failed` with `command_cleanup_failed`.
+
+Runtime handlers retain Unity wait semantics, including nested/custom iterators and opaque Unity waits. A realtime 300-second deadline also bounds opaque waits while `timeScale` is zero. There are at most 16 active runs, 128 retained statuses, 128 nested iterators and 1,024 immediate advances per frame. The runtime component is disabled when no commands are active. No command is replayed after reload; its old run status is unavailable after that host is destroyed.
+
+Cancellation runs on Unity's main thread. A request made inside a handler callback takes effect after that callback returns. A blocked callback delays cleanup. The runner owns the entered iterator stack. Verify cleanup for independently started coroutines and project-specific input devices in the target project.
+
+## Consumer lifetime
+
+A registration owns its handler until that name is unregistered or replaced. The owner should remove only its own registrations before its code unloads. Registration is idempotent for the same name, including Play Mode entry with domain reload disabled. Finish or cancel the owner's active runs before an intentional code reload; unregistering a name prevents future scheduling but does not cancel an existing run.
+
+The runner retains terminal status and result data without retaining the completed handler delegate. Consumer handlers should return package result data rather than place consumer objects in external static caches.
+
+CoreCLR can keep unmodified assemblies and their statics alive while replacing consumer code. References from those statics can prevent the old consumer assembly from unloading. See Unity's [CoreCLR upgrade guide](https://discussions.unity.com/t/path-to-coreclr-2026-upgrade-guide/1714279). Use owner lifecycle hooks rather than clearing the shared registry or another owner's subscriptions.
+
+Editor consumers of `ILPatcher.OnPatchCompleted` must also detach their own callback. This example uses the existing Mono reload event and Unity 7 lifecycle attributes:
+
+```csharp
+#if UNITY_EDITOR
+using UnityEditor;
+using UnityCursorToolkit.HotReload;
+
+public static partial class ProjectPatchObserver
+{
+#if UNITY_7000_0_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+#else
+    [InitializeOnLoadMethod]
+#endif
+    private static void Attach()
+    {
+        ILPatcher.OnPatchCompleted -= OnPatch;
+        ILPatcher.OnPatchCompleted += OnPatch;
+#if !UNITY_7000_0_OR_NEWER
+        AssemblyReloadEvents.beforeAssemblyReload -= Detach;
+        AssemblyReloadEvents.beforeAssemblyReload += Detach;
+#endif
+    }
+
+#if UNITY_7000_0_OR_NEWER
+    [Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+#endif
+    private static void Detach()
+    {
+        ILPatcher.OnPatchCompleted -= OnPatch;
+#if !UNITY_7000_0_OR_NEWER
+        AssemblyReloadEvents.beforeAssemblyReload -= Detach;
+#endif
+    }
+
+    private static void OnPatch(PatchResult result)
+    {
+        // Read result.Success before treating the patch as applied.
+    }
+}
+#endif
+```
+
+On CoreCLR, IL patching is refused and the completion event still reports that refusal. The callback must inspect the result. Native source reload is a separate lifecycle path.
+
+The [consumer proof](../experiments/consumer-lifecycle-proof/README.md) tests terminal target collection, owner-only unregistering and callback replacement. Its evidence records whether package statics were retained; ordinary static reconstruction does not prove selective reload retention.
 
 ## MCP Tool
 
@@ -52,9 +157,9 @@ The companion extension exposes the generic `game_command` MCP tool:
 | Action | Purpose |
 |---|---|
 | `list` | Returns registered command names, descriptions, and play-mode requirements |
-| `run` | Schedules a registered command and returns a `runId` |
+| `run` | Runs a synchronous Editor command or schedules a Play command and returns a `runId` |
 | `status` | Reads the retained status for a `runId` |
-| `cancel` | Stops a pending or running command coroutine |
+| `cancel` | Releases entered handler scopes and stops a pending or running command |
 
 Example agent flow:
 
@@ -81,8 +186,10 @@ Use `host: "editorBatchmode"` for command list/run calls that should execute in 
 ```
 
 ```json
-{ "action": "run", "host": "editorBatchmode", "commandName": "auth.select_us_east", "args": {}, "timeoutMs": 120000 }
+{ "action": "run", "host": "editorBatchmode", "commandName": "editor.lab.export", "args": {}, "timeoutMs": 120000 }
 ```
+
+A batchmode run requires a registered synchronous `editor.*` command; it does not enter Play Mode for runtime commands.
 
 The MCP server launches Unity with `-batchmode -quit -executeMethod UnityCursorToolkit.AgentCommands.BatchCommandEntry.Run`. Pass `unityPath` or set `UNITY_CURSOR_TOOLKIT_UNITY_PATH` when Unity cannot be found from `ProjectSettings/ProjectVersion.txt`.
 

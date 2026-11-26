@@ -29,6 +29,9 @@ namespace UnityCursorToolkit.InternalSmoke
 		private const string FailureRunIdKey = "UCT_INTERNAL_SMOKE_FAILURE_RUN_ID";
 		private const string AttemptsKey = "UCT_INTERNAL_SMOKE_ATTEMPTS";
 		private const int TimeoutSeconds = 90;
+		private static int inventorySentinel = 73;
+		private static SceneView orientationView;
+		private static bool orientationMarkersPainted;
 
 		static UnityCursorToolkitInternalSmoke()
 		{
@@ -40,9 +43,13 @@ namespace UnityCursorToolkit.InternalSmoke
 
 		public static void Run()
 		{
+			ValidateRuntimeAndStateReset();
+			ValidateStaticInventory();
+			ValidateSceneObjectIds();
+			ValidateBridgeReload();
 			ValidateUntermIntegration();
 			SessionState.SetBool(RunningKey, true);
-			SessionState.SetString(PhaseKey, "enterPlay");
+			SessionState.SetString(PhaseKey, "prepareSceneOrientation");
 			SessionState.SetString(ResultPathKey, GetArg("-uctSmokeResultPath", "/tmp/uct-internal-smoke-result.json"));
 			SessionState.SetString(ViewportFramePathKey, GetArg("-uctSmokeViewportFramePath", "/tmp/uct-internal-smoke-viewport.jpg"));
 			SessionState.SetString(StartedTicksKey, DateTime.UtcNow.Ticks.ToString());
@@ -52,6 +59,240 @@ namespace UnityCursorToolkit.InternalSmoke
 			HookUpdate();
 		}
 
+		[Serializable]
+		private sealed class SceneIdResult
+		{
+			public bool success;
+			public int instanceId;
+			public string entityId;
+			public int componentInstanceId;
+			public string componentEntityId;
+		}
+
+		private static void ValidateSceneObjectIds()
+		{
+			string Call(string tool, string json)
+			{
+				Type type = Type.GetType("UnityCursorToolkit.MCP." + tool + ", UnityCursorToolkit.Editor", true);
+				return (string)type.GetMethod("HandleCommand").Invoke(Activator.CreateInstance(type), new object[] { json });
+			}
+			string Id(SceneIdResult result, bool parent = false)
+			{
+#if UNITY_7000_0_OR_NEWER
+				if (string.IsNullOrEmpty(result.entityId)) throw new InvalidOperationException("Unity 7 did not return an entity ID.");
+				return "\"" + (parent ? "parentEntityId" : "entityId") + "\":\"" + result.entityId + "\"";
+#else
+				if (result.instanceId == 0) throw new InvalidOperationException("Mono did not return an instance ID.");
+				return "\"" + (parent ? "parentInstanceId" : "instanceId") + "\":" + result.instanceId;
+#endif
+			}
+			GameObject child = null, parentObject = null;
+			string prefix = "UCT_IdProbe_" + Guid.NewGuid().ToString("N");
+			try
+			{
+				var childId = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"create\",\"name\":\"" + prefix + "\"}"));
+				child = GameObject.Find(prefix);
+				var parentId = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"create\",\"name\":\"" + prefix + "_parent\"}"));
+				parentObject = GameObject.Find(prefix + "_parent");
+				var found = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"find\"," + Id(childId) + "}"));
+				if (!childId.success || !parentId.success || !found.success || Id(found) != Id(childId)) throw new InvalidOperationException("Object ID did not round-trip.");
+				Call("ManageGameObjectTool", "{\"action\":\"setParent\"," + Id(childId) + "," + Id(parentId, true) + "}");
+				if (child.transform.parent != parentObject.transform) throw new InvalidOperationException("Parent ID did not resolve.");
+				try
+				{
+					var invalid = JsonUtility.FromJson<SceneIdResult>(Call("ManageGameObjectTool", "{\"action\":\"setParent\"," + Id(childId) + ",\"parentEntityId\":\"invalid\"}"));
+					if (invalid.success) throw new InvalidOperationException("Invalid parent ID was accepted.");
+				}
+				catch (TargetInvocationException error) when (error.InnerException is ArgumentException) { }
+				if (child.transform.parent != parentObject.transform) throw new InvalidOperationException("Invalid parent ID changed the hierarchy.");
+				Call("ManageGameObjectTool", "{\"action\":\"setTransform\"," + Id(childId) + ",\"position\":[1,2,3]}");
+				if (child.transform.position != new Vector3(1, 2, 3)) throw new InvalidOperationException("Object ID transform failed.");
+				var component = JsonUtility.FromJson<SceneIdResult>(Call("ManageComponentTool", "{\"action\":\"add\"," + Id(childId) + ",\"componentType\":\"UnityEngine.Camera\"}"));
+#if UNITY_7000_0_OR_NEWER
+				if (!component.success || string.IsNullOrEmpty(component.componentEntityId)) throw new InvalidOperationException("Component entity ID missing.");
+#else
+				if (!component.success || component.componentInstanceId == 0) throw new InvalidOperationException("Component instance ID missing.");
+#endif
+				if (!Call("ManageSceneTool", "{\"action\":\"getHierarchy\"}").Contains(Id(childId))) throw new InvalidOperationException("Hierarchy ID missing.");
+				Call("ManageGameObjectTool", "{\"action\":\"destroy\"," + Id(childId) + "}");
+				if (child != null) throw new InvalidOperationException("Object ID destroy failed.");
+				Debug.Log("[UCT Internal Smoke] Scene object IDs: create/find/parent/transform/component/hierarchy/destroy passed; invalid parent preserved hierarchy.");
+			}
+			finally
+			{
+				if (child != null) UnityEngine.Object.DestroyImmediate(child);
+				if (parentObject != null) UnityEngine.Object.DestroyImmediate(parentObject);
+			}
+		}
+
+		private static void ValidateStaticInventory()
+		{
+			Type tool = Type.GetType("UnityCursorToolkit.MCP.StaticInventoryTool, UnityCursorToolkit.Editor", true);
+			object inventory = tool.GetMethod("Collect", BindingFlags.Static | BindingFlags.NonPublic).Invoke(null, null);
+			string output = GetArg("-uctStaticInventoryPath", string.Empty);
+			if (!string.IsNullOrEmpty(output)) File.WriteAllText(output, JsonUtility.ToJson(inventory, true));
+			IList fields = (IList)inventory.GetType().GetField("fields").GetValue(inventory);
+			bool foundSentinel = false;
+			foreach (object field in fields)
+			{
+				Type entry = field.GetType();
+				string assembly = (string)entry.GetField("assembly").GetValue(field);
+				if (assembly == "UnityCursorToolkit.Editor" || assembly == "UnityCursorToolkit.Runtime")
+					throw new InvalidOperationException("Static inventory included package-owned fields.");
+				if ((string)entry.GetField("type").GetValue(field) == typeof(UnityCursorToolkitInternalSmoke).FullName
+					&& (string)entry.GetField("field").GetValue(field) == "inventorySentinel")
+				{
+					foundSentinel = true;
+					if ((bool)entry.GetField("hasCleanupAttribute").GetValue(field))
+						throw new InvalidOperationException("Static inventory invented a cleanup attribute.");
+				}
+			}
+			if (!foundSentinel || inventorySentinel != 73 || fields.Count > (int)inventory.GetType().GetField("maxFields").GetValue(inventory))
+				throw new InvalidOperationException("Static inventory omitted user metadata, changed its value, or exceeded its bound: " + JsonUtility.ToJson(inventory));
+
+		}
+		private static void ValidateBridgeReload()
+		{
+			Type handler = typeof(UnityCursorToolkit.HotReloadHandler);
+			const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+			MethodInfo before = handler.GetMethod("OnBeforeAssemblyReload", flags);
+			MethodInfo after = handler.GetMethod("OnAfterAssemblyReload", flags);
+			if (after == null) throw new InvalidOperationException("The bridge has no preserved-state reload restart hook.");
+			MethodInfo start = handler.GetMethod("StartWithoutMutex", flags);
+			FieldInfo currentPort = handler.GetField("currentPort", flags);
+			FieldInfo lastPort = handler.GetField("lastSuccessfulPort", flags);
+			FieldInfo initialized = handler.GetField("isInitialized", flags);
+			FieldInfo restartIntent = handler.GetField("wasRunningBeforeReload", flags);
+			int originalPort = (int)currentPort.GetValue(null);
+			int originalLastPort = (int)lastPort.GetValue(null);
+			bool originalInitialized = (bool)initialized.GetValue(null);
+			bool originalRestartIntent = (bool)restartIntent.GetValue(null);
+			bool originalRunning = UnityCursorToolkit.HotReloadHandler.IsServerRunning();
+			string lastPortKey = (string)handler.GetField("lastPortPrefKey", flags).GetRawConstantValue();
+			string runningKey = (string)handler.GetField("sessionRunningKey", flags).GetRawConstantValue();
+			bool hadLastPort = EditorPrefs.HasKey(lastPortKey);
+			int previousLastPort = EditorPrefs.GetInt(lastPortKey);
+			bool previousRunning = SessionState.GetBool(runningKey, false);
+			try
+			{
+				// The owned proof must not depend on fixed ports excluded by the host OS.
+				UnityCursorToolkit.HotReloadHandler.Stop();
+				var probe = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Any, 0);
+				int fixturePort;
+				try
+				{
+					probe.Start();
+					fixturePort = ((System.Net.IPEndPoint)probe.LocalEndpoint).Port;
+				}
+				finally { probe.Stop(); }
+				currentPort.SetValue(null, fixturePort);
+				lastPort.SetValue(null, fixturePort);
+				start.Invoke(null, null);
+				WaitForBridgeServer();
+				before.Invoke(null, null);
+				after.Invoke(null, null);
+				WaitForBridgeServer();
+				if (!(bool)initialized.GetValue(null))
+					throw new InvalidOperationException("The bridge did not restart after a preserved-state reload.");
+
+				UnityCursorToolkit.HotReloadHandler.Stop();
+				before.Invoke(null, null);
+				after.Invoke(null, null);
+				if (UnityCursorToolkit.HotReloadHandler.IsServerRunning() || (bool)initialized.GetValue(null))
+					throw new InvalidOperationException("Reload restarted a manually stopped bridge.");
+			}
+			finally
+			{
+				UnityCursorToolkit.HotReloadHandler.Stop();
+				currentPort.SetValue(null, originalPort);
+				lastPort.SetValue(null, originalLastPort);
+				restartIntent.SetValue(null, originalRestartIntent);
+				if (originalRunning)
+				{
+					start.Invoke(null, null);
+					WaitForBridgeServer();
+				}
+				else initialized.SetValue(null, originalInitialized);
+				if (hadLastPort) EditorPrefs.SetInt(lastPortKey, previousLastPort);
+				else EditorPrefs.DeleteKey(lastPortKey);
+				SessionState.SetBool(runningKey, previousRunning);
+			}
+		}
+
+		private static void WaitForBridgeServer()
+		{
+			var timer = System.Diagnostics.Stopwatch.StartNew();
+			while (!UnityCursorToolkit.HotReloadHandler.IsServerRunning() && timer.ElapsedMilliseconds < 5000)
+				System.Threading.Thread.Sleep(10);
+			if (!UnityCursorToolkit.HotReloadHandler.IsServerRunning())
+				throw new InvalidOperationException("The bridge listener did not start during the owned reload smoke.");
+			using (var client = new System.Net.Sockets.TcpClient())
+			{
+				client.ReceiveTimeout = 2000;
+				client.SendTimeout = 2000;
+				client.Connect(System.Net.IPAddress.Loopback, UnityCursorToolkit.HotReloadHandler.GetCurrentPort());
+				byte[] ping = Encoding.UTF8.GetBytes("{\"command\":\"ping\"}\n");
+				System.Net.Sockets.NetworkStream stream = client.GetStream();
+				stream.Write(ping, 0, ping.Length);
+				using (var reader = new StreamReader(stream))
+				{
+					if (reader.ReadLine() != "{\"command\":\"pong\"}")
+						throw new InvalidOperationException("The bridge did not answer ping after the owned reload.");
+				}
+			}
+		}
+
+		// Exercise session cleanup twice without a domain reload, so stale static state is visible.
+		private static void ValidateRuntimeAndStateReset()
+		{
+			string projectInfo = CallMcpTool("UnityCursorToolkit.MCP.ProjectInfoTool, UnityCursorToolkit.Editor", "{}");
+			bool mono = typeof(object).Assembly.GetType("Mono.Runtime") != null;
+			bool coreClr = !mono && typeof(object).Assembly.GetName().Name == "System.Private.CoreLib";
+			AssertContains(projectInfo, "\"isCoreCLR\":" + (coreClr ? "true" : "false"));
+			AssertContains(projectInfo, "\"hasDomainReload\":" + (mono ? "true" : "false"));
+
+			Type enumerator = Type.GetType("UnityCursorToolkit.Core.AssemblyEnumerator, UnityCursorToolkit.Editor", true);
+			bool toolkitFound = false;
+			foreach (Assembly assembly in (IEnumerable)enumerator.GetMethod("GetLoaded", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static).Invoke(null, null))
+			{
+				toolkitFound |= assembly == enumerator.Assembly;
+			}
+			if (!toolkitFound) throw new InvalidOperationException("Assembly enumeration omitted the toolkit.");
+
+			Type bridge = Type.GetType("UnityCursorToolkit.MCP.MCPBridge, UnityCursorToolkit.Editor", true);
+			Type console = Type.GetType("UnityCursorToolkit.ConsoleToCursor, UnityCursorToolkit.Editor", true);
+			Type profiler = Type.GetType("UnityCursorToolkit.ProfilerSessionRecorder, UnityCursorToolkit.Editor", true);
+			const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic;
+			bridge.GetMethod("Initialize", flags).Invoke(null, null);
+			foreach (PlayModeStateChange state in new[] { PlayModeStateChange.EnteredPlayMode, PlayModeStateChange.EnteredEditMode })
+			{
+				IDictionary oldHandlers = (IDictionary)bridge.GetField("_handlers", flags).GetValue(null);
+				bridge.GetMethod("OnPlayModeStateChanged", flags).Invoke(null, new object[] { state });
+				IDictionary newHandlers = (IDictionary)bridge.GetField("_handlers", flags).GetValue(null);
+				if (ReferenceEquals(oldHandlers, newHandlers) || newHandlers.Count == 0)
+					throw new InvalidOperationException("MCP handlers were not rebuilt for the new session.");
+				foreach (object key in oldHandlers.Keys)
+				{
+					if (!newHandlers.Contains(key) || ReferenceEquals(oldHandlers[key], newHandlers[key]))
+						throw new InvalidOperationException("MCP retained a stale tool handler: " + key);
+				}
+
+				console.GetMethod("OnLogReceived", flags).Invoke(null, new object[] { "State reset smoke", "", LogType.Log });
+				IList entries = (IList)console.GetField("entryBuffer", flags).GetValue(null);
+				if (entries.Count == 0) throw new InvalidOperationException("Console smoke did not seed an entry.");
+				console.GetMethod("OnPlayModeStateChanged", flags).Invoke(null, new object[] { state });
+				if (entries.Count != 0) throw new InvalidOperationException("Console retained the previous session.");
+
+				object timings = profiler.GetField("frameTimings", flags).GetValue(null);
+				Type timingType = timings.GetType().GetGenericArguments()[0];
+				timings.GetType().GetMethod("Enqueue").Invoke(timings, new[] { Activator.CreateInstance(timingType) });
+				string oldSession = (string)profiler.GetField("sessionId", flags).GetValue(null);
+				profiler.GetMethod("ResetSession", flags).Invoke(null, null);
+				if (oldSession == (string)profiler.GetField("sessionId", flags).GetValue(null)
+					|| (int)timings.GetType().GetProperty("Count").GetValue(timings) != 0)
+					throw new InvalidOperationException("Profiler retained the previous session.");
+			}
+		}
 		/// <summary>
 		/// Proves menu registration, native API binding, editor text round-trip, and GPU rendering.
 		/// </summary>
@@ -179,6 +420,14 @@ namespace UnityCursorToolkit.InternalSmoke
 
 				switch (SessionState.GetString(PhaseKey, "enterPlay"))
 				{
+					case "prepareSceneOrientation":
+						BeginSceneOrientationSmoke();
+						SessionState.SetString(PhaseKey, "verifySceneOrientation");
+						break;
+					case "verifySceneOrientation":
+						VerifySceneOrientationSmoke();
+						SessionState.SetString(PhaseKey, "enterPlay");
+						break;
 					case "enterPlay":
 						EnterPlayMode();
 						break;
@@ -243,6 +492,84 @@ namespace UnityCursorToolkit.InternalSmoke
 				SessionState.SetString(PhaseKey, "waitPlay");
 				EditorApplication.EnterPlaymode();
 			}
+		}
+
+		private static void BeginSceneOrientationSmoke()
+		{
+			if (!Application.isBatchMode || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null)
+				throw new InvalidOperationException("SceneView orientation smoke requires its disposable batch Editor with native graphics; headless rendering is not proof.");
+			orientationView = ScriptableObject.CreateInstance<SceneView>();
+			orientationView.position = new Rect(40f, 40f, 640f, 480f);
+			SceneView.duringSceneGui += PaintOrientationMarkers;
+			orientationView.Show();
+			orientationView.Focus();
+		}
+
+		private static void PaintOrientationMarkers(SceneView view)
+		{
+			if (view != orientationView || Event.current.type != EventType.Repaint) return;
+			Handles.BeginGUI();
+			try
+			{
+				float halfHeight = view.position.height * 0.5f;
+				EditorGUI.DrawRect(new Rect(0f, 0f, view.position.width, halfHeight), Color.red);
+				EditorGUI.DrawRect(new Rect(0f, halfHeight, view.position.width, halfHeight), Color.blue);
+				orientationMarkersPainted = true;
+			}
+			finally { Handles.EndGUI(); }
+		}
+
+		private static void VerifySceneOrientationSmoke()
+		{
+			try
+			{
+				if (orientationView == null || SceneView.lastActiveSceneView != orientationView)
+					throw new InvalidOperationException("SceneView capture did not select the smoke-owned window.");
+				Type captureType = Type.GetType("UnityCursorToolkit.MCP.EditorWindowViewportCapture, UnityCursorToolkit.Editor", true);
+				Type frameType = captureType.GetNestedType("Frame", BindingFlags.NonPublic);
+				MethodInfo capture = captureType.GetMethod("TryCapture", BindingFlags.Static | BindingFlags.NonPublic, null,
+					new[] { typeof(string), typeof(int), typeof(int), typeof(int), frameType.MakeByRefType(), typeof(string).MakeByRefType() }, null);
+				Vector2Int nativeSize = Vector2Int.zero;
+				foreach (Vector2Int maximum in new[] { Vector2Int.zero, new Vector2Int(320, 240) })
+				{
+					orientationMarkersPainted = false;
+					object[] args = { "scene", 90, maximum.x, maximum.y, null, null };
+					if (!(bool)capture.Invoke(null, args))
+						throw new InvalidOperationException("SceneView capture failed: " + args[5]);
+					if (!orientationMarkersPainted)
+						throw new InvalidOperationException("SceneView capture did not repaint its synthetic orientation markers.");
+					Texture2D decoded = new Texture2D(2, 2, TextureFormat.RGB24, false);
+					try
+					{
+						if (!decoded.LoadImage((byte[])frameType.GetField("bytes").GetValue(args[4])))
+							throw new InvalidOperationException("SceneView capture did not produce a decodable JPEG.");
+						if (decoded.width != (int)frameType.GetField("width").GetValue(args[4])
+							|| decoded.height != (int)frameType.GetField("height").GetValue(args[4]))
+							throw new InvalidOperationException("SceneView JPEG dimensions differ from frame metadata.");
+						if (maximum == Vector2Int.zero) nativeSize = new Vector2Int(decoded.width, decoded.height);
+						else if (decoded.width > maximum.x || decoded.height > maximum.y
+							|| decoded.width >= nativeSize.x || decoded.height >= nativeSize.y)
+							throw new InvalidOperationException("SceneView orientation smoke did not exercise a smaller scaled readback.");
+						// LoadImage exposes bottom-left texture coordinates; JPEG consumers need red above blue.
+						Color upper = decoded.GetPixel(decoded.width / 2, decoded.height * 3 / 4);
+						Color lower = decoded.GetPixel(decoded.width / 2, decoded.height / 4);
+						if (upper.r < 0.7f || upper.b > 0.3f || lower.b < 0.7f || lower.r > 0.3f)
+							throw new InvalidOperationException("SceneView JPEG orientation is wrong: the upper red and lower blue markers were inverted or missing. Backend: " + SystemInfo.graphicsDeviceType);
+						Debug.Log("SceneView JPEG orientation verified: Editor " + Application.unityVersion + ", " + Application.platform
+							+ ", " + SystemInfo.graphicsDeviceType + ", " + decoded.width + "x" + decoded.height + ", maximum=" + maximum);
+					}
+					finally { UnityEngine.Object.DestroyImmediate(decoded); }
+				}
+			}
+			finally { CleanupSceneOrientationSmoke(); }
+		}
+
+		private static void CleanupSceneOrientationSmoke()
+		{
+			SceneView.duringSceneGui -= PaintOrientationMarkers;
+			SceneView owned = orientationView;
+			orientationView = null;
+			if (owned != null) owned.Close();
 		}
 
 		private static void EnterLivePlayMode()
@@ -653,6 +980,7 @@ namespace UnityCursorToolkit.InternalSmoke
 
 		private static void Finish(bool success, string message)
 		{
+			CleanupSceneOrientationSmoke();
 			try
 			{
 				CallMcpTool("UnityCursorToolkit.MCP.ViewportStreamTool, UnityCursorToolkit.Editor", "{\"action\":\"stop\"}");

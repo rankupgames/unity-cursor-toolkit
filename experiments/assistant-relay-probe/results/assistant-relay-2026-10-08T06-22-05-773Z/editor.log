@@ -1,0 +1,181 @@
+<licensing or credential line omitted>
+Built from '6000.3/staging' branch; Version is '6000.3.9f1 (7a9955a4f2fa) revision 8034645'; Using compiler version '194234433'; Build Type 'Release'
+<licensing or credential line omitted>
+OS: 'Windows 10  (10.0.19045) 64bit Enterprise' Language: 'en' Physical Memory: 32702 MB
+BatchMode: 1, IsHumanControllingUs: 0, StartBugReporterOnCrash: 0, Is64bit: 1
+System  architecture: x64
+Process architecture: x64
+Date: 2026-10-08T06:22:13Z
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+  Version:                 1.18.3+d7ffd15
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+<licensing or credential line omitted>
+
+COMMAND LINE ARGUMENTS:
+<editor-directory>\Unity.exe
+-batchmode
+-projectPath
+<fixture>
+-logFile
+<fixture>\proof\editor.log
+Successfully changed project path to: <fixture>
+<fixture>
+[UnityMemory] Configuration Parameters - Can be set up in boot.config
+    "memorysetup-temp-allocator-size-nav-mesh-worker=65536"
+    "memorysetup-temp-allocator-size-audio-worker=65536"
+    "memorysetup-temp-allocator-size-gfx=262144"
+    "memorysetup-allocator-temp-initial-block-size-main=262144"
+    "memorysetup-allocator-temp-initial-block-size-worker=262144"
+    "memorysetup-temp-allocator-size-background-worker=32768"
+    "memorysetup-temp-allocator-size-job-worker=262144"
+    "memorysetup-temp-allocator-size-preload-manager=33554432"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-temp-allocator-size-gi-baking-worker=262144"
+    "memorysetup-bucket-allocator-granularity=16"
+    "memorysetup-bucket-allocator-bucket-count=8"
+    "memorysetup-bucket-allocator-block-size=33554432"
+    "memorysetup-bucket-allocator-block-count=8"
+    "memorysetup-main-allocator-block-size=16777216"
+    "memorysetup-thread-allocator-block-size=16777216"
+    "memorysetup-gfx-main-allocator-block-size=16777216"
+    "memorysetup-gfx-thread-allocator-block-size=16777216"
+    "memorysetup-cache-allocator-block-size=4194304"
+    "memorysetup-typetree-allocator-block-size=2097152"
+    "memorysetup-profiler-bucket-allocator-granularity=16"
+    "memorysetup-profiler-bucket-allocator-bucket-count=8"
+    "memorysetup-profiler-bucket-allocator-block-size=33554432"
+    "memorysetup-profiler-bucket-allocator-block-count=8"
+    "memorysetup-profiler-allocator-block-size=16777216"
+    "memorysetup-profiler-editor-allocator-block-size=1048576"
+    "memorysetup-temp-allocator-size-main=16777216"
+    "memorysetup-job-temp-allocator-block-size=2097152"
+    "memorysetup-job-temp-allocator-block-size-background=1048576"
+    "memorysetup-job-temp-allocator-reduction-small-platforms=262144"
+    "memorysetup-temp-allocator-size-cloud-worker=32768"
+Failed to start primary listening socket at (0.0.0.0:55504-55512).
+Player connection [30260]  Target information:
+
+Player connection [30260]  * "[IP] <owned-interface-ip> [Port] 55511 [Flags] 2 [Guid] 45520086 [EditorId] 45520086 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [30260]  * "[IP] <owned-interface-ip> [Port] 55511 [Flags] 2 [Guid] 45520086 [EditorId] 45520086 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [30260]  * "[IP] <owned-interface-ip> [Port] 55511 [Flags] 2 [Guid] 45520086 [EditorId] 45520086 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [30260]  * "[IP] <owned-interface-ip> [Port] 55511 [Flags] 2 [Guid] 45520086 [EditorId] 45520086 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Player connection [30260]  * "[IP] <owned-interface-ip> [Port] 55511 [Flags] 2 [Guid] 45520086 [EditorId] 45520086 [Version] 1048832 [Id] WindowsEditor(7,<host-name>) [Debug] 1 [PackageName] WindowsEditor [ProjectName] Editor"
+
+Unable to join player connection multicast group (err: 10013).
+Player connection [30260] Host joined alternative multi-casting on [225.0.0.222:34997]...
+Input System module state changed to: Initialized.
+[Physics::Module] Initialized fallback backend.
+[Physics::Module] Id: 0xdecafbad
+[Package Manager] Connected to IPC stream "Upm-70372" after 0.8 seconds.
+<licensing or credential line omitted>
+Library Redirect Path: Library/
+Rebuilding Library because the asset database could not be found!
+[Physics::Module] Selected backend.
+[Physics::Module] Name: PhysX
+[Physics::Module] Id: 0xf2b8ea05
+[Physics::Module] SDK Version: 4.1.2
+[Physics::Module] Integration Version: 1.0.0
+[Physics::Module] Threading Mode: Multi-Threaded
+Refreshing native plugins compatible for Editor in 0.00 ms, found 0 plugins.
+Preloading 0 native plugins for Editor in 0.00 ms.
+Initialize engine version: 6000.3.9f1 (7a9955a4f2fa)
+[Subsystems] Discovering subsystems at path <editor-directory>/Data/Resources/UnitySubsystems
+[Subsystems] Discovering subsystems at path <fixture>/Assets
+GfxDevice: creating device client; kGfxThreadingModeNonThreaded
+Direct3D:
+    Version:  Direct3D 11.0 [level 11.1]
+    Renderer: NVIDIA GeForce RTX 3080 (ID=0x2206)
+    Vendor:   NVIDIA
+    VRAM:     10053 MB
+    Driver:   32.0.16.1047
+Initialize mono
+Mono path[0] = '<editor-directory>/Data/Managed'
+Mono path[1] = '<editor-directory>/Data/MonoBleedingEdge/lib/mono/unityjit-win32'
+Mono config path = '<editor-directory>/Data/MonoBleedingEdge/etc'
+Using monoOptions --debugger-agent=transport=dt_socket,embedding=1,server=y,suspend=n,address=127.0.0.1:56372
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+Using cacheserver namespaces - metadata:defaultmetadata, artifacts:defaultartifacts
+ImportWorker Server TCP listen port: 0
+AcceleratorClientConnectionCallback - disconnected - :0
+Begin MonoManager ReloadAssembly
+Registering precompiled unity dll's ...
+Register platform support module: <editor-directory>/Data/PlaybackEngines/WindowsStandaloneSupport/UnityEditor.WindowsStandalone.Extensions.dll
+<licensing or credential line omitted>
+Register platform support module: <editor-directory>/Data/PlaybackEngines/AndroidPlayer/UnityEditor.Android.Extensions.dll
+<licensing or credential line omitted>
+Register platform support module: <editor-directory>/Data/PlaybackEngines/iOSSupport/UnityEditor.iOS.Extensions.dll
+Registered in 0.496827 seconds.
+- Loaded All Assemblies, in 10.573 seconds
+[usbmuxd] Start listen thread
+[usbmuxd] Listen thread started
+Native extension for iOS target not found
+Native extension for Android target not found
+Android Extension - Scanning For ADB Devices 2427 ms
+Native extension for WindowsStandalone target not found
+ScheduleIndexationOnStartup MainProcess:False IndexOnStartup:False
+Mono: successfully reloaded assembly
+- Finished resetting the current domain, in  3.122 seconds
+Domain Reload Profiling: 13694ms
+	BeginReloadAssembly (7595ms)
+		ExecutionOrderSort (0ms)
+		DisableScriptedObjects (0ms)
+		BackupInstance (0ms)
+		ReleaseScriptingObjects (0ms)
+		CreateAndSetChildDomain (19ms)
+	RebuildCommonClasses (501ms)
+	RebuildNativeTypeToScriptingClass (15ms)
+	initialDomainReloadingComplete (551ms)
+	LoadAllAssembliesAndSetupDomain (1911ms)
+		LoadAssemblies (7592ms)
+		RebuildTransferFunctionScriptingTraits (0ms)
+		AnalyzeDomain (1891ms)
+			TypeCache.Refresh (1889ms)
+				TypeCache.ScanAssembly (1621ms)
+			BuildScriptInfoCaches (0ms)
+			ResolveRequiredComponents (1ms)
+	FinalizeReload (3122ms)
+		ReleaseScriptCaches (0ms)
+		RebuildScriptCaches (0ms)
+		SetupLoadedEditorAssemblies (3080ms)
+			LogAssemblyErrors (0ms)
+			InitializePlatformSupportModulesInManaged (2686ms)
+			SetLoadedEditorAssemblies (5ms)
+			BeforeProcessingInitializeOnLoad (109ms)
+			ProcessInitializeOnLoadAttributes (169ms)
+			ProcessInitializeOnLoadMethodAttributes (110ms)
+			AfterProcessingInitializeOnLoad (0ms)
+			EditorAssembliesLoaded (0ms)
+		ExecutionOrderSort2 (0ms)
+		AwakeInstancesAfterBackupRestoration (0ms)
+<licensing or credential line omitted>
+Application.AssetDatabase Initial Refresh Start
+Package Manager log level set to [2]
+[Package Manager] Done resolving packages in 5.49 seconds
+<licensing or credential line omitted>
+An error occurred while resolving packages:
+  Project has invalid dependencies:
+    com.unity.modules.uielementsnative.sha1: Package [com.unity.modules.uielementsnative.sha1@1.0.0] cannot be found
+Exiting without the bug reporter. Application will terminate with return code 1

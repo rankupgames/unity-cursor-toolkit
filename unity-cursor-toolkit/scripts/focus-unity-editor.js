@@ -1,38 +1,18 @@
 #!/usr/bin/env node
-'use strict';
-
-// Focuses the one running Unity Editor that owns --project. Runs from source (Node 22.18+ type stripping), no build needed.
-// Usage: node scripts/focus-unity-editor.js --project <unity-project-root> [--expected-pid <pid>]
-// Exit codes: 0 activated, 1 any other state, 2 bad usage. Activation alone does not prove compilation or main-thread recovery.
-
+/** Foreground the verified existing project owner; never open a second Unity Editor. */
 const path = require('path');
 const { pathToFileURL } = require('url');
-
-async function main() {
-	const args = process.argv.slice(2);
-	const values = new Map();
-	for (let index = 0; index < args.length; index += 2) {
-		const name = args[index], value = args[index + 1];
-		if (!['--project', '--expected-pid'].includes(name) || values.has(name) || !value || value.startsWith('--')) {
-			console.error('Usage: node scripts/focus-unity-editor.js --project <unity-project-root> [--expected-pid <pid>]');
-			return 2;
-		}
-		values.set(name, value);
-	}
-	const project = values.get('--project');
-	const pidText = values.get('--expected-pid');
-	const expectedPid = pidText === undefined ? undefined : Number(pidText);
-	if (!project || (pidText !== undefined && (!/^[1-9]\d*$/.test(pidText) || !Number.isSafeInteger(expectedPid) || expectedPid > 2147483647))) {
-		console.error('Usage: node scripts/focus-unity-editor.js --project <unity-project-root> [--expected-pid <pid>]');
-		return 2;
-	}
-	const { focusUnityEditor } = await import(pathToFileURL(path.join(__dirname, '..', 'src', 'core', 'unityEditorFocus.ts')).href);
-	const result = await focusUnityEditor({ projectRoot: project, expectedPid });
-	console.log(JSON.stringify(result));
-	return result.state === 'activated' ? 0 : 1;
-}
-
-main().then(code => { process.exitCode = code; }, error => {
-	console.error(error instanceof Error ? error.message : String(error));
-	process.exitCode = 1;
-});
+(async () => {
+ const args = process.argv.slice(2);
+ const allowed = new Set(['--project', '--expected-pid']);
+ const values = {};
+ for (let i = 0; i < args.length; i += 2) {
+  if (!allowed.has(args[i]) || values[args[i]] != null || !args[i + 1]) throw new Error('Usage: --project <root> [--expected-pid <pid>]');
+  values[args[i]] = args[i + 1];
+ }
+ if (!values['--project'] || (values['--expected-pid'] && !/^[1-9]\d*$/.test(values['--expected-pid']))) throw new Error('A project root and valid optional PID are required.');
+ const { focusUnityEditor } = await import(pathToFileURL(path.join(__dirname, '../src/core/unityEditorFocus.ts')).href);
+ const result = await focusUnityEditor(path.resolve(values['--project']), { expectedPid: values['--expected-pid'] ? Number(values['--expected-pid']) : undefined });
+ process.stdout.write(JSON.stringify(result) + '\n');
+ process.exitCode = result.state === 'activated' ? 0 : 1;
+})().catch(error => { process.stdout.write(JSON.stringify({ state: 'failed', reason: error.message }) + '\n'); process.exitCode = 2; });

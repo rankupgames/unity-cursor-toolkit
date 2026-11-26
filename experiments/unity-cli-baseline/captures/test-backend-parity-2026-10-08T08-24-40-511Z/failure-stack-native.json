@@ -1,0 +1,22 @@
+{
+  "ok": false,
+  "exitCode": 8,
+  "stdout": {
+    "success": false,
+    "command": "test",
+    "data": null,
+    "errors": [
+      {
+        "code": "TESTS_FAILED",
+        "message": "Tests failed: Unity process exited with code 2."
+      }
+    ],
+    "warnings": []
+  },
+  "error": {
+    "code": "tests_failed",
+    "message": "Tests failed: Unity process exited with code 2.",
+    "recovery": "Inspect the test results and fix the failing tests.",
+    "nativeCode": "TESTS_FAILED"
+  }
+}

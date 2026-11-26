@@ -28,7 +28,7 @@ namespace UnityCursorToolkit.MCP
 		/// <summary>
 		/// Human-readable tool description for local registry diagnostics.
 		/// </summary>
-		public string Description => "List, schedule, poll, or cancel game-authored runtime agent commands.";
+		public string Description => "List, run, poll, or cancel game-authored Play commands and synchronous editor.* commands.";
 
 		/// <summary>
 		/// Routes game command actions to the runtime command registry and runner.

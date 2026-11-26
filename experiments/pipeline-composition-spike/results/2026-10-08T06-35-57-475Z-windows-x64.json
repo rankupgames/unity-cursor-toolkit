@@ -1,0 +1,106 @@
+{
+  "capturedAt": "2026-10-08T06:35:57.475Z",
+  "cliVersion": "1.0.0-beta.12",
+  "pipelineVersion": "0.8.0-exp.1",
+  "editorVersion": "6000.3.9f1",
+  "outcome": "incomplete",
+  "commands": [
+    {
+      "argv": [
+        "pipeline",
+        "--format",
+        "json",
+        "--non-interactive",
+        "--no-banner",
+        "--no-log-proxy",
+        "install",
+        "--project-path",
+        "<fixture-2>",
+        "--package-version",
+        "0.8.0-exp.1"
+      ],
+      "format": "json",
+      "reason": null,
+      "exitCode": 0,
+      "signal": null,
+      "stdout": "{\"success\":true,\"command\":\"pipeline install\",\"data\":{\"packageId\":\"com.unity.pipeline\",\"version\":\"0.8.0-exp.1\",\"projectPath\":\"<fixture-2>\",\"alreadyInstalled\":false},\"errors\":[],\"warnings\":[]}",
+      "stderr": "",
+      "frames": [
+        {
+          "success": true,
+          "command": "pipeline install",
+          "data": {
+            "packageId": "com.unity.pipeline",
+            "version": "0.8.0-exp.1",
+            "projectPath": "<fixture-2>",
+            "alreadyInstalled": false
+          },
+          "errors": [],
+          "warnings": []
+        }
+      ]
+    }
+  ],
+  "transport": [],
+  "composition": [],
+  "safety": {},
+  "editorProductVersion": "6000.3.9f1_7a9955a4f2fa",
+  "secondInstall": {
+    "checkedAt": "2026-10-08T06:35:59.624Z",
+    "httpDate": "Thu, 08 Oct 2026 06:36:00 GMT",
+    "gate": {
+      "ok": true,
+      "packageVersion": "0.8.0-exp.1",
+      "declaredEditorVersion": "6000.3.9f1",
+      "minimumEditorVersion": "6000.0",
+      "publishedAt": "2026-09-25T18:42:14.022Z",
+      "checkedAt": "2026-10-08T06:35:59.624Z",
+      "ageMs": 1079625602,
+      "registryUrl": "https://packages.unity.com/com.unity.pipeline",
+      "httpDate": "Thu, 08 Oct 2026 06:36:00 GMT"
+    },
+    "baseline": {
+      "manifest": {
+        "dependencies": {}
+      }
+    },
+    "manifest": {
+      "dependencies": {
+        "com.unity.pipeline": "0.8.0-exp.1"
+      }
+    }
+  },
+  "failure": "Readiness runtime identity/root does not match owned fixture",
+  "sentinelExitConfirmed": true,
+  "shutdown": [
+    {
+      "fixture": "fixture-1",
+      "processExitObserved": true,
+      "normalQuitMarkerObserved": true,
+      "quittingCallbackObserved": true,
+      "normalExitConfirmed": true,
+      "forcedCleanup": false,
+      "editorExitCode": null,
+      "events": [
+        "initialize|2026-10-08T06:36:06.8750106Z",
+        "after-reload|2026-10-08T06:36:06.9530156Z",
+        "seeded|2026-10-08T06:36:09.7787343Z",
+        "root-restored=Assets|2026-10-08T06:36:09.7797088Z",
+        "normal-exit|2026-10-08T06:36:09.7942088Z",
+        "quitting|2026-10-08T06:36:09.9347100Z"
+      ],
+      "compilerErrors": []
+    },
+    {
+      "fixture": "fixture-2",
+      "processExitObserved": null,
+      "normalQuitMarkerObserved": false,
+      "quittingCallbackObserved": false,
+      "normalExitConfirmed": false,
+      "forcedCleanup": false,
+      "editorExitCode": null,
+      "events": [],
+      "compilerErrors": []
+    }
+  ]
+}

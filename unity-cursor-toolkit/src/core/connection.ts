@@ -11,6 +11,8 @@ import * as net from 'net';
 import { ConnectionState, safeJsonParse } from './types';
 import type { ConnectionInfo, IncomingMessage } from './types';
 import type { IConnectionManager } from './interfaces';
+import { parseRuntimeCapabilities, RuntimeCapabilityError } from './runtimeCapabilities';
+import type { RuntimeCapabilities } from './runtimeCapabilities';
 
 const DEFAULT_PORTS = [55500, 55501, 55502, 55503, 55504] as const;
 const HEARTBEAT_INTERVAL_MS = 10_000;
@@ -25,6 +27,30 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 
 	public readonly onStateChanged: vscode.Event<ConnectionInfo> = this._onStateChanged.event;
 	public readonly onMessage: vscode.Event<IncomingMessage> = this._onMessage.event;
+
+	private readonly runtimeCapabilitiesChanged = new vscode.EventEmitter<void>();
+	public readonly onRuntimeCapabilitiesChanged = this.runtimeCapabilitiesChanged.event;
+	private runtimeCapabilities: RuntimeCapabilities | undefined;
+	private runtimeCapabilityError: RuntimeCapabilityError | undefined;
+
+	public getRuntimeCapabilities(): RuntimeCapabilities {
+		if (this.runtimeCapabilityError) throw this.runtimeCapabilityError;
+		if (this.runtimeCapabilities) return this.runtimeCapabilities;
+		throw new RuntimeCapabilityError('runtime', 'The runtime handshake is pending. Runtime features are unavailable. Connect to Unity first.');
+	}
+
+	public acceptProjectInfo(projectInfo: unknown): void {
+		if (this.runtimeCapabilities || this.runtimeCapabilityError) return;
+		try {
+			this.runtimeCapabilities = parseRuntimeCapabilities(projectInfo);
+			console.info('[Connection] Runtime capabilities:', this.runtimeCapabilities);
+		} catch (error) {
+			if (!(error instanceof RuntimeCapabilityError)) throw error;
+			this.runtimeCapabilityError = error;
+			console.warn('[Connection] Runtime capabilities:', error.code, error.message);
+		}
+		this.runtimeCapabilitiesChanged.fire();
+	}
 
 	private state: ConnectionState = ConnectionState.Disconnected;
 	private socket: net.Socket | undefined;
@@ -195,9 +221,15 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 		this.disconnect();
 		this._onStateChanged.dispose();
 		this._onMessage.dispose();
+		this.runtimeCapabilitiesChanged.dispose();
 	}
 
 	private setState(next: ConnectionState): void {
+		if (next !== ConnectionState.Connected && (this.runtimeCapabilities || this.runtimeCapabilityError)) {
+			this.runtimeCapabilities = undefined;
+			this.runtimeCapabilityError = undefined;
+			this.runtimeCapabilitiesChanged.fire();
+		}
 		if (this.state === next) {
 			return;
 		}

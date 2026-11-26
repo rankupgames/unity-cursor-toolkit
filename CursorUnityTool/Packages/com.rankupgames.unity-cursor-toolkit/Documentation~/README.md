@@ -14,6 +14,7 @@ Editor tools for Cursor/VS Code and MCP-capable AI agents integrating with Unity
 - **IL Patcher**: Runtime method body swapping during play mode (avoids domain reload)
 - **Unity-Unterm**: Toolkit-internal terminal, Claude Code, code editor, completion, and debugger windows on supported Unity 6000.3 editors
 - **Agent Safety**: Supports read-only MCP sessions and dry-run previews from the companion extension
+- **Spotlight**: Keyboard search for Editor windows, commands, assets, loaded scene objects, and exact components
 
 ## Installation
 
@@ -78,6 +79,35 @@ Open the bundled tools from **Tools > Unity Cursor Toolkit > Unterm**, then choo
 
 The optional Claude Code panel uses an existing user-managed `claude` executable discovered from `UNTERM_CLAUDE_PATH`, `PATH`, common install locations, or a legacy Unterm install. The toolkit does not download or update Claude Code.
 
+## Spotlight
+
+Open **Tools > Unity Cursor Toolkit > Spotlight**, or press **Option+Space** on
+macOS and **Ctrl+Shift+K** on Windows. Rebind **Unity Cursor Toolkit/Spotlight**
+in Unity's Shortcuts manager. This Editor palette does not need an attached
+extension or MCP client.
+
+Type a name, type, or path. Arrow keys move through results without changing
+Editor selection. Enter performs the selected result's default action.
+Escape closes the palette and restores the previous Editor window's focus.
+Use the row menu, right-click, or **Shift+F10** for other available actions.
+
+- Scene results include inactive GameObjects and exact components in every
+  loaded additive scene. Paths include scene, sibling, and component identifiers
+  to distinguish repeated names. Hidden Editor objects are excluded.
+- Assets support Select, Open, and Ping. Loaded persistent objects include
+  exact sub-assets and ScriptableObjects. Unloaded sub-assets depend on the
+  native asset provider's index coverage.
+- GameObjects and components support Select, Ping, and Frame. Frame needs an
+  open Scene view. Existing Editor windows support Focus. Commands execute only
+  after an explicit action. Deleted results refuse actions.
+- Unity 2021.2 and later use the public asset, menu, and settings Search
+  providers. Unity 2019.4 through 2021.1 use AssetDatabase and managed `MenuItem`
+  discovery. Native-only menu commands and settings search need the newer API.
+
+The package's declared minimum remains Unity 2019.4. These implementation
+boundaries do not certify every Editor version. Unity 7 remains subject to the
+repository's compatibility gates.
+
 ## Companion Extension Validation
 
 The VS Code/Cursor companion extension is maintained in the repository's `unity-cursor-toolkit/` folder.
@@ -133,6 +163,19 @@ See the repository docs:
 The MCP tool `editor_validation` supports `list`, `status`, `sync_project_files`, `request_compile`, and `sync_and_compile`. `request_compile` leaves project files unchanged; `sync_and_compile` fails without requesting compilation when Unity cannot provide a project-file synchronization API.
 
 `sync_and_compile` regenerates project files using Unity's active code editor integration, requests script compilation, and writes the latest pollable result to `TestResults/UnityCursorToolkit/EditorValidation/latest.json` under the Unity project root. The same action is available inside Unity at **Tools > Unity Cursor Toolkit > Validation > Regenerate Project Files And Compile**.
+
+## Static Snapshots And Transition Diffs
+
+In Unity, open **Tools > Unity Cursor Toolkit > Static Capture**. Enter exact assembly names and select **Start capture**. Capture is off by default. Only loaded binaries compiled from sources wholly under this project's Assets folder are eligible. The window shows the latest snapshot status and the field classifications from the latest Play Mode transition. Fingerprints stay in Editor memory and serve only as comparison inputs.
+
+The field limit defaults to 1000 and the time limit defaults to 10 ms. A scan that reaches either limit discards partial entries and marks the snapshot incomplete. Time checks are cooperative because Unity and reflection calls cannot be interrupted. Assembly discovery runs once when capture starts. Capture stops and clears retained data when you select **Stop capture**, when Unity starts a new compilation, or when the Editor exits.
+
+Entries contain assembly/type/field identities and either a fingerprint or an unreadable reason. Exact scalar primitives and strings of at most 4096 characters use a fixed cheap hash; null and array element count have explicit fingerprints. Array contents are not hashed, and hashes can collide. Non-null custom objects and collections are unreadable; no custom Count, property getter, ToString or GetHashCode is called. Types with a static initializer are unreadable except literal constants, because reflection value access could execute that initializer. Open generic and thread-static fields are also unreadable. This conservative limit can hide real stale state and does not establish that unreadable fields are safe.
+
+Consecutive transition diffs use assembly/type/field identities and classify carried, reset, added, removed or unreadable, and show unreadable reasons. Reset means the fingerprint changed; it does not prove reset to a default value. A missing snapshot, skipped scan or transition-order gap produces an incomplete diff with no partial entries. Each snapshot is limited to 1000 fields and each diff to their union (at most 2000); only the latest snapshot and diff are retained.
+
+An unsaved `ScriptableSingleton` retains the bounded configuration and baseline across Mono assembly reload. It has no `FilePathAttribute`, never calls `Save()` and retains no raw value objects; see [Unity's ScriptableSingleton contract](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/ScriptableSingleton_1.html). Identical reconnect configuration preserves the baseline; changed or invalid configuration and disabling clear it. Owner callbacks detach and reattach idempotently; quitting clears and destroys the in-memory state.
+
 
 ## Security Notes
 

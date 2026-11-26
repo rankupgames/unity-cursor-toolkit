@@ -18,16 +18,41 @@ using UnityCursorToolkit.AgentCommands;
 
 namespace UnityCursorToolkit.MCP
 {
-	internal static class EditorWindowViewportCapture
+	internal static partial class EditorWindowViewportCapture
 	{
 		private const int MaxMainEditorCaptureWidth = 4096;
+		private static bool isQuitting;
 		private const int MaxMainEditorCaptureHeight = 4096;
 		private static readonly Dictionary<string, CaptureResources> resourcesByKey = new Dictionary<string, CaptureResources>();
 
 		static EditorWindowViewportCapture()
 		{
+			#if !UNITY_7000_0_OR_NEWER
+			InitializeLifecycle();
+			#endif
+		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+		#endif
+		private static void InitializeLifecycle()
+		{
+			if (isQuitting) return;
+			#if !UNITY_7000_0_OR_NEWER
 			AssemblyReloadEvents.beforeAssemblyReload += DisposeCachedResources;
-			EditorApplication.quitting += DisposeCachedResources;
+			#endif
+			EditorApplication.quitting -= OnEditorQuitting;
+			EditorApplication.quitting += OnEditorQuitting;
+			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+		}
+
+		private static void OnPlayModeStateChanged(PlayModeStateChange state)
+		{
+			if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
+			{
+				DisposeCachedResources();
+			}
 		}
 
 		internal sealed class Frame
@@ -35,6 +60,7 @@ namespace UnityCursorToolkit.MCP
 			public byte[] bytes;
 			public int width;
 			public int height;
+			// Reports a correction already applied to the encoded bytes, not a client-side transform.
 			public bool flippedVertical;
 		}
 
@@ -382,8 +408,26 @@ namespace UnityCursorToolkit.MCP
 		private static bool ShouldFlipReadbackVertically(string view)
 		{
 			// GameView and Windows editor readbacks use a bottom-origin buffer here.
-			return Application.platform == RuntimePlatform.WindowsEditor || view == "game";
+			// Metal SceneView GUIView.GrabPixels also needs normalization before JPEG
+			// encoding, including its native toolbar. This is not camera projection.
+			return Application.platform == RuntimePlatform.WindowsEditor || view == "game"
+				|| (view == "scene" && Application.platform == RuntimePlatform.OSXEditor
+					&& SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Metal);
 		}
+
+		private static void OnEditorQuitting()
+		{
+			isQuitting = true;
+			DisposeCachedResources();
+		}
+
+		#if UNITY_7000_0_OR_NEWER
+		[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+		private static void OnCodeUnloading()
+		{
+			if (!isQuitting) DisposeCachedResources();
+		}
+		#endif
 
 		private static void DisposeCachedResources()
 		{
@@ -429,7 +473,7 @@ namespace UnityCursorToolkit.MCP
 			Type windowType = Type.GetType(typeName);
 			if (windowType == null)
 			{
-				foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+				foreach (Assembly assembly in UnityCursorToolkit.Core.AssemblyEnumerator.GetLoaded())
 				{
 					windowType = assembly.GetType(typeName);
 					if (windowType != null)

@@ -1,0 +1,175 @@
+{
+  "capturedAt": "2026-10-09T00:48:46.900Z",
+  "cliVersion": "1.0.0-beta.12",
+  "platform": "win32",
+  "architecture": "x64",
+  "binarySha256": "3010efdd511df0ca631ba3d51e720afd0cfb19d6446bbf6fd38db39d78cfef6d",
+  "release": {
+    "date": "2026-09-30",
+    "source": "https://docs.unity.com/en-us/unity-cli/release-notes",
+    "installTimeAgeVerified": true,
+    "releaseDate": {
+      "checkedAt": "2026-10-09T00:48:39.104Z",
+      "serverDate": "Fri, 09 Oct 2026 00:41:25 GMT",
+      "ageSeconds": 780085
+    },
+    "availableVersions": [
+      {
+        "version": "1.0.0-beta.13",
+        "date": "2026-10-07"
+      },
+      {
+        "version": "1.0.0-beta.12",
+        "date": "2026-09-30"
+      },
+      {
+        "version": "1.0.0-beta.11",
+        "date": "2026-09-22"
+      },
+      {
+        "version": "1.0.0-beta.10",
+        "date": "2026-09-14"
+      },
+      {
+        "version": "1.0.0-beta.9",
+        "date": "2026-09-08"
+      },
+      {
+        "version": "1.0.0-beta.8",
+        "date": "2026-09-02"
+      },
+      {
+        "version": "1.0.0-beta.6",
+        "date": "2026-08-21"
+      },
+      {
+        "version": "1.0.0-beta.5",
+        "date": "2026-08-13"
+      },
+      {
+        "version": "1.0.0-beta.4",
+        "date": "2026-08-12"
+      },
+      {
+        "version": "1.0.0-beta.3",
+        "date": "2026-07-23"
+      },
+      {
+        "version": "1.0.0-beta.2",
+        "date": "2026-07-16"
+      },
+      {
+        "version": "1.0.0-beta.1",
+        "date": "2026-06-30"
+      }
+    ],
+    "installation": {
+      "method": "isolated official standalone binary; no installer, PATH or receipt changes",
+      "installedAt": "2026-10-09T00:48:42.638Z",
+      "manifestUrl": "https://public-cdn.cloud.unity3d.com/hub/prod/cli/1.0.0-beta.12/latest.json",
+      "manifestSha256": "ee9392fd100a5296f6c7b1c6d8ed4a945f4a4b3af7c98dba3e7b1f9ee1dd89c8",
+      "binaryUrl": "https://public-cdn.cloud.unity3d.com/hub/prod/cli/1.0.0-beta.12/unity-windows-x64.exe",
+      "binarySize": 27873200,
+      "binarySha256": "3010efdd511df0ca631ba3d51e720afd0cfb19d6446bbf6fd38db39d78cfef6d",
+      "age": {
+        "checkedAt": "2026-10-09T00:48:39.949Z",
+        "lastModified": "Thu, 01 Oct 2026 11:32:40 GMT",
+        "serverDate": "Fri, 09 Oct 2026 00:48:40 GMT",
+        "ageSeconds": 652559.9489998817
+      },
+      "downloadAge": {
+        "checkedAt": "2026-10-09T00:48:40.584Z",
+        "lastModified": "Thu, 01 Oct 2026 11:32:40 GMT",
+        "serverDate": "Fri, 09 Oct 2026 00:48:40 GMT",
+        "ageSeconds": 652560
+      },
+      "signature": {
+        "status": "Valid",
+        "subject": "CN=Unity Technologies SF, O=Unity Technologies SF, L=San Francisco, S=California, C=US, SERIALNUMBER=3183233, OID.2.5.4.15=Private Organization, OID.1.3.6.1.4.1.311.60.2.1.2=California, OID.1.3.6.1.4.1.311.60.2.1.3=US"
+      }
+    }
+  },
+  "redactions": [
+    "user path",
+    "repository path",
+    "Editor roots from inventory and env",
+    "account identifiers and credential fields",
+    "OS-user and host identifiers",
+    "doctor recent logs omitted"
+  ],
+  "records": [
+    {
+      "args": [
+        "--version"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 383,
+      "stdout": "1.0.0-beta.12\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "doctor"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 1309,
+      "stdout": "platform\twin32\narch\tx64\nnodeVersion\t.NET 10.0.12\ncliVersion\t1.0.0-beta.12\ninstallPath\t<isolated-cli>\\unity.exe\nlogDirectory\t<user>\\AppData\\Roaming\\UnityHub\\logs\ncheck.binary-on-path\twarn\tdir=<isolated-cli>\ncheck.path-duplicates\tpass\ncheck.windows-long-paths\tpass\ncheck.git-credential-helper\tpass\thelpers=manager\ncheck.credential-store\tpass\tbackend=credential-manager\ncheck.credential-store-orphans\tpass\ncheck.fex-emu\tinfo\nauth.loggedIn\ttrue\nauth.sessionState\tfresh\nauth.mode\toauth\nauth.credentialSource\tkeyring\nauth.name\t<redacted>\nauth.email\t<email>\nauth.serviceAccountClientId\t<redacted>\neditor.0\t6000.3.25f1\tx86_64\t<editor:6000.3.25f1>\\Unity.exe\neditor.1\t6000.3.9f1\tx86_64\t<editor:6000.3.9f1>\\Unity.exe\neditor.2\t6000.6.4f1\tx86_64\t<editor:6000.6.4f1>\\Unity.exe\neditor.3\t7000.0.0a7\tx86_64\t<editor:7000.0.0a7>\\Unity.exe\nproxy.url\t\nproxy.source\tnone\nproxy.authSource\tnone\nproxy.noProxy\t\naccelerator.endpoint\t\naccelerator.source\tnone\naccelerator.projectMode\t\naccelerator.projectModeLabel\t\naccelerator.projectEndpoint\t\nexternalComponent.plastic\tresolved\ttool\tpath\tC:\\Program Files\\PlasticSCM5\\client\\cm.exe\t\n<redacted credential or identity log line>\nexternalComponent.ugs\tnot-installed\ttool\t\t\t\nexternalComponent.ai\tnot-installed\ttool\t\t\t\nossComponents.licenseTextsUrl\thttps://spdx.org/licenses/\nossComponent.dotnet\t.NET 10.0.12\tMIT\nossComponent.Microsoft.Data.Sqlite.Core\t10.0.12\tMIT\nossComponent.SQLitePCLRaw.core\t3.0.5\tApache-2.0\nossComponent.SQLitePCLRaw.provider.sqlite3\t3.0.5\tApache-2.0\nossComponent.SQLitePCLRaw.provider.winsqlite3\t3.0.5\tApache-2.0\nvcs.tool.git\tresolved\t2.54.0.windows.1\tpath\tC:\\Program Files\\Git\\cmd\\git.exe\nvcs.tool.git-lfs\tresolved\t3.7.1\tpath\tC:\\Program Files\\Git LFS\\git-lfs.exe\nvcs.tool.gh\tresolved\t2.97.0\tpath\t<user>\\AppData\\Local\\Programs\\GitHub CLI\\gh.exe\nvcs.tool.glab\tnot-installed\t\t\t\nvcs.tool.tea\tnot-installed\t\t\t\nvcs.tool.bkt\tnot-installed\t\t\t\nvcs.tool.az\tnot-installed\t\t\t\nvcs.host.github.com\tgithub\ttier-a\tgh\tnot-probed\ttrue\nvcs.host.gitlab.com\tgitlab\ttier-a\tglab\tnot-probed\ttrue\nauthBroker.state\tsuppressed\t\t\t\t\t\tfalse\nauthBroker.sealTier\twindows-dpapi\tfalse\twindows-platform-tpm\t\nauthBroker.dpopTier\twindows-cng-tpm\ttrue\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "env",
+        "--format",
+        "json"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 582,
+      "stdout": "{\n  \"success\": true,\n  \"command\": \"env\",\n  \"data\": {\n    \"userDataPath\": \"<user>\\\\AppData\\\\Roaming\\\\UnityHub\",\n    \"editorInstallPath\": \"<editors>\",\n    \"downloadCachePath\": \"<user>\\\\AppData\\\\Roaming\\\\UnityHub\\\\downloads\",\n    \"configPath\": \"<user>\\\\AppData\\\\Roaming\\\\UnityHub\\\\user-settings.json\",\n    \"hubVersion\": \"1.0.0-beta.12\",\n    \"proxy\": {\n      \"url\": null,\n      \"source\": \"none\",\n      \"authSource\": \"none\",\n      \"noProxy\": []\n    }\n  },\n  \"errors\": [],\n  \"warnings\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "editors",
+        "-i",
+        "--format",
+        "json"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 678,
+      "stdout": "{\n  \"success\": true,\n  \"command\": \"editors\",\n  \"data\": [\n    {\n      \"version\": \"7000.0.0a7\",\n      \"alias\": \"7.0.0a7\",\n      \"architecture\": \"x86_64\",\n      \"location\": \"<editor:7000.0.0a7>\\\\Unity.exe\",\n      \"modules\": \"\",\n      \"default\": false\n    },\n    {\n      \"version\": \"6000.6.4f1\",\n      \"alias\": \"6.6.4f1\",\n      \"architecture\": \"x86_64\",\n      \"location\": \"<editor:6000.6.4f1>\\\\Unity.exe\",\n      \"modules\": \"\",\n      \"default\": false\n    },\n    {\n      \"version\": \"6000.3.25f1\",\n      \"alias\": \"6.3.25f1\",\n      \"architecture\": \"x86_64\",\n      \"location\": \"<editor:6000.3.25f1>\\\\Unity.exe\",\n      \"modules\": \"\",\n      \"default\": false\n    },\n    {\n      \"version\": \"6000.3.9f1\",\n      \"alias\": \"6.3.9f1\",\n      \"architecture\": \"x86_64\",\n      \"location\": \"<editor:6000.3.9f1>\\\\Unity.exe\",\n      \"modules\": \"Android, Android SDK & NDK Tools, iOS, OpenJDK, Windows\",\n      \"default\": false\n    }\n  ],\n  \"errors\": [],\n  \"warnings\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "auth",
+        "status",
+        "--format",
+        "json"
+      ],
+      "exitCode": 0,
+      "signal": null,
+      "durationMs": 603,
+      "stdout": "{\n  \"success\": true,\n  \"command\": \"auth\",\n  \"data\": {\n    \"loggedIn\": true,\n    \"sessionState\": \"fresh\",\n    \"mode\": \"oauth\",\n    \"credentialSource\": \"keyring\",\n    \"user\": {\n      \"name\": \"<redacted>\",\n      \"email\": \"<redacted>\"\n    },\n    \"account\": {\n      \"foreignKey\": \"<redacted>\",\n      \"source\": \"global\"\n    }\n  },\n  \"errors\": [],\n  \"warnings\": []\n}\n",
+      "stderr": ""
+    }
+  ],
+  "isolation": {
+    "profileRegularFilesChecked": 52,
+    "profileRegularFilesUnchanged": true,
+    "userPathUnchanged": true,
+    "accountStore": "Not inspected; auth status may update account cache/WAL. accounts.db, accounts.db-wal and accounts.db-shm excluded from the file comparison. No authentication mutation command issued.",
+    "backgroundHelpersDisabled": [
+      "update check",
+      "crash reporting",
+      "consent prompt",
+      "Editor identity server",
+      "auth broker"
+    ],
+    "logs": "Documented diagnostic log writes are permitted; log directories excluded from state comparison.",
+    "historicalBinaryDifference": "Same CLI version, different checksum and length from the 2026-10-08 binary; reason unknown."
+  }
+}

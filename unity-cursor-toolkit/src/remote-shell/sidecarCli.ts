@@ -3,13 +3,14 @@
 import * as fs from 'fs';
 import * as http from 'http';
 import * as path from 'path';
-import { spawn } from 'child_process';
-import { createExampleManifest, loadRemoteShellManifest, resolveManifestPath } from './manifest';
-import { CommandPlan, RemoteShellPlan, createRemoteShellPlan } from './sidecarPlan';
+import { spawn, execFile } from 'child_process';
+import { createExampleManifest, loadRemoteShellManifest, parseRemoteShellDoctorManifest, resolveManifestPath } from './manifest';
+import { CommandPlan, RemoteShellPlan, createRemoteShellPlan, createRemoteShellDoctorPlans, REMOTE_SHELL_SIDECAR_VERSION } from './sidecarPlan';
 import { withSessionLifecycle, type UnityHostSessionSnapshot } from './session';
 
 interface CliOptions {
 	readonly action: string;
+	readonly format: string;
 	readonly manifestPath: string;
 	readonly workspaceRoot: string;
 	readonly extensionRoot: string;
@@ -34,6 +35,8 @@ export async function runCli(argv: string[], io: { stdout: NodeJS.WritableStream
 	try {
 		const options = parseCliOptions(argv);
 		switch (options.action) {
+			case 'doctor':
+				return await doctor(options, io.stdout);
 			case 'init':
 				await initManifest(options);
 				return 0;
@@ -70,6 +73,7 @@ export function parseCliOptions(argv: string[]): CliOptions {
 
 	return {
 		action,
+		format: readArg(args, '--format', 'human'),
 		manifestPath,
 		workspaceRoot,
 		extensionRoot,
@@ -88,6 +92,142 @@ export async function buildPlanFromOptions(options: CliOptions): Promise<RemoteS
 	});
 }
 
+
+type DoctorCheckId = 'manifest' | 'localpaths' | 'ssh' | 'remotepaths' | 'sidecarversion' | 'license';
+interface DoctorCheck {
+	id: DoctorCheckId;
+	state: 'pass' | 'fail';
+	code: string;
+	message: string;
+	remediation: string;
+}
+interface DoctorResult {
+	success: boolean;
+	checks: DoctorCheck[];
+	sidecarVersion: string | null;
+	licenseState: 'active' | 'inactive' | 'unknown';
+}
+
+async function doctor(options: CliOptions, stdout: NodeJS.WritableStream): Promise<number> {
+	const checks: DoctorCheck[] = [];
+	const result: DoctorResult = { success: false, checks, sidecarVersion: null, licenseState: 'unknown' };
+	const add = (id: DoctorCheckId, pass: boolean, code: string, message: string, remediation: string): void => {
+		checks.push({ id, state: pass ? 'pass' : 'fail', code, message, remediation });
+	};
+	let manifest: ReturnType<typeof parseRemoteShellDoctorManifest> | undefined;
+	if (!['human', 'json'].includes(options.format)) {
+		add('manifest', false, 'invalid_format', 'Doctor output format is invalid.', 'Use --format human or --format json.');
+	} else {
+		try {
+			manifest = parseRemoteShellDoctorManifest(JSON.parse(await fs.promises.readFile(options.manifestPath, 'utf8')));
+			add('manifest', true, 'ok', 'Manifest fields and remote path syntax are valid.', 'No action required.');
+		} catch {
+			add('manifest', false, 'invalid_manifest', 'Manifest is missing, unreadable, malformed, or invalid.',
+				'Provide a readable manifest with required fields, valid SSH target, and absolute Windows remote paths.');
+		}
+	}
+	let localReady = false;
+	if (manifest) {
+		try {
+			if (!(await fs.promises.stat(options.workspaceRoot)).isDirectory()
+				|| !(await fs.promises.stat(options.extensionRoot)).isDirectory()) {
+				throw new Error('Local path unavailable.');
+			}
+			const shellPath = options.shellAppPath?.trim();
+			if (!shellPath) {
+				if (!(await fs.promises.stat(path.join(options.extensionRoot, 'native-shell', 'UnityVddShell', 'Package.swift'))).isFile()) {
+					throw new Error('Native shell sources unavailable.');
+				}
+				if (!(await runDoctorCommand({ command: 'swift', args: ['--version'] })).ok) { throw new Error('Swift unavailable.'); }
+			} else {
+				const stat = await fs.promises.stat(shellPath);
+				if (shellPath.endsWith('.app') ? !stat.isDirectory() : !stat.isFile()) { throw new Error('Shell unavailable.'); }
+				await fs.promises.access(shellPath, process.platform === 'win32' || shellPath.endsWith('.app') ? fs.constants.R_OK : fs.constants.X_OK);
+			}
+			localReady = true;
+			add('localpaths', true, 'ok', 'Local workspace, extension, and shell paths resolve.', 'No action required.');
+		} catch {
+			add('localpaths', false, 'local_paths_unavailable', 'A required local path or shell dependency is unavailable.',
+				'Check workspace and extension paths; provide an installed shell app or prepare Swift and the native shell sources.');
+		}
+	} else {
+		add('localpaths', false, 'prerequisite_failed', 'Manifest validation must pass first.', 'Correct the manifest and run doctor again.');
+	}
+	if (manifest && localReady) {
+		const plans = createRemoteShellDoctorPlans(manifest);
+		const reachable = await runDoctorCommand(plans.ssh);
+		const sshReady = reachable.ok && readDoctorJson(reachable.stdout)?.reachable === true;
+		add('ssh', sshReady, sshReady ? 'ok' : sshFailureCode(reachable),
+			sshReady ? 'Non-interactive SSH reachability passed.' : 'Non-interactive SSH reachability failed.',
+			sshReady ? 'No action required.' : 'Verify the SSH alias, network, existing host-key trust, and non-interactive authentication outside doctor.');
+		if (sshReady) {
+			const remote = await runDoctorCommand(plans.remotepaths);
+			const remoteData = readDoctorJson(remote.stdout);
+			const keys = ['workspace', 'player', 'sidecar', 'ffmpeg', ...(manifest.unityEditorPath ? ['editor'] : []), ...(manifest.remoteRepoPath ? ['repo'] : [])];
+			const pathsReady = remote.ok && remoteData != null && keys.every(key => remoteData[key] === true);
+			add('remotepaths', pathsReady, pathsReady ? 'ok' : 'remote_paths_unavailable',
+				pathsReady ? 'Configured remote paths and FFmpeg resolve.' : 'Remote path or dependency checks failed.',
+				pathsReady ? 'No action required.' : 'Prepare the remote workspace, Player, sidecar, optional Editor/repository, and FFmpeg outside doctor.');
+			if (pathsReady) {
+				const version = await runDoctorCommand(plans.sidecarversion);
+				const observed = readDoctorJson(version.stdout)?.sidecarVersion;
+				// Publish only a version-shaped value, never arbitrary remote text.
+				if (version.ok && typeof observed === 'string' && /^\d+\.\d+\.\d+$/.test(observed) && observed.length <= 32) { result.sidecarVersion = observed; }
+				const versionReady = result.sidecarVersion === REMOTE_SHELL_SIDECAR_VERSION;
+				add('sidecarversion', versionReady, versionReady ? 'ok' : result.sidecarVersion ? 'sidecar_version_mismatch' : 'sidecar_version_unavailable',
+					versionReady ? 'Remote sidecar version matches the local contract.' : 'Remote sidecar version is unavailable or does not match.',
+					versionReady ? 'No action required.' : 'Verify the trusted bundled sidecar and host script execution policy. Deploy the matching sidecar, then run doctor again.');
+			} else {
+				add('sidecarversion', false, 'prerequisite_failed', 'Remote path validation must pass first.', 'Correct remote paths and run doctor again.');
+			}
+		} else {
+			add('remotepaths', false, 'prerequisite_failed', 'SSH reachability must pass first.', 'Correct SSH access and run doctor again.');
+			add('sidecarversion', false, 'prerequisite_failed', 'SSH reachability must pass first.', 'Correct SSH access and run doctor again.');
+		}
+	} else {
+		for (const id of ['ssh', 'remotepaths', 'sidecarversion'] as const) {
+			add(id, false, 'prerequisite_failed', 'Local manifest and path checks must pass first.', 'Correct the local checks and run doctor again.');
+		}
+	}
+	// Official license status may install/replace its client; no proven no-install contract is available.
+	add('license', false, 'license_probe_unavailable', 'Remote Unity license state is unknown; no safe non-installing probe is available.',
+		'Have the operator verify the active Unity license with official tools outside doctor. Doctor never installs, activates, returns, or signs out.');
+	result.success = checks.every(check => check.state === 'pass');
+	if (options.format === 'json') {
+		stdout.write(JSON.stringify(result, null, 2) + '\n');
+	} else {
+		stdout.write('Remote shell doctor: ' + (result.success ? 'PASS' : 'FAIL') + '\n');
+		for (const check of checks) { stdout.write(check.id + ': ' + check.state.toUpperCase() + ' [' + check.code + '] ' + check.message + '\n  ' + check.remediation + '\n'); }
+		stdout.write('sidecarVersion: ' + (result.sidecarVersion ?? 'unknown') + '\nlicenseState: ' + result.licenseState + '\n');
+	}
+	return result.success ? 0 : 1;
+}
+
+function readDoctorJson(text: string): Record<string, unknown> | null {
+	try {
+		const value: unknown = JSON.parse(text);
+		return value != null && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : null;
+	} catch { return null; }
+}
+
+function runDoctorCommand(plan: CommandPlan): Promise<{ ok: boolean; stdout: string; stderr: string; timedOut: boolean; missing: boolean }> {
+	return new Promise(resolve => {
+		execFile(plan.command, plan.args, { timeout: 10_000, maxBuffer: 64 * 1024, windowsHide: true, encoding: 'utf8' }, (error, stdout, stderr) => {
+			resolve({ ok: error == null, stdout, stderr, timedOut: error?.killed === true, missing: error?.code === 'ENOENT' });
+		});
+	});
+}
+
+function sshFailureCode(result: { timedOut: boolean; missing: boolean; stderr: string }): string {
+	if (result.timedOut) { return 'ssh_timed_out'; }
+	if (result.missing) { return 'ssh_unavailable'; }
+	if (/Permission denied/i.test(result.stderr)) { return 'ssh_auth_failed'; }
+	if (/Host key verification failed|REMOTE HOST IDENTIFICATION HAS CHANGED/i.test(result.stderr)) { return 'ssh_host_key_failed'; }
+	if (/Could not resolve hostname/i.test(result.stderr)) { return 'ssh_name_unresolved'; }
+	if (/Connection refused/i.test(result.stderr)) { return 'ssh_refused'; }
+	return 'ssh_failed';
+}
+
 async function initManifest(options: CliOptions): Promise<void> {
 	if (fs.existsSync(options.manifestPath)) {
 		throw new Error(`Remote shell manifest already exists: ${options.manifestPath}`);
@@ -104,10 +244,10 @@ async function printPlan(options: CliOptions, stdout: NodeJS.WritableStream): Pr
 }
 
 async function launch(options: CliOptions, stdout: NodeJS.WritableStream): Promise<void> {
-	const plan = await buildPlanFromOptions(options);
-	const tunnel = spawnDetached(plan.sshTunnel, 'unity-vdd-shell tunnel');
-	const remoteStart = spawnDetached(plan.remoteStart, 'unity-vdd-shell remote start');
-	const shell = spawnDetached(plan.shellLaunch, 'unity-vdd-shell native shell');
+	const plan = await buildPlanFromOptions(options).catch(() => { throw new Error('[doctor:manifest] Launch manifest or plan is invalid. Run remote-shell doctor.'); });
+	const tunnel = spawnDetached(plan.sshTunnel, 'unity-vdd-shell tunnel [doctor:ssh]');
+	const remoteStart = spawnDetached(plan.remoteStart, 'unity-vdd-shell remote start [doctor:remotepaths]');
+	const shell = spawnDetached(plan.shellLaunch, 'unity-vdd-shell native shell [doctor:localpaths]');
 	const state: SessionState = {
 		manifestPath: plan.manifestPath,
 		statePath: plan.statePath,

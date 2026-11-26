@@ -1,0 +1,5 @@
+{"direction":"send","at":"2026-10-08T06:26:28.420Z","message":{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"uct-private-assistant-probe","version":"1.0"}}}}
+{"direction":"receive","at":"2026-10-08T06:26:28.636Z","message":{"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":true},"prompts":{}},"serverInfo":{"name":"unity-mcp-server","version":"1.0.0"}},"jsonrpc":"2.0","id":1}}
+{"direction":"send","at":"2026-10-08T06:26:28.636Z","message":{"jsonrpc":"2.0","method":"notifications/initialized"}}
+{"direction":"send","at":"2026-10-08T06:26:28.636Z","message":{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}}
+{"direction":"receive","at":"2026-10-08T06:26:29.143Z","message":{"result":{"tools":[]},"jsonrpc":"2.0","id":2}}

@@ -3,24 +3,44 @@
 [![VS Code Marketplace](https://img.shields.io/badge/VS_Code_Marketplace-Install-007ACC?logo=visualstudiocode&logoColor=white)](https://marketplace.visualstudio.com/items?itemName=rankupgames.unity-cursor-toolkit)
 [![Open VSX](https://img.shields.io/open-vsx/v/rankupgames/unity-cursor-toolkit?label=Open%20VSX)](https://open-vsx.org/extension/rankupgames/unity-cursor-toolkit)
 
-VS Code / Cursor extension for Unity live console and profiler context, MCP
-tool routing, context indexing, runtime game commands, play mode controls,
-`.meta` resolution, debugger attach, hot reload, and standalone MCP access for
-AI agents.
+Unity Cursor Toolkit connects VS Code, Cursor, and MCP agents to Unity console,
+profiler, project, and runtime context. The package targets Unity 2019.4+; the
+recorded Windows baseline is exact 6000.3.9f1. Use local, remote, or virtual
+desktop workflows with enforced MCP read-only/dry-run policy and explicit
+first-party backend composition. Remote streaming is experimental.
 
 ## Current Support and Unity 7
 
-- The companion Unity package declares Unity 2019.4 or later for core features.
-- Bundled Unity-Unterm features require Unity 6000.3 or later on macOS or
-  Windows.
-- Mono debugging and IL-patch hot reload remain the current legacy-runtime
-  paths.
-- CoreCLR capability gates, migration assistance, a replacement debugger, and
-  Unity 7 compatibility evidence are planned work. Unity 7 support is not yet a
-  shipped claim.
+- Unity 6000.3.9f1 on Windows passed isolated canonical-package activation,
+  TCP handshake, console, and standalone MCP checks. The fixture uses a free
+  port and isolated preferences; default-install listener activation is unproved.
+- Unity 2019.4 parity is user-blocked. Legacy LTS versions without an exact
+  configured candidate, other versions, and other platforms remain untested.
+- Exact 7000.0.0a7/CoreCLR checks are readiness preparation, not general shipped
+  Unity 7 support.
+- Bundled Unity-Unterm declares Unity 6000.3+ on macOS or Windows; that minimum
+  is separate from the core package target and exact test evidence.
 
-Read the repository's [roadmap](../docs/ROADMAP.md) and
-[documentation index](../docs/README.md).
+## Backend, Migration, and Debugger Status
+
+The current source includes Unity CLI Doctor and an explicitly selected CLI
+test backend. Unity owns CLI execution; the toolkit adds capability checks,
+policy, transport, and normalized results. Pipeline eligibility and disposable
+composition proofs exist, but production Pipeline execution is pending.
+These source-stack additions do not imply availability in older published
+extensions.
+
+The CoreCLR migration assistant reports source review candidates and optional
+bounded static metadata. It does not rewrite scripts or certify a migration.
+
+| Runtime | Debugger position |
+| --- | --- |
+| Mono | Existing Editor/Development Player soft-debugger adapter |
+| CoreCLR, exact 7000.0.0a7 | Feasibility failed; shipping blocked, with no verified breakpoint, step, or locals flow |
+
+Read the [repository documentation](https://github.com/rankupgames/unity-cursor-toolkit#readme)
+for the capability matrix, compatibility proof limits, backend experiments,
+migration guide, and Unity 7 delta watch.
 
 ## Development
 

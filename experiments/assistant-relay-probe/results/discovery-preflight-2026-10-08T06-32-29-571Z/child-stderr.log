@@ -1,0 +1,79 @@
+[INFO ] [Unity Mcp Server] mcp.startup workingDir=<fixture>
+[INFO ] [Unity Mcp Server] log === MCP SERVER STARTED ===
+[INFO ] [Unity Mcp Server] log PID=33080 execPath=<fixture>\relay_win.exe
+[INFO ] [Unity Mcp Server] log argv: ["bun","B:/~BUN/root/relay_win.exe","--mcp","--project-path","<fixture>","--instance-id","34660"]
+[INFO ] [Unity Mcp Server] log Working directory: <fixture>
+[INFO ] [Unity Mcp Server] log Approval token: {"fromEnv":false}
+[INFO ] [Unity Mcp Server] log Project path: (not specified)
+[INFO ] [Unity Mcp Server] log Instance ID: (not specified)
+[INFO ] [Unity Mcp Server] log MCP server initializing...
+[INFO ] [Unity Mcp Server] log Initializing unity-mcp-server v1.0.0
+[DEBUG] [Unity Mcp Server] log Debug mode enabled (debug tools available)
+[INFO ] [Unity Mcp Server] log Discovery filter: projectPath=<fixture>, editorPid=34660
+[DEBUG] [Unity Mcp Server] log Setting up dynamic tool discovery...
+[DEBUG] [Unity Mcp Server] log Tool handlers registered (discovery deferred until Unity connection)
+[DEBUG] [Unity Mcp Server] log Successfully set up discovery for 1 debug tools + 0 Unity tools
+[DEBUG] [Unity Mcp Server] log Unity MCP Server ready for connections
+[INFO ] [Unity Mcp Server] log Unity MCP Server started
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Unity not available at startup
+[INFO ] [Unity Mcp Server] log Client connected: uct-private-assistant-probe 1.0
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Discovering available tools from Unity Bridge...
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Operation attempt 1 failed: Named pipe socket file not found: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Retrying after 560ms delay...
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Operation attempt 2 failed: Named pipe socket file not found: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Retrying after 1096ms delay...
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Operation attempt 3 failed: Named pipe socket file not found: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Retrying after 2490ms delay...
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log Using connection from bridge-owned-discovery-761fcee3-9273-408d-8d5a-033dafce0d55.json: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[DEBUG] [Unity Mcp Server] log Connecting to named pipe: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49
+[ERROR] [Unity Mcp Server] log Named pipe connection error: ENOENT - connect ENOENT \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49 (path: \\.\pipe\uct-owned-discovery-e65dcc7f-ac68-49eb-8347-1262e7848b49)
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe
+[DEBUG] [Unity Mcp Server] log stdin closed, initiating graceful shutdown
+[INFO ] [Unity Mcp Server] log Shutting down Unity MCP Server...
+[DEBUG] [Unity Mcp Server] log Disconnected from named pipe

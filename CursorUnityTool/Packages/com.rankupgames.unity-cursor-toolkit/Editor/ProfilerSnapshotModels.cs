@@ -142,6 +142,8 @@ namespace UnityCursorToolkit
 		internal string capturedUtc;
 		internal string unityVersion;
 		internal string activeScene;
+		// SceneManager order; includes unsaved loaded scenes, excludes the special DontDestroyOnLoad scene.
+		internal List<LoadedSceneSnapshot> loadedScenes = new List<LoadedSceneSnapshot>();
 		internal bool isPlaying;
 		internal bool isPaused;
 		internal bool isCompiling;
@@ -172,6 +174,16 @@ namespace UnityCursorToolkit
 			ProfilerSnapshotJson.Prop(sb, "capturedUtc", capturedUtc).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "unityVersion", unityVersion).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "activeScene", activeScene).Append(",");
+			sb.Append("\"loadedScenes\":[");
+			for (int i = 0; i < loadedScenes.Count; i++)
+			{
+				if (i > 0) sb.Append(",");
+				sb.Append("{");
+				ProfilerSnapshotJson.Prop(sb, "name", loadedScenes[i].name).Append(",");
+				ProfilerSnapshotJson.Prop(sb, "path", loadedScenes[i].path).Append(",");
+				sb.Append("\"isActive\":").Append(ProfilerSnapshotJson.Bool(loadedScenes[i].isActive)).Append("}");
+			}
+			sb.Append("],");
 			ProfilerSnapshotJson.Prop(sb, "bottleneck", bottleneck).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "sessionPath", sessionPath).Append(",");
 			ProfilerSnapshotJson.Prop(sb, "consoleTranscriptPath", consoleTranscriptPath).Append(",");
@@ -394,6 +406,12 @@ namespace UnityCursorToolkit
 			sb.AppendLine("bottleneck: " + session.bottleneck);
 			sb.AppendLine("unityVersion: " + session.unityVersion);
 			sb.AppendLine("activeScene: " + session.activeScene);
+			sb.AppendLine("loadedScenes:");
+			for (int i = 0; i < session.loadedScenes.Count; i++)
+			{
+				LoadedSceneSnapshot scene = session.loadedScenes[i];
+				sb.AppendLine("  - " + scene.name + " | " + scene.path + " | active:" + ProfilerSnapshotJson.Bool(scene.isActive));
+			}
 			sb.AppendLine("storedPath: " + session.sessionPath);
 			sb.AppendLine("consoleTranscriptPath: " + EmptyFallback(session.consoleTranscriptPath));
 			sb.AppendLine("consoleEntries: " + session.consoleEntryCount.ToString(CultureInfo.InvariantCulture));

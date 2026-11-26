@@ -36,6 +36,18 @@ namespace UnityCursorToolkit.AgentCommands
 		/// </summary>
 		public AgentCommandResult Result { get; private set; }
 
+		/// <summary>The latest progress message, independent of the terminal result.</summary>
+		public string Progress { get; private set; } = string.Empty;
+
+		/// <summary>Sets the latest progress message for the Game Flow window and status polling.</summary>
+		/// <param name="message">A short description of the current step.</param>
+		public void ReportProgress(string message)
+		{
+			const int maximumLength = 512;
+			Progress = message == null ? string.Empty : message.Length <= maximumLength
+				? message : message.Substring(0, maximumLength);
+		}
+
 		/// <summary>
 		/// Creates a context for a scheduled command run.
 		/// </summary>

@@ -1,176 +1,63 @@
-/**
- * Targeted focus for the one running Unity Editor that owns a project.
- *
- * Focus can resume Editor work deferred while it is in the background. This helper activates the
- * exact owning process. It never launches, kills, hides, or saves an Editor or project.
- *
- * Builtin imports only: Node can run it directly (see scripts/focus-unity-editor.js) without a build.
- */
-
+/** Exact-project activation after verifying an existing Unity Editor process and bundle. */
 import * as fs from 'fs';
 import * as path from 'path';
 import { execFile } from 'child_process';
 
-const COMMAND_TIMEOUT_MS = 3_000;
-const UNITY_EDITOR_VERSION_PATTERN = /^\d+\.\d+\.\d+[abcfp]\d+(?:[A-Za-z0-9._-]*)?$/i;
-const LSOF = '/usr/sbin/lsof';
-const PS = '/bin/ps';
-const OSASCRIPT = '/usr/bin/osascript';
-// System Events addresses the existing process by Unix PID; no Unity app is opened or launched.
-const ACTIVATE_SCRIPT = `on run argv
-	set targetPid to (item 1 of argv) as integer
-	tell application "System Events"
-		set targetProcess to first application process whose unix id is targetPid
-		set frontmost of targetProcess to true
-	end tell
-	return "requested"
-end run`;
-const VERIFY_SCRIPT = `function run(argv) {
-	ObjC.import('AppKit');
-	const app = $.NSRunningApplication.runningApplicationWithProcessIdentifier(Number(argv[0]));
-	if (app.js === undefined || app.terminated) { return 'missing'; }
-	for (let attempt = 0; attempt < 3 && !app.active; attempt++) { delay(0.2); }
-	return app.active ? 'activated' : 'background';
-}`;
-
-export type UnityEditorFocusState = 'activated' | 'not_running' | 'ambiguous' | 'mismatch' | 'not_foreground' | 'permission_denied' | 'failed' | 'unsupported';
-
-export interface UnityEditorFocusResult {
-	readonly state: UnityEditorFocusState;
-	readonly pid?: number;
-	readonly reason: string;
+export type FocusState = 'activated' | 'not_running' | 'ambiguous' | 'mismatch' | 'not_foreground' | 'failed' | 'unsupported';
+export interface FocusResult { state: FocusState; pid?: number; reason: string; }
+export type FocusCommand = (command: string, args: string[]) => Promise<string>;
+export interface FocusOptions {
+ platform?: string;
+ expectedPid?: number;
+ unityPath?: string;
+ run?: FocusCommand;
+ readVersion?: (file: string) => string;
 }
+const runCommand: FocusCommand = (command, args) => new Promise((resolve, reject) => {
+ execFile(command, args, { timeout: 3000, maxBuffer: 32768, encoding: 'utf8' }, (error, stdout) => error ? reject(error) : resolve(stdout));
+});
 
-export interface UnityEditorFocusRequest {
-	readonly projectRoot: string;
-	/** Process id the bridge reported for this Editor, when known. Must equal the lock owner. */
-	readonly expectedPid?: number;
-}
-
-export interface UnityEditorCommandResult {
-	readonly code: number | null;
-	readonly stdout: string;
-	readonly timedOut: boolean;
-	readonly nativeErrorCode?: number;
-}
-
-export type UnityEditorRunCommand = (command: string, args: readonly string[], timeoutMs: number) => Promise<UnityEditorCommandResult>;
-
-export interface UnityEditorFocusDependencies {
-	readonly platform?: NodeJS.Platform;
-	readonly run?: UnityEditorRunCommand;
-	readonly readFile?: (candidate: string) => string;
-	readonly env?: NodeJS.ProcessEnv;
-}
-
-export type UnityEditorFocus = (request: UnityEditorFocusRequest) => Promise<UnityEditorFocusResult>;
-
-/** macOS only. Other platforms return an explicit unsupported result instead of guessing. */
-export async function focusUnityEditor(request: UnityEditorFocusRequest, dependencies: UnityEditorFocusDependencies = {}): Promise<UnityEditorFocusResult> {
-	const platform = dependencies.platform ?? process.platform;
-	if (platform !== 'darwin') {
-		return { state: 'unsupported', reason: `Targeted Editor focus supports macOS only, not ${platform}.` };
-	}
-	const run = dependencies.run ?? runCommand;
-	const projectRoot = path.resolve(request.projectRoot);
-	const env = dependencies.env ?? process.env;
-
-	const first = await findLockOwner(projectRoot, run);
-	if (typeof first !== 'number') { return first; }
-	if (request.expectedPid != null && request.expectedPid !== first) {
-		return { state: 'mismatch', pid: first, reason: 'The project lock owner is not the Editor process the bridge reported.' };
-	}
-	const executable = await readExecutable(first, run);
-	if (typeof executable !== 'string') { return executable; }
-	const version = readEditorVersion(projectRoot, dependencies.readFile);
-	if (version == null) {
-		return { state: 'mismatch', pid: first, reason: 'The project Editor version is missing or invalid. Focus was not requested.' };
-	}
-	if (!executableMatches(executable, version, env.UNITY_CURSOR_TOOLKIT_UNITY_PATH)) {
-		return { state: 'mismatch', pid: first, reason: 'The lock owner is not the Unity Editor installed for this project version.' };
-	}
-
-	// Revalidate right before activation so a pid reused or handed over since the first check is never focused.
-	const second = await findLockOwner(projectRoot, run);
-	if (typeof second !== 'number') { return second; }
-	if (second !== first) {
-		return { state: 'mismatch', pid: second, reason: 'The project lock owner changed while focus was being prepared.' };
-	}
-
-	const activation = await run(OSASCRIPT, ['-e', ACTIVATE_SCRIPT, String(first)], COMMAND_TIMEOUT_MS);
-	if (activation.nativeErrorCode === -1743) {
-		return { state: 'permission_denied', pid: first, reason: 'macOS denied permission to activate this Editor through System Events.' };
-	}
-	if (activation.timedOut || activation.code !== 0 || activation.stdout.trim() !== 'requested') {
-		return { state: 'failed', pid: first, reason: activation.timedOut ? 'Activation timed out.' : 'Activation command failed.' };
-	}
-	const verification = await run(OSASCRIPT, ['-l', 'JavaScript', '-e', VERIFY_SCRIPT, String(first)], COMMAND_TIMEOUT_MS);
-	if (verification.timedOut || verification.code !== 0) {
-		return { state: 'failed', pid: first, reason: 'The Editor foreground state could not be verified.' };
-	}
-	const outcome = verification.stdout.trim();
-	if (outcome === 'activated') {
-		return { state: 'activated', pid: first, reason: 'The project owner is the active application. This does not prove compilation or main-thread recovery.' };
-	}
-	if (outcome === 'background') {
-		return { state: 'not_foreground', pid: first, reason: 'macOS accepted the request but the Editor stayed in the background.' };
-	}
-	return { state: outcome === 'missing' ? 'not_running' : 'failed', pid: first, reason: outcome === 'missing' ? 'The Editor process exited before activation.' : 'macOS returned an unexpected foreground state.' };
-}
-
-async function findLockOwner(projectRoot: string, run: UnityEditorRunCommand): Promise<number | UnityEditorFocusResult> {
-	const result = await run(LSOF, ['-t', path.join(projectRoot, 'Temp', 'UnityLockfile')], COMMAND_TIMEOUT_MS);
-	if (result.timedOut || (result.code !== 0 && result.code !== 1)) {
-		return { state: 'failed', reason: 'Project lock ownership could not be read.' };
-	}
-	const lines = result.stdout.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-	if (lines.some(line => !/^\d+$/.test(line))) {
-		return { state: 'failed', reason: 'Project lock ownership returned unexpected output.' };
-	}
-	const owners = [...new Set(lines.map(Number))].filter(pid => pid > 0);
-	if (owners.length === 0) { return { state: 'not_running', reason: 'No running Editor holds this project lock.' }; }
-	if (owners.length > 1) { return { state: 'ambiguous', reason: 'More than one process holds this project lock.' }; }
-	return owners[0];
-}
-
-/** `comm=` prints only the executable path, never the arguments. */
-async function readExecutable(pid: number, run: UnityEditorRunCommand): Promise<string | UnityEditorFocusResult> {
-	const result = await run(PS, ['-p', String(pid), '-o', 'comm='], COMMAND_TIMEOUT_MS);
-	if (result.timedOut || result.code !== 0) {
-		return { state: 'not_running', pid, reason: 'The lock owner process is no longer running.' };
-	}
-	return result.stdout.trim();
-}
-
-function readEditorVersion(projectRoot: string, readFile: (candidate: string) => string = candidate => fs.readFileSync(candidate, 'utf8')): string | null {
-	try {
-		const match = /^m_EditorVersion:\s*(.+)$/m.exec(readFile(path.join(projectRoot, 'ProjectSettings', 'ProjectVersion.txt')));
-		const version = match == null ? null : match[1].trim();
-		return version != null && UNITY_EDITOR_VERSION_PATTERN.test(version) ? version : null;
-	} catch {
-		return null;
-	}
-}
-
-function executableMatches(executable: string, version: string | null, override: string | undefined): boolean {
-	if (!path.isAbsolute(executable)) { return false; }
-	if (override != null && override.trim().length > 0) {
-		const trimmed = override.trim();
-		if (path.resolve(trimmed.endsWith('.app') ? path.join(trimmed, 'Contents', 'MacOS', 'Unity') : trimmed) === path.resolve(executable)) { return true; }
-	}
-	return version != null && executable.endsWith(`/${version}/Unity.app/Contents/MacOS/Unity`);
-}
-
-function runCommand(command: string, args: readonly string[], timeoutMs: number): Promise<UnityEditorCommandResult> {
-	return new Promise(resolve => {
-		execFile(command, [...args], { timeout: timeoutMs, killSignal: 'SIGKILL', maxBuffer: 16 * 1024 }, (error, stdout, stderr) => {
-			const failure = error as (NodeJS.ErrnoException & { killed?: boolean }) | null;
-			resolve({
-				code: failure == null ? 0 : typeof failure.code === 'number' ? failure.code : null,
-				stdout: String(stdout),
-				timedOut: failure?.killed === true,
-				nativeErrorCode: /\(-1743\)/.test(String(stderr)) ? -1743 : undefined
-			});
-		});
-	});
+export async function focusUnityEditor(projectRoot: string, options: FocusOptions = {}): Promise<FocusResult> {
+ if ((options.platform ?? process.platform) !== 'darwin') return { state: 'unsupported', reason: 'Automatic activation is available only on macOS.' };
+ const run = options.run ?? runCommand;
+ const lock = path.join(path.resolve(projectRoot), 'Temp', 'UnityLockfile');
+ let activating = false;
+ const owners = async (): Promise<number[]> => {
+  const result = await run('/usr/sbin/lsof', ['-t', lock]);
+  const values = result.trim().split(/\s+/).filter(Boolean);
+  if (values.some(value => !/^\d+$/.test(value))) return [];
+  return [...new Set(values.map(Number))].filter(value => Number.isSafeInteger(value) && value > 0);
+ };
+ try {
+  const pids = await owners();
+  if (pids.length !== 1) return { state: pids.length ? 'ambiguous' : 'not_running', reason: 'The selected project must have exactly one Editor lock owner.' };
+  const pid = pids[0];
+  if (options.expectedPid != null && options.expectedPid !== pid) return { state: 'mismatch', pid, reason: 'The selected Editor process changed.' };
+  const executable = (await run('/bin/ps', ['-p', String(pid), '-o', 'comm='])).trim();
+  const configured = options.unityPath ?? process.env.UNITY_CURSOR_TOOLKIT_UNITY_PATH;
+  const text = (options.readVersion ?? (file => fs.readFileSync(file, 'utf8')))(path.join(projectRoot, 'ProjectSettings', 'ProjectVersion.txt'));
+  const version = /^m_EditorVersion:\s*(\S+)\s*$/m.exec(text)?.[1];
+  const executableSuffix = '/Unity.app/Contents/MacOS/Unity';
+  if (!version || !/^\d+\.\d+\.\d+[a-z]\d+$/i.test(version) || !executable.endsWith(executableSuffix) || (configured
+   ? path.resolve(executable) !== path.resolve(configured)
+   : !executable.endsWith('/' + version + '/Unity.app/Contents/MacOS/Unity'))) {
+   return { state: 'mismatch', pid, reason: 'The lock owner executable does not match the selected project Editor.' };
+  }
+  const checked = await owners();
+  if (checked.length !== 1 || checked[0] !== pid) return { state: 'mismatch', pid, reason: 'The project lock owner changed before activation.' };
+  activating = true;
+  // Target the existing owner by PID. Opening a bundle can choose a different running Editor.
+  const processScript = `const pid=${pid}; const se=Application('System Events'); const matches=se.applicationProcesses.whose({unixId:pid})(); if(matches.length!==1 || matches[0].name()!=='Unity') throw Error('process_mismatch');`;
+  await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', processScript + ' matches[0].frontmost=true;']);
+  // Use a fresh read-only process: an activation process can cache its own foreground result.
+  const foreground = (await run('/usr/bin/osascript', ['-l', 'JavaScript', '-e', processScript + ' String(matches[0].frontmost());'])).trim();
+  if (foreground !== 'true' && foreground !== 'false') return { state: 'failed', pid, reason: 'Foreground verification returned an invalid process state.' };
+  const active = foreground === 'true';
+  return { state: active ? 'activated' : 'not_foreground', pid, reason: active
+   ? 'The verified project owner is foreground. This does not prove compile or main-thread recovery.'
+   : 'macOS did not foreground the verified Editor process.' };
+ } catch (error) {
+  const code = (error as { code?: string | number }).code;
+  return { state: code === 1 && !activating ? 'not_running' : 'failed', reason: error instanceof Error ? error.message : 'Editor activation failed.' };
+ }
 }

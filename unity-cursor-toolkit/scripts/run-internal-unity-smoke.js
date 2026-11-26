@@ -84,7 +84,7 @@ async function runUnityBatchmodeSmoke() {
 
 	const result = JSON.parse(fs.readFileSync(unityResultPath, 'utf8'));
 	if (result.success !== true) {
-		throw new Error(`Unity internal smoke failed: ${JSON.stringify(result)}\n${tail(unityLogPath, 120)}`);
+		throw new Error(`Unity internal smoke failed: ${JSON.stringify(result)}`);
 	}
 
 	assert(fs.existsSync(viewportFramePath), `Unity internal smoke did not persist viewport frame: ${viewportFramePath}`);
@@ -120,13 +120,13 @@ function resolveUnityPath() {
 
 function runProcess(command, args) {
 	return new Promise((resolve, reject) => {
-		const child = spawn(command, args, { stdio: 'inherit' });
+		const child = spawn(command, args, { stdio: 'ignore' });
 		child.on('error', reject);
 		child.on('exit', (code, signal) => {
 			if (code === 0) {
 				resolve();
 			} else {
-				reject(new Error(`${command} exited with code=${code} signal=${signal}\n${tail(unityLogPath, 120)}`));
+				reject(new Error(`${command} exited with code=${code} signal=${signal}`));
 			}
 		});
 	});
@@ -139,14 +139,6 @@ function parseToolResult(result) {
 function assert(condition, message) {
 	if (!condition) {
 		throw new Error(message);
-	}
-}
-
-function tail(filePath, lines) {
-	try {
-		return fs.readFileSync(filePath, 'utf8').split(/\r?\n/).slice(-lines).join('\n');
-	} catch {
-		return '';
 	}
 }
 

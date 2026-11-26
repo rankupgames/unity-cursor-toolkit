@@ -1,0 +1,27 @@
+{
+  "observedAt": "2026-10-08T10:41:31.799Z",
+  "passed": false,
+  "platform": "win32",
+  "version": "7000.0.0a7",
+  "revision": "581996e1a8f7",
+  "actualVersion": "7000.0.0a7 (581996e1a8f7)",
+  "outcome": {
+    "code": 1,
+    "signal": null,
+    "forcedCleanup": false
+  },
+  "build": null,
+  "cleanupError": null,
+  "quittingObserved": false,
+  "ownedEditorsRemaining": [],
+  "template": "com.unity.template.urp-blank-17.3.0.tgz",
+  "templateSha256": "0fc1fe28d6077b020a550021aa74feeef922d89d9c0ad8954cd245bd5ed0f909",
+  "renderPipelinePackageVersion": "17.7.0",
+  "sourceHashes": {
+    "builder": "494b68e08dbd9219ba35a6533b329bd8cf9a64c79012dec77b4d77212cfa9ccb",
+    "server": "0f985825738782a4efa655de2b31004487150de148aad431278be4f8fa50df7f",
+    "fixtureHelper": "af349dbc194ea8c325a4bbfef7eba5a87447f6e9e057e9bc7e0d33f264caf707"
+  },
+  "fixtureScope": "URPsettings+current unchanged player builder/server; no toolkitEditorpackage or userEditorPrefs included",
+  "readinessClaim": false
+}
