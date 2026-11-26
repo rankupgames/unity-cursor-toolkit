@@ -28,7 +28,10 @@ const options = {
 	pid: getIntArg('--pid', 0) || null,
 	ports: parsePorts(getStringArg('--ports', process.env.UNITY_CURSOR_TOOLKIT_MCP_PORTS || '')),
 	project: path.resolve(getStringArg('--project', defaultProjectRoot)),
-	sampleOnly: hasFlag('--sample-only')
+	sampleOnly: hasFlag('--sample-only'),
+	editorVersion: getStringArg('--editor-version', ''),
+	requireCoreCLR: hasFlag('--require-coreclr'),
+	frameOut: getStringArg('--frame-out', '')
 };
 
 const sessionId = `measure_${options.view}_${Date.now()}`;
@@ -62,11 +65,25 @@ let buffer = '';
 let phase = 'connect';
 let sampleTimer = null;
 let finished = false;
+let previousCpu = null;
+let streamStarted = false;
+let collectingFrames = false;
+let windowStarted = null;
+let requestSequence = 0;
+const pending = new Map();
+const inflightSamples = new Set();
 
-main().catch((error) => fail(error.message || String(error)));
+main().catch(async error => {
+	collectingFrames = false;
+	await stopSampling();
+	try { await stopStream(); } catch (stopError) { recordError(stopError.message); }
+	fail(error.message || String(error));
+});
 
 async function main() {
 	console.log('Unity Cursor Toolkit -- Editor Stream Measurement\n');
+	if (!options.sampleOnly && !['scene', 'game', 'inspector', 'packageManager'].includes(options.view) && !/^window:.+/.test(options.view))
+		throw new Error('invalid_request: unsupported viewport view');
 	console.log(`Ports: ${options.ports.join(', ')}`);
 	console.log(`Session: ${sessionId}`);
 	console.log(`Output: ${options.out}`);
@@ -84,8 +101,8 @@ async function main() {
 		measurement.streamStartedAt = new Date().toISOString();
 		startSampling();
 		await sleep(options.durationSeconds * 1000);
-		stopSampling();
-		finish(0);
+		await stopSampling();
+		finish(measurement.errors.length ? 1 : 0);
 		return;
 	}
 
@@ -95,14 +112,21 @@ async function main() {
 	socket.on('data', onData);
 	socket.on('error', (error) => recordError(error.message || String(error)));
 
-	if (measurement.pid == null) {
-		measurement.pid = await resolvePidForPort(connected.port);
-	}
+	const listenerPid = await resolvePidForPort(connected.port);
+	if (options.pid && listenerPid !== options.pid) throw new Error('target_mismatch: listener PID differs from requested PID');
+	measurement.pid = listenerPid;
 	if (measurement.pid == null) {
 		throw new Error(`could not resolve Unity PID for port ${connected.port}; pass --pid`);
 	}
 
 	console.log(`Connected to bridge on ${connected.port}; sampling PID ${measurement.pid}.`);
+
+	const identity = await request('project_info', {});
+	if (typeof identity?.projectPath !== 'string' || !identity.projectPath.trim() || typeof identity.unityVersion !== 'string' || !identity.unityVersion.trim()
+		|| (process.platform === 'win32' ? path.resolve(identity.projectPath).toLowerCase() !== options.project.toLowerCase() : path.resolve(identity.projectPath) !== options.project)
+		|| (options.editorVersion && identity.unityVersion !== options.editorVersion)
+		|| (options.requireCoreCLR && identity.runtime?.isCoreCLR !== true)) throw new Error('target_mismatch: project/version/runtime differs');
+	measurement.identity = identity;
 	writeMeasurement();
 
 	phase = 'idle';
@@ -110,32 +134,31 @@ async function main() {
 		console.log(`Sampling attached editor idle for ${options.idleSeconds}s...`);
 		startSampling();
 		await sleep(options.idleSeconds * 1000);
-		stopSampling();
+		await stopSampling();
 	}
 
+	const existing = readStreamStatus(await request('viewport_stream', { action: 'status' }));
+	if (existing.sessions.some(item => item.view === options.view || item.sessionId === sessionId))
+		throw new Error('stream_view_occupied: requested view already has a stream; no start or stop sent');
+
 	console.log(`Starting ${options.view} ${options.captureMode} stream at ${options.fps}fps for ${options.durationSeconds}s...`);
+	previousCpu = null;
 	phase = 'stream';
 	measurement.streamStartedAt = new Date().toISOString();
-	send({
-		command: 'mcpToolCall',
-		_requestId: 'measure_start',
-		toolName: 'viewport_stream',
-		args: {
-			action: 'start',
-			sessionId,
-			host: 'editor',
-			view: options.view,
-			captureMode: options.captureMode,
-			fps: options.fps,
-			quality: options.quality
-		}
-	});
-
+	windowStarted = performance.now();
+	collectingFrames = true;
+	streamStarted = true;
+	const start = await request('viewport_stream', { action: 'start', sessionId, host: 'editor', view: options.view, captureMode: options.captureMode, fps: options.fps, quality: options.quality });
+	if (start?.success !== true || start.sessionId !== sessionId) throw new Error('stream_start_failed: ' + JSON.stringify(start));
 	startSampling();
 	await sleep(options.durationSeconds * 1000);
-	stopSampling();
+	collectingFrames = false;
+	measurement.streamFinishedAt = new Date().toISOString();
+	measurement.elapsedWindowSeconds = Number(((performance.now() - windowStarted) / 1000).toFixed(6));
+	await stopSampling();
 	await stopStream();
-	finish(0);
+	if (measurement.frameCount === 0) throw new Error('frames_missing: stream produced no frame');
+	finish(measurement.errors.length ? 1 : 0);
 }
 
 async function connectBridge(ports) {
@@ -161,6 +184,7 @@ function tryConnectPort(port) {
 			}
 			done = true;
 			clearTimeout(timer);
+			candidate.removeListener('data', onPong);
 			if (result == null) {
 				candidate.destroy();
 			}
@@ -170,7 +194,7 @@ function tryConnectPort(port) {
 		candidate.once('connect', () => {
 			candidate.write('{"command":"ping"}\n');
 		});
-		candidate.on('data', (chunk) => {
+		const onPong = (chunk) => {
 			localBuffer += chunk.toString();
 			let newline;
 			while ((newline = localBuffer.indexOf('\n')) >= 0) {
@@ -189,13 +213,15 @@ function tryConnectPort(port) {
 					// Keep scanning until timeout; non-JSON listeners are rejected.
 				}
 			}
-		});
+		};
+		candidate.on('data', onPong);
 		candidate.once('error', () => complete(null));
 	});
 }
 
 function onData(chunk) {
 	buffer += chunk.toString();
+	if (Buffer.byteLength(buffer, 'utf8') > 8 * 1024 * 1024) { recordError('output_too_large: bridge buffer exceeded8MiB'); socket.destroy(); return; }
 	let newline;
 	while ((newline = buffer.indexOf('\n')) >= 0) {
 		const line = buffer.slice(0, newline).trim();
@@ -211,11 +237,8 @@ function onData(chunk) {
 			continue;
 		}
 
-		if (message.command === 'mcpToolResult' && message._requestId === 'measure_start') {
-			if (message.result?.success !== true) {
-				recordError('viewport_stream start failed: ' + JSON.stringify(message.result || message));
-			}
-			continue;
+		if (message.command === 'mcpToolResult' && pending.has(message._requestId)) {
+			const item = pending.get(message._requestId); pending.delete(message._requestId); clearTimeout(item.timer); item.resolve(message.result); continue;
 		}
 
 		if (message.command === 'viewportFrame' && message.sessionId === sessionId) {
@@ -225,9 +248,14 @@ function onData(chunk) {
 }
 
 function recordFrame(message) {
+	if (!collectingFrames) return;
+	if (typeof message.data !== 'string' || !message.data || !Number.isFinite(message.width) || message.width <= 0 || !Number.isFinite(message.height) || message.height <= 0) { recordError('invalid_frame: data or size missing'); return; }
+	const bytes = Buffer.from(message.data, 'base64');
+	if (bytes.length < 4 || bytes[0] !== 0xff || bytes[1] !== 0xd8) { recordError('invalid_frame: JPEG missing'); return; }
 	measurement.frameCount++;
 	if (measurement.firstFrameAt == null) {
 		measurement.firstFrameAt = new Date().toISOString();
+		if (options.frameOut) { fs.mkdirSync(path.dirname(path.resolve(options.frameOut)), { recursive: true }); fs.writeFileSync(options.frameOut, bytes); }
 	}
 	if (typeof message.data === 'string') {
 		measurement.frameDataBytes.push(Buffer.byteLength(message.data, 'utf8'));
@@ -243,34 +271,40 @@ function startSampling() {
 	sampleTimer = setInterval(sampleMetrics, 5000);
 }
 
-function stopSampling() {
-	if (sampleTimer != null) {
-		clearInterval(sampleTimer);
-		sampleTimer = null;
-	}
+async function stopSampling() {
+	if (sampleTimer != null) clearInterval(sampleTimer);
+	sampleTimer = null;
+	await Promise.allSettled([...inflightSamples]);
 }
 
-async function sampleMetrics() {
-	const sample = await readProcessMetrics(measurement.pid);
-	const target = phase === 'idle' ? measurement.idleSamples : measurement.streamSamples;
-	target.push(Object.assign({
-		at: new Date().toISOString(),
-		phase
-	}, sample));
-	writeMeasurement();
+function sampleMetrics() {
+	const samplePhase = phase;
+	const task = readProcessMetrics(measurement.pid).then(sample => {
+		const at = sample.sampleAt || Date.now();
+		delete sample.sampleAt;
+		if (process.platform === 'win32' && Number.isFinite(sample.cpuSeconds)) {
+			if (previousCpu && at > previousCpu.at)
+				sample.cpuPercent = Number(((sample.cpuSeconds - previousCpu.seconds) / ((at - previousCpu.at) / 1000) * 100).toFixed(1));
+			previousCpu = { at, seconds: sample.cpuSeconds };
+		}
+		if (sample.error || !Number.isFinite(sample.rssMb) || !(process.platform === 'win32' ? Number.isFinite(sample.cpuSeconds) : Number.isFinite(sample.cpuPercent))) recordError('metrics_unavailable: ' + (sample.error || 'RSS or CPU missing'));
+		(samplePhase === 'idle' ? measurement.idleSamples : measurement.streamSamples).push({ at: new Date(at).toISOString(), phase: samplePhase, ...sample });
+		writeMeasurement();
+	}).finally(() => inflightSamples.delete(task));
+	inflightSamples.add(task);
 }
 
 function readProcessMetrics(pid) {
 	if (process.platform === 'win32') {
 		const script = [
 			`$p = Get-Process -Id ${pid} -ErrorAction SilentlyContinue;`,
-			'if ($p) { [pscustomobject]@{ rssMb = [math]::Round($p.WorkingSet64 / 1MB, 1); cpuSeconds = [math]::Round($p.CPU, 3) } | ConvertTo-Json -Compress }'
+			'if ($p) { [pscustomobject]@{ rssMb = [math]::Round($p.WorkingSet64 / 1MB, 1); cpuSeconds = $p.TotalProcessorTime.TotalSeconds; sampleAt = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds() } | ConvertTo-Json -Compress }'
 		].join(' ');
 		return execJson('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', script], { missing: 'Unity process not found' });
 	}
 
 	return new Promise((resolve) => {
-		execFile('ps', ['-o', 'rss=,pcpu=', '-p', String(pid)], (error, stdout) => {
+		execFile('ps', ['-o', 'rss=,pcpu=', '-p', String(pid)], { timeout: 10000 }, (error, stdout) => {
 			if (error || !stdout.trim()) {
 				resolve({ error: error ? error.message : 'Unity process not found' });
 				return;
@@ -286,7 +320,7 @@ function readProcessMetrics(pid) {
 
 function execJson(command, args, fallback) {
 	return new Promise((resolve) => {
-		execFile(command, args, (error, stdout) => {
+		execFile(command, args, { timeout: 10000, windowsHide: true }, (error, stdout) => {
 			if (error || !stdout.trim()) {
 				resolve({ error: error ? error.message : fallback.missing });
 				return;
@@ -351,33 +385,42 @@ async function findUnityEditorPid(projectPath) {
 
 function execText(command, args) {
 	return new Promise((resolve) => {
-		execFile(command, args, (error, stdout) => {
+		execFile(command, args, { timeout: 10000, windowsHide: true }, (error, stdout) => {
 			resolve(error ? '' : stdout);
 		});
 	});
 }
 
-function stopStream() {
-	return new Promise((resolve) => {
-		try {
-			send({
-				command: 'mcpToolCall',
-				_requestId: 'measure_stop',
-				toolName: 'viewport_stream',
-				args: {
-					action: 'stop',
-					sessionId,
-					view: options.view
-				}
-			});
-		} catch {
-			// best effort
-		}
-		setTimeout(resolve, 500);
+function request(toolName, args) {
+	const id = 'measure_' + (++requestSequence);
+	return new Promise((resolve, reject) => {
+		const timer = setTimeout(() => { pending.delete(id); reject(new Error('bridge_timeout: ' + toolName)); }, 15000);
+		pending.set(id, { resolve, reject, timer });
+		send({ command: 'mcpToolCall', _requestId: id, toolName, args });
 	});
+}
+function readStreamStatus(value) {
+	if (value?.success !== true || !Array.isArray(value.sessions) || !Number.isInteger(value.runningSessions)
+		|| value.runningSessions !== value.sessions.length || value.running !== (value.runningSessions > 0)
+		|| value.sessions.some(item => !item || typeof item.sessionId !== 'string' || !item.sessionId || typeof item.view !== 'string' || !item.view)
+		|| new Set(value.sessions.map(item => item.sessionId)).size !== value.sessions.length
+		|| (value.session !== undefined && (!value.session || !value.sessions.some(item => item.sessionId === value.session.sessionId && item.view === value.session.view))))
+		throw new Error('stream_status_invalid: expected consistent running/count/session array');
+	return value;
+}
+async function stopStream() {
+	if (!streamStarted) return;
+	if (!socket || socket.destroyed) throw new Error('stream_stop_unconfirmed: disconnected owned stream');
+	const result = await request('viewport_stream', { action: 'stop', sessionId });
+	if (result?.success !== true || result.stopped !== 1 || !Number.isInteger(result.runningSessions) || result.runningSessions < 0 || result.running !== (result.runningSessions > 0)) throw new Error('stream_stop_unconfirmed: ' + JSON.stringify(result));
+	const status = readStreamStatus(await request('viewport_stream', { action: 'status', sessionId }));
+	if (status.session || status.sessions.some(item => item.sessionId === sessionId))
+		throw new Error('stream_stop_unconfirmed: session remains');
+	streamStarted = false;
 }
 
 function send(payload) {
+	if (!socket || socket.destroyed) throw new Error('bridge_disconnected');
 	socket.write(JSON.stringify(payload) + '\n');
 }
 
@@ -394,8 +437,14 @@ function finish(code) {
 		return;
 	}
 	finished = true;
+	for (const item of pending.values()) { clearTimeout(item.timer); item.reject(new Error('bridge_closed')); }
+	pending.clear();
+	measurement.success = code === 0;
+	measurement.cpuEstimator = process.platform === 'win32' ? 'interval-process-CPU-seconds / elapsed-seconds * 100 (one-core units)' : 'platform ps percent (macOS decaying average)';
+	measurement.rssUnit = 'MiB';
+	measurement.frameDataUnit = 'base64 UTF-8 bytes';
 	measurement.finishedAt = new Date().toISOString();
-	measurement.effectiveFps = Number((measurement.frameCount / Math.max(1, options.durationSeconds)).toFixed(2));
+	measurement.effectiveFps = Number((measurement.frameCount / Math.max(0.001, measurement.elapsedWindowSeconds || options.durationSeconds)).toFixed(2));
 	writeMeasurement();
 	try { socket?.end(); } catch {}
 	console.log(`Frames: ${measurement.frameCount} (${measurement.effectiveFps} fps effective)`);
@@ -413,7 +462,18 @@ function fail(message) {
 
 function writeMeasurement() {
 	fs.mkdirSync(path.dirname(options.out), { recursive: true });
-	fs.writeFileSync(options.out, JSON.stringify(measurement, null, 2));
+	fs.writeFileSync(options.out, JSON.stringify(clean(measurement), null, 2));
+}
+
+function clean(value) {
+	if (Array.isArray(value)) return value.map(clean);
+	if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).filter(([key]) => !/ownerToken/i.test(key)).map(([key, item]) => [key, clean(item)]));
+	if (typeof value !== 'string') return value;
+	for (const [location, replacement] of [[options.project, '<owned-project>'], [os.homedir(), '<user-home>'], [os.hostname(), '<host>']]) {
+		if (location) value = value.split(location).join(replacement).split(location.replace(/\\/g, '/')).join(replacement);
+	}
+	return value.replace(/(?:ownerToken|sessionId|correlationId|machineId|accessToken|authToken)\s*["':=]+\s*["']?[a-z0-9_-]{16,}/gi, '<private-value>')
+		.replace(/\b[a-f0-9]{32,}\b/gi, '<nonce>').replace(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g, '<address>');
 }
 
 function sleep(ms) {

@@ -1,0 +1,77 @@
+{
+  "capturedAtUtc": "2026-10-08T04:31:25.627Z",
+  "sourceCommit": "a5e6897",
+  "editorVersion": "7000.0.0a7",
+  "editorRevision": "581996e1a8f7",
+  "channel": "alpha",
+  "platform": "Windows",
+  "architecture": "x86_64",
+  "acquisition": "User-installed Editor, discovered through unity editors -i --format json and executable ProductVersion.",
+  "fixture": "Disposable project with committed embedded toolkit package and internal smoke harness; canonical sample unchanged.",
+  "arguments": [
+    "-batchmode",
+    "-projectPath",
+    "<fixture>",
+    "-executeMethod",
+    "UnityCursorToolkit.InternalSmoke.UnityCursorToolkitInternalSmoke.Run",
+    "-uctSmokeResultPath",
+    "<fixture>/editor-smoke.json",
+    "-uctSmokeViewportFramePath",
+    "<fixture>/viewport.jpg",
+    "-logFile",
+    "<fixture>/editor-smoke-attempt2.log"
+  ],
+  "manifestAdjustment": "Removed unavailable builtin com.unity.modules.vr from disposable manifest after initial resolver refusal; installed Unity7 builtin catalog does not contain it.",
+  "compilation": "failed",
+  "diagnostics": [
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\ThirdParty\\Unity-Unterm\\UntermExecuteCodeTools.cs(75,31): warning UAC0020: System.Reflection.Assembly.Load(byte[]) loads assembly into non-Unity AssemblyLoadContext and is not supported. Use Unity API instead.",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\ThirdParty\\Unity-Unterm\\UntermExecuteCodeTools.cs(117,26): warning UAC0005: AppDomain.GetAssemblies() in Unity may return already unloaded assemblies and result in errors or leaks. Use Unity APIs instead, such as 'CurrentAssemblies.GetLoadedAssemblies()' or 'TypeCache.GetTypesDerivedFrom()'.",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\ThirdParty\\Unity-Unterm\\UntermExecuteCodeTools.cs(105,65): warning UAC0007: Assembly.Location returns \"\" in Unity as assemblies are loaded from stream. Use extension method 'Assembly.GetLoadedAssemblyPath()' instead.",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\ThirdParty\\Unity-Unterm\\UntermExecuteCodeTools.cs(119,57): warning UAC0007: Assembly.Location returns \"\" in Unity as assemblies are loaded from stream. Use extension method 'Assembly.GetLoadedAssemblyPath()' instead.",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\ThirdParty\\Unity-Unterm\\UntermExecuteCodeTools.cs(120,63): warning UAC0007: Assembly.Location returns \"\" in Unity as assemblies are loaded from stream. Use extension method 'Assembly.GetLoadedAssemblyPath()' instead.",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\ThirdParty\\Unity-Unterm\\UntermToolGroup.cs(102,33): warning UAC0005: AppDomain.GetAssemblies() in Unity may return already unloaded assemblies and result in errors or leaks. Use Unity APIs instead, such as 'CurrentAssemblies.GetLoadedAssemblies()' or 'TypeCache.GetTypesDerivedFrom()'.",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\ThirdParty\\Unity-Unterm\\UntermToolGroup.cs(119,33): warning UAC0005: AppDomain.GetAssemblies() in Unity may return already unloaded assemblies and result in errors or leaks. Use Unity APIs instead, such as 'CurrentAssemblies.GetLoadedAssemblies()' or 'TypeCache.GetTypesDerivedFrom()'.",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\ThirdParty\\Unity-Unterm\\UntermMcpServer.cs(861,33): warning UAC0005: AppDomain.GetAssemblies() in Unity may return already unloaded assemblies and result in errors or leaks. Use Unity APIs instead, such as 'CurrentAssemblies.GetLoadedAssemblies()' or 'TypeCache.GetTypesDerivedFrom()'.",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\HotReload\\ILPatcher.cs(521,85): warning CS0618: 'FindObjectsSortMode' is obsolete: 'FindObjectsSortMode has been deprecated. Use the FindObjectsByType overloads that do not take a FindObjectsSortMode parameter.'",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\HotReload\\ILPatcher.cs(521,33): warning CS0618: 'Object.FindObjectsByType<T>(FindObjectsSortMode)' is obsolete: 'FindObjectsByType with FindObjectsSortMode parameter has been deprecated. Use FindObjectsByType<T>() or FindObjectsByType<T>(FindObjectsInactive) instead. InstanceID will be replaced in the future with EntityId and previous sort order cannot be maintained.'",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\MCP\\SceneTools.cs(30,42): error CS0619: 'EntityId.implicit operator EntityId(int)' is obsolete: 'EntityId will not be representable by an int in the future. This casting operator will be removed in a future version.'",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\MCP\\SceneTools.cs(162,49): error CS0619: 'Object.GetInstanceID()' is obsolete: 'Use GetEntityId instead.'",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\MCP\\SceneTools.cs(170,49): error CS0619: 'Object.GetInstanceID()' is obsolete: 'Use GetEntityId instead.'",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\MCP\\SceneTools.cs(86,108): error CS0619: 'Object.GetInstanceID()' is obsolete: 'Use GetEntityId instead.'",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\MCP\\SceneTools.cs(292,58): error CS0619: 'Object.GetInstanceID()' is obsolete: 'Use GetEntityId instead.'",
+    "Packages\\com.rankupgames.unity-cursor-toolkit\\Editor\\HotReload\\ILPatcher.cs(285,24): warning UAC0007: Assembly.Location returns \"\" in Unity as assemblies are loaded from stream. Use extension method 'Assembly.GetLoadedAssemblyPath()' instead."
+  ],
+  "flows": [
+    {
+      "flow": "connect",
+      "status": "blocked",
+      "reason": "Toolkit Editor assembly did not compile; smoke entry point not reached."
+    },
+    {
+      "flow": "console streaming",
+      "status": "blocked",
+      "reason": "Toolkit Editor assembly did not compile; smoke entry point not reached."
+    },
+    {
+      "flow": "project_info",
+      "status": "blocked",
+      "reason": "Toolkit Editor assembly did not compile; smoke entry point not reached."
+    },
+    {
+      "flow": "play-mode enter",
+      "status": "blocked",
+      "reason": "Toolkit Editor assembly did not compile; smoke entry point not reached."
+    },
+    {
+      "flow": "play-mode exit",
+      "status": "blocked",
+      "reason": "Toolkit Editor assembly did not compile; smoke entry point not reached."
+    },
+    {
+      "flow": "screenshot capture",
+      "status": "blocked",
+      "reason": "Toolkit Editor assembly did not compile; smoke entry point not reached."
+    }
+  ],
+  "readiness": "No CoreCLR readiness claim; runtime flags and reload event delivery not observed in this attempt."
+}

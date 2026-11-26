@@ -1,0 +1,234 @@
+{
+  "capturedAt": "2026-10-08T18:11:37.374Z",
+  "cliVersion": "1.0.0-beta.12",
+  "pipelineVersion": "0.8.0-exp.1",
+  "editorVersion": "6000.3.9f1",
+  "ownedEditorPid": 21208,
+  "readOnlyRouter": true,
+  "results": [
+    {
+      "action": "list",
+      "dryRun": false,
+      "command": null,
+      "targetPidMatches": true,
+      "success": true,
+      "executionEligible": false,
+      "targetVerified": true,
+      "count": 161,
+      "unknownCommands": [
+        "proof_delay"
+      ],
+      "nativeCalls": [
+        "version",
+        "status",
+        "list",
+        "status"
+      ],
+      "origin": "pipeline"
+    },
+    {
+      "action": "list",
+      "dryRun": false,
+      "command": null,
+      "targetPidMatches": false,
+      "success": false,
+      "code": "target_unverified",
+      "executionEligible": false,
+      "nativeCalls": [
+        "version",
+        "status"
+      ],
+      "origin": "pipeline"
+    },
+    {
+      "action": "run",
+      "dryRun": true,
+      "command": "read_text_file",
+      "targetPidMatches": true,
+      "success": false,
+      "code": "provenance_unverified",
+      "executionEligible": false,
+      "targetVerified": false,
+      "nativeCalls": [],
+      "origin": "pipeline"
+    },
+    {
+      "action": "run",
+      "dryRun": false,
+      "command": "read_text_file",
+      "targetPidMatches": true,
+      "success": false,
+      "code": "provenance_unverified",
+      "executionEligible": false,
+      "targetVerified": false,
+      "nativeCalls": [],
+      "origin": "pipeline"
+    },
+    {
+      "action": "run",
+      "dryRun": false,
+      "command": "write_text_file",
+      "targetPidMatches": true,
+      "success": false,
+      "code": "policy_refused",
+      "executionEligible": false,
+      "targetVerified": false,
+      "nativeCalls": [],
+      "origin": "pipeline"
+    },
+    {
+      "action": "run",
+      "dryRun": false,
+      "command": "search",
+      "targetPidMatches": true,
+      "success": false,
+      "code": "policy_refused",
+      "executionEligible": false,
+      "targetVerified": false,
+      "nativeCalls": [],
+      "origin": "pipeline"
+    }
+  ],
+  "audit": {
+    "newRecords": [
+      {
+        "invocationId": "871f593f-e135-49ad-a0f3-775cfadb558a",
+        "time": "2026-10-08T18:11:30.878Z",
+        "origin": "pipeline",
+        "action": "list",
+        "command": "unknown",
+        "classification": "read_only",
+        "outcome": "started",
+        "code": "started"
+      },
+      {
+        "invocationId": "871f593f-e135-49ad-a0f3-775cfadb558a",
+        "time": "2026-10-08T18:11:35.180Z",
+        "origin": "pipeline",
+        "action": "list",
+        "command": "unknown",
+        "classification": "read_only",
+        "outcome": "success",
+        "code": "ok",
+        "editorVersion": "6000.3.9f1",
+        "editorPid": 21208,
+        "exitCode": 0
+      },
+      {
+        "invocationId": "986db9b0-96c8-47b9-9804-8eb433bd5aa2",
+        "time": "2026-10-08T18:11:35.188Z",
+        "origin": "pipeline",
+        "action": "list",
+        "command": "unknown",
+        "classification": "read_only",
+        "outcome": "started",
+        "code": "started"
+      },
+      {
+        "invocationId": "986db9b0-96c8-47b9-9804-8eb433bd5aa2",
+        "time": "2026-10-08T18:11:37.295Z",
+        "origin": "pipeline",
+        "action": "list",
+        "command": "unknown",
+        "classification": "read_only",
+        "outcome": "refused",
+        "code": "target_unverified"
+      },
+      {
+        "invocationId": "a27bbc44-30d2-4778-a5d0-3d1b2b0a8580",
+        "time": "2026-10-08T18:11:37.304Z",
+        "origin": "pipeline",
+        "action": "plan",
+        "command": "read_text_file",
+        "classification": "read_only",
+        "outcome": "started",
+        "code": "started"
+      },
+      {
+        "invocationId": "a27bbc44-30d2-4778-a5d0-3d1b2b0a8580",
+        "time": "2026-10-08T18:11:37.313Z",
+        "origin": "pipeline",
+        "action": "plan",
+        "command": "read_text_file",
+        "classification": "read_only",
+        "outcome": "refused",
+        "code": "provenance_unverified"
+      },
+      {
+        "invocationId": "ad800da2-9e8f-4b6a-b050-3dd1e74ee418",
+        "time": "2026-10-08T18:11:37.321Z",
+        "origin": "pipeline",
+        "action": "run",
+        "command": "read_text_file",
+        "classification": "read_only",
+        "outcome": "started",
+        "code": "started"
+      },
+      {
+        "invocationId": "ad800da2-9e8f-4b6a-b050-3dd1e74ee418",
+        "time": "2026-10-08T18:11:37.330Z",
+        "origin": "pipeline",
+        "action": "run",
+        "command": "read_text_file",
+        "classification": "read_only",
+        "outcome": "refused",
+        "code": "provenance_unverified"
+      },
+      {
+        "invocationId": "4c867dce-411e-4c6f-9f31-b71617730dc4",
+        "time": "2026-10-08T18:11:37.338Z",
+        "origin": "pipeline",
+        "action": "run",
+        "command": "write_text_file",
+        "classification": "escape",
+        "outcome": "started",
+        "code": "started"
+      },
+      {
+        "invocationId": "4c867dce-411e-4c6f-9f31-b71617730dc4",
+        "time": "2026-10-08T18:11:37.348Z",
+        "origin": "pipeline",
+        "action": "run",
+        "command": "write_text_file",
+        "classification": "escape",
+        "outcome": "refused",
+        "code": "policy_refused"
+      },
+      {
+        "invocationId": "ef798eed-8e08-4509-b233-00a126551bb7",
+        "time": "2026-10-08T18:11:37.356Z",
+        "origin": "pipeline",
+        "action": "run",
+        "command": "search",
+        "classification": "escape",
+        "outcome": "started",
+        "code": "started"
+      },
+      {
+        "invocationId": "ef798eed-8e08-4509-b233-00a126551bb7",
+        "time": "2026-10-08T18:11:37.365Z",
+        "origin": "pipeline",
+        "action": "run",
+        "command": "search",
+        "classification": "escape",
+        "outcome": "refused",
+        "code": "policy_refused"
+      }
+    ],
+    "previousRecordsPreserved": true,
+    "argumentsAndProjectPathAbsent": true,
+    "bytes": 5466,
+    "lockReleased": true
+  },
+  "limits": [
+    "No command dispatch is implemented; handler provenance remains unverified.",
+    "This proof covers the exact owned Unity 6.3 fixture only."
+  ],
+  "shutdown": {
+    "normalQuitMarkerObserved": true,
+    "quittingCallbackObserved": true,
+    "ownedProcessAbsent": true,
+    "forcedCleanup": false,
+    "exitCode": null
+  }
+}

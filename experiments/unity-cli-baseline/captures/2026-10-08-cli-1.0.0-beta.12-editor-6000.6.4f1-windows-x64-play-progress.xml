@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<test-run id="2" testcasecount="1" result="Passed" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0" engine-version="3.5.0.0" clr-version="4.0.30319.42000" start-time="2026-10-08 04:34:59Z" end-time="2026-10-08 04:35:29Z" duration="30.0564645">
+  <test-suite type="TestSuite" id="1006" name="fixture-6000.6.4f1" fullname="fixture-6000.6.4f1" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 04:34:59Z" end-time="2026-10-08 04:35:29Z" duration="30.056465" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+    <properties>
+      <property name="platform" value="PlayMode" />
+    </properties>
+    <test-suite type="Assembly" id="1004" name="CliPlayModeTests.dll" fullname="G:/GithubProjects/unity-cursor-toolkit/experiments/unity-cli-baseline/fixture-6000.6.4f1/Library/ScriptAssemblies/CliPlayModeTests.dll" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 04:34:59Z" end-time="2026-10-08 04:35:29Z" duration="30.044688" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+      <properties>
+        <property name="_PID" value="13148" />
+        <property name="_APPDOMAIN" value="Unity Child Domain" />
+        <property name="platform" value="PlayMode" />
+        <property name="EditorOnly" value="False" />
+      </properties>
+      <test-suite type="TestFixture" id="1001" name="CliPlayTests" fullname="CliPlayTests" classname="CliPlayTests" runstate="Runnable" testcasecount="2" result="Passed" start-time="2026-10-08 04:34:59Z" end-time="2026-10-08 04:35:29Z" duration="30.042881" total="1" passed="1" failed="0" inconclusive="0" skipped="0" asserts="0">
+        <properties />
+        <test-case id="1003" name="LongProgress" fullname="CliPlayTests.LongProgress" methodname="LongProgress" classname="CliPlayTests" runstate="Runnable" seed="893259879" result="Passed" start-time="2026-10-08 04:34:59Z" end-time="2026-10-08 04:35:29Z" duration="30.028173" asserts="0">
+          <properties>
+            <property name="_JOINTYPE" value="UnityCombinatorial" />
+            <property name="retryIteration" value="0" />
+            <property name="repeatIteration" value="0" />
+          </properties>
+          <output><![CDATA[CLI_PROOF_PROGRESS 0
+CLI_PROOF_PROGRESS 1
+CLI_PROOF_PROGRESS 2
+CLI_PROOF_PROGRESS 3
+CLI_PROOF_PROGRESS 4
+CLI_PROOF_PROGRESS 5
+CLI_PROOF_PROGRESS 6
+CLI_PROOF_PROGRESS 7
+CLI_PROOF_PROGRESS 8
+CLI_PROOF_PROGRESS 9
+CLI_PROOF_PROGRESS 10
+CLI_PROOF_PROGRESS 11
+CLI_PROOF_PROGRESS 12
+CLI_PROOF_PROGRESS 13
+CLI_PROOF_PROGRESS 14
+CLI_PROOF_PROGRESS 15
+CLI_PROOF_PROGRESS 16
+CLI_PROOF_PROGRESS 17
+CLI_PROOF_PROGRESS 18
+CLI_PROOF_PROGRESS 19
+CLI_PROOF_PROGRESS 20
+CLI_PROOF_PROGRESS 21
+CLI_PROOF_PROGRESS 22
+CLI_PROOF_PROGRESS 23
+CLI_PROOF_PROGRESS 24
+CLI_PROOF_PROGRESS 25
+CLI_PROOF_PROGRESS 26
+CLI_PROOF_PROGRESS 27
+CLI_PROOF_PROGRESS 28
+CLI_PROOF_PROGRESS 29
+Saving results to: G:\GithubProjects\unity-cursor-toolkit\experiments\unity-cli-baseline\captures\2026-10-08-cli-1.0.0-beta.12-editor-6000.6.4f1-windows-x64-play-progress.xml
+]]></output>
+        </test-case>
+      </test-suite>
+    </test-suite>
+  </test-suite>
+</test-run>

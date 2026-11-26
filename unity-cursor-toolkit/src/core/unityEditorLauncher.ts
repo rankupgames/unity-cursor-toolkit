@@ -108,6 +108,7 @@ export function resolveUnityEditorPath(projectPath: string, options: UnityEditor
 		}
 	}
 
+	// ProjectVersion selects the exact installed Editor executable, never feature behavior.
 	const version = readProjectVersion(projectPath, options);
 	if (version == null) {
 		return null;
@@ -148,6 +149,7 @@ export function matchesUnityProjectInfo(projectPath: string, expectedVersion: st
 	if (expectedVersion == null) {
 		return false;
 	}
+	// Exact version matching prevents attachment to a different installed Editor.
 	return projectInfo?.unityVersion === expectedVersion;
 }
 

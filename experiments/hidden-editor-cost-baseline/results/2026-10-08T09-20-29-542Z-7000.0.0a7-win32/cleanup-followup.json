@@ -1,0 +1,21 @@
+{
+  "observedAt": "2026-10-08T09:28:54.415Z",
+  "passed": false,
+  "forcedCleanup": true,
+  "ownedEditorPid": 46192,
+  "normalStopMarkerWritten": true,
+  "normalQuittingObserved": false,
+  "mainWindowHandlePresentBeforeCleanup": true,
+  "mainWindowTitlePresentBeforeCleanup": true,
+  "ownedEditorPidsRemaining": [],
+  "sharedLicensingProcessesTouched": false,
+  "chronology": [
+    "\tResponseCode: 505",
+    "\tResponseStatus: Unsupported protocol version '1.19.0-rc.1'.",
+    "Starting IPC server.",
+    "  Version:                 1.19.0-rc.1+a1d64c6"
+  ],
+  "engineInitializationObserved": false,
+  "executeMethodObserved": false,
+  "limits": "505 may be protocol negotiation fallback; no root-cause attribution. No Unity7 functional or hidden cost acceptance."
+}

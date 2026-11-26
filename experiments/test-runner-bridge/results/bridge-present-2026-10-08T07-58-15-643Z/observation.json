@@ -1,0 +1,39 @@
+{
+  "case": "present",
+  "editorVersion": "7000.0.0a7",
+  "testFramework": "1.9.0",
+  "sourceHashes": [
+    {
+      "file": "Editor/HotReloadHandler.cs",
+      "sha256": "0d7fff095ce2492f4682c473b0a8a21b6473011036c130ef03a06e341a7058a6"
+    },
+    {
+      "file": "Editor/MCP/Tests/TestRunnerTool.cs",
+      "sha256": "cd4d33452e12452054fbc0bdefe2172eca1ac81a7a65dbd133859686f54b52c1"
+    },
+    {
+      "file": "Editor/TestRunnerIntegration/TestRunnerAdapter.cs",
+      "sha256": "f452ff86cb58cf2a26a2bd97df86fbf0e0dacf7016ec72d71be0b542c501337d"
+    },
+    {
+      "file": "Editor/TestRunnerIntegration/UnityCursorToolkit.TestRunnerIntegration.Editor.asmdef",
+      "sha256": "2101ab9b22e43bb7fa3e44472f84e3379eb5a83c6342bba16395851b6ccd1dff"
+    }
+  ],
+  "passed": false,
+  "cases": [],
+  "debugLogsEnabled": true,
+  "error": {
+    "message": "Fixture readiness: Editor exited {\"code\":1,\"signal\":null}",
+    "stack": "Error: Fixture readiness: Editor exited {\"code\":1,\"signal\":null}\n    at wait (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:58:26)\n    at async run (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:120:17)\n    at async main (<repository>\\experiments\\test-runner-bridge\\run-bridge-proof.js:220:89)"
+  },
+  "progress": [],
+  "exit": {
+    "code": 1,
+    "signal": null
+  },
+  "rawOwnerTokenValueCount": 0,
+  "rawOwnerTokenLoggingObserved": false,
+  "remainingOwnedProcesses": [],
+  "normalEditorExit": false
+}

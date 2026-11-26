@@ -1,6 +1,7 @@
 using System.IO;
 using Unity.CodeEditor;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEngine;
 
 namespace Unterm.Editor
@@ -67,20 +68,33 @@ namespace Unterm.Editor
         // rather than an exact path (see TryGetInstallationForPath).
         private const string PackageId = "dev.tnayuki.unterm";
 
-        // The "installation path" Unity stores as the selected editor. Unterm is
-        // in-editor (no executable), but Unity's dropdown only lists installations
-        // whose path exists on disk. The compiled assembly is real and stable within
-        // a project, and unlike a package.json path it remains valid when Unterm is
-        // embedded under another package's Editor/ThirdParty subtree. The identity
-        // fallback below still recognizes selections made by standalone upstream
-        // package versions that used package.json as their installation path.
-        internal static readonly string EditorKey =
-            Path.GetFullPath(typeof(UntermExternalCodeEditor).Assembly.Location);
+        // Use the containing package's manifest for standalone and toolkit installs.
+        // Resolve the asmdef by name so registration never reads Assembly.Location.
+        internal static readonly string EditorKey;
+        private static readonly string ContainingPackageId;
 
         static UntermExternalCodeEditor()
         {
             try
             {
+                string asmdefPath = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(
+                    typeof(UntermExternalCodeEditor).Assembly.GetName().Name);
+                var package = string.IsNullOrEmpty(asmdefPath)
+                    ? null : UnityEditor.PackageManager.PackageInfo.FindForAssetPath(asmdefPath);
+                if (package == null || string.IsNullOrEmpty(package.name) ||
+                    string.IsNullOrEmpty(package.resolvedPath))
+                {
+                    Debug.LogWarning("[Unterm] External editor registration skipped: package metadata is unavailable.");
+                    return;
+                }
+                string editorKey = Path.GetFullPath(Path.Combine(package.resolvedPath, "package.json"));
+                if (!File.Exists(editorKey))
+                {
+                    Debug.LogWarning("[Unterm] External editor registration skipped: package manifest is missing.");
+                    return;
+                }
+                EditorKey = editorKey;
+                ContainingPackageId = package.name;
                 CodeEditor.Register(new UntermExternalCodeEditor());
                 // After a package update the stored selection still points at the
                 // PREVIOUS cache path (a git/UPM install resolves to
@@ -118,10 +132,9 @@ namespace Unterm.Editor
             }
         }
 
-        public CodeEditor.Installation[] Installations { get; } =
-        {
-            new CodeEditor.Installation { Name = "Unterm Code Editor", Path = EditorKey },
-        };
+        public CodeEditor.Installation[] Installations { get; } = string.IsNullOrEmpty(EditorKey)
+            ? System.Array.Empty<CodeEditor.Installation>()
+            : new[] { new CodeEditor.Installation { Name = "Unterm Code Editor", Path = EditorKey } };
 
         public bool TryGetInstallationForPath(string editorPath, out CodeEditor.Installation installation)
         {
@@ -132,7 +145,7 @@ namespace Unterm.Editor
             // the exact string would then make Unity treat Unterm as unselected and
             // silently route script / Markdown opens to another editor (or the OS).
             // Recognizing it by identity keeps the selection across updates.
-            if (editorPath == EditorKey || IdentifiesPackage(editorPath))
+            if (Installations.Length > 0 && (editorPath == EditorKey || IdentifiesPackage(editorPath)))
             {
                 installation = Installations[0];
                 return true;
@@ -141,18 +154,23 @@ namespace Unterm.Editor
             return false;
         }
 
-        // Whether `editorPath` is this package's `package.json`, wherever it currently
-        // resolves — embedded (`.../dev.tnayuki.unterm/package.json`) or UPM-cached
-        // (`.../dev.tnayuki.unterm@<hash>/package.json`).
+        // Match the containing package across cache updates, plus stored selections
+        // from the standalone upstream package.
         private static bool IdentifiesPackage(string editorPath)
         {
             if (string.IsNullOrEmpty(editorPath)) return false;
-            if (!string.Equals(Path.GetFileName(editorPath), "package.json",
-                    System.StringComparison.OrdinalIgnoreCase))
-                return false;
+            string file = Path.GetFileName(editorPath);
             string dir = Path.GetFileName(Path.GetDirectoryName(editorPath) ?? "");
+            // The shipped fork stored its compiled assembly as the selection.
+            if (dir == "ScriptAssemblies" && file == typeof(UntermExternalCodeEditor).Assembly.GetName().Name + ".dll")
+                return true;
+            if (!string.Equals(file, "package.json", System.StringComparison.OrdinalIgnoreCase))
+                return false;
             return dir == PackageId
-                || dir.StartsWith(PackageId + "@", System.StringComparison.Ordinal);
+                || dir.StartsWith(PackageId + "@", System.StringComparison.Ordinal)
+                || (!string.IsNullOrEmpty(ContainingPackageId) &&
+                    (dir == ContainingPackageId || dir.StartsWith(ContainingPackageId + "@",
+                        System.StringComparison.Ordinal)));
         }
 
         public void Initialize(string editorInstallationPath) { }

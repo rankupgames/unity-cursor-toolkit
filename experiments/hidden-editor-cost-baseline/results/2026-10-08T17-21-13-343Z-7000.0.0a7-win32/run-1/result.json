@@ -1,0 +1,142 @@
+{
+  "success": true,
+  "editorVersion": "7000.0.0a7",
+  "platform": "Windows 10  (10.0.19045) 64bit",
+  "coreLibrary": "System.Private.CoreLib",
+  "editorPid": 16068,
+  "firstFrameAt": "2026-10-08T17:23:42.0954648Z",
+  "pixelsPerPoint": 1,
+  "visibilityEvidence": [
+    {
+      "phase": "before_capture:sceneView",
+      "at": "2026-10-08T17:23:42.0536037Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "after_capture:sceneView",
+      "at": "2026-10-08T17:23:42.0841290Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "before_capture:gameView",
+      "at": "2026-10-08T17:23:42.0964164Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "after_capture:gameView",
+      "at": "2026-10-08T17:23:42.1317599Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "before_capture:inspector",
+      "at": "2026-10-08T17:23:42.1436734Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "after_capture:inspector",
+      "at": "2026-10-08T17:23:42.1870190Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "before_capture:packageManager",
+      "at": "2026-10-08T17:23:42.1946201Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "after_capture:packageManager",
+      "at": "2026-10-08T17:23:42.2278894Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "before_capture:customProbe",
+      "at": "2026-10-08T17:23:42.2419925Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "after_capture:customProbe",
+      "at": "2026-10-08T17:23:42.2526154Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    },
+    {
+      "phase": "after_input",
+      "at": "2026-10-08T17:23:42.4169499Z",
+      "enumerated": true,
+      "windows": 7,
+      "visible": 0
+    }
+  ],
+  "allCapturesSucceeded": true,
+  "captures": [
+    {
+      "window": "sceneView",
+      "success": true,
+      "path": "<owned-project>\\run-1\\frames\\sceneView.jpg",
+      "width": 800,
+      "height": 520,
+      "distinctColors": 303,
+      "error": ""
+    },
+    {
+      "window": "gameView",
+      "success": true,
+      "path": "<owned-project>\\run-1\\frames\\gameView.jpg",
+      "width": 813,
+      "height": 915,
+      "distinctColors": 28,
+      "error": ""
+    },
+    {
+      "window": "inspector",
+      "success": true,
+      "path": "<owned-project>\\run-1\\frames\\inspector.jpg",
+      "width": 775,
+      "height": 915,
+      "distinctColors": 71,
+      "error": ""
+    },
+    {
+      "window": "packageManager",
+      "success": true,
+      "path": "<owned-project>\\run-1\\frames\\packageManager.jpg",
+      "width": 1066,
+      "height": 737,
+      "distinctColors": 21,
+      "error": ""
+    },
+    {
+      "window": "customProbe",
+      "success": true,
+      "path": "<owned-project>\\run-1\\frames\\customProbe.jpg",
+      "width": 420,
+      "height": 280,
+      "distinctColors": 108,
+      "error": ""
+    }
+  ],
+  "inputTest": {
+    "attempted": true,
+    "rotationAngle": 13.275,
+    "changed": true,
+    "error": ""
+  }
+}

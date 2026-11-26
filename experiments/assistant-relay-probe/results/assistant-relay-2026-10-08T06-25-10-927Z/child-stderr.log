@@ -1,0 +1,14 @@
+[INFO ] [Unity Mcp Server] mcp.startup workingDir=<fixture>
+[INFO ] [Unity Mcp Server] log === MCP SERVER STARTED ===
+[INFO ] [Unity Mcp Server] log PID=7272 execPath=<fixture>\relay\relay_win.exe
+[INFO ] [Unity Mcp Server] log argv: ["bun","B:/~BUN/root/relay_win.exe","--mcp","--project-path","<fixture>","--instance-id","49960"]
+[INFO ] [Unity Mcp Server] log Working directory: <fixture>
+[INFO ] [Unity Mcp Server] log Approval token: {"fromEnv":false}
+[INFO ] [Unity Mcp Server] log Project path: (not specified)
+[INFO ] [Unity Mcp Server] log Instance ID: (not specified)
+[INFO ] [Unity Mcp Server] log MCP server initializing...
+[INFO ] [Unity Mcp Server] log Initializing unity-mcp-server v1.0.0
+[INFO ] [Unity Mcp Server] log Discovery filter: projectPath=<fixture>, editorPid=49960
+[INFO ] [Unity Mcp Server] log Unity MCP Server started
+[INFO ] [Unity Mcp Server] log Client connected: uct-private-assistant-probe 1.0
+[INFO ] [Unity Mcp Server] log Shutting down Unity MCP Server...

@@ -1,0 +1,324 @@
+{
+  "providerSha256": "24f6881cd093489132ba63e3b790aafc1efd3993a473c13534b449d4dde8982b",
+  "packageVersion": "2.20.0-pre.1",
+  "archiveSha256": "e19d67ccc57145fbeecd3f3958babe9c1578cd0023e8830b391178ee49456a3e",
+  "registry": "https://packages.unity.com/com.unity.ai.assistant",
+  "published": "2026-09-23T13:36:53.179Z",
+  "minimumEditorVersion": "6000.0.60f1",
+  "editorVersion": "6000.3.9f1",
+  "productVersion": "6000.3.9f1_7a9955a4f2fa",
+  "serverDate": "2026-10-08T06:36:43.000Z",
+  "policyTests": {
+    "passed": true,
+    "providerSha256": "24f6881cd093489132ba63e3b790aafc1efd3993a473c13534b449d4dde8982b",
+    "refused": [
+      {
+        "name": "Unity_RunCommand",
+        "args": {
+          "Code": "System.IO.File.WriteAllText(\"sentinel\",\"changed\")"
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_policy_escape\",\"message\":\"Arbitrary C# execution is refused, including dryRun.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_RunCommand",
+        "args": {
+          "Code": "arbitrary C#",
+          "dryRun": true
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_policy_escape\",\"message\":\"Arbitrary C# execution is refused, including dryRun.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_ReadConsole",
+        "args": {
+          "Action": "Clear",
+          "dryRun": true
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_argument_unclassified\",\"message\":\"Only exact captured schema keys are accepted.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_ReadConsole",
+        "args": {
+          "Action": "get"
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_unclassified_action\",\"message\":\"An exact classified Action is required.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_ReadConsole",
+        "args": {
+          "Action": "Get",
+          "action": "Clear"
+        },
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_argument_unclassified\",\"message\":\"Only exact captured schema keys are accepted.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unity_ReadConsole",
+        "args": {},
+        "result": {
+          "isError": true,
+          "content": [
+            {
+              "type": "text",
+              "text": "{\"error\":{\"code\":\"relay_unclassified_action\",\"message\":\"An exact classified Action is required.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+            }
+          ]
+        }
+      },
+      {
+        "name": "Unknown",
+        "args": {
+          "Action": "Get"
+        },
+        "result": {
+          "content": [
+            {
+              "type": "text",
+              "text": "Unknown tool: assistantRelay/Unknown. Available tools: coreclr_migration, manage_scene, manage_gameobject, manage_component, manage_asset, manage_material, play_mode, editor_lifecycle, execute_menu_item, screenshot, project_info, editor_validation, game_command, profiler_snapshot, build_trigger, batch_execute, unity_context, viewport_stream, read_console, clear_console, resolve_meta, assistantRelay/Unity_ReadConsole, assistantRelay/Unity_RunCommand"
+            }
+          ],
+          "isError": true
+        }
+      }
+    ],
+    "allowed": {
+      "isError": false,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"read\"}]}}"
+        }
+      ]
+    },
+    "faults": [
+      {
+        "kind": "spawn",
+        "code": "relay_start_failed"
+      },
+      {
+        "kind": "timeout",
+        "code": "relay_timeout"
+      },
+      {
+        "kind": "exit",
+        "code": "relay_unexpected_exit"
+      },
+      {
+        "kind": "empty-catalog",
+        "code": "relay_empty_catalog"
+      },
+      {
+        "kind": "exit-after-ready",
+        "code": "relay_unexpected_exit"
+      }
+    ],
+    "legacyGate": "2019.4 denied before child construction; shipped code unchanged"
+  },
+  "changes": [
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Settings/MCPConstants.cs",
+      "symbol": "relayBaseDirectoryName",
+      "old": "public static string relayBaseDirectoryName = \".unity/relay\";",
+      "replacement": "public static string relayBaseDirectoryName = Environment.GetEnvironmentVariable(\"UCT_ASSISTANT_RELAY_DIR\") ?? throw new InvalidOperationException(\"Owned relay path required\");"
+    },
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Settings/MCPConstants.cs",
+      "symbol": "mcpBaseDirectoryName",
+      "old": "public static string mcpBaseDirectoryName = \".unity/mcp\";",
+      "replacement": "public static string mcpBaseDirectoryName = Environment.GetEnvironmentVariable(\"UCT_ASSISTANT_MCP_DIR\") ?? throw new InvalidOperationException(\"Owned MCP path required\");"
+    },
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Settings/MCPConstants.cs",
+      "symbol": "prefProjectSettings",
+      "old": "public const string prefProjectSettings = \"Unity.AI.MCP.ProjectSettings.v2\";",
+      "replacement": "public const string prefProjectSettings = \"UCT.Assistant.Proof.3c8dacc6-28af-4a6a-93ba-f08cb8df0e52.MCPSettings\";"
+    },
+    {
+      "relative": "Editor/Assistant/Relay/RelayPersistenceService.cs",
+      "symbol": "k_KeyPrefix",
+      "old": "const string k_KeyPrefix = \"Unity.AI.Gateway.Relay.\";",
+      "replacement": "const string k_KeyPrefix = \"UCT.Assistant.Proof.3c8dacc6-28af-4a6a-93ba-f08cb8df0e52.Relay.\";"
+    }
+  ],
+  "sourceHashes": [
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Settings/MCPConstants.cs",
+      "originalSha256": "41659294a8af8e6e2b39469cb941aefbaa70939d49948dbbcfd5b391b82f21da",
+      "modifiedSha256": "c2718a3239c85bb0fc172e82a6a5e1559bbed4304c9ea06997955c052498c0be"
+    },
+    {
+      "relative": "Editor/Assistant/Relay/RelayPersistenceService.cs",
+      "originalSha256": "b3cd6ecf745bdaf5e27fd41c21a5f1c396286b16c8fd22f1374eb4ecd1b07081",
+      "modifiedSha256": "046817628f5ba6c1e1de3e4183b9fbb59d27a1c626f7368462ac009821c37b1c"
+    }
+  ],
+  "immutableHashes": [
+    {
+      "relative": "RelayApp~/relay_win.exe",
+      "sha256": "0cd32f102a64fc8585671ec3ce82a78046011452a2b6d5f655d90e26369e014b"
+    },
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Tools/ReadConsole.cs",
+      "sha256": "83c8ca59bd19dfba46cf4afd2da7d43684e7c10db5bc4011b82603944a1f17d9"
+    },
+    {
+      "relative": "Modules/Unity.AI.MCP.Editor/Tools/RunCommand.cs",
+      "sha256": "359056413fc062c900fb0402ec99bd08b04768023fc04ec624a9f1d4d05ec732"
+    }
+  ],
+  "mcpChildHomeOverride": "<fixture>/home",
+  "defaultInstallBehaviorProved": false,
+  "coreclrCompatibilityProved": false,
+  "paidAiInvocation": false,
+  "bootstrap": {
+    "version": "6000.3.9f1",
+    "coreLibrary": "mscorlib",
+    "pid": 63796,
+    "isBatchMode": true,
+    "isMono": true,
+    "statusDirectory": "<fixture>\\home\\.unity\\mcp\\connections",
+    "packageVersion": "2.20.0-pre.1",
+    "at": "2026-10-08T06:37:46.3085674Z"
+  },
+  "editorStartupMilliseconds": 57513,
+  "editorPid": 63796,
+  "relayPid": 10236,
+  "childStartupMilliseconds": 477,
+  "denied": [
+    {
+      "isError": true,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"error\":{\"code\":\"relay_policy_escape\",\"message\":\"Arbitrary C# execution is refused, including dryRun.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+        }
+      ]
+    },
+    {
+      "isError": true,
+      "content": [
+        {
+          "type": "text",
+          "text": "{\"error\":{\"code\":\"relay_policy_escape\",\"message\":\"Arbitrary C# execution is refused, including dryRun.\"},\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"}}"
+        }
+      ]
+    }
+  ],
+  "deniedRequestsForwarded": 0,
+  "sentinelCreated": false,
+  "calls": [
+    {
+      "milliseconds": 35,
+      "response": {
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"success\\\": true,\\n  \\\"message\\\": \\\"Retrieved 1 log entries.\\\",\\n  \\\"data\\\": [\\n    {\\n      \\\"Message\\\": \\\"UCT_ASSISTANT_PROBE_SENTINEL\\\",\\n      \\\"Type\\\": \\\"Log\\\",\\n      \\\"File\\\": \\\"Assets/Editor/AssistantRelayProbe.cs\\\",\\n      \\\"Line\\\": 57,\\n      \\\"StackTrace\\\": \\\"UnityEngine.Debug:Log (object)\\\\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\\\\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()\\\"\\n    }\\n  ]\\n}\"}]}}"
+          }
+        ]
+      }
+    },
+    {
+      "milliseconds": 5,
+      "response": {
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"success\\\": true,\\n  \\\"message\\\": \\\"Retrieved 1 log entries.\\\",\\n  \\\"data\\\": [\\n    {\\n      \\\"Message\\\": \\\"UCT_ASSISTANT_PROBE_SENTINEL\\\",\\n      \\\"Type\\\": \\\"Log\\\",\\n      \\\"File\\\": \\\"Assets/Editor/AssistantRelayProbe.cs\\\",\\n      \\\"Line\\\": 57,\\n      \\\"StackTrace\\\": \\\"UnityEngine.Debug:Log (object)\\\\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\\\\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()\\\"\\n    }\\n  ]\\n}\"}]}}"
+          }
+        ]
+      }
+    },
+    {
+      "milliseconds": 4,
+      "response": {
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"success\\\": true,\\n  \\\"message\\\": \\\"Retrieved 1 log entries.\\\",\\n  \\\"data\\\": [\\n    {\\n      \\\"Message\\\": \\\"UCT_ASSISTANT_PROBE_SENTINEL\\\",\\n      \\\"Type\\\": \\\"Log\\\",\\n      \\\"File\\\": \\\"Assets/Editor/AssistantRelayProbe.cs\\\",\\n      \\\"Line\\\": 57,\\n      \\\"StackTrace\\\": \\\"UnityEngine.Debug:Log (object)\\\\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\\\\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()\\\"\\n    }\\n  ]\\n}\"}]}}"
+          }
+        ]
+      }
+    },
+    {
+      "milliseconds": 4,
+      "response": {
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"success\\\": true,\\n  \\\"message\\\": \\\"Retrieved 1 log entries.\\\",\\n  \\\"data\\\": [\\n    {\\n      \\\"Message\\\": \\\"UCT_ASSISTANT_PROBE_SENTINEL\\\",\\n      \\\"Type\\\": \\\"Log\\\",\\n      \\\"File\\\": \\\"Assets/Editor/AssistantRelayProbe.cs\\\",\\n      \\\"Line\\\": 57,\\n      \\\"StackTrace\\\": \\\"UnityEngine.Debug:Log (object)\\\\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\\\\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()\\\"\\n    }\\n  ]\\n}\"}]}}"
+          }
+        ]
+      }
+    },
+    {
+      "milliseconds": 4,
+      "response": {
+        "isError": false,
+        "content": [
+          {
+            "type": "text",
+            "text": "{\"origin\":{\"source\":\"assistantRelay\",\"packageVersion\":\"2.20.0-pre.1\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"{\\n  \\\"success\\\": true,\\n  \\\"message\\\": \\\"Retrieved 1 log entries.\\\",\\n  \\\"data\\\": [\\n    {\\n      \\\"Message\\\": \\\"UCT_ASSISTANT_PROBE_SENTINEL\\\",\\n      \\\"Type\\\": \\\"Log\\\",\\n      \\\"File\\\": \\\"Assets/Editor/AssistantRelayProbe.cs\\\",\\n      \\\"Line\\\": 57,\\n      \\\"StackTrace\\\": \\\"UnityEngine.Debug:Log (object)\\\\nAssistantRelayProbe:Configure () (at Assets/Editor/AssistantRelayProbe.cs:57)\\\\nUnityEditor.EditorApplication:Internal_CallDelayFunctions ()\\\"\\n    }\\n  ]\\n}\"}]}}"
+          }
+        ]
+      }
+    }
+  ],
+  "passed": true,
+  "childExit": {
+    "exited": true,
+    "code": 0,
+    "signal": null
+  },
+  "editorExit": {
+    "code": 0,
+    "signal": null
+  },
+  "remainingOwnedProcesses": [],
+  "normalEditorExit": true,
+  "deletedOwnedPrefs": [],
+  "resourceOrderNote": "Parent release was followed by a delayed Pipeline refinement cleanup update. Its PID64044 overlapped initial Assistant startup briefly and exited normally before Assistant tool execution. Timings are observations, not an isolated benchmark.",
+  "compositionDecision": "Continue only opt-in composition design: selected reads, committed policy before transport, explicit pinned origin and fail-closed lifecycle. Do not ship or claim default installation or CoreCLR support from this experiment."
+}

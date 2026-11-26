@@ -23,7 +23,7 @@ namespace UnityCursorToolkit
 {
 
 [InitializeOnLoad]
-public static class ConsoleToCursor
+public static partial class ConsoleToCursor
 {
 	public const int MAX_BUFFER_SIZE = 200;
 	public const int DEFAULT_SEND_LIMIT = 50;
@@ -33,6 +33,8 @@ public static class ConsoleToCursor
 	private static readonly List<ConsoleEntry> entryBuffer = new List<ConsoleEntry>();
 	private static readonly object bufferLock = new object();
 	private static bool autoStreamEnabled = true;
+	private static bool captureInitialized;
+	private static bool isQuitting;
 
 	#endregion
 
@@ -72,8 +74,63 @@ public static class ConsoleToCursor
 
 	static ConsoleToCursor()
 	{
+		#if !UNITY_7000_0_OR_NEWER
 		ProfilerSessionRecorder.EnsureInitialized();
+		InitializeCapture();
+		AssemblyReloadEvents.beforeAssemblyReload += Shutdown;
+		AssemblyReloadEvents.afterAssemblyReload += InitializeCapture;
+		#endif
+	}
+
+	#if UNITY_7000_0_OR_NEWER
+	[Unity.Scripting.LifecycleManagement.OnCodeInitializing]
+	#endif
+	private static void InitializeCapture()
+	{
+		if (isQuitting || captureInitialized) return;
+		captureInitialized = true;
+		EditorApplication.quitting -= OnEditorQuitting;
+		EditorApplication.quitting += OnEditorQuitting;
+		EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
+		EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+		ResetBuffer();
+		Application.logMessageReceived -= OnLogReceived;
 		Application.logMessageReceived += OnLogReceived;
+	}
+
+	#if UNITY_7000_0_OR_NEWER
+	[Unity.Scripting.LifecycleManagement.OnCodeUnloading]
+	#endif
+	private static void Shutdown()
+	{
+		if (!captureInitialized) return;
+		captureInitialized = false;
+		Application.logMessageReceived -= OnLogReceived;
+		ResetBuffer();
+	}
+
+	private static void OnEditorQuitting()
+	{
+		isQuitting = true;
+		Shutdown();
+	}
+
+	private static void OnPlayModeStateChanged(PlayModeStateChange state)
+	{
+		if (state == PlayModeStateChange.EnteredPlayMode || state == PlayModeStateChange.EnteredEditMode)
+		{
+			// Unity can clear its log callback when switching modes without reloading code.
+			captureInitialized = false;
+			InitializeCapture();
+		}
+	}
+
+	private static void ResetBuffer()
+	{
+		lock (bufferLock)
+		{
+			entryBuffer.Clear();
+		}
 	}
 
 	#endregion
@@ -182,10 +239,7 @@ public static class ConsoleToCursor
 	[MenuItem("Tools/Hot Reload/Clear Console Buffer")]
 	public static void ClearBuffer()
 	{
-		lock (bufferLock)
-		{
-			entryBuffer.Clear();
-		}
+		ResetBuffer();
 		Debug.Log("(ConsoleToCursor) Console buffer cleared.");
 	}
 

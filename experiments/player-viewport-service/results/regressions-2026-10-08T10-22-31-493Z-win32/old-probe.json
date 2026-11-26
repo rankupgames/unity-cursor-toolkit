@@ -1,0 +1,7 @@
+{
+  "observedAt": "2026-10-08T10:22:31.494Z",
+  "sourceSha256": "991197b1d557d963fcb07d3624196ded07c96c7e71586adce5015677a6d9615d",
+  "exitCode": 1,
+  "stdout": "PASS normal\nPlayer protocol regressions: 1/6 passed\n",
+  "stderr": "FAIL wrong-pid: Expected \"actual\" to be strictly unequal to: 0\nFAIL foreign-stream: Expected \"actual\" to be strictly unequal to: 0\nFAIL no-stop-ack: Expected \"actual\" to be strictly unequal to: 0\nFAIL invalid-jpeg: Expected \"actual\" to be strictly unequal to: 0\nFAIL malformed-status: Expected \"actual\" to be strictly unequal to: 0\n"
+}

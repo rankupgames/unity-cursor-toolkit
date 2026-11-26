@@ -1,0 +1,77 @@
+{
+  "case": "absent",
+  "editorVersion": "6000.3.9f1",
+  "testFramework": null,
+  "sourceHashes": [
+    {
+      "file": "Editor/MCP/Tests/TestRunnerTool.cs",
+      "sha256": "48a79c46ad8bb2df7fac324f604dec4ea799461479de402f892253b9cf0309f0"
+    },
+    {
+      "file": "Editor/TestRunnerIntegration/TestRunnerAdapter.cs",
+      "sha256": "4ec071a3a978d5fb9b5c44dd7fb117f3bda0e80340a9d402723fe5cf6d10bbd8"
+    },
+    {
+      "file": "Editor/TestRunnerIntegration/UnityCursorToolkit.TestRunnerIntegration.Editor.asmdef",
+      "sha256": "2101ab9b22e43bb7fa3e44472f84e3379eb5a83c6342bba16395851b6ccd1dff"
+    }
+  ],
+  "passed": true,
+  "cases": [
+    {
+      "name": "missing-framework",
+      "result": {
+        "success": false,
+        "workStopped": true,
+        "backend": "bridge",
+        "runId": "062ceac100f00d5105addb3def1d6e41",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "editorPid": 40488,
+        "mode": "EditMode",
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "test_framework_unavailable",
+          "message": "The optional com.unity.test-framework integration is not loaded. No dependency was installed.",
+          "recovery": "Check the selected Editor, backend and request."
+        }
+      }
+    }
+  ],
+  "ready": {
+    "pid": 40488,
+    "port": 50742,
+    "version": "6000.3.9f1",
+    "coreLibrary": "mscorlib",
+    "isMono": true
+  },
+  "capabilities": {
+    "success": true,
+    "available": false,
+    "supportsCancellation": false,
+    "backend": "bridge",
+    "editorVersion": "6000.3.9f1",
+    "projectPath": "<fixture>",
+    "editorPid": 40488,
+    "modes": []
+  },
+  "exit": {
+    "code": 0,
+    "signal": null
+  },
+  "remainingOwnedProcesses": [],
+  "normalEditorExit": true,
+  "rawOwnerTokenLoggingObserved": true,
+  "capturedArtifactsRedacted": true,
+  "rawOwnerTokenValueCount": 1
+}

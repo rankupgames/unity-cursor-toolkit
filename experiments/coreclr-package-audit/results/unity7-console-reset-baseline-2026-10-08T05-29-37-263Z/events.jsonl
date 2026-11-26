@@ -1,0 +1,24 @@
+{"utc":"2026-10-08T05:29:24.9613300Z","callback":"OnCodeInitializing","pid":37036,"generation":"bc1be7b09a54454f81a8d228b8decf9f","stage":0}
+{"utc":"2026-10-08T05:29:26.0453558Z","callback":"proofPortSelected","pid":37036,"generation":"bc1be7b09a54454f81a8d228b8decf9f","stage":0,"port":57348}
+{"utc":"2026-10-08T05:29:26.0487575Z","callback":"run","pid":37036,"generation":"bc1be7b09a54454f81a8d228b8decf9f","stage":0,"unityVersion":"7000.0.0a7","coreLibrary":"System.Private.CoreLib"}
+{"utc":"2026-10-08T05:29:26.3759981Z","callback":"networkVerified","pid":37036,"generation":"bc1be7b09a54454f81a8d228b8decf9f","stage":0,"revision":0,"port":57348,"handler":"4afa5f4f28304ed1912b3649a12be13f","packageMvid":"18412de4-dfd6-4990-9275-576577e1b7da"}
+{"utc":"2026-10-08T05:29:26.3892845Z","callback":"requestRevision","pid":37036,"generation":"bc1be7b09a54454f81a8d228b8decf9f","stage":1,"revision":1}
+{"utc":"2026-10-08T05:29:27.7757373Z","callback":"OnCodeUnloading","pid":37036,"generation":"bc1be7b09a54454f81a8d228b8decf9f","stage":1}
+{"utc":"2026-10-08T05:29:29.7358410Z","callback":"OnCodeInitializing","pid":37036,"generation":"74f20913841c41aabee4b7cb6baff34f","stage":1}
+{"utc":"2026-10-08T05:29:30.5544469Z","callback":"networkVerified","pid":37036,"generation":"74f20913841c41aabee4b7cb6baff34f","stage":1,"revision":1,"port":57348,"handler":"4d96f86777604171912f92f997934863","packageMvid":"18412de4-dfd6-4990-9275-576577e1b7da"}
+{"utc":"2026-10-08T05:29:30.5561072Z","callback":"sessionResetVerified","pid":37036,"generation":"74f20913841c41aabee4b7cb6baff34f","stage":1,"profilerSession":"editor_20261008_052930_216","consoleMarkerCount":1}
+{"utc":"2026-10-08T05:29:30.5572602Z","callback":"captureReleased","pid":37036,"generation":"74f20913841c41aabee4b7cb6baff34f","stage":1}
+{"utc":"2026-10-08T05:29:30.5667317Z","callback":"requestRevision","pid":37036,"generation":"74f20913841c41aabee4b7cb6baff34f","stage":2,"revision":2}
+{"utc":"2026-10-08T05:29:31.4161846Z","callback":"OnCodeUnloading","pid":37036,"generation":"74f20913841c41aabee4b7cb6baff34f","stage":2}
+{"utc":"2026-10-08T05:29:33.1272194Z","callback":"OnCodeInitializing","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":2}
+{"utc":"2026-10-08T05:29:33.8393545Z","callback":"networkVerified","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":2,"revision":2,"port":57348,"handler":"e8df878485ce43db99829026fd4ce3c5","packageMvid":"18412de4-dfd6-4990-9275-576577e1b7da"}
+{"utc":"2026-10-08T05:29:33.8410830Z","callback":"sessionResetVerified","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":2,"profilerSession":"editor_20261008_052933_561","consoleMarkerCount":1}
+{"utc":"2026-10-08T05:29:33.8424821Z","callback":"captureReleased","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":2}
+{"utc":"2026-10-08T05:29:33.8731842Z","callback":"viewportContinued","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":3,"frames":1,"pixelValidityChecked":false}
+{"utc":"2026-10-08T05:29:34.1238862Z","callback":"sessionResetVerified","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":4,"profilerSession":"play_20261008_052934_090","consoleMarkerCount":1}
+{"utc":"2026-10-08T05:29:34.1244102Z","callback":"captureReleased","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":4}
+{"utc":"2026-10-08T05:29:34.1246767Z","callback":"viewportContinued","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":4,"frames":2,"pixelValidityChecked":false}
+{"utc":"2026-10-08T05:29:34.3568650Z","callback":"failure","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":5,"error":"System.InvalidOperationException: Console log subscription duplicated or missing: count=0\n   at ProductionLifecycleProbe.Require(Boolean value, String message) in <disposable-project>\\Assets\\Editor\\ProductionLifecycleProbe.cs:line 68\n   at ProductionLifecycleProbe.CheckReset() in <disposable-project>\\Assets\\Editor\\ProductionLifecycleProbe.cs:line 125\n   at ProductionLifecycleProbe.Pump() in <disposable-project>\\Assets\\Editor\\ProductionLifecycleProbe.cs:line 223"}
+{"utc":"2026-10-08T05:29:34.4624710Z","callback":"editorQuitting","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":5}
+{"utc":"2026-10-08T05:29:34.6088038Z","callback":"shutdownWorkers","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":5,"stopped":true}
+{"utc":"2026-10-08T05:29:34.6090907Z","callback":"OnCodeUnloading","pid":37036,"generation":"4bbcfa982c9646d0aa5b4a677a511652","stage":5}

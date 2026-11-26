@@ -1,9 +1,9 @@
 # CoreCLR package API inventory
 
-Frozen: 2026-10-07. Source task: [GitHub #26](https://github.com/rankupgames/unity-cursor-toolkit/issues/26).
+Frozen: 2026-10-07, package source at [`f1a4c2ab5d972ac6288a572ac1c907671e1c3bb7`](https://github.com/rankupgames/unity-cursor-toolkit/commit/f1a4c2ab5d972ac6288a572ac1c907671e1c3bb7) after PR #84 integration. Source task: [GitHub #26](https://github.com/rankupgames/unity-cursor-toolkit/issues/26).
 
 Reference Editor: **6000.3.9f1**, revision **7a9955a4f2fa**, from `CursorUnityTool/ProjectSettings/ProjectVersion.txt`.
-This is a source audit. No CoreCLR Editor was run. This inventory does not establish Unity 7 or CoreCLR toolkit support.
+The frozen baseline is a source audit; no CoreCLR Editor was run at that freeze. Follow-up runtime observations are recorded below and do not establish general Unity 7 toolkit support.
 
 ## Scope and counts
 
@@ -19,10 +19,10 @@ The scan includes source in inactive preprocessor branches. It does not inspect 
 | Copy | Owner | Exact-term raw matches | Additional assembly location reads | Comment matches | Executable sites | Files with executable sites |
 | --- | --- | ---: | ---: | ---: | ---: | ---: |
 | Root | First-party | 12 | 1 | 0 | 13 | 6 |
-| Root | Vendored Unterm | 16 | 2 | 1 | 17 | 9 |
+| Root | Vendored Unterm | 16 | 2 | 2 | 16 | 8 |
 | Sample | First-party | 12 | 1 | 0 | 13 | 6 |
-| Sample | Vendored Unterm | 16 | 2 | 1 | 17 | 9 |
-| Both | Total | 56 | 6 | 2 | 60 | 30 |
+| Sample | Vendored Unterm | 16 | 2 | 2 | 16 | 8 |
+| Both | Total | 56 | 6 | 4 | 58 | 28 |
 
 Exact grep terms: `DomainUnload`, `AppDomain.`, `Assembly.Load`, `Assembly.Location`, `ManagedDebugger`, `AssemblyReloadEvents`.
 Both copies have zero matches for `DomainUnload` and `ManagedDebugger`.
@@ -69,7 +69,8 @@ The planned runtime gates and capability errors remain separate work in [#29](ht
 
 ## Vendored Unterm sites
 
-17 executable sites in 9 files per copy. All listed files are under `Editor/ThirdParty/Unity-Unterm/` in both package roots.
+16 executable sites in 8 files per copy. All listed files are under `Editor/ThirdParty/Unity-Unterm/` in both package roots.
+PR #84 removed the external editor registration's assembly location read; it now resolves the containing package manifest from the assembly definition.
 
 | File relative to package root | Root line | Sample line | Matched API or expression | Risk class | Replacement | Owner behavior |
 | --- | ---: | ---: | --- | --- | --- | --- |
@@ -83,7 +84,6 @@ The planned runtime gates and capability errors remain separate work in [#29](ht
 | `Editor/ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs` | 117 | 117 | `AppDomain.CurrentDomain.GetAssemblies()` | Deprecated | E | Find the `netstandard` assembly. |
 | `Editor/ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs` | 119 | 119 | `ns.Location` (`Assembly.Location`) | Behavior change | P | The empty-path guard skips the `netstandard` reference. |
 | `Editor/ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs` | 120 | 120 | `ns.Location` (`Assembly.Location`) | Behavior change | P | Read the `netstandard` metadata path after the guard. |
-| `Editor/ThirdParty/Unity-Unterm/UntermExternalCodeEditor.cs` | 78 | 78 | `typeof(UntermExternalCodeEditor).Assembly.Location` | Behavior change | P | An empty path can fail static editor registration. |
 | `Editor/ThirdParty/Unity-Unterm/UntermMcpServer.cs` | 861 | 861 | `AppDomain.CurrentDomain.GetAssemblies()` | Deprecated | E | Resolve component types for MCP tools. |
 | `Editor/ThirdParty/Unity-Unterm/UntermSignatureWorker.cs` | 36 | 36 | `AssemblyReloadEvents.beforeAssemblyReload +=` | Behavior change | L | Stop the signature thread and dispose its signal. |
 | `Editor/ThirdParty/Unity-Unterm/UntermToolGroup.cs` | 102 | 102 | `AppDomain.CurrentDomain.GetAssemblies()` | Deprecated | E | Resolve component types. |
@@ -96,6 +96,7 @@ The planned runtime gates and capability errors remain separate work in [#29](ht
 | File relative to package root | Root line | Sample line | Match | Reason |
 | --- | ---: | ---: | --- | --- |
 | `Editor/ThirdParty/Unity-Unterm/UntermExecuteCodeTools.cs` | 19 | 19 | `Assembly.Load` | XML comment describing the call at line 75. No separate execution site. |
+| `Editor/ThirdParty/Unity-Unterm/UntermExternalCodeEditor.cs` | 72 | 72 | `Assembly.Location` | Comment describing the eliminated assembly path read. No execution site. |
 | `Editor/ProfilerSnapshot.cs` | 30 | 30 | `FilePathAttribute.Location.ProjectFolder` | Supplemental `.Location` match refers to a Unity attribute enum, not an assembly path. |
 
 ## Repeat the scan
@@ -127,8 +128,8 @@ Recheck the official sources and API availability for the selected Editor.
 Update the freeze date, reference Editor, tables, and counts together.
 Do not infer runtime support from matching package copies or documented API availability.
 
-Freeze verification: the exact-term command returned 56 lines. The supplemental command returned 12 lines, including two non-assembly enum matches.
-The tables match all 60 executable sites across both copies. `diff -rq` returned no package differences after the sample sync.
+Freeze verification: the exact-term command returned 56 lines, including four comment matches. The supplemental command returned 12 lines, including two comment matches and two non-assembly enum matches.
+The tables match all 58 executable sites across both copies. `diff -rq` returned no package differences after the sample sync.
 
 ## Source references checked on 2026-10-07
 
@@ -147,3 +148,35 @@ No runtime gate is selected by this inventory. Confirm availability and lifecycl
 [load-path]: https://docs.unity3d.com/6000.5/Documentation/ScriptReference/Assemblies.CurrentAssemblies.LoadFromPath.html
 [path]: https://docs.unity.com/en-us/engine/6000.5/script-reference/unityengine/assemblyextension/getloadedassemblypath
 [coreclr]: https://docs.unity.com/en-us/engine/6000.7/manual/programming-environment/scripting-backends/coreclr
+
+## Follow-up lifecycle sites, 2026-10-08
+
+The table above preserves the original frozen source inventory. Current canonical
+sites after RUG-517/518 are below; sample synchronization is validated separately.
+Unity 7 uses the exact observed Unity.Scripting.LifecycleManagement attributes.
+The guide's earlier BeforeCodeUnloading name is absent in the installed 7000.0.0a7
+metadata. Older Editors keep AssemblyReloadEvents behind the opposite guard.
+
+| Owner file | Older-Editor before/after lines | Unity 7 unload/initialize attribute lines |
+| --- | --- | --- |
+| Editor/HotReloadHandler.cs | 136 / 137 | 505 / 535 |
+| Editor/ConsoleToCursor.cs | 80 / 81 | 102 / 86 |
+| Editor/ProfilerSnapshot.cs | 175-176, 429 / 151 | 418 / 156 |
+| Editor/MCP/MCPBridge.cs | 37 / 38 | 45 / 72 |
+| Editor/MCP/EditorWindowViewportCapture.cs | 42 / none | 420 / 36 |
+| Editor/MCP/ViewportStreamTool.cs | 42 / none | 55 / 36 |
+
+The standalone [ordered observation](unity7-lifecycle-2026-10-08T04-57-52-040Z/observation.json)
+and [production package observation](unity7-package-lifecycle-2026-10-08T05-27-37-571Z/observation.json)
+record the actual callback sequence and guarded cleanup on Windows x64.
+The production probe changes only a separate Assets handler; its package MVID
+remains unchanged over two recompiles. Recreated coordinator static state is
+recorded, not treated as proof of selective assembly retention. Normal shutdown,
+manual Stop, console/profiler reset and capture disposal passed. Viewport frame
+delivery passed; correct pixel content remains outside this proof.
+
+## Render fixture correction, 2026-10-08
+
+Unity 7 removed the Built-in Render Pipeline ([Unity announcement](https://discussions.unity.com/t/the-path-to-a-single-render-pipeline-in-unity-7/1737908)). The first empty fixture had no supported render pipeline and produced black frames. The [fresh URP observation](unity7-urp-smoke-2026-10-08T05-58-37-071Z/observation.json) passed the existing full internal smoke on 7000.0.0a7 (581996e1a8f7), Windows x64, with normal exit 0. The installed Editor template supplies the settings and exact URP 17.7.0 pin; its SHA-256 is recorded. The [captured frame](unity7-urp-smoke-2026-10-08T05-58-37-071Z/viewport.jpg) shows the blue cube, orange sphere, and floor. No capture implementation changed.
+
+Reproduce with `run-render-smoke.js --unity <Unity.exe> --version 7000.0.0a7 --template <bundled-urp-template.tgz>`. This creates and removes an owned temporary project after normal exit. The smoke selects an available local TCP port because the host excludes the default bridge port range; default-port connectivity is not proven. This exact alpha observation does not establish general Unity 7 readiness or complete the separate vendor audit.

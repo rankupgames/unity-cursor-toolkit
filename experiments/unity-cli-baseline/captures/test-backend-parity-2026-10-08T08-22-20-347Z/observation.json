@@ -1,0 +1,99 @@
+{
+  "passed": false,
+  "observedAt": "2026-10-08T08:22:20.348Z",
+  "editorVersion": "6000.3.9f1",
+  "bridgeCapture": "bridge-present-2026-10-08T08-19-44-038Z",
+  "cases": [
+    {
+      "name": "skipped-mapping",
+      "elapsedMs": 15078,
+      "matched": false,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Skipped"
+        ],
+        "testStatus": "skipped"
+      },
+      "cli": {
+        "success": false,
+        "backend": "cli",
+        "runId": "cli-3d8b4eead719f5c7b625f6436ee63fe9",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "invalid_results",
+          "message": "Unity CLI did not produce a complete consistent NUnit report.",
+          "recovery": "Inspect the Editor and report; no partial result is treated as success."
+        }
+      },
+      "editorsRemaining": []
+    },
+    {
+      "name": "inconclusive-mapping",
+      "elapsedMs": 13996,
+      "matched": false,
+      "bridge": {
+        "status": "completed",
+        "selection": [
+          "BridgeProof.Scope.Arithmetic.Inconclusive"
+        ],
+        "testStatus": "inconclusive"
+      },
+      "cli": {
+        "success": false,
+        "backend": "cli",
+        "runId": "cli-e9cb891d73f772968ce2381fa6e000a4",
+        "status": "error",
+        "editorVersion": "6000.3.9f1",
+        "mode": "EditMode",
+        "selection": [],
+        "tests": [],
+        "summary": {
+          "total": 0,
+          "passed": 0,
+          "failed": 0,
+          "skipped": 0,
+          "inconclusive": 0,
+          "notRun": 0,
+          "durationMs": 0
+        },
+        "error": {
+          "code": "invalid_results",
+          "message": "Unity CLI did not produce a complete consistent NUnit report.",
+          "recovery": "Inspect the Editor and report; no partial result is treated as success."
+        }
+      },
+      "editorsRemaining": []
+    }
+  ],
+  "fixtureRemoved": false,
+  "sources": [
+    {
+      "file": "unityCliTestAdapter.ts",
+      "sha256": "4a2b243c7e59ca272f4a7792c409a4ae79a178f419df7d1dd935da29828ff0c2"
+    },
+    {
+      "file": "unityTestTypes.ts",
+      "sha256": "2070c9e8e9b1b8879fcd4056c551fb2e4acb2698a26fd1915f88e82a757ffbbc"
+    },
+    {
+      "file": "unityTestPrivacy.ts",
+      "sha256": "4918e4cc4265c47b5600e60aebdacc0559eb7706089834797e665226f8e229b9"
+    }
+  ],
+  "editorsRemaining": [],
+  "fixtureRetained": true
+}
