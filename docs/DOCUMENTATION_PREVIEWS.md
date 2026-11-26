@@ -74,7 +74,7 @@ Remove the project copy, update the package pin and add `UCT_DOCUMENTATION` in t
 
 ## Validation
 
-Use the existing Jenkins admission route for builds and tests. The optional `UnityCursorToolkit.Documentation.Editor.Tests` assembly uses the existing Unity Test Framework when installed. It is excluded unless `UCT_DOCUMENTATION` is enabled. It covers parser errors, bounds, path traversal and source lookup from the installed package.
+Run builds and tests locally with the supported Unity Editor. The optional `UnityCursorToolkit.Documentation.Editor.Tests` assembly uses the existing Unity Test Framework when installed. It is excluded unless `UCT_DOCUMENTATION` is enabled. It covers parser errors, bounds, path traversal and source lookup from the installed package.
 
 Check both module states in an isolated project:
 

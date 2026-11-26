@@ -6,8 +6,12 @@ on:
   pull_request:
     branches: [main, 'Version-*']
   schedule:
-    - cron: '0 11 * * 5'  # Friday 6am EST -- weekly build
+    - cron: '0 11 * * 5'  # Friday 11:00 UTC
   workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
 
 jobs:
   check-changes:
@@ -67,6 +71,10 @@ jobs:
         run: |
           npm install -g npm@11.14.1
           npm --version
+
+      - name: Lint workflows
+        working-directory: .
+        run: npx --yes github-actionlint@1.7.12 .github/workflows/ci.yml .github/workflows/release.yml .github/workflows/unity-unterm-vendor.yml
 
       - name: Stamp version
         run: |
