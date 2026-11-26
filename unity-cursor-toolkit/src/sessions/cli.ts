@@ -47,7 +47,7 @@ const sessionRule = shape({
 	frameTimings: array(shape(fields(['cpuFrameTimeMs', 'gpuFrameTimeMs', 'cpuMainThreadFrameTimeMs', 'cpuRenderThreadFrameTimeMs', 'cpuMainThreadPresentWaitTimeMs'], finite))),
 	hotFrames: array(shape({ frameIndex: count, threadName: text, cpuFrameTimeMs: finite, gpuFrameTimeMs: finite })),
 	hotPaths: array(shape({ name: text, path: text, framesSeen: count, ...fields(['totalTimeMs', 'selfTimeMs', 'maxTimeMs', 'gcBytes', 'calls'], finite) }))
-});
+}, { loadedScenes: array(shape({ name: text, path: text, isActive: boolean })) });
 const transcriptRule = shape({ sessionId: nonempty, startedUtc: timestamp, capturedUtc: timestamp, transcriptPath: text,
 	trimmed: boolean, entryCount: count, groupCount: count, errorGroupCount: count,
 	entries: array(shape({ index: count, key: nonempty, type: logType, timestampUtc: timestamp, elapsedMs: finite })),

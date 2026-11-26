@@ -14,7 +14,8 @@ const id = 'fixture-session', stamp = '2000-01-01T00:00:00.0000000Z';
 const sessionFile = path.join(saved, id + '.json');
 const transcriptFile = path.join(saved, id + '.console.json');
 const session = {
-	id, mode: 'play', startedUtc: stamp, capturedUtc: stamp, unityVersion: 'fixture-version', activeScene: '',
+	id, mode: 'play', startedUtc: stamp, capturedUtc: stamp, unityVersion: 'fixture-version', activeScene: 'Assets/Scenes/Main.unity',
+	loadedScenes: [{ name: 'Main', path: 'Assets/Scenes/Main.unity', isActive: true }, { name: 'Untitled', path: '', isActive: false }],
 	bottleneck: 'unknown', sessionPath: 'historical/path/session.json', consoleTranscriptPath: 'historical/path/transcript.json',
 	consoleEntryCount: 1, consoleErrorGroupCount: 1, consoleTrimmed: false, isPlaying: true, isPaused: false, isCompiling: false,
 	frameBufferLength: 300, hierarchyEnabled: true, deepProfiling: false, frameTimingStatsEnabled: false,
@@ -72,8 +73,11 @@ test('read returns the stored contract without Unity, VS Code, or resolving hist
 	assert.deepStrictEqual(JSON.parse(result.stdout), { success: true, session });
 	assert.strictEqual(run('read', '--project', project, '--id', id).stdout, result.stdout);
 });
-test('compact captures without optional raw counter arrays remain readable', () => {
-	const compact = clone(session); delete compact.metrics[0].values; write(sessionFile, compact);
+test('older compact captures without loaded scenes or raw counter arrays remain readable', () => {
+	const compact = clone(session);
+	delete compact.loadedScenes;
+	delete compact.metrics[0].values;
+	write(sessionFile, compact);
 	const result = invoke('read', '--id', id);
 	assert.strictEqual(result.status, 0, result.stderr);
 	assert.deepStrictEqual(JSON.parse(result.stdout).session, compact); reset();
@@ -111,7 +115,8 @@ for (const [name, mutate] of [
 	['invalid timestamp', value => { value.capturedUtc = 'fixture-private-marker'; }],
 	['backwards time', value => { value.startedUtc = '2000-01-02T00:00:00.000Z'; }],
 	['negative count', value => { value.consoleEntryCount = -1; }], ['overflow', value => { value.frameBufferLength = 2147483648; }],
-	['nested type', value => { value.metrics[0].avg = null; }], ['wrong mode', value => { value.mode = 'player'; }]
+	['nested type', value => { value.metrics[0].avg = null; }],
+	['invalid loaded scene', value => { value.loadedScenes[0].isActive = 'true'; }], ['wrong mode', value => { value.mode = 'player'; }]
 ]) {
 	test('read rejects ' + name, () => {
 		const invalid = clone(session); mutate(invalid); write(sessionFile, invalid);
@@ -120,7 +125,7 @@ for (const [name, mutate] of [
 }
 for (const source of ['', '{"private":"fixture-private-marker"', '[]', JSON.stringify(session).replace('"mode":"play"', '"mode":"editor","mode":"play"'),
 	JSON.stringify(session).replace('"avg":1', '"avg":0,"a\\u0076g":1'),
-	Buffer.from(JSON.stringify(session).replace('"activeScene":""', '"activeScene":"\xff"'), 'latin1')]) {
+	Buffer.from(JSON.stringify({ ...session, activeScene: '\xff' }), 'latin1')]) {
 	test('read rejects malformed or duplicate JSON', () => {
 		fs.writeFileSync(sessionFile, source); failure(invoke('read', '--id', id), 'invalid_artifact'); reset();
 	});
