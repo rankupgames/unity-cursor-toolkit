@@ -266,9 +266,10 @@ then confirm that exact PID is foreground. It never replays a command.
 `editor_validation` with `action: "recover"` opens a bounded recovery episode. The
 monitor permits at most two focus attempts and stops on compiler errors, project/process
 mismatch or its deadline. Read-only servers do not foreground applications.
-`compileSucceeded` requires the matching request, compiler diagnostics and a fresh
-post-reload main-thread observation. Sync-only completion and a responsive Editor do
-not prove compilation.
+Saved compiler diagnostics for the active request can report progress while the
+bridge is stalled. `compileSucceeded` requires the matching request, compiler
+diagnostics and a fresh post-reload main-thread observation. Sync-only completion
+and a responsive Editor do not prove compilation.
 
 For an explicit operational focus on Node24:
 

@@ -29,6 +29,7 @@ export class EditorRecoveryMonitor {
  private readonly now: () => number;
  private statusValue: RecoveryStatus = { state: 'idle', pending: false, success: false, compileSucceeded: false, focusAttempts: 0, bridgeRecovered: false };
  private started = 0;
+ private requestedAt: number | undefined;
  private lastResponse = 0;
  private lastFocusAt = 0;
  private editorPid: number | undefined;
@@ -43,11 +44,15 @@ export class EditorRecoveryMonitor {
  public recover(reason = 'explicit_recovery', requestId?: string): RecoveryStatus {
   if (this.disposed) return this.status;
   if (!this.options.projectRoot) return { ...this.status, state: 'project_required', reason: 'Select UNITY_CURSOR_TOOLKIT_PROJECT_PATH before recovery.' };
-  if (!this.statusValue.pending) {
-   this.started = this.now(); this.lastResponse = this.started; this.lastFocusAt = 0;
-   this.statusValue = { state: 'waiting', pending: true, success: false, compileSucceeded: false, bridgeRecovered: false, focusAttempts: 0, requestId, reason };
-  }
+  if (!this.statusValue.pending) this.startRecovery(reason, requestId);
   this.schedule(); return this.status;
+ }
+ private startRecovery(reason: string, requestId?: string, requestedAt?: number): void {
+  this.started = this.now();
+  this.lastResponse = this.started;
+  this.lastFocusAt = 0;
+  this.requestedAt = requestedAt;
+  this.statusValue = { state: 'waiting', pending: true, success: false, compileSucceeded: false, bridgeRecovered: false, focusAttempts: 0, requestId, reason };
  }
  public observe(tool: string, payload: Record<string, unknown>): void {
   if (this.disposed) return;
@@ -56,13 +61,34 @@ export class EditorRecoveryMonitor {
    if (typeof payload.editorPid === 'number') this.editorPid = payload.editorPid;
   }
   this.lastResponse = this.now();
-  if (tool === 'editor_validation' && payload.pending === true) {
-   this.recover('compile_pending', typeof payload.requestId === 'string' ? payload.requestId : undefined);
+  if (tool === 'editor_validation' && payload.pending === true && this.matchesProject(payload.projectPath)) {
+   const requestId = typeof payload.requestId === 'string' && payload.requestId ? payload.requestId : undefined;
+   const startsNewRequest = requestId != null && requestId !== this.statusValue.requestId;
+   const observedPid = typeof payload.editorPid === 'number' && Number.isSafeInteger(payload.editorPid) &&
+    payload.editorPid > 0 ? payload.editorPid : undefined;
+   if (this.editorPid != null && observedPid !== this.editorPid && (!startsNewRequest || observedPid == null)) return;
+   if (requestId) {
+    const parsed = typeof payload.requestedUtc === 'string' ? Date.parse(payload.requestedUtc) : NaN;
+    const requestedAt = Number.isFinite(parsed) && parsed <= this.now() ? parsed : undefined;
+    if (startsNewRequest) {
+     if (this.requestedAt != null && (requestedAt == null || requestedAt <= this.requestedAt)) return;
+     this.startRecovery('compile_pending', requestId, requestedAt);
+    } else {
+     if (!this.statusValue.pending) return;
+     this.requestedAt ??= requestedAt;
+    }
+   }
+   if (observedPid != null) this.editorPid = observedPid;
+   this.recover('compile_pending', requestId);
   }
  }
  public poll(): Promise<RecoveryStatus> {
   if (this.inFlight) return this.inFlight;
-  this.inFlight = this.pollCurrent().catch(error => { if (!this.disposed) this.finish('failed', error instanceof Error ? error.message : 'Recovery probe failed.'); return this.status; }).finally(() => { this.inFlight = undefined; });
+  const episode = this.statusValue;
+  this.inFlight = this.pollCurrent(episode).catch(error => {
+   if (this.isActive(episode)) this.finish('failed', error instanceof Error ? error.message : 'Recovery probe failed.');
+   return this.status;
+  }).finally(() => { this.inFlight = undefined; });
   return this.inFlight;
  }
  public dispose(): void {
@@ -73,19 +99,30 @@ export class EditorRecoveryMonitor {
   this.timer = setTimeout(() => { this.timer = undefined; void this.poll().then(() => this.schedule()); }, 1000);
   this.timer.unref();
  }
- private async pollCurrent(): Promise<RecoveryStatus> {
-  if (this.disposed || !this.statusValue.pending) return this.status;
+ private isActive(episode: RecoveryStatus): boolean {
+  return !this.disposed && episode === this.statusValue && episode.pending;
+ }
+ private async pollCurrent(episode: RecoveryStatus): Promise<RecoveryStatus> {
+  if (!this.isActive(episode)) return this.status;
   const now = this.now();
   if (now - this.started >= 60000) { this.finish('inconclusive', 'Recovery deadline elapsed; no command was replayed.'); return this.status; }
   const recorded = this.readValidation();
-  const fresh = recorded && this.matchesProject(recorded.projectPath) &&
-   (this.editorPid == null || recorded.editorPid === this.editorPid) &&
-   typeof recorded.capturedUtc === 'string' && Date.parse(recorded.capturedUtc) >= this.started;
-  if (fresh && (recorded.status === 'failed' || Number(recorded.errorCount) > 0)) {
-   this.finish('compile_failed', 'Compiler errors require repair; foreground recovery is stopped.'); return this.status;
+  const requestId = this.statusValue.requestId;
+  if (recorded && this.matchesProject(recorded.projectPath) &&
+      (this.editorPid == null || recorded.editorPid === this.editorPid) &&
+      (!requestId || recorded.requestId === requestId) &&
+      typeof recorded.capturedUtc === 'string' && Date.parse(recorded.capturedUtc) >= (this.requestedAt ?? this.started)) {
+   if (recorded.status === 'failed' || Number(recorded.errorCount) > 0) {
+    this.finish('compile_failed', 'Compiler errors stopped foreground recovery.'); return this.status;
+   }
+   if (requestId && recorded.compilationStarted === true && recorded.compilationFinished === true &&
+       recorded.diagnosticsComplete === true && recorded.errorCount === 0) {
+    this.statusValue.state = 'waiting_for_main_thread';
+    this.statusValue.reason = 'Saved compiler diagnostics are complete. Waiting for the Editor to confirm this request.';
+   }
   }
   const response = await this.sender.request('mcpToolCall', { toolName: 'project_info', args: {} });
-  if (this.disposed) return this.status;
+  if (!this.isActive(episode)) return this.status;
   const info = this.payload(response);
   if (info) {
    if (!this.matchesProject(info.projectPath) || (this.editorPid != null && typeof info.editorPid === 'number' && info.editorPid !== this.editorPid)) {
@@ -95,7 +132,7 @@ export class EditorRecoveryMonitor {
    this.lastResponse = this.now(); this.statusValue.bridgeRecovered = true;
    if (!this.statusValue.requestId) { this.finish('recovered', 'A fresh selected-project main-thread response was received; compile success is not implied.'); return this.status; }
    const validation = this.payload(await this.sender.request('mcpToolCall', { toolName: 'editor_validation', args: { action: 'status' } }));
-   if (this.disposed) return this.status;
+   if (!this.isActive(episode)) return this.status;
    if (validation && this.matchesProject(validation.projectPath) && validation.requestId === this.statusValue.requestId) {
     if (validation.status === 'failed' || Number(validation.errorCount) > 0) this.finish('compile_failed');
     else if (validation.pending !== true && validation.compileSucceeded === true && validation.success === true) {
@@ -108,7 +145,7 @@ export class EditorRecoveryMonitor {
       (this.statusValue.focusAttempts === 0 || this.now() - this.lastFocusAt >= 10000) && this.options.focusEditor) {
    this.statusValue.focusAttempts++; this.lastFocusAt = this.now();
    const focus = await this.options.focusEditor(this.options.projectRoot as string, this.editorPid);
-   if (this.disposed) return this.status;
+   if (!this.isActive(episode)) return this.status;
    this.statusValue.lastFocus = focus;
    if (focus.pid != null) this.editorPid = focus.pid;
    if (['mismatch', 'ambiguous', 'unsupported', 'not_running', 'not_foreground'].includes(focus.state)) this.finish(focus.state, focus.reason);
