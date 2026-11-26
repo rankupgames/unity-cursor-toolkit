@@ -191,6 +191,9 @@ namespace UnityCursorToolkit.MCP
 				return false;
 			}
 
+			error = GetUnsavedEditorError();
+			if (!string.IsNullOrEmpty(error)) return false;
+
 			bool hasUntitledDirtyScene;
 			List<string> dirtyScenes = GetDirtySceneIdentifiers(out hasUntitledDirtyScene);
 			if (hasUntitledDirtyScene)
@@ -217,6 +220,9 @@ namespace UnityCursorToolkit.MCP
 				error = "Unity still reports unsaved scene changes after the save attempt. The editor will remain open.";
 				return false;
 			}
+
+			error = GetUnsavedEditorError();
+			if (!string.IsNullOrEmpty(error)) return false;
 
 			List<string> remainingDirtyAssets = GetDirtyAssetPaths();
 			if (remainingDirtyAssets.Count > 0)
@@ -255,7 +261,7 @@ namespace UnityCursorToolkit.MCP
 		}
 
 		/// <summary>
-		/// Finds loaded persistent project assets whose dirty flags remain set.
+		/// Finds unsaved project assets and importer settings, excluding only known generated representations.
 		/// </summary>
 		private static List<string> GetDirtyAssetPaths()
 		{
@@ -263,17 +269,49 @@ namespace UnityCursorToolkit.MCP
 			Object[] loadedObjects = Resources.FindObjectsOfTypeAll<Object>();
 			foreach (Object loadedObject in loadedObjects)
 			{
-				if (loadedObject == null || EditorUtility.IsPersistent(loadedObject) == false || EditorUtility.IsDirty(loadedObject) == false)
+				if (loadedObject == null || EditorUtility.IsDirty(loadedObject) == false ||
+					(EditorUtility.IsPersistent(loadedObject) == false && !(loadedObject is AssetImporter)))
 					continue;
 
-				string path = AssetDatabase.GetAssetPath(loadedObject);
-				if (IsWritableProjectAssetPath(path))
+				string path = loadedObject is AssetImporter importer ? importer.assetPath : AssetDatabase.GetAssetPath(loadedObject);
+				if (IsWritableProjectAssetPath(path) && !IsGeneratedForeignAssetObject(loadedObject, path))
 					paths.Add(path);
 			}
 
 			var sortedPaths = new List<string>(paths);
 			sortedPaths.Sort(StringComparer.Ordinal);
 			return sortedPaths;
+		}
+
+		// Only exempt known importer-generated objects when both unsaved UI APIs are available.
+		// Older Editors retain the original strict dirty-object classification.
+		private static bool IsGeneratedForeignAssetObject(Object value, string path)
+		{
+#if UNITY_2022_3_OR_NEWER
+			if (!AssetDatabase.IsForeignAsset(value)) return false;
+			if (value is Shader || value is Font) return true;
+			return value is Texture2D && AssetDatabase.IsSubAsset(value) && AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(Font);
+#else
+			return false;
+#endif
+		}
+
+		private static string GetUnsavedEditorError()
+		{
+#if UNITY_2022_3_OR_NEWER
+			var unsaved = new List<string>();
+			foreach (var window in Resources.FindObjectsOfTypeAll<EditorWindow>())
+				if (window != null && window.hasUnsavedChanges) unsaved.Add("Window: " + window.titleContent.text);
+			foreach (var editor in Resources.FindObjectsOfTypeAll<Editor>())
+				if (editor != null && editor.hasUnsavedChanges) unsaved.Add("Inspector: " + editor.GetType().Name);
+			if (unsaved.Count > 0)
+			{
+				unsaved.Sort(StringComparer.Ordinal);
+				return "An Inspector or Editor window has unsaved changes. Automated saving and shutdown are blocked. Save or discard this work through Unity: "
+					+ string.Join(", ", unsaved.GetRange(0, Math.Min(unsaved.Count, MaxReportedDirtyPaths)));
+			}
+#endif
+			return string.Empty;
 		}
 
 		/// <summary>

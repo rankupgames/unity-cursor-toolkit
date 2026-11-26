@@ -1,3 +1,8 @@
 # Auto detect text files and perform LF normalization
 * text=auto
-ci/jenkins/*.sh text eol=lf
+
+# Preserve reviewed vendor hashes on every checkout platform.
+Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/** -text
+CursorUnityTool/Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/** -text
+"Packages/com.rankupgames.unity-cursor-toolkit/Third Party Notices.md" -text
+"CursorUnityTool/Packages/com.rankupgames.unity-cursor-toolkit/Third Party Notices.md" -text

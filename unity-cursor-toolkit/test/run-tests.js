@@ -534,28 +534,9 @@ function testCapabilityMatrix() {
 		assert.strictEqual(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix.json'), 'utf8').replace(/\r\n/g, '\n'), JSON.stringify(matrix, null, 2) + '\n');
 		assert.strictEqual(fs.readFileSync(path.join(root, 'docs/CAPABILITY_MATRIX.md'), 'utf8').replace(/\r\n/g, '\n'), renderMarkdown(matrix));
 		const workflow = fs.readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8').replace(/\r\n/g, '\n');
-		assert.ok(workflow.includes('matrix: \${{ fromJSON(needs.check-changes.outputs.capability_matrix) }}'), 'CI does not consume the generated capability matrix');
-		assert.ok(workflow.includes('needs: [check-changes, capability-definitions]'), 'Build must require capability definition validation');
-		const body = name => workflow.slice(workflow.indexOf('- name: ' + name)).match(/node <<'NODE'\n([\s\S]*?)\n\s+NODE/)[1];
-		const producer = body('Export capability CI matrix'), consumer = body('Validate capability candidate definition');
-		const run = (code, output, fixture = config) => {
-			let exported, reported;
-			const fakeFs = {
-				readFileSync: file => file.endsWith('ProjectInfoProvider.cs') ? source : JSON.stringify(file.endsWith('capability-matrix-input.json') ? fixture : output),
-				appendFileSync: (_file, value) => { exported = value; }
-			};
-			new Function('require', 'process', 'console', code)(id => id === 'fs' ? fakeFs : id.includes('generate-capability-matrix') ? require('../scripts/generate-capability-matrix') : require(id),
-				{ env: { GITHUB_OUTPUT: 'fixture-output', CAPABILITY_CANDIDATE: JSON.stringify(matrix.ci.include[0]) } }, { log: value => { reported = JSON.parse(value); } });
-			return { exported, reported };
-		};
-		assert.deepStrictEqual(JSON.parse(run(producer, matrix).exported.trim().slice('capability_matrix='.length)), matrix.ci);
-		assert.strictEqual(run(consumer, matrix).reported.nativeExecution, 'untested');
-		for (const mutate of [output => output.rows.pop(), output => output.ci.include.shift()]) {
-			const stale = JSON.parse(JSON.stringify(matrix)); mutate(stale);
-			assert.throws(() => run(consumer, stale));
-		}
-		const missingEvidence = JSON.parse(JSON.stringify(config)); delete missingEvidence.observations[0].evidence;
-		assert.throws(() => run(consumer, matrix, missingEvidence));
+		const manifest = JSON.parse(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/package.json'), 'utf8'));
+		assert.match(workflow, /run: npm run validate\s/);
+		assert.match(manifest.scripts.validate, /node scripts\/generate-capability-matrix\.js --check(?:\s|$)/);
 	});
 	test('local compatibility import requires exact identity, all checks, runtime and normal owned exits', () => {
 		const config = { bands: ['Mono', 'Core'], ci: { include: [
@@ -2556,6 +2537,12 @@ function testUnityProfilerSafetySource() {
 		assert.ok(disposeForViewSource.includes('resources.Dispose();'), 'stale render textures must be destroyed immediately');
 	});
 
+	test('bridge listens on loopback and batch runs skip automatic start', () => {
+		assert.ok(!hotReloadSource.includes('IPAddress.Any'), 'bridge listeners must not bind every interface');
+		assert.strictEqual(hotReloadSource.split('new TcpListener(IPAddress.Loopback,').length - 1, 3);
+		assert.ok(hotReloadSource.includes('SessionState.SetBool(sessionRunningKey, !Application.isBatchMode);'));
+	});
+
 	test('refresh handling avoids duplicate compilation and bounds queued message bytes', () => {
 		assert.ok(hotReloadSource.includes('private const int MAX_QUEUED_MESSAGE_CHARACTERS = 4 * 1024 * 1024;'));
 		assert.ok(hotReloadSource.includes('EnqueueMessage(line);'));
@@ -3190,6 +3177,76 @@ async function testUnityMcpTools() {
 
 async function testStandaloneMcpServer() {
 	console.log('\n── mcp/server.ts (standalone stdio) ──');
+
+	await testAsync('standalone bridge skips listeners without a toolkit pong and keeps data after the handshake', async () => {
+		const { StandaloneUnityConnection } = require(path.join(outDir, 'mcp', 'standaloneConnection'));
+		const replyOnPing = reply => net.createServer((socket) => socket.once('data', () => socket.write(reply)));
+		const malformed = replyOnPing('Unity debugger listener\n');
+		const wrongCommand = replyOnPing('{"command":"hello"}\n');
+		const partialThenSilent = replyOnPing('{"command":"po');
+		const bridge = net.createServer((socket) => socket.once('data', () => {
+			socket.write('{"command":"po');
+			setTimeout(() => socket.write('ng"}\n{"command":"consoleEntry","message":"after pong"}\n'), 20);
+		}));
+		const servers = [malformed, wrongCommand, partialThenSilent, bridge];
+		const ports = [];
+		for (const server of servers) {
+			ports.push(await listenOnLocalhost(server));
+		}
+		const connection = new StandaloneUnityConnection(ports);
+
+		try {
+			const received = new Promise(resolve => connection.onMessage(resolve));
+			connection.send('noop');
+			const message = await received;
+			assert.strictEqual(connection.port, ports[3]);
+			assert.strictEqual(message.command, 'consoleEntry');
+			assert.strictEqual(message.payload.message, 'after pong');
+		} finally {
+			connection.dispose();
+			for (const server of servers) {
+				await closeServer(server);
+			}
+		}
+	});
+
+	await testAsync('standalone bridge requires pong and matching project before dispatch', async () => {
+		const { StandaloneUnityConnection } = require(path.join(outDir, 'mcp', 'standaloneConnection'));
+		const projectPath = path.resolve('fixture', '游戏');
+		const reached = [];
+		const createBridge = (pong, reportedProject) => net.createServer(socket => {
+			socket.setEncoding('utf8');
+			let buffer = '';
+			socket.on('data', chunk => {
+				buffer += chunk;
+				const lines = buffer.split('\n');
+				buffer = lines.pop();
+				for (const line of lines) {
+					const message = JSON.parse(line);
+					if (message.command === 'ping') {
+						socket.write(JSON.stringify({ command: pong }) + '\n');
+					} else if (message.toolName === 'project_info') {
+						socket.write(JSON.stringify({ command: 'mcpToolResult', _requestId: message._requestId, result: JSON.stringify({ projectPath: reportedProject }) }) + '\n');
+					} else {
+						reached.push(reportedProject);
+						socket.write(JSON.stringify({ command: 'fixtureResult', _requestId: message._requestId }) + '\n');
+					}
+				}
+			});
+		});
+		const servers = [createBridge('hello', projectPath), createBridge('pong', projectPath + '-other'), createBridge('pong', projectPath)];
+		const ports = [];
+		for (const server of servers) ports.push(await listenOnLocalhost(server));
+		const connection = new StandaloneUnityConnection(ports, projectPath);
+		try {
+			assert.strictEqual((await connection.request('fixtureOperation'))?.command, 'fixtureResult');
+			assert.strictEqual(connection.port, ports[2]);
+			assert.deepStrictEqual(reached, [projectPath]);
+		} finally {
+			connection.dispose();
+			for (const server of servers) await closeServer(server);
+		}
+	});
 
 	await testAsync('stdio server initializes and lists tools, resources, and prompts', async () => {
 		const closedPort = await getUnusedPort();

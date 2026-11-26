@@ -156,7 +156,7 @@ APIs present in Unity 2019.4. Actual 2019.4 runtime proof remains pending.
 5. When the compact grouped console timeline is needed, call `profiler_snapshot` with `action: "readConsoleTranscript"` and the captured session id.
 6. Call `manage_scene` with `action: "getHierarchy"` before any scene edit.
 7. Call `game_command` with `action: "list"` before scheduling a project-owned command.
-8. After generated C# or project-file changes, preview `editor_validation` with `action: "sync_and_compile"` and `dryRun: true`, then run it and poll `action: "status"` until `pending` is false.
+8. After generated C# or project-file changes, preview `editor_validation` with `action: "sync_and_compile"` and `dryRun: true`, then run it and poll `action: "status"` until `pending` is false. Require `compileSucceeded` on the matching request; sync-only or a no-start timeout is not compile proof.
 9. Use `dryRun: true` for the first mutating call.
 10. Execute the real mutating call only after the user has approved the intended change.
 11. Before closing or restarting a user editor, exit Play Mode, call `editor_lifecycle` with `action: "status"`, preview `action: "saveAndQuit"` with `dryRun: true`, then run it and wait for Unity's normal process exit.
@@ -230,6 +230,14 @@ These prompts are intentionally conservative: inspect first, summarize state, th
 - Package Manager tools: list packages, inspect versions, and propose dependency changes with dry-run output.
 - CoreCLR and Unity 7 work is tracked in `docs/ROADMAP.md` and GitHub issues; do not
   present open issues as available tools.
+
+For a silent bridge during an active request, the standalone server has bounded exact-project recovery. Use `editor_validation` action `recover` to open an explicit episode; do not replay the failed mutation. A foreground Editor still needs a fresh main-thread response.
+
+For requested gameplay testing, arm `session_monitor` before Play and subscribe to
+its events. At session end, read the summary, profiler/console artifacts and relevant
+snapshots. Keep native Console/stack matches labeled candidates, inspect truncation
+and timing metadata, and never infer the missing field or throwing instance solely
+from a type name. See `docs/PLAY_SESSIONS.md`.
 
 ### Scene object IDs
 

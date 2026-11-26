@@ -7,8 +7,9 @@
  * Company: Rank Up Games LLC
  */
 
-import type { IToolProvider, ICommandSender, ToolDefinition, ToolResult } from '../core/interfaces';
+import type { IToolProvider, ICommandSender, ToolCallContext, ToolDefinition, ToolResult } from '../core/interfaces';
 import { buildBatchmodeCommandPlan, runBatchmodeGameCommand, shouldUseEditorBatchmode } from './gameCommandBatchmode';
+import type { EditorRecoveryMonitor } from './editorRecoveryMonitor';
 import { getToolAnnotations, isDryRun, isMutatingToolCall, withDryRunProperty } from './toolMetadata';
 import { resolveProjectRoot } from './standaloneProjectTools';
 
@@ -18,7 +19,7 @@ export class UnityMcpTools implements IToolProvider {
 
 	private readonly commandSender: ICommandSender;
 
-	constructor(commandSender: ICommandSender, private readonly projectRoot: () => string | undefined = resolveProjectRoot) {
+	constructor(commandSender: ICommandSender, private readonly projectRoot: () => string | undefined = resolveProjectRoot, private readonly recovery?: EditorRecoveryMonitor) {
 		this.commandSender = commandSender;
 	}
 
@@ -197,7 +198,7 @@ export class UnityMcpTools implements IToolProvider {
 					properties: withDryRunProperty({
 						action: {
 							type: 'string',
-							enum: ['list', 'status', 'sync_project_files', 'request_compile', 'sync_and_compile'],
+							enum: ['list', 'status', 'sync_project_files', 'request_compile', 'sync_and_compile', 'recover'],
 							description: 'Editor validation action. Defaults to sync_and_compile.'
 						}
 					})
@@ -288,7 +289,7 @@ export class UnityMcpTools implements IToolProvider {
 		];
 	}
 
-	public async handleToolCall(name: string, args: Record<string, unknown>): Promise<ToolResult> {
+	public async handleToolCall(name: string, args: Record<string, unknown>, context?: ToolCallContext): Promise<ToolResult> {
 		if (name.startsWith('toolkit.')) { name = name.slice('toolkit.'.length); }
 		if (['test_runner', 'list_tests', 'run_tests'].includes(name)) {
 			return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
@@ -309,17 +310,23 @@ export class UnityMcpTools implements IToolProvider {
 		}
 
 		if (name === 'batch_execute') {
-			return this.handleBatchExecute(args);
+			return this.handleBatchExecute(args, context);
 		}
 
-		if (!this.getTools().some(tool => tool.name === name)) {
+		// SessionMonitorTools advertises this tool and relays its Editor-owned actions here.
+		if (name !== 'session_monitor' && !this.getTools().some(tool => tool.name === name)) {
 			return { content: [{ type: 'text', text: JSON.stringify({ success: false, error: {
 				code: 'unknown_tool', message: 'Unknown toolkit batch tool: ' + name
 			} }) }], isError: true };
 		}
+
+		if (name === 'editor_validation' && args.action === 'recover' && args.dryRun !== true && this.recovery) {
+			return { content: [{ type: 'text', text: JSON.stringify(this.recovery.recover()) }] };
+		}
+
 		const unityArgs = UnityMcpTools.normalizeToolArgs(name, args);
 		if (name === 'game_command' && shouldUseEditorBatchmode(unityArgs)) {
-			return this.handleEditorBatchmodeGameCommand(args, unityArgs);
+			return this.handleEditorBatchmodeGameCommand(args, unityArgs, context?.signal);
 		}
 
 		if (isDryRun(args) && isMutatingToolCall(name, args)) {
@@ -329,6 +336,7 @@ export class UnityMcpTools implements IToolProvider {
 		const result = await this.commandSender.request('mcpToolCall', { toolName: name, args: unityArgs });
 
 		if (result == null) {
+			this.recovery?.recover('unity_timeout');
 			return {
 				content: [{ type: 'text', text: `Unity did not respond. Is the project connected and the MCPBridge installed?` }],
 				isError: true
@@ -336,15 +344,24 @@ export class UnityMcpTools implements IToolProvider {
 		}
 
 		const resultPayload = result.result;
+		const observed = UnityMcpTools.parseResult(resultPayload ?? result);
+		if (observed) this.recovery?.observe(name, observed);
 		const resultText = typeof resultPayload === 'string'
 			? resultPayload
 			: JSON.stringify(resultPayload ?? result);
-		const isError = result.error === true || UnityMcpTools.isUnityErrorResult(resultPayload);
+		const isError = result.error === true || UnityMcpTools.isUnityErrorResult(observed);
 
 		return {
 			content: [{ type: 'text', text: resultText }],
 			isError
 		};
+	}
+
+	private static parseResult(value: unknown): Record<string, unknown> | undefined {
+		if (typeof value === 'string') {
+			try { value = JSON.parse(value) as unknown; } catch { return undefined; }
+		}
+		return value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : undefined;
 	}
 
 	private static isUnityErrorResult(result: unknown): boolean {
@@ -538,7 +555,7 @@ export class UnityMcpTools implements IToolProvider {
 		return lastDot > 0 ? fileName.slice(0, lastDot) : fileName;
 	}
 
-	private async handleBatchExecute(args: Record<string, unknown>): Promise<ToolResult> {
+	private async handleBatchExecute(args: Record<string, unknown>, context?: ToolCallContext): Promise<ToolResult> {
 		const operations = args.operations as Array<{ tool: string; args: Record<string, unknown> }>;
 		if (!Array.isArray(operations) || operations.length === 0) {
 			return { content: [{ type: 'text', text: 'No operations provided.' }], isError: true };
@@ -572,7 +589,7 @@ export class UnityMcpTools implements IToolProvider {
 
 		for (let i = 0; i < operations.length; i++) {
 			const op = operations[i];
-			const result = await this.handleToolCall(op.tool, op.args);
+			const result = await this.handleToolCall(op.tool, op.args, context);
 
 			if (result.isError) {
 				results.push(`[${i + 1}/${operations.length}] ${op.tool}: FAILED - ${result.content[0]?.text}`);
@@ -586,7 +603,7 @@ export class UnityMcpTools implements IToolProvider {
 		return { content: [{ type: 'text', text: results.join('\n') }] };
 	}
 
-	private async handleEditorBatchmodeGameCommand(originalArgs: Record<string, unknown>, unityArgs: Record<string, unknown>): Promise<ToolResult> {
+	private async handleEditorBatchmodeGameCommand(originalArgs: Record<string, unknown>, unityArgs: Record<string, unknown>, signal?: AbortSignal): Promise<ToolResult> {
 		const action = typeof unityArgs.action === 'string' ? unityArgs.action : 'list';
 		if (action !== 'list' && action !== 'run') {
 			return {
@@ -611,7 +628,7 @@ export class UnityMcpTools implements IToolProvider {
 				};
 			}
 
-			const result = await runBatchmodeGameCommand(unityArgs);
+			const result = await runBatchmodeGameCommand(unityArgs, signal);
 			return {
 				content: [{ type: 'text', text: JSON.stringify(result, null, 2) }],
 				isError: result.success === false
