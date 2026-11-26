@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using UnityEngine;
 using UnityEditor;
 using UnityCursorToolkit;
@@ -150,6 +151,7 @@ namespace UnityCursorToolkit.MCP
 				else
 				{
 					result = handler.HandleCommand(argsJson ?? "{}");
+					if (result != null) result = CompactTransportJson(result);
 				}
 			}
 			catch (Exception ex)
@@ -163,6 +165,40 @@ namespace UnityCursorToolkit.MCP
 				string payload = "{\"command\":\"mcpToolResult\",\"tool\":\"" + EscapeJson(toolName) + "\"" + requestPart + ",\"result\":" + result + "}";
 				HotReloadHandler.BroadcastToClients(payload);
 			}
+		}
+
+		// TCP consumers use one JSON value per line. Handler-owned raw result JSON may be pretty printed.
+		private static string CompactTransportJson(string json)
+		{
+			var compact = new StringBuilder(json.Length);
+			bool quoted = false;
+			bool escaped = false;
+			for (int i = 0; i < json.Length; i++)
+			{
+				char character = json[i];
+				if (quoted)
+				{
+					if (character < 0x20) throw new FormatException("transport_json_invalid: an unescaped control character occurs inside a JSON string.");
+					compact.Append(character);
+					if (escaped) escaped = false;
+					else if (character == '\\') escaped = true;
+					else if (character == '"') quoted = false;
+				}
+				else
+				{
+					if (character == ' ' || character == '\t' || character == '\r' || character == '\n')
+					{
+						// Keep a token separator: deleting it could turn malformed `1 2` into accepted `12`.
+						if (compact.Length > 0 && compact[compact.Length - 1] != ' ') compact.Append(' ');
+						continue;
+					}
+					if (character < 0x20) throw new FormatException("transport_json_invalid: an invalid JSON control character occurs outside a string.");
+					compact.Append(character);
+					if (character == '"') quoted = true;
+				}
+			}
+			if (quoted || compact.Length == 0) throw new FormatException("transport_json_invalid: empty JSON or an unterminated string.");
+			return compact.ToString();
 		}
 
 		private static string BuildErrorJson(string message)

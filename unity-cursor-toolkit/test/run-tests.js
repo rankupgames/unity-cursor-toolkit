@@ -3205,6 +3205,44 @@ async function testStandaloneMcpServer() {
 		}
 	});
 
+	await testAsync('standalone bridge requires pong and matching project before dispatch', async () => {
+		const { StandaloneUnityConnection } = require(path.join(outDir, 'mcp', 'standaloneConnection'));
+		const projectPath = path.resolve('fixture', '游戏');
+		const reached = [];
+		const createBridge = (pong, reportedProject) => net.createServer(socket => {
+			socket.setEncoding('utf8');
+			let buffer = '';
+			socket.on('data', chunk => {
+				buffer += chunk;
+				const lines = buffer.split('\n');
+				buffer = lines.pop();
+				for (const line of lines) {
+					const message = JSON.parse(line);
+					if (message.command === 'ping') {
+						socket.write(JSON.stringify({ command: pong }) + '\n');
+					} else if (message.toolName === 'project_info') {
+						socket.write(JSON.stringify({ command: 'mcpToolResult', _requestId: message._requestId, result: JSON.stringify({ projectPath: reportedProject }) }) + '\n');
+					} else {
+						reached.push(reportedProject);
+						socket.write(JSON.stringify({ command: 'fixtureResult', _requestId: message._requestId }) + '\n');
+					}
+				}
+			});
+		});
+		const servers = [createBridge('hello', projectPath), createBridge('pong', projectPath + '-other'), createBridge('pong', projectPath)];
+		const ports = [];
+		for (const server of servers) ports.push(await listenOnLocalhost(server));
+		const connection = new StandaloneUnityConnection(ports, projectPath);
+		try {
+			assert.strictEqual((await connection.request('fixtureOperation'))?.command, 'fixtureResult');
+			assert.strictEqual(connection.port, ports[2]);
+			assert.deepStrictEqual(reached, [projectPath]);
+		} finally {
+			connection.dispose();
+			for (const server of servers) await closeServer(server);
+		}
+	});
+
 	await testAsync('stdio server initializes and lists tools, resources, and prompts', async () => {
 		const closedPort = await getUnusedPort();
 		const server = startMcpServer({

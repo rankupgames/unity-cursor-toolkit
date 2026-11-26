@@ -253,6 +253,39 @@ The server resolves Unity from `UNITY_CURSOR_TOOLKIT_UNITY_PATH`, the `unityPath
 
 When rebuilding the extension from source, install with `npm ci`. Dependency updates should use npm 11.14.1 or newer with `--min-release-age=7`; security fixes for packages younger than 7 days need explicit hotfix approval before changing the lockfile.
 
+## Editor recovery
+
+Set `UNITY_CURSOR_TOOLKIT_PROJECT_PATH` to the selected Unity project. The standalone
+MCP process monitors an active compile request or a failed Editor response independently
+of Unity's main thread. After verifying the selected project's existing lock owner
+and executable, it sets that exact PID's `frontmost` state through macOS System Events.
+It does not open an application bundle or launch an Editor. This requires the host's
+Automation and Accessibility permissions. A fresh read-only `osascript` process must
+then confirm that exact PID is foreground. It never replays a command.
+
+`editor_validation` with `action: "recover"` opens a bounded recovery episode. The
+monitor permits at most two focus attempts and stops on compiler errors, project/process
+mismatch or its deadline. Read-only servers do not foreground applications.
+`compileSucceeded` requires the matching request, compiler diagnostics and a fresh
+post-reload main-thread observation. Sync-only completion and a responsive Editor do
+not prove compilation.
+
+For an explicit operational focus on Node24:
+
+```bash
+npm run unity:focus -- --project /path/to/UnityProject
+```
+
+The command reports `activated` only after verifying the foreground process. Other
+results remain explicit; activation alone is not compile or bridge proof.
+
+## Play sessions
+
+Use `session_monitor` to opt in to start/error/end snapshots and read object/component
+evidence. The selected-project journal supports event-driven standby notifications
+and the `unity://sessions/events` resource. See [Play session evidence](PLAY_SESSIONS.md)
+for capture timing, attribution limits, budgets and subscription commands.
+
 ### Scene object IDs
 
 Unity 7 and newer return opaque `entityId` strings from scene hierarchy and GameObject create/find calls, and `componentEntityId` from component creation. Pass `entityId` to GameObject/component actions and `parentEntityId` to setParent. Keep these strings unchanged; do not convert them to JavaScript numbers.

@@ -2,349 +2,382 @@
 // Author: Miguel A. Lopez
 // Company: Rank Up Games LLC
 // Project: Unity Cursor Toolkit
-// Description: Hidden runtime coroutine runner for MCP-scheduled game commands.
+// Description: Main-thread command hosts with explicit nested-iterator ownership.
 // Created: 2026-05-28
-// Last Modified: 2026-05-28
+// Last Modified: 2026-11-06
 // =============================================================================
 
 using System;
 using System.Collections;
 using System.Collections.Generic;
-
 using UnityEngine;
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 
 namespace UnityCursorToolkit.AgentCommands
 {
-	/// <summary>
-	/// Schedules registered commands on Unity's main thread and retains status for MCP polling.
-	/// </summary>
+	/// <summary>Owns every entered command iterator until completion or cancellation.</summary>
 	public sealed class AgentCommandRunner : MonoBehaviour
 	{
-		/// <summary>
-		/// Hidden singleton runner created on demand during play mode.
-		/// </summary>
-		private static AgentCommandRunner instance;
-
-		/// <summary>
-		/// Monotonic suffix used to keep run ids stable and readable.
-		/// </summary>
-		private static int nextRunNumber;
-
-		/// <summary>
-		/// Maximum number of retained command runs kept available for status polling.
-		/// </summary>
 		private const int MaximumRetainedRuns = 128;
-
-		/// <summary>
-		/// Active and completed command runs retained for status polling.
-		/// </summary>
-		private readonly Dictionary<string, AgentCommandRunState> runs = new Dictionary<string, AgentCommandRunState>(StringComparer.Ordinal);
-
-		/// <summary>
-		/// Run ids in schedule order so completed snapshots can be pruned deterministically.
-		/// </summary>
+		private const int MaximumActiveRuns = 16;
+		private const int MaximumIteratorDepth = 128;
+		private const int MaximumImmediateAdvances = 1024;
+		private const double MaximumRunSeconds = 300;
+		private static AgentCommandRunner instance;
+		private static int nextRunNumber;
+		private readonly Dictionary<string, RunState> runs = new Dictionary<string, RunState>(StringComparer.Ordinal);
 		private readonly List<string> runOrder = new List<string>();
+		private int activeCount;
+		private bool shuttingDown;
+		private bool ticking;
 
-		/// <summary>
-		/// Schedules a registered command and returns the initial run status.
-		/// </summary>
-		/// <param name="commandName">Registered command name selected by MCP.</param>
-		/// <param name="argsJson">Raw JSON arguments forwarded to the game command.</param>
-		/// <returns>Status snapshot for the scheduled or rejected command.</returns>
+		/// <summary>Cancellation unwinds entered nested iterators before returning.</summary>
+		public static bool SupportsDeterministicCancellation => true;
+
+#if UNITY_EDITOR
+		static AgentCommandRunner()
+		{
+			AssemblyReloadEvents.beforeAssemblyReload += CancelBeforeReload;
+			EditorApplication.playModeStateChanged += OnPlayModeChanged;
+			EditorApplication.quitting += CancelBeforeReload;
+		}
+
+		private static void CancelBeforeReload()
+		{
+			if (instance)
+			{
+				var owner = instance;
+				owner.CancelAll("command_host_reloading: the Editor command host is stopping.");
+				DestroyImmediate(owner.gameObject);
+			}
+		}
+
+		private static void OnPlayModeChanged(PlayModeStateChange change)
+		{
+			if (change == PlayModeStateChange.ExitingPlayMode && instance)
+				instance.CancelAll("command_play_mode_ended: Play Mode is ending.");
+		}
+#endif
+
+		/// <summary>Schedules Play commands, or executes editor.* commands synchronously in idle Edit Mode.</summary>
 		public static AgentCommandRunSnapshot Run(string commandName, string argsJson)
 		{
 			AgentCommandDescriptor descriptor;
 			AgentCommandHandler handler;
-			if (AgentCommandRegistry.TryGet(commandName, out descriptor, out handler) == false)
-			{
+			if (!AgentCommandRegistry.TryGet(commandName, out descriptor, out handler))
 				return AgentCommandRunSnapshot.Rejected(commandName, "Unknown game command: " + commandName);
-			}
-
-			if (Application.isPlaying == false)
+			if (!descriptor.RequiresPlayMode)
 			{
-				return AgentCommandRunSnapshot.Rejected(commandName, "Game commands require Unity play mode: " + commandName);
+#if UNITY_EDITOR
+				return EditorHost.Run(commandName, argsJson, handler);
+#else
+				return AgentCommandRunSnapshot.Rejected(commandName, "editor_command_unavailable: editor.* commands do not run in a player.");
+#endif
 			}
-
-				AgentCommandRunner runner = GetOrCreate();
-				AgentCommandRunState state = new AgentCommandRunState(CreateRunId(commandName), commandName, handler, new AgentCommandContext(commandName, argsJson));
-				runner.runs[state.RunId] = state;
-				runner.runOrder.Add(state.RunId);
-				runner.TrimRetainedRuns();
-				state.Coroutine = runner.StartCoroutine(runner.ExecuteCommand(state));
-				return state.ToSnapshot();
+			if (!Application.isPlaying)
+				return AgentCommandRunSnapshot.Rejected(commandName, "Game commands require Unity play mode: " + commandName);
+			if (instance && (instance.shuttingDown || instance.activeCount >= MaximumActiveRuns))
+				return AgentCommandRunSnapshot.Rejected(commandName, "command_host_unavailable: the host is stopping or its active-run limit was reached.");
+			var runner = GetOrCreate();
+			var state = new RunState(CreateRunId(commandName), commandName, handler, new AgentCommandContext(commandName, argsJson), runner);
+			runner.runs.Add(state.RunId, state);
+			runner.runOrder.Add(state.RunId);
+			runner.activeCount++;
+			runner.enabled = true;
+			runner.TrimRetainedRuns();
+			var coroutine = runner.StartCoroutine(runner.Execute(state));
+			if (!state.IsTerminal) state.Coroutine = coroutine;
+			return state.Snapshot();
 		}
 
-		/// <summary>
-		/// Returns the current status for a scheduled command run.
-		/// </summary>
-		/// <param name="runId">Run id returned by the schedule call.</param>
-		/// <returns>Status snapshot, or a failed snapshot when the run is unknown.</returns>
 		public static AgentCommandRunSnapshot GetStatus(string runId)
 		{
-			AgentCommandRunState state;
-			if (TryGetState(runId, out state) == false)
-			{
-				return AgentCommandRunSnapshot.Rejected(string.Empty, "Unknown game command run: " + runId);
-			}
-
-			return state.ToSnapshot();
+			RunState state;
+			return TryGetState(runId, out state) ? state.Snapshot()
+				: AgentCommandRunSnapshot.Rejected(string.Empty, "Unknown game command run: " + runId);
 		}
 
-		/// <summary>
-		/// Cancels a running command coroutine and returns the resulting status.
-		/// </summary>
-		/// <param name="runId">Run id returned by the schedule call.</param>
-		/// <returns>Status snapshot after cancellation, or a failed snapshot when the run is unknown.</returns>
+		/// <summary>Disposes entered handlers inside-out, even when Unity does not dispose a stopped coroutine.</summary>
 		public static AgentCommandRunSnapshot Cancel(string runId)
 		{
-			AgentCommandRunState state;
-			if (TryGetState(runId, out state) == false)
-			{
+			RunState state;
+			if (!TryGetState(runId, out state))
 				return AgentCommandRunSnapshot.Rejected(string.Empty, "Unknown game command run: " + runId);
-			}
-
-			if (state.Coroutine != null && (state.Status == AgentCommandStatus.Pending || state.Status == AgentCommandStatus.Running))
+			if (!state.IsTerminal)
 			{
-				instance.StopCoroutine(state.Coroutine);
-				state.Complete(AgentCommandStatus.Canceled, AgentCommandResult.Failure("Command run canceled."));
-				instance.TrimRetainedRuns();
+				var coroutine = state.Coroutine;
+				state.Finish(AgentCommandStatus.Canceled, AgentCommandResult.Failure("Command run canceled."));
+				if (coroutine != null && instance) instance.StopCoroutine(coroutine);
+				if (instance) instance.TrimRetainedRuns();
 			}
-
-			return state.ToSnapshot();
+			return state.Snapshot();
 		}
 
-		/// <summary>
-		/// Creates or returns the hidden runner object used for command coroutines.
-		/// </summary>
-		/// <returns>Runtime command runner singleton.</returns>
+		private static bool TryGetState(string runId, out RunState state)
+		{
+			state = null;
+			if (string.IsNullOrEmpty(runId)) return false;
+			if (instance && instance.runs.TryGetValue(runId, out state)) return true;
+#if UNITY_EDITOR
+			return EditorHost.Runs.TryGetValue(runId, out state);
+#else
+			return false;
+#endif
+		}
+
 		private static AgentCommandRunner GetOrCreate()
 		{
-			if (instance != null)
-			{
-				return instance;
-			}
-
-			GameObject runnerObject = new GameObject("Unity Cursor Toolkit Agent Command Runner");
-			runnerObject.hideFlags = HideFlags.HideAndDontSave;
-			if (Application.isPlaying)
-			{
-				DontDestroyOnLoad(runnerObject);
-			}
-
-			instance = runnerObject.AddComponent<AgentCommandRunner>();
+			if (instance) return instance;
+			var owner = new GameObject("Unity Cursor Toolkit Agent Command Runner");
+			owner.hideFlags = HideFlags.HideAndDontSave;
+			DontDestroyOnLoad(owner);
+			instance = owner.AddComponent<AgentCommandRunner>();
 			return instance;
 		}
 
-		/// <summary>
-		/// Attempts to resolve a retained run by id.
-		/// </summary>
-		/// <param name="runId">Run id returned by the schedule call.</param>
-		/// <param name="state">Resolved run state when found.</param>
-		/// <returns>True when the run exists.</returns>
-		private static bool TryGetState(string runId, out AgentCommandRunState state)
-		{
-			state = null;
-			if (instance == null || string.IsNullOrEmpty(runId))
-			{
-				return false;
-			}
-
-			return instance.runs.TryGetValue(runId, out state);
-		}
-
-		/// <summary>
-		/// Builds a readable unique run id from the command name and schedule order.
-		/// </summary>
-		/// <param name="commandName">Command name associated with the run.</param>
-		/// <returns>Unique run id.</returns>
-		private static string CreateRunId(string commandName)
+		private static string CreateRunId(string name)
 		{
 			nextRunNumber++;
-			string safeName = string.IsNullOrEmpty(commandName) ? "command" : commandName.Replace(".", "_").Replace("/", "_");
-			return safeName + "_" + nextRunNumber + "_" + DateTime.UtcNow.Ticks;
+			return name.Replace(".", "_").Replace("/", "_") + "_" + nextRunNumber + "_" + DateTime.UtcNow.Ticks;
 		}
 
-		/// <summary>
-		/// Removes oldest terminal runs after the status cache grows past its retention cap.
-		/// </summary>
-		private void TrimRetainedRuns()
+		private static double Now => Time.realtimeSinceStartup;
+
+		private IEnumerator Execute(RunState state)
 		{
-			if (runs.Count <= MaximumRetainedRuns)
-			{
-				return;
-			}
-
-			for (int i = 0; i < runOrder.Count && runs.Count > MaximumRetainedRuns; i++)
-			{
-				string runId = runOrder[i];
-				AgentCommandRunState state;
-				if (runs.TryGetValue(runId, out state) == false)
-				{
-					runOrder.RemoveAt(i);
-					i--;
-					continue;
-				}
-
-				if (state.IsTerminal == false)
-				{
-					continue;
-				}
-
-				runs.Remove(runId);
-				runOrder.RemoveAt(i);
-				i--;
-			}
-		}
-
-		/// <summary>
-		/// Executes a command coroutine and converts handler completion into a retained status result.
-		/// </summary>
-		/// <param name="state">Run state being executed.</param>
-		/// <returns>Coroutine sequence that mirrors the game command handler.</returns>
-		private IEnumerator ExecuteCommand(AgentCommandRunState state)
-		{
-			state.Status = AgentCommandStatus.Running;
-			IEnumerator handlerRoutine;
 			try
 			{
-				handlerRoutine = state.Handler(state.Context);
+				object current;
+				while (state.Advance(false, out current)) yield return current;
 			}
-			catch (Exception exception)
+			finally
 			{
-				state.Complete(AgentCommandStatus.Failed, AgentCommandResult.Failure(exception.Message));
-				yield break;
+				if (!state.IsTerminal)
+					state.Finish(AgentCommandStatus.Canceled, AgentCommandResult.Failure("command_coroutine_stopped: the Unity coroutine ended before its handler."));
+				TrimRetainedRuns();
 			}
+		}
 
-			while (true)
+		// Enabled only while commands run. The realtime guard also bounds opaque Unity waits at timeScale=0.
+		private void Update()
+		{
+			ticking = true;
+			try
 			{
-				object currentYield;
+				for (int i = runOrder.Count - 1; i >= 0; i--)
+				{
+					RunState state = runs[runOrder[i]];
+					if (!state.IsTerminal && Now >= state.Deadline)
+					{
+						var coroutine = state.Coroutine;
+						state.Finish(AgentCommandStatus.Failed, AgentCommandResult.Failure("command_timeout: the realtime command deadline elapsed."));
+						if (coroutine != null) StopCoroutine(coroutine);
+					}
+				}
+			}
+			finally { ticking = false; TrimRetainedRuns(); }
+		}
+
+		private void OnEnable() { shuttingDown = false; }
+		private void OnDisable()
+		{
+			if (activeCount > 0) CancelAll("command_host_disabled: the command host was disabled.");
+		}
+		private void OnDestroy()
+		{
+			CancelAll("command_host_destroyed: the command host was destroyed.");
+			if (instance == this) instance = null;
+		}
+
+		private void CancelAll(string reason)
+		{
+			shuttingDown = true;
+			for (int i = runOrder.Count - 1; i >= 0; i--)
+			{
+				RunState state = runs[runOrder[i]];
+				if (!state.IsTerminal) state.Finish(AgentCommandStatus.Canceled, AgentCommandResult.Failure(reason));
+			}
+			StopAllCoroutines();
+		}
+
+		private void Completed()
+		{
+			activeCount--;
+			if (activeCount == 0) enabled = false;
+		}
+
+		private void TrimRetainedRuns()
+		{
+			if (!ticking && !shuttingDown) Trim(runs, runOrder);
+		}
+
+		private static void Trim(Dictionary<string, RunState> retained, List<string> order)
+		{
+			for (int i = 0; i < order.Count && retained.Count > MaximumRetainedRuns; i++)
+			{
+				if (!retained[order[i]].IsTerminal) continue;
+				retained.Remove(order[i]);
+				order.RemoveAt(i--);
+			}
+		}
+
+#if UNITY_EDITOR
+		// No Editor update callback or scene object is needed for synchronous authoring handlers.
+		private static class EditorHost
+		{
+			internal static readonly Dictionary<string, RunState> Runs = new Dictionary<string, RunState>(StringComparer.Ordinal);
+			private static readonly List<string> order = new List<string>();
+			private static int activeCount;
+
+			internal static AgentCommandRunSnapshot Run(string name, string args, AgentCommandHandler handler)
+			{
+				if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating)
+					return AgentCommandRunSnapshot.Rejected(name, "editor_not_ready: editor.* commands require idle Edit Mode.");
+				if (activeCount >= MaximumActiveRuns)
+					return AgentCommandRunSnapshot.Rejected(name, "editor_command_limit: too many nested synchronous command calls.");
+				activeCount++;
 				try
 				{
-					if (handlerRoutine == null || handlerRoutine.MoveNext() == false)
-					{
-						break;
-					}
+					var state = new RunState(CreateRunId(name), name, handler, new AgentCommandContext(name, args), null);
+					Runs.Add(state.RunId, state);
+					order.Add(state.RunId);
+					object unused;
+					state.Advance(true, out unused);
+					Trim(Runs, order);
+					return state.Snapshot();
+				}
+				finally { activeCount--; }
+			}
+		}
+#endif
 
-					currentYield = handlerRoutine.Current;
+		private sealed class RunState
+		{
+			internal readonly string RunId;
+			private readonly string commandName;
+			private AgentCommandHandler handler;
+			private readonly AgentCommandContext context;
+			private readonly AgentCommandRunner owner;
+			private readonly List<IEnumerator> stack = new List<IEnumerator>();
+			internal double Deadline;
+			internal Coroutine Coroutine;
+			private AgentCommandStatus status = AgentCommandStatus.Pending;
+			private AgentCommandResult result;
+			private bool started;
+			private bool closing;
+			internal bool IsTerminal => status == AgentCommandStatus.Succeeded || status == AgentCommandStatus.Failed || status == AgentCommandStatus.Canceled;
+
+			internal RunState(string runId, string name, AgentCommandHandler handler, AgentCommandContext context, AgentCommandRunner owner)
+			{
+				RunId = runId;
+				commandName = name;
+				this.handler = handler;
+				this.context = context;
+				this.owner = owner;
+				Deadline = Now + MaximumRunSeconds;
+			}
+
+			internal bool Advance(bool synchronous, out object yielded)
+			{
+				yielded = null;
+				if (IsTerminal || closing) return false;
+				status = AgentCommandStatus.Running;
+				// The handler and its iterators are the extension boundary. Failures must still release every entered scope.
+				try
+				{
+					if (!started)
+					{
+						started = true;
+						var root = handler(context);
+						if (root != null) stack.Add(root);
+					}
+					for (int advances = 0; advances < MaximumImmediateAdvances; advances++)
+					{
+#if UNITY_EDITOR
+						if (synchronous && (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating))
+						{
+							Finish(AgentCommandStatus.Failed, AgentCommandResult.Failure("editor_mode_changed: the handler changed the idle Edit Mode context."));
+							return false;
+						}
+#endif
+						if (Now >= Deadline)
+						{
+							Finish(AgentCommandStatus.Failed, AgentCommandResult.Failure("command_timeout: the realtime command deadline elapsed."));
+							return false;
+						}
+						if (stack.Count == 0)
+						{
+							if (!context.HasResult) context.Succeed("Command completed.");
+							Finish(context.Result.Success ? AgentCommandStatus.Succeeded : AgentCommandStatus.Failed, context.Result);
+							return false;
+						}
+						var top = stack[stack.Count - 1];
+						if (!top.MoveNext())
+						{
+							stack.RemoveAt(stack.Count - 1);
+							try { (top as IDisposable)?.Dispose(); }
+							catch (Exception exception)
+							{
+								Finish(AgentCommandStatus.Failed, AgentCommandResult.Failure("command_cleanup_failed: " + exception.ToString()));
+								return false;
+							}
+							continue;
+						}
+						if (IsTerminal || closing) return false;
+						var current = top.Current;
+						var nested = current as IEnumerator;
+						if (nested != null)
+						{
+							if (stack.Count >= MaximumIteratorDepth)
+								throw new InvalidOperationException("command_iterator_limit: nested iterator depth limit reached.");
+							for (int i = 0; i < stack.Count; i++)
+								if (ReferenceEquals(stack[i], nested)) throw new InvalidOperationException("command_iterator_limit: nested iterator cycle detected.");
+							stack.Add(nested);
+							continue;
+						}
+						if (synchronous)
+						{
+							Finish(AgentCommandStatus.Failed, AgentCommandResult.Failure("editor_command_yielded: editor.* handlers must finish synchronously without yielding a frame or Unity wait."));
+							return false;
+						}
+						yielded = current;
+						return true;
+					}
+					Finish(AgentCommandStatus.Failed, AgentCommandResult.Failure("command_iterator_limit: too many immediate iterator advances."));
 				}
 				catch (Exception exception)
 				{
-					state.Complete(AgentCommandStatus.Failed, AgentCommandResult.Failure(exception.Message));
-					yield break;
+					Finish(AgentCommandStatus.Failed, AgentCommandResult.Failure("command_handler_failed: " + exception.ToString()));
 				}
-
-				yield return currentYield;
+				return false;
 			}
 
-			if (state.Context.HasResult == false)
+			internal void Finish(AgentCommandStatus terminal, AgentCommandResult completion)
 			{
-				state.Context.Succeed("Command completed.");
-			}
-
-			AgentCommandStatus finalStatus = state.Context.Result.Success ? AgentCommandStatus.Succeeded : AgentCommandStatus.Failed;
-			state.Complete(finalStatus, state.Context.Result);
-			TrimRetainedRuns();
-		}
-
-		/// <summary>
-		/// Clears the static runner reference when Unity destroys the hidden object.
-		/// </summary>
-		private void OnDestroy()
-		{
-			if (instance == this)
-			{
-				instance = null;
-			}
-		}
-
-		/// <summary>
-		/// Mutable state retained for a scheduled command run.
-		/// </summary>
-		private sealed class AgentCommandRunState
-		{
-			/// <summary>
-			/// Unique identifier for polling or cancellation.
-			/// </summary>
-			public string RunId { get; }
-
-			/// <summary>
-			/// Registered command name selected by MCP.
-			/// </summary>
-			public string CommandName { get; }
-
-			/// <summary>
-			/// Coroutine delegate that executes the game command.
-			/// </summary>
-			public AgentCommandHandler Handler { get; private set; }
-
-			/// <summary>
-			/// Command context shared with the game-authored handler.
-			/// </summary>
-			public AgentCommandContext Context { get; }
-
-			/// <summary>
-			/// Coroutine handle used when cancellation is requested.
-			/// </summary>
-			public Coroutine Coroutine { get; set; }
-
-			/// <summary>
-			/// Current execution status.
-			/// </summary>
-			public AgentCommandStatus Status { get; set; }
-
-			/// <summary>
-			/// Completion payload once the run reaches a terminal state.
-			/// </summary>
-			public AgentCommandResult Result { get; private set; }
-
-			/// <summary>
-			/// True after the run has ended and no coroutine remains active.
-			/// </summary>
-			public bool IsTerminal
-			{
-				get
+				if (IsTerminal || closing) return;
+				closing = true;
+				string cleanupFailure = null;
+				while (stack.Count > 0)
 				{
-					return Status == AgentCommandStatus.Succeeded || Status == AgentCommandStatus.Failed || Status == AgentCommandStatus.Canceled;
+					var current = stack[stack.Count - 1];
+					stack.RemoveAt(stack.Count - 1);
+					try { (current as IDisposable)?.Dispose(); }
+					catch (Exception exception)
+					{
+						cleanupFailure = (cleanupFailure == null ? string.Empty : cleanupFailure + "; ") + exception.ToString();
+					}
 				}
-			}
-
-			/// <summary>
-			/// Creates retained state for a scheduled command.
-			/// </summary>
-			/// <param name="runId">Unique identifier for polling or cancellation.</param>
-			/// <param name="commandName">Registered command name selected by MCP.</param>
-			/// <param name="handler">Coroutine delegate that executes the game command.</param>
-			/// <param name="context">Command context shared with the game-authored handler.</param>
-			public AgentCommandRunState(string runId, string commandName, AgentCommandHandler handler, AgentCommandContext context)
-			{
-				RunId = runId;
-				CommandName = commandName;
-				Handler = handler;
-				Context = context;
-				Status = AgentCommandStatus.Pending;
-			}
-
-			/// <summary>
-			/// Moves the run into a terminal state.
-			/// </summary>
-			/// <param name="status">Terminal status to expose through polling.</param>
-			/// <param name="result">Completion payload associated with the terminal state.</param>
-			public void Complete(AgentCommandStatus status, AgentCommandResult result)
-			{
-				Status = status;
-				Result = result;
+				status = cleanupFailure == null ? terminal : AgentCommandStatus.Failed;
+				result = cleanupFailure == null ? completion : AgentCommandResult.Failure(completion.Message + " command_cleanup_failed: " + cleanupFailure);
 				Coroutine = null;
-				Handler = null;
+				handler = null;
+				closing = false;
+				if (owner) owner.Completed();
 			}
 
-			/// <summary>
-			/// Converts retained state into an immutable polling snapshot.
-			/// </summary>
-			/// <returns>Status snapshot for MCP responses.</returns>
-			public AgentCommandRunSnapshot ToSnapshot()
-			{
-				return new AgentCommandRunSnapshot(RunId, CommandName, Status, Result);
-			}
+			internal AgentCommandRunSnapshot Snapshot() => new AgentCommandRunSnapshot(RunId, commandName, status, result);
 		}
 	}
 }

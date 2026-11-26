@@ -30,6 +30,8 @@ namespace UnityCursorToolkit.InternalSmoke
 		private const string AttemptsKey = "UCT_INTERNAL_SMOKE_ATTEMPTS";
 		private const int TimeoutSeconds = 90;
 		private static int inventorySentinel = 73;
+		private static SceneView orientationView;
+		private static bool orientationMarkersPainted;
 
 		static UnityCursorToolkitInternalSmoke()
 		{
@@ -47,7 +49,7 @@ namespace UnityCursorToolkit.InternalSmoke
 			ValidateBridgeReload();
 			ValidateUntermIntegration();
 			SessionState.SetBool(RunningKey, true);
-			SessionState.SetString(PhaseKey, "enterPlay");
+			SessionState.SetString(PhaseKey, "prepareSceneOrientation");
 			SessionState.SetString(ResultPathKey, GetArg("-uctSmokeResultPath", "/tmp/uct-internal-smoke-result.json"));
 			SessionState.SetString(ViewportFramePathKey, GetArg("-uctSmokeViewportFramePath", "/tmp/uct-internal-smoke-viewport.jpg"));
 			SessionState.SetString(StartedTicksKey, DateTime.UtcNow.Ticks.ToString());
@@ -418,6 +420,14 @@ namespace UnityCursorToolkit.InternalSmoke
 
 				switch (SessionState.GetString(PhaseKey, "enterPlay"))
 				{
+					case "prepareSceneOrientation":
+						BeginSceneOrientationSmoke();
+						SessionState.SetString(PhaseKey, "verifySceneOrientation");
+						break;
+					case "verifySceneOrientation":
+						VerifySceneOrientationSmoke();
+						SessionState.SetString(PhaseKey, "enterPlay");
+						break;
 					case "enterPlay":
 						EnterPlayMode();
 						break;
@@ -482,6 +492,84 @@ namespace UnityCursorToolkit.InternalSmoke
 				SessionState.SetString(PhaseKey, "waitPlay");
 				EditorApplication.EnterPlaymode();
 			}
+		}
+
+		private static void BeginSceneOrientationSmoke()
+		{
+			if (!Application.isBatchMode || SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null)
+				throw new InvalidOperationException("SceneView orientation smoke requires its disposable batch Editor with native graphics; headless rendering is not proof.");
+			orientationView = ScriptableObject.CreateInstance<SceneView>();
+			orientationView.position = new Rect(40f, 40f, 640f, 480f);
+			SceneView.duringSceneGui += PaintOrientationMarkers;
+			orientationView.Show();
+			orientationView.Focus();
+		}
+
+		private static void PaintOrientationMarkers(SceneView view)
+		{
+			if (view != orientationView || Event.current.type != EventType.Repaint) return;
+			Handles.BeginGUI();
+			try
+			{
+				float halfHeight = view.position.height * 0.5f;
+				EditorGUI.DrawRect(new Rect(0f, 0f, view.position.width, halfHeight), Color.red);
+				EditorGUI.DrawRect(new Rect(0f, halfHeight, view.position.width, halfHeight), Color.blue);
+				orientationMarkersPainted = true;
+			}
+			finally { Handles.EndGUI(); }
+		}
+
+		private static void VerifySceneOrientationSmoke()
+		{
+			try
+			{
+				if (orientationView == null || SceneView.lastActiveSceneView != orientationView)
+					throw new InvalidOperationException("SceneView capture did not select the smoke-owned window.");
+				Type captureType = Type.GetType("UnityCursorToolkit.MCP.EditorWindowViewportCapture, UnityCursorToolkit.Editor", true);
+				Type frameType = captureType.GetNestedType("Frame", BindingFlags.NonPublic);
+				MethodInfo capture = captureType.GetMethod("TryCapture", BindingFlags.Static | BindingFlags.NonPublic, null,
+					new[] { typeof(string), typeof(int), typeof(int), typeof(int), frameType.MakeByRefType(), typeof(string).MakeByRefType() }, null);
+				Vector2Int nativeSize = Vector2Int.zero;
+				foreach (Vector2Int maximum in new[] { Vector2Int.zero, new Vector2Int(320, 240) })
+				{
+					orientationMarkersPainted = false;
+					object[] args = { "scene", 90, maximum.x, maximum.y, null, null };
+					if (!(bool)capture.Invoke(null, args))
+						throw new InvalidOperationException("SceneView capture failed: " + args[5]);
+					if (!orientationMarkersPainted)
+						throw new InvalidOperationException("SceneView capture did not repaint its synthetic orientation markers.");
+					Texture2D decoded = new Texture2D(2, 2, TextureFormat.RGB24, false);
+					try
+					{
+						if (!decoded.LoadImage((byte[])frameType.GetField("bytes").GetValue(args[4])))
+							throw new InvalidOperationException("SceneView capture did not produce a decodable JPEG.");
+						if (decoded.width != (int)frameType.GetField("width").GetValue(args[4])
+							|| decoded.height != (int)frameType.GetField("height").GetValue(args[4]))
+							throw new InvalidOperationException("SceneView JPEG dimensions differ from frame metadata.");
+						if (maximum == Vector2Int.zero) nativeSize = new Vector2Int(decoded.width, decoded.height);
+						else if (decoded.width > maximum.x || decoded.height > maximum.y
+							|| decoded.width >= nativeSize.x || decoded.height >= nativeSize.y)
+							throw new InvalidOperationException("SceneView orientation smoke did not exercise a smaller scaled readback.");
+						// LoadImage exposes bottom-left texture coordinates; JPEG consumers need red above blue.
+						Color upper = decoded.GetPixel(decoded.width / 2, decoded.height * 3 / 4);
+						Color lower = decoded.GetPixel(decoded.width / 2, decoded.height / 4);
+						if (upper.r < 0.7f || upper.b > 0.3f || lower.b < 0.7f || lower.r > 0.3f)
+							throw new InvalidOperationException("SceneView JPEG orientation is wrong: the upper red and lower blue markers were inverted or missing. Backend: " + SystemInfo.graphicsDeviceType);
+						Debug.Log("SceneView JPEG orientation verified: Editor " + Application.unityVersion + ", " + Application.platform
+							+ ", " + SystemInfo.graphicsDeviceType + ", " + decoded.width + "x" + decoded.height + ", maximum=" + maximum);
+					}
+					finally { UnityEngine.Object.DestroyImmediate(decoded); }
+				}
+			}
+			finally { CleanupSceneOrientationSmoke(); }
+		}
+
+		private static void CleanupSceneOrientationSmoke()
+		{
+			SceneView.duringSceneGui -= PaintOrientationMarkers;
+			SceneView owned = orientationView;
+			orientationView = null;
+			if (owned != null) owned.Close();
 		}
 
 		private static void EnterLivePlayMode()
@@ -892,6 +980,7 @@ namespace UnityCursorToolkit.InternalSmoke
 
 		private static void Finish(bool success, string message)
 		{
+			CleanupSceneOrientationSmoke();
 			try
 			{
 				CallMcpTool("UnityCursorToolkit.MCP.ViewportStreamTool, UnityCursorToolkit.Editor", "{\"action\":\"stop\"}");
