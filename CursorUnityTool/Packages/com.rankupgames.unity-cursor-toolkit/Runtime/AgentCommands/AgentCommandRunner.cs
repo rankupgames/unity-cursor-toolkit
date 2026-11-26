@@ -413,7 +413,7 @@ namespace UnityCursorToolkit.AgentCommands
 				if (owner) owner.Completed();
 			}
 
-			internal AgentCommandRunSnapshot Snapshot() => new AgentCommandRunSnapshot(RunId, commandName, status, result);
+			internal AgentCommandRunSnapshot Snapshot() => new AgentCommandRunSnapshot(RunId, commandName, status, result, context.Progress);
 		}
 	}
 }
