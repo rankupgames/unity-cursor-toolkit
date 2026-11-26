@@ -61,14 +61,16 @@ export class EditorRecoveryMonitor {
    if (typeof payload.editorPid === 'number') this.editorPid = payload.editorPid;
   }
   this.lastResponse = this.now();
-  if (tool === 'editor_validation' && payload.pending === true && this.matchesProject(payload.projectPath) &&
-      (this.editorPid == null || payload.editorPid === this.editorPid)) {
-   if (typeof payload.editorPid === 'number') this.editorPid = payload.editorPid;
+  if (tool === 'editor_validation' && payload.pending === true && this.matchesProject(payload.projectPath)) {
    const requestId = typeof payload.requestId === 'string' && payload.requestId ? payload.requestId : undefined;
+   const startsNewRequest = requestId != null && requestId !== this.statusValue.requestId;
+   const observedPid = typeof payload.editorPid === 'number' && Number.isSafeInteger(payload.editorPid) &&
+    payload.editorPid > 0 ? payload.editorPid : undefined;
+   if (this.editorPid != null && observedPid !== this.editorPid && (!startsNewRequest || observedPid == null)) return;
    if (requestId) {
     const parsed = typeof payload.requestedUtc === 'string' ? Date.parse(payload.requestedUtc) : NaN;
     const requestedAt = Number.isFinite(parsed) && parsed <= this.now() ? parsed : undefined;
-    if (requestId !== this.statusValue.requestId) {
+    if (startsNewRequest) {
      if (this.requestedAt != null && (requestedAt == null || requestedAt <= this.requestedAt)) return;
      this.startRecovery('compile_pending', requestId, requestedAt);
     } else {
@@ -76,6 +78,7 @@ export class EditorRecoveryMonitor {
      this.requestedAt ??= requestedAt;
     }
    }
+   if (observedPid != null) this.editorPid = observedPid;
    this.recover('compile_pending', requestId);
   }
  }

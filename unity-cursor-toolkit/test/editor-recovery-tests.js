@@ -145,15 +145,34 @@ async function main() {
   now += 1000;
   monitor.observe('editor_validation', { ...project, projectPath: root + '-other', requestId: 'foreign', pending: true });
   assert.strictEqual(monitor.status.requestId, 'a');
-  monitor.observe('editor_validation', { ...project, requestId: 'b', requestedUtc: new Date(now).toISOString(), pending: true });
+  monitor.observe('editor_validation', { ...project, editorPid: 202, requestId: 'b', requestedUtc: new Date(now).toISOString(), pending: true });
   monitor.observe('editor_validation', { ...project, requestId: 'a', requestedUtc: new Date(now - 1000).toISOString(), pending: true });
   completeOldProbe({ result: project });
   const current = await oldPoll;
   assert.strictEqual(current.requestId, 'b');
   assert.strictEqual(current.bridgeRecovered, false);
-  recorded = { ...project, requestId: 'b', capturedUtc: new Date(now).toISOString(), status: 'failed', errorCount: 1 };
+  recorded = { ...project, editorPid: 202, requestId: 'b', capturedUtc: new Date(now).toISOString(), status: 'failed', errorCount: 1 };
   assert.strictEqual((await monitor.poll()).state, 'compile_failed');
   assert.deepStrictEqual(calls, ['project_info']);
+  monitor.dispose();
+ });
+ await test('a restarted Editor owns its new compile after a saved failure', async () => {
+  let now = Date.now();
+  const restarted = { ...project, editorPid: 202 };
+  let recorded = { ...project, requestId: 'a', capturedUtc: new Date(now).toISOString(), status: 'failed', errorCount: 1 };
+  let probes = 0;
+  const monitor = new EditorRecoveryMonitor({ send() {}, request: async () => { probes++; return null; } },
+   { projectRoot: root, automatic: false, now: () => now, readValidation: () => recorded });
+  monitor.observe('editor_validation', { ...project, requestId: 'a', requestedUtc: new Date(now).toISOString(), pending: true });
+  assert.strictEqual((await monitor.poll()).state, 'compile_failed');
+  now += 1000;
+  monitor.observe('editor_validation', { ...restarted, requestId: 'b', requestedUtc: new Date(now).toISOString(), pending: true });
+  assert.strictEqual(monitor.status.requestId, 'b');
+  recorded = { ...recorded, requestId: 'b', capturedUtc: new Date(now).toISOString() };
+  assert.strictEqual((await monitor.poll()).state, 'waiting');
+  recorded = { ...recorded, editorPid: restarted.editorPid };
+  assert.strictEqual((await monitor.poll()).state, 'compile_failed');
+  assert.strictEqual(probes, 1, 'Only the stale process record needs another bridge probe');
   monitor.dispose();
  });
  await test('a late observer accepts saved diagnostics from the selected request start', async () => {
