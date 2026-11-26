@@ -199,6 +199,7 @@ namespace UnityCursorToolkit.Core
 						}
 					}
 				}
+				if (Expired(timer)) return Skip(result, timer, "time_budget");
 				if (matched != state.assemblyNames.Length) return Skip(result, timer, "assembly_identity_changed");
 				result.complete = true;
 				return Finish(result, timer);
