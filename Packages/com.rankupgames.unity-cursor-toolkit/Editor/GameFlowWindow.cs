@@ -126,7 +126,10 @@ namespace UnityCursorToolkit
 		{
 			run = AgentCommandRunner.GetStatus(runId);
 			if (string.IsNullOrEmpty(run.RunId))
+			{
 				SessionState.EraseString(RunIdKey);
+				run = null;
+			}
 		}
 
 		private void CancelRun()
