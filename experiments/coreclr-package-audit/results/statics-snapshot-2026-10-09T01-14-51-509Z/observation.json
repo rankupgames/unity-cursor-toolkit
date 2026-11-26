@@ -1,0 +1,23 @@
+{
+  "observedAt": "2026-10-09T01:14:51.509Z",
+  "consoleResetBaseline": false,
+  "fixture": "canonical package and sample Assets copy with static owner fixtures; no play transitions",
+  "pid": 24520,
+  "outcome": {
+    "code": 1,
+    "signal": null,
+    "normalExit": true,
+    "timeout": false,
+    "phase": "startup"
+  },
+  "completed": false,
+  "readinessClaim": false,
+  "events": [],
+  "passed": false,
+  "deadlines": {
+    "startupSeconds": 180,
+    "executionSeconds": 90,
+    "normalExitGraceSeconds": 15
+  },
+  "scope": "Exact sample Assets copy plus owner fixtures. Cooperative scan timing; no play-mode diff, native CI or other Editor guarantee."
+}

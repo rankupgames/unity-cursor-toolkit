@@ -58,3 +58,11 @@ The [registry regression](../experiments/unity-compatibility/results/registry-qu
 A read-only historical cleanup reassessment is available with --verify-cleanup "<report.json>" --project "<owned-TEMP-fixture>". It verifies only the compatibility preference prefix, the exact saved PID and the supplied owned TEMP fixture scope. It does not start or stop an Editor, change preferences, alter the original observation or create importable compatibility evidence.
 
 No default-port, other-platform or whole-band support claim follows from these runs.
+
+## Native CI runner setup
+
+The vendor workflow uses a repository-scoped Windows Actions runner on the approved DEV-3 host, with labels `self-hosted`, `Windows`, `dev-3` and `unity-windows-runtime`. Register it only for this repository with GitHub's supported Windows service configuration. The service uses `NT AUTHORITY\NETWORK SERVICE`; a licence available to an interactive user does not prove availability to that account. Existing Windows PowerShell runs the Windows steps.
+
+Set the `unity-ci` environment variable `UNITY_6000_3_9F1_WINDOWS_EDITOR_PATH` to the installed Editor executable. The job verifies the exact product version from the generated matrix before launch. Provision licensing for the service account through the approved Unity process; these jobs do not activate, acquire or return a licence. Missing configuration or an existing Editor session fails preflight without closing that session.
+
+Both Windows jobs share one host concurrency group with `queue: max` and `cancel-in-progress: false`. This preserves queued jobs across PRs; per-PR workflow cancellation still replaces obsolete runs. GitHub accepts this queue syntax, but actionlint 1.7.12 reports it as an unknown key. The macOS runner placement and Unity 2019.4 execution remain blocked. No passing native-CI result is implied by runner registration, and the aggregate gate still requires all configured checks to pass.

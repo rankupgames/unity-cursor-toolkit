@@ -72,6 +72,7 @@ const vscode = {
 			update: async () => {}
 		}),
 		workspaceFolders: null,
+		onDidChangeConfiguration: () => ({ dispose() {} }),
 		createFileSystemWatcher: (globPattern) => {
 			_lastCreatedWatcher = createMockFileSystemWatcher(globPattern);
 			_allCreatedWatchers.push(_lastCreatedWatcher);
@@ -532,6 +533,10 @@ function testCapabilityMatrix() {
 		const matrix = generateMatrix(advertisedCapabilities(source), config);
 		assert.strictEqual(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/capability-matrix.json'), 'utf8').replace(/\r\n/g, '\n'), JSON.stringify(matrix, null, 2) + '\n');
 		assert.strictEqual(fs.readFileSync(path.join(root, 'docs/CAPABILITY_MATRIX.md'), 'utf8').replace(/\r\n/g, '\n'), renderMarkdown(matrix));
+		const workflow = fs.readFileSync(path.join(root, '.github/workflows/ci.yml'), 'utf8').replace(/\r\n/g, '\n');
+		const manifest = JSON.parse(fs.readFileSync(path.join(root, 'unity-cursor-toolkit/package.json'), 'utf8'));
+		assert.match(workflow, /run: npm run validate\s/);
+		assert.match(manifest.scripts.validate, /node scripts\/generate-capability-matrix\.js --check(?:\s|$)/);
 	});
 	test('local compatibility import requires exact identity, all checks, runtime and normal owned exits', () => {
 		const config = { bands: ['Mono', 'Core'], ci: { include: [
@@ -3522,6 +3527,16 @@ async function testModuleLoader() {
 		assert.ok(!log.includes('bad:off'), 'Bad module never in active list');
 	});
 
+	test('static capture is owned by the Unity Editor', () => {
+		const editor = path.join(__dirname, '../../Packages/com.rankupgames.unity-cursor-toolkit/Editor');
+		const bridge = fs.readFileSync(path.join(editor, 'HotReloadHandler.cs'), 'utf8');
+		const collector = fs.readFileSync(path.join(editor, 'Core/StaticSnapshotter.cs'), 'utf8');
+		assert.ok(!bridge.includes('configureStatics'), 'TCP cannot change capture consent');
+		assert.ok(!collector.includes('BroadcastToClients'), 'Snapshots and diffs stay in the Editor');
+		const settings = JSON.parse(fs.readFileSync(path.join(__dirname, '../package.json'), 'utf8')).contributes.configuration[0].properties;
+		assert.ok(Object.keys(settings).every(key => !key.startsWith('unityCursorToolkit.statics.')));
+	});
+
 	await testAsync('disabled module is skipped (config returns false)', async () => {
 		const origGetConfig = vscode.workspace.getConfiguration;
 		vscode.workspace.getConfiguration = () => ({
@@ -3882,9 +3897,9 @@ function testStatusBarController() {
 	const { StatusBarController } = require(path.join(outDir, 'core', 'statusBarController'));
 	const { ConnectionState } = require(path.join(outDir, 'core', 'types'));
 
-	function makeController() {
+	function makeController(getRuntimeCapabilities) {
 		const ctx = createMockExtensionContext();
-		const ctrl = new StatusBarController(ctx);
+		const ctrl = new StatusBarController(ctx, getRuntimeCapabilities);
 		const connectItem = ctx.subscriptions[0];
 		const quickAccessItem = ctx.subscriptions[1];
 		return { ctrl, connectItem, quickAccessItem, cliItem: ctx.subscriptions[2] };
@@ -3911,15 +3926,37 @@ function testStatusBarController() {
 		ctrl.dispose();
 	});
 
-	test('Connected: green color, port in tooltip, stop command', () => {
-		const { ctrl, connectItem, quickAccessItem } = makeController();
-		ctrl.update(ConnectionState.Connected, 55500);
-
-		assert.ok(connectItem.text.includes('circle-filled') || connectItem.text.includes('Unity'));
-		assert.ok(connectItem.tooltip.includes('55500'));
-		assert.ok(connectItem.color instanceof vscode.ThemeColor);
-		assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.stopConnection');
-		ctrl.dispose();
+	test('Connected: shows capability-selected reload mode through compilation and clears it on reconnect', () => {
+		const { parseRuntimeCapabilities } = require(path.join(outDir, 'core', 'runtimeCapabilities'));
+		let payload;
+		const { ctrl, connectItem } = makeController(() => parseRuntimeCapabilities(payload));
+		try {
+			for (const [info, mode] of [
+				[undefined, 'Reload unavailable'],
+				[{}, 'Mono reload'],
+				[{ unityVersion: '7000.0.0a7', runtime: { isCoreCLR: false, hasDomainReload: true } }, 'Mono reload'],
+				[{ unityVersion: '6000.3.9f1', runtime: { isCoreCLR: true, hasDomainReload: false } }, 'Unity reload'],
+				[{ runtime: {} }, 'Reload unavailable'],
+				[{ runtime: { isCoreCLR: false, hasDomainReload: false } }, 'Reload unavailable']
+			]) {
+				payload = info;
+				ctrl.update(ConnectionState.Connected, 55500);
+				assert.ok(connectItem.text.includes(mode), 'Status bar omitted the active reload mode');
+				assert.ok(connectItem.tooltip.includes(mode));
+				assert.ok(connectItem.tooltip.includes('55500'));
+				assert.ok(connectItem.color instanceof vscode.ThemeColor);
+				assert.strictEqual(connectItem.command, 'unity-cursor-toolkit.stopConnection');
+				for (const success of [true, false]) {
+					ctrl.showCompilationResult(success, 1, 1);
+					assert.ok(connectItem.text.includes(mode), 'Compilation result lost the reload mode');
+				}
+				for (const state of [ConnectionState.Reconnecting, ConnectionState.Disconnected]) {
+					ctrl.update(state, null);
+					assert.ok(!connectItem.text.includes(mode));
+					assert.ok(!connectItem.tooltip.includes(mode));
+				}
+			}
+		} finally { ctrl.dispose(); }
 	});
 
 	test('Connecting: shows sync spinner, hides quick access', () => {
@@ -5274,6 +5311,23 @@ async function testUnityCliAdapter() {
 }
 
 function testCliEvidencePrivacy() {
+
+	test('native CI smoke failures keep Editor logs out of job output', () => {
+		const source = fs.readFileSync(path.join(__dirname, '../scripts/run-internal-unity-smoke.js'), 'utf8');
+		const begin = source.indexOf('function runProcess('), end = source.indexOf('function parseToolResult(', begin);
+		assert.ok(begin >= 0 && end > begin, 'Native runner owner boundary missing');
+		const probe = [
+			"const vm=require('vm'),{EventEmitter}=require('events');let childOutput='';",
+			"const context={unityLogPath:'fixture.log',tail:()=> 'fixtureSensitive',spawn:(_command,_args,options)=>{const child=new EventEmitter();if(options.stdio!=='ignore')childOutput='fixtureSensitive';process.nextTick(()=>child.emit('exit',1,null));return child;}};",
+			"vm.createContext(context);vm.runInContext(" + JSON.stringify(source.slice(begin, end)) + ",context);",
+			"context.runProcess('Unity',[]).then(()=>{throw Error('Expected failure');},error=>{process.stdout.write(JSON.stringify({message:error.message,childOutput}));});"
+		].join('\n');
+		const result = require('child_process').spawnSync(process.execPath, ['-e', probe], { encoding: 'utf8', timeout: 10000 });
+		assert.strictEqual(result.status, 0, result.stderr);
+		const output = JSON.parse(result.stdout);
+		assert.ok(output.message.includes('code=1'));
+		assert.ok(!JSON.stringify(output).includes('fixtureSensitive'), 'Raw Editor diagnostics leaked into CI output');
+	});
 	test('CLI and Pipeline captures redact identities and keep public evidence', () => {
 		const root = path.resolve(__dirname, '../../experiments/unity-cli-baseline/captures');
 		const read = file => {

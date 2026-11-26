@@ -164,6 +164,19 @@ The MCP tool `editor_validation` supports `list`, `status`, `sync_project_files`
 
 `sync_and_compile` regenerates project files using Unity's active code editor integration, requests script compilation, and writes the latest pollable result to `TestResults/UnityCursorToolkit/EditorValidation/latest.json` under the Unity project root. The same action is available inside Unity at **Tools > Unity Cursor Toolkit > Validation > Regenerate Project Files And Compile**.
 
+## Static Snapshots And Transition Diffs
+
+In Unity, open **Tools > Unity Cursor Toolkit > Static Capture**. Enter exact assembly names and select **Start capture**. Capture is off by default. Only loaded binaries compiled from sources wholly under this project's Assets folder are eligible. The window shows the latest snapshot status and the field classifications from the latest Play Mode transition. Fingerprints stay in Editor memory and serve only as comparison inputs.
+
+The field limit defaults to 1000 and the time limit defaults to 10 ms. A scan that reaches either limit discards partial entries and marks the snapshot incomplete. Time checks are cooperative because Unity and reflection calls cannot be interrupted. Assembly discovery runs once when capture starts. Capture stops and clears retained data when you select **Stop capture**, when Unity starts a new compilation, or when the Editor exits.
+
+Entries contain assembly/type/field identities and either a fingerprint or an unreadable reason. Exact scalar primitives and strings of at most 4096 characters use a fixed cheap hash; null and array element count have explicit fingerprints. Array contents are not hashed, and hashes can collide. Non-null custom objects and collections are unreadable; no custom Count, property getter, ToString or GetHashCode is called. Types with a static initializer are unreadable except literal constants, because reflection value access could execute that initializer. Open generic and thread-static fields are also unreadable. This conservative limit can hide real stale state and does not establish that unreadable fields are safe.
+
+Consecutive transition diffs use assembly/type/field identities and classify carried, reset, added, removed or unreadable, and show unreadable reasons. Reset means the fingerprint changed; it does not prove reset to a default value. A missing snapshot, skipped scan or transition-order gap produces an incomplete diff with no partial entries. Each snapshot is limited to 1000 fields and each diff to their union (at most 2000); only the latest snapshot and diff are retained.
+
+An unsaved `ScriptableSingleton` retains the bounded configuration and baseline across Mono assembly reload. It has no `FilePathAttribute`, never calls `Save()` and retains no raw value objects; see [Unity's ScriptableSingleton contract](https://docs.unity3d.com/6000.3/Documentation/ScriptReference/ScriptableSingleton_1.html). Identical reconnect configuration preserves the baseline; changed or invalid configuration and disabling clear it. Owner callbacks detach and reattach idempotently; quitting clears and destroys the in-memory state.
+
+
 ## Security Notes
 
 - The companion extension validates Unity/MCP/webview payloads before using them.

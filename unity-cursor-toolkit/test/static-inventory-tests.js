@@ -51,7 +51,7 @@ namespace UnityEngine {
 }
 namespace UnityEditor.Compilation {
 	public enum AssembliesType { Editor }
-	public class Assembly { public string name; public string[] sourceFiles; }
+	public class Assembly { public string name; public string outputPath = "Library/ScriptAssemblies/Test.dll"; public string[] sourceFiles; }
 	public static class CompilationPipeline {
 		public static Assembly[] GetAssemblies(AssembliesType value) => new[] {
 			new Assembly { name = typeof(Dangerous).Assembly.GetName().Name, sourceFiles = new[] { "Assets/User.cs" } },

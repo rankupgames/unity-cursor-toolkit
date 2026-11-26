@@ -88,6 +88,28 @@ Agent safety defaults:
 
 See the [documentation index](docs/README.md), [AI Agent Guide](docs/AI_AGENTS.md), [Runtime Game Commands](docs/GAME_COMMANDS.md), [Roadmap](docs/ROADMAP.md), and [llms.txt](llms.txt) for agent-facing context.
 
+## Offline session CLI
+
+Read existing profiler captures and console transcripts while Unity is closed.
+After `npm run compile`, run these commands from `unity-cursor-toolkit/`:
+
+```bash
+npm run --silent sessions -- list --project "<Unity project>"
+npm run --silent sessions -- read --project "<Unity project>" --id "<session ID>"
+npm run --silent sessions -- console --project "<Unity project>" --id "<session ID>"
+```
+
+The default scope is `saved`. Clipboard captures remain in `temp` until saved;
+add `--scope temp` to inspect those captures. IDs come from the list output.
+The packaged entrypoint is `out/sessions/cli.js`, which also runs directly with Node.
+
+Output is JSON. List reports file metadata; read validates the existing session
+format, and console reads its matching adjacent transcript. Historical absolute
+paths inside captures are metadata. This CLI never follows them or starts Unity.
+Failures return exit code 1 and a JSON error on stderr, without partial stdout.
+The CLI reads files only. Export using stdout redirection if needed; captures can
+contain private logs and paths, and this first increment does not redact them.
+
 ## Requirements
 
 - VS Code or Cursor 1.60+

@@ -114,5 +114,4 @@ shared objects across sessions. Capture truncation flags remain visible.
 
 Native source checks are available under
 `Tools/Unity Cursor Toolkit/Validation/Session Storage Contracts`. They use owned
-synthetic captures and remove only their fixtures. Builds and test-suite execution
-remain subject to the project's Jenkins admission rules.
+synthetic captures and remove only their fixtures.

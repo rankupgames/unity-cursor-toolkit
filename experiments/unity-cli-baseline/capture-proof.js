@@ -4,14 +4,39 @@ const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
 const repo = path.resolve(__dirname, '../..');
-const cli = process.env.UNITY_CLI_BINARY || 'unity';
-if (spawnSync(cli, ['--version'], { encoding: 'utf8' }).stdout.trim() !== '1.0.0-beta.12') throw new Error('CLI version differs');
-const inventoryResult = spawnSync(cli, ['editors', '-i', '--format', 'json', '--no-log-proxy', '--non-interactive'], { encoding: 'utf8', timeout: 30000 });
+const cli = process.env.UNITY_CLI_BINARY;
+if (!cli || !path.isAbsolute(cli) || !fs.existsSync(cli)) throw new Error('Set UNITY_CLI_BINARY to the exact installed executable');
+const version = process.env.UNITY_CLI_PROOF_EDITOR || '6000.6.4f1';
+if (!['6000.3.9f1', '6000.6.4f1'].includes(version)) throw new Error('Use a recorded exact Editor version');
+const name = process.argv[2];
+if (typeof name !== 'string' || !/^[a-z][a-z0-9-]*$/.test(name)) throw new Error('Choose a defined proof case');
+const nativeModuleCase = name === 'missing-module-native' || name === 'missing-module-profile' || name === 'missing-module-profile-build';
+if (nativeModuleCase && version !== '6000.6.4f1') throw new Error('Use the recorded Editor with Android absent');
+const prefix = new Date().toISOString().slice(0, 10) + '-cli-1.0.0-beta.12-editor-' + version + '-windows-x64-' + name;
+const destination = path.join(__dirname, 'captures', prefix + '.json');
+const xml = path.join(__dirname, 'captures', prefix + '.xml');
+if (fs.existsSync(destination) || fs.existsSync(xml)) throw new Error('Proof capture already exists; historical evidence will not be overwritten');
+const env = { ...process.env };
+delete env.UNITY_EDITOR_VERSION;
+for (const key of ['UNITY_SERVICE_ACCOUNT_ID', 'UNITY_SERVICE_ACCOUNT_SECRET']) delete env[key];
+for (const key of ['UNITY_NO_UPDATE_CHECK', 'UNITY_NO_CRASH_REPORT', 'UNITY_NO_CONSENT_PROMPT', 'UNITY_NO_EDITOR_IDENTITY_SERVER', 'UNITY_NO_AUTH_BROKER']) env[key] = '1';
+env.UNITY_INSTALL_MISSING_TOOLS = '0';
+const cliVersion = spawnSync(cli, ['--version'], { env, encoding: 'utf8', timeout: 30000, maxBuffer: 8 * 1024 * 1024, windowsHide: true });
+if (cliVersion.status !== 0 || cliVersion.stdout.trim() !== '1.0.0-beta.12') throw new Error('CLI version differs');
+const inventoryResult = spawnSync(cli, ['editors', '-i', '--format', 'json', '--no-log-proxy', '--non-interactive'], { env, encoding: 'utf8', timeout: 30000, maxBuffer: 8 * 1024 * 1024, windowsHide: true });
 if (inventoryResult.status !== 0) throw new Error('Cannot resolve installed Editor roots');
 const installedEditors = JSON.parse(inventoryResult.stdout).data;
 const editorRoots = installedEditors.map(editor => ({ root: path.dirname(editor.location), label: '<editor:' + editor.version + '>' }));
-const version = process.env.UNITY_CLI_PROOF_EDITOR || '6000.6.4f1';
-if (!['6000.3.9f1', '6000.6.4f1'].includes(version)) throw new Error('Use a recorded exact Editor version');
+const moduleEvidence = [];
+if (nativeModuleCase) {
+    for (const editorVersion of ['6000.3.9f1', version]) {
+        const result = spawnSync(cli, ['editors', 'module', 'list', editorVersion, '--format', 'json', '--no-log-proxy', '--non-interactive', '--no-banner'], { env, encoding: 'utf8', timeout: 30000, maxBuffer: 8 * 1024 * 1024, windowsHide: true });
+        if (result.status !== 0) throw new Error('Exact Editor module inventory failed');
+        const status = JSON.parse(result.stdout).data.find(module => module.id === 'android')?.status;
+        if (status !== (editorVersion === version ? 'Available' : 'Installed')) throw new Error('Recorded per-Editor Android module precondition differs');
+        moduleEvidence.push({ args: ['editors', 'module', 'list', editorVersion, '--format', 'json'], exitCode: result.status, editorVersion, module: 'android', status });
+    }
+}
 const project = path.join(__dirname, 'fixture-' + version);
 if (!fs.existsSync(project)) {
     fs.mkdirSync(project, { recursive: true });
@@ -38,17 +63,27 @@ if (!fs.existsSync(project)) {
     fs.writeFileSync(path.join(project, 'Packages/manifest.json'), JSON.stringify({ dependencies }, null, 2));
 }
 if (!fs.readFileSync(path.join(project, 'ProjectSettings/ProjectVersion.txt'), 'utf8').includes('m_EditorVersion: ' + version + '\n')) throw new Error('Fixture Editor version differs');
-const name = process.argv[2];
-const prefix = '2026-10-08-cli-1.0.0-beta.12-editor-' + version + '-windows-x64-' + name;
-const xml = path.join(__dirname, 'captures', prefix + '.xml');
-const log = path.join(project, 'Logs', name + '.log');
-const output = path.join(project, 'Build', 'Proof.exe');
+const log = path.join(project, 'Logs', prefix + '.log');
+const output = path.join(project, 'Build', nativeModuleCase ? prefix + '.apk' : 'Proof.exe');
+if (nativeModuleCase && !fs.existsSync(path.join(project, 'Assets/Proof.unity'))) throw new Error('Owned prepared fixture scene missing');
+let nativeProfile;
+if (name === 'missing-module-profile-build') {
+    const prerequisite = JSON.parse(fs.readFileSync(path.join(__dirname, 'captures', prefix.replace(/missing-module-profile-build$/, 'missing-module-profile') + '.json'), 'utf8'));
+    const result = JSON.parse(prerequisite.stdout);
+    if (prerequisite.exitCode !== 0 || prerequisite.signal || prerequisite.error || result.success !== true || result.data?.target !== 'Android' || typeof result.data.profilePath !== 'string') throw new Error('Successful native Android profile prerequisite missing');
+    nativeProfile = path.resolve(project, result.data.profilePath);
+    const relative = path.relative(project, nativeProfile);
+    if (!relative || relative.startsWith('..') || path.isAbsolute(relative) || !nativeProfile.endsWith('.asset') || !fs.existsSync(nativeProfile)) throw new Error('Native profile is not an existing owned project asset');
+}
 const common = ['--non-interactive', '--no-log-proxy', '--no-banner', '--format', name === 'play-progress' ? 'ndjson' : 'json'];
 const cases = {
     run: ['run', project, '--timeout', '180', '--log-file', log, '--', '-executeMethod', 'CliProof.Run', '-nographics'],
     'build-dirty': ['build', project, '--target', 'StandaloneWindows64', '--execute-method', 'CliProof.Build', '--output-path', output, '--log-file', log, '--timeout', '180'],
     build: ['build', project, '--target', 'StandaloneWindows64', '--execute-method', 'CliProof.Build', '--output-path', output, '--log-file', log, '--timeout', '180', '--allow-dirty-build'],
     'missing-module': ['build', project, '--target', 'Android', '--execute-method', 'CliProof.Build', '--output-path', output, '--log-file', log, '--timeout', '60', '--allow-dirty-build'],
+    'missing-module-native': ['build', project, '--target', 'Android', '--output-path', output, '--log-file', log, '--timeout', '60', '--allow-dirty-build', '--no-provenance', '--no-accelerator'],
+    'missing-module-profile': ['build', project, '--create-profile', 'Android', '--log-file', log, '--timeout', '60', '--no-provenance', '--no-accelerator'],
+    'missing-module-profile-build': ['build', project, '--profile', nativeProfile, '--output-path', output, '--log-file', log, '--timeout', '60', '--allow-dirty-build', '--no-provenance', '--no-accelerator'],
     'registered-command': ['run', project, '--command', 'cli_proof', '--timeout', '60', '--log-file', log],
     'edit-pass': ['test', project, '--mode', 'EditMode', '--filter', 'CliEditTests.Passing', '--output', xml, '--timeout', '90', '--', '-nographics'],
     'edit-fail': ['test', project, '--mode', 'EditMode', '--filter', 'CliEditTests.DeliberateFailure', '--output', xml, '--timeout', '90', '--', '-nographics'],
@@ -78,11 +113,17 @@ function scrub(text) {
     for (const [input, label] of [[process.env.USERNAME, '<os-user>'], [process.env.COMPUTERNAME, '<host>']]) if (input) text = text.replaceAll(input, label);
     return text.replace(/^-hubSessionId\r?\n[^\r\n]*/gim, "<redacted credential or identity log line>")
         .replace(/^.*(?:licensing|Session[ -]?Id|Correlation[ -]?Id|Machine[ -]?Id|access[ -]?token|bearer|license[ -]?(?:serial|key|id)|hardware[ -]?id|user[ -]?id|account[ -]?id).*$/gim, "<redacted credential or identity log line>")
-        .replace(/^\s*(?:Id|Product|Type|Expiration):[^\r\n]*$/gim, "<redacted licensing metadata>")
+        .replace(/^\s*(?:Id|Product|Type|Expiration):[^\r\n]*$/gim, "<redacted diagnostic>")
         .replace(/^\s*[A-Za-z0-9+\/=_-]{32,}\s*$/gm, "<redacted credential or identity log line>");
 }
 if (name === 'build-dirty-versioned' || name === 'build-versioned') { args.push('--versioning-strategy', 'semantic'); }
 const beforeVersion = fs.readFileSync(path.join(project, 'ProjectSettings/ProjectVersion.txt'), 'utf8');
+function ownedEditors() {
+    const result = spawnSync('powershell', ['-NoProfile', '-NonInteractive', '-Command', 'Get-CimInstance Win32_Process -Filter "Name=\'Unity.exe\'" | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($env:UCT_CLI_PROOF_PROJECT) } | Select-Object -ExpandProperty ProcessId'], { encoding: 'utf8', timeout: 30000, maxBuffer: 65536, windowsHide: true, env: { ...env, UCT_CLI_PROOF_PROJECT: project } });
+    if (result.status !== 0) throw new Error('Owned Editor process query failed');
+    return result.stdout.trim().split(/\s+/).filter(Boolean);
+}
+if (nativeModuleCase && ownedEditors().length) throw new Error('Owned fixture already has an Editor; stop before another case');
 const startedAt = new Date().toISOString();
 const started = Date.now();
 const { spawn } = require('child_process');
@@ -90,19 +131,18 @@ const frames = [];
 let interruptReceived = false;
 process.on('SIGINT', () => { interruptReceived = true; });
 const result = await new Promise(resolve => {
-    const child = spawn(cli, args, { cwd: repo });
+    const child = spawn(cli, args, { cwd: repo, env, windowsHide: true, timeout: nativeModuleCase ? 90000 : undefined });
     let stdout = '', stderr = '';
     child.stdout.on('data', chunk => { const text = chunk.toString(); stdout += text; frames.push({ elapsedMs: Date.now() - started, stream: 'stdout', text: scrub(text) }); });
     child.stderr.on('data', chunk => { const text = chunk.toString(); stderr += text; frames.push({ elapsedMs: Date.now() - started, stream: 'stderr', text: scrub(text) }); });
     child.on('error', error => resolve({ status: null, error, stdout, stderr }));
     child.on('close', (status, signal) => resolve({ status, signal, stdout, stderr }));
 });
-const processes = spawnSync('powershell', ['-NoProfile', '-Command', 'Get-CimInstance Win32_Process -Filter "Name=\'Unity.exe\'" | Where-Object { $_.CommandLine -and $_.CommandLine.Contains($env:UCT_CLI_PROOF_PROJECT) } | Select-Object -ExpandProperty ProcessId'], { encoding: 'utf8', env: { ...process.env, UCT_CLI_PROOF_PROJECT: project } });
-if (processes.status !== 0) throw new Error('Owned Editor process query failed');
+const leftoverEditorPids = ownedEditors();
 const packages = Object.entries(JSON.parse(fs.readFileSync(path.join(project, 'Packages/manifest.json'), 'utf8')).dependencies).filter(([, source]) => source.startsWith('file:')).map(([name, source]) => ({ name, version: JSON.parse(fs.readFileSync(path.join(source.slice(5), 'package.json'), 'utf8')).version, source: version === '6000.6.4f1' ? '<selected-editor>/Data/Resources/PackageManager/BuiltInPackages/' + name : '<sample-package-cache>/' + path.basename(source.slice(5)) }));
-const capture = { redactions: ['repository/user roots', 'Editor roots from installed inventory', 'OS-user/host identifiers', 'credential/identity log lines'], interruptReceived, partialArtifactPresent: fs.existsSync(path.join(project, 'Temp/cli-proof-partial.txt')), packages, frames: frames.map(({ elapsedMs, stream, text }) => ({ elapsedMs, stream, characters: text.length, progressMarkers: /CLI_PROOF_PROGRESS/.test(text) ? text.match(/CLI_PROOF_PROGRESS \d+/g) : undefined })), leftoverEditorPids: processes.stdout.trim().split(/\s+/).filter(Boolean), startedAt, completedAt: new Date().toISOString(), cliVersion: '1.0.0-beta.12', editorVersion: version, platform: 'windows-x64', args: args.map(scrub), exitCode: result.status, signal: result.signal, durationMs: Date.now() - started, error: result.error?.message, stdout: scrub(result.stdout), stderr: scrub(result.stderr), editorLog: fs.existsSync(log) ? scrub(fs.readFileSync(log, 'utf8')) : null, xmlProduced: fs.existsSync(xml), projectVersionBefore: beforeVersion, projectVersionAfter: fs.readFileSync(path.join(project, 'ProjectSettings/ProjectVersion.txt'), 'utf8'), declaredEditorVersionUnchanged: /^m_EditorVersion:\s*(\S+)/m.exec(beforeVersion)?.[1] === /^m_EditorVersion:\s*(\S+)/m.exec(fs.readFileSync(path.join(project, 'ProjectSettings/ProjectVersion.txt'), 'utf8'))?.[1], buildArtifactPresentAfter: fs.existsSync(output) };
-fs.writeFileSync(path.join(__dirname, 'captures', prefix + '.json'), JSON.stringify(capture, null, 2) + '\n');
+const capture = { redactions: ['repository/user roots', 'Editor roots from installed inventory', 'OS-user/host identifiers', 'credential/identity log lines'], interruptReceived, partialArtifactPresent: fs.existsSync(path.join(project, 'Temp/cli-proof-partial.txt')), packages, frames: frames.map(({ elapsedMs, stream, text }) => ({ elapsedMs, stream, characters: text.length, progressMarkers: /CLI_PROOF_PROGRESS/.test(text) ? text.match(/CLI_PROOF_PROGRESS \d+/g) : undefined })), leftoverEditorPids, startedAt, completedAt: new Date().toISOString(), cliVersion: '1.0.0-beta.12', binarySha256: require('crypto').createHash('sha256').update(fs.readFileSync(cli)).digest('hex'), installedEditorVersions: installedEditors.map(editor => editor.version), moduleEvidence, editorVersion: version, platform: 'windows-x64', args: args.map(scrub), exitCode: result.status, signal: result.signal, durationMs: Date.now() - started, error: result.error?.code, stdout: scrub(result.stdout), stderr: scrub(result.stderr), editorLog: fs.existsSync(log) ? scrub(fs.readFileSync(log, 'utf8')) : null, xmlProduced: fs.existsSync(xml), projectVersionBefore: beforeVersion, projectVersionAfter: fs.readFileSync(path.join(project, 'ProjectSettings/ProjectVersion.txt'), 'utf8'), declaredEditorVersionUnchanged: /^m_EditorVersion:\s*(\S+)/m.exec(beforeVersion)?.[1] === /^m_EditorVersion:\s*(\S+)/m.exec(fs.readFileSync(path.join(project, 'ProjectSettings/ProjectVersion.txt'), 'utf8'))?.[1], buildArtifactPresentAfter: fs.existsSync(output) };
+fs.writeFileSync(destination, JSON.stringify(capture, null, 2) + '\n', { flag: 'wx' });
 console.log(JSON.stringify({ name, exitCode: capture.exitCode, durationMs: capture.durationMs, xmlProduced: capture.xmlProduced, buildArtifactPresentAfter: capture.buildArtifactPresentAfter, leftoverEditorPids: capture.leftoverEditorPids, frames: frames.length }));
 if (capture.leftoverEditorPids.length) throw new Error('Owned fixture Editor remains; stop before another case');
 
-})().catch(error => { console.error(error.message); process.exitCode = 1; });
+})().catch(error => { console.error(error.code || (error.message && /^[A-Za-z0-9 _;:-]+$/.test(error.message) ? error.message : 'proof_capture_failed')); process.exitCode = 1; });
