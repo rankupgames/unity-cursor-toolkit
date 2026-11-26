@@ -9,6 +9,7 @@ namespace UnityCursorToolkit
 	internal sealed class GameFlowWindow : EditorWindow
 	{
 		private const string EnabledKey = "UnityCursorToolkit.GameFlow.Enabled";
+		private const string RunIdKey = "UnityCursorToolkit.GameFlow.RunId";
 		private string commandName;
 		private string arguments = "{}";
 		private AgentCommandRunSnapshot run;
@@ -26,12 +27,16 @@ namespace UnityCursorToolkit
 		private void OnInspectorUpdate()
 		{
 			if (IsRunning)
-				run = AgentCommandRunner.GetStatus(run.RunId);
+				RefreshRun(run.RunId);
 			Repaint();
 		}
 
 		private void OnEnable()
 		{
+			string runId = SessionState.GetString(RunIdKey, string.Empty);
+			if (!string.IsNullOrEmpty(runId))
+				RefreshRun(runId);
+
 			var enableControls = new Toggle("Enable Game Flow controls") { name = "game-flow-enabled" };
 			enableControls.SetValueWithoutNotify(SessionState.GetBool(EnabledKey, false));
 			enableControls.RegisterValueChangedCallback(change =>
@@ -88,7 +93,7 @@ namespace UnityCursorToolkit
 				using (new EditorGUI.DisabledScope(!ready))
 				{
 					if (GUILayout.Button("Run"))
-						run = AgentCommandRunner.Run(commandName, arguments);
+						StartRun();
 				}
 				if (!ready)
 					EditorGUILayout.LabelField(command.RequiresPlayMode ? "Requires Play Mode." : "Requires Edit Mode.");
@@ -109,6 +114,19 @@ namespace UnityCursorToolkit
 
 			if (IsRunning && GUILayout.Button("Cancel"))
 				CancelRun();
+		}
+
+		private void StartRun()
+		{
+			run = AgentCommandRunner.Run(commandName, arguments);
+			SessionState.SetString(RunIdKey, run.RunId);
+		}
+
+		private void RefreshRun(string runId)
+		{
+			run = AgentCommandRunner.GetStatus(runId);
+			if (string.IsNullOrEmpty(run.RunId))
+				SessionState.EraseString(RunIdKey);
 		}
 
 		private void CancelRun()

@@ -15,7 +15,8 @@ Open **Tools > Unity Cursor Toolkit > Game Flow** and enable the controls
 for the current Editor session. The window lists project commands named
 `flow.*` or `*.flow.*`. Each command runs in its registered Edit or Play Mode. The window shows
 its latest status and result. Use **Cancel** to stop the active run. Turning
-off the controls also cancels a run started from the window.
+off the controls also cancels a run started from the window. Reopen the
+window to check or cancel that run.
 
 Projects register their own destinations, arguments, and diagnostics through
 the existing command registry.
