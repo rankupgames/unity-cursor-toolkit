@@ -4,6 +4,11 @@ on:
   pull_request:
     branches: [main, 'release-0.7-unity-runtime-rework']
   workflow_dispatch:
+    inputs:
+      run_native:
+        description: Run the licensed Unity Editor checks
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -58,7 +63,7 @@ jobs:
           verify_attestation "../Packages/com.rankupgames.unity-cursor-toolkit/Editor/ThirdParty/Unity-Unterm/Third Party Notices.md"
 
   unity-6000-macos-smoke:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_native
     needs: vendor-integrity
     runs-on:
       group: 'Unity Toolkit Runtime'
@@ -116,7 +121,7 @@ jobs:
         run: npm run test:unity-internal
 
   unity-6000-windows-smoke:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_native
     needs: vendor-integrity
     runs-on:
       group: 'Unity Toolkit Runtime'
@@ -166,7 +171,7 @@ jobs:
         run: npm run test:unity-internal
 
   unity-2019-windows-exclusion:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.event_name == 'workflow_dispatch' && inputs.run_native
     needs: vendor-integrity
     runs-on:
       group: 'Unity Toolkit Runtime'
@@ -253,7 +258,7 @@ jobs:
 
   unity-runtime-gate:
     name: Unity runtime gate
-    if: always()
+    if: always() && github.event_name == 'workflow_dispatch' && inputs.run_native
     needs: [vendor-integrity, unity-6000-macos-smoke, unity-6000-windows-smoke, unity-2019-windows-exclusion]
     runs-on: ubuntu-latest
     steps:

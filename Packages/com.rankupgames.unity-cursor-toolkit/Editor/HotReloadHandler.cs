@@ -127,7 +127,8 @@ public partial class HotReloadHandler : EditorWindow
         if (!SessionState.GetBool(sessionStartedKey, false))
         {
             SessionState.SetBool(sessionStartedKey, true);
-            SessionState.SetBool(sessionRunningKey, true);
+            // Batch runs start the bridge only through an explicit Start call.
+            SessionState.SetBool(sessionRunningKey, !Application.isBatchMode);
         }
         wasRunningBeforeReload = SessionState.GetBool(sessionRunningKey, false);
 
@@ -266,8 +267,7 @@ public partial class HotReloadHandler : EditorWindow
         TcpListener tempListener = null;
         try
         {
-            // Explicitly qualify TcpListener and IPAddress to ensure correct type resolution
-            tempListener = new TcpListener(IPAddress.Any, port);
+            tempListener = new TcpListener(IPAddress.Loopback, port);
             tempListener.Start();
             return false; // Port is available if we could start
         }
@@ -698,7 +698,7 @@ public partial class HotReloadHandler : EditorWindow
                     lock (clientListLock)
                     {
                         if (stopRequested) return;
-                        server = new TcpListener(IPAddress.Any, portToTry);
+                        server = new TcpListener(IPAddress.Loopback, portToTry);
                         server.Start();
                         isServerRunning = true;
                     }
@@ -1439,7 +1439,7 @@ public partial class HotReloadHandler : EditorWindow
             lock (clientListLock)
             {
                 if (stopRequested) return;
-                server = new TcpListener(IPAddress.Any, specificPort);
+                server = new TcpListener(IPAddress.Loopback, specificPort);
 
                 // Try to set socket options to allow port reuse
                 try

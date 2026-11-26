@@ -1,6 +1,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
+const { execFileSync } = require('child_process');
 
 const repositoryRoot = path.resolve(__dirname, '../..');
 const packageRelativePath = path.join('Packages', 'com.rankupgames.unity-cursor-toolkit');
@@ -241,7 +242,11 @@ function validateVendorManifest(vendorRoot) {
 	}
 
 	const macDebuggerPath = path.join(vendorRoot, 'Plugins', 'macOS', 'unterm-debugger');
-	if ((fs.statSync(macDebuggerPath).mode & 0o111) === 0) {
+	const executable = process.platform === 'win32'
+		? execFileSync('git', ['ls-files', '--format=%(objectmode)', '--', normalizeRelativePath(repositoryRoot, macDebuggerPath)],
+			{ cwd: repositoryRoot, encoding: 'utf8' }).trim() === '100755'
+		: (fs.statSync(macDebuggerPath).mode & 0o111) !== 0;
+	if (!executable) {
 		fail(`${normalizeRelativePath(repositoryRoot, macDebuggerPath)} must retain executable permissions`);
 	}
 

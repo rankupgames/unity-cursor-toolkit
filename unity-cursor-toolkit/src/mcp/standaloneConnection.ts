@@ -15,6 +15,9 @@ import type { ICommandSender } from '../core/interfaces';
 const DEFAULT_PORTS = [55500, 55501, 55502, 55503, 55504] as const;
 const CONNECT_TIMEOUT_MS = 2_000;
 const REQUEST_TIMEOUT_MS = 10_000;
+const MAX_HANDSHAKE_BYTES = 4_096;
+const MAX_PROJECT_INFO_BYTES = 1024 * 1024;
+const PROJECT_ATTACH_REQUEST_ID = 'toolkit_project_attach';
 
 interface PendingRequest {
 	resolve: (value: Record<string, unknown> | null) => void;
@@ -40,7 +43,10 @@ export class StandaloneUnityConnection implements ICommandSender {
 	private connectPromise: Promise<boolean> | undefined;
 	private disposed = false;
 
-	constructor(ports: readonly number[] = parsePorts(process.env.UNITY_CURSOR_TOOLKIT_MCP_PORTS), private readonly projectRoot = process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH) {
+	constructor(
+		ports: readonly number[] = parsePorts(process.env.UNITY_CURSOR_TOOLKIT_MCP_PORTS),
+		private readonly projectRoot = process.env.UNITY_CURSOR_TOOLKIT_PROJECT_PATH,
+	) {
 		this.ports = ports;
 	}
 
@@ -63,7 +69,6 @@ export class StandaloneUnityConnection implements ICommandSender {
 	}
 
 	public async request(command: string, payload?: Record<string, unknown>): Promise<Record<string, unknown> | null> {
-		if (this.disposed) return null;
 		const connected = await this.ensureConnected();
 		if (connected === false || this.socket == null || this.socket.writable === false) {
 			return null;
@@ -98,6 +103,10 @@ export class StandaloneUnityConnection implements ICommandSender {
 	}
 
 	private async ensureConnected(): Promise<boolean> {
+		if (this.disposed) {
+			return false;
+		}
+
 		if (this.socket != null && this.socket.writable) {
 			return true;
 		}
@@ -117,13 +126,19 @@ export class StandaloneUnityConnection implements ICommandSender {
 		this.destroySocket();
 
 		for (const port of this.ports) {
-			if (this.disposed) return false;
-			const socket = await this.tryPort(port);
-			if (this.disposed) { socket?.destroy(); return false; }
-			if (socket) {
-				this.socket = socket;
+			if (this.disposed) {
+				return false;
+			}
+			const handshake = await this.tryPort(port);
+			if (this.disposed) {
+				handshake?.socket.destroy();
+				return false;
+			}
+			if (handshake) {
+				this.socket = handshake.socket;
 				this.connectedPort = port;
-				this.attachSocketListeners(socket);
+				this.attachSocketListeners(handshake.socket);
+				this.handleData(handshake.remainder);
 				return true;
 			}
 		}
@@ -131,80 +146,78 @@ export class StandaloneUnityConnection implements ICommandSender {
 		return false;
 	}
 
-	private tryPort(port: number): Promise<net.Socket | null> {
+	/** Verifies the bridge and, when configured, the selected Unity project. */
+	private tryPort(port: number): Promise<{ socket: net.Socket; remainder: string } | null> {
+		const projectRoot = this.projectRoot ? path.resolve(this.projectRoot) : undefined;
 		return new Promise((resolve) => {
 			const socket = new net.Socket();
+			socket.setEncoding('utf8');
+			let buffer = '';
+			let receivedPong = false;
 			let settled = false;
 
-			const settle = (result: net.Socket | null) => {
+			const settle = (remainder: string | null) => {
 				if (settled) {
 					return;
 				}
 
 				settled = true;
+				clearTimeout(timer);
 				socket.removeAllListeners();
 
-				if (result == null) {
+				if (remainder == null) {
 					socket.destroy();
+					resolve(null);
+					return;
 				}
 
-				resolve(result);
+				resolve({ socket, remainder });
 			};
 
-			socket.setTimeout(CONNECT_TIMEOUT_MS);
+			const timer = setTimeout(() => settle(null), CONNECT_TIMEOUT_MS);
 			socket.once('connect', () => {
-				if (!this.projectRoot) { socket.setTimeout(0); settle(socket); return; }
-				const requestId = 'toolkit_project_attach';
-				let buffer = '';
-				socket.on('data', (raw: Buffer) => {
-					buffer += raw.toString('utf8');
-					if (buffer.length > 1024 * 1024) { settle(null); return; }
-					const lines = buffer.split('\n'); buffer = lines.pop() ?? '';
-					for (const line of lines) {
-						const response = parseJsonObject(line);
-						if (response?._requestId !== requestId) continue;
-						const info = typeof response.result === 'string' ? parseJsonObject(response.result) : response.result as Record<string, unknown> | undefined;
-						if (!info || typeof info.projectPath !== 'string' || path.resolve(info.projectPath) !== path.resolve(this.projectRoot as string)) { settle(null); return; }
-						socket.setTimeout(0); settle(socket); return;
+				socket.write(JSON.stringify({ command: 'ping' }) + '\n');
+			});
+			socket.on('data', (text: string) => {
+				buffer += text;
+				let newline = buffer.indexOf('\n');
+				while (newline >= 0) {
+					const maxBytes = receivedPong ? MAX_PROJECT_INFO_BYTES : MAX_HANDSHAKE_BYTES;
+					const line = buffer.slice(0, newline);
+					if (Buffer.byteLength(line) > maxBytes) {
+						settle(null);
+						return;
 					}
-				});
-				socket.write(JSON.stringify({ command: 'mcpToolCall', toolName: 'project_info', args: {}, _requestId: requestId }) + '\n');
+					const response = parseJsonObject(line);
+					buffer = buffer.slice(newline + 1);
+					if (!receivedPong) {
+						if (response?.command !== 'pong' || projectRoot === undefined) {
+							settle(response?.command === 'pong' ? buffer : null);
+							return;
+						}
+						receivedPong = true;
+						socket.write(JSON.stringify({ command: 'mcpToolCall', toolName: 'project_info', args: {}, _requestId: PROJECT_ATTACH_REQUEST_ID }) + '\n');
+					} else if (response?._requestId === PROJECT_ATTACH_REQUEST_ID) {
+						const result = typeof response.result === 'string' ? parseJsonObject(response.result) : response.result as Record<string, unknown> | undefined;
+						const matches = response.error !== true && typeof result?.projectPath === 'string' &&
+							path.resolve(result.projectPath) === projectRoot;
+						settle(matches ? buffer : null);
+						return;
+					}
+					newline = buffer.indexOf('\n');
+				}
+				if (Buffer.byteLength(buffer) > (receivedPong ? MAX_PROJECT_INFO_BYTES : MAX_HANDSHAKE_BYTES)) {
+					settle(null);
+				}
 			});
 			socket.once('error', () => settle(null));
-			socket.once('timeout', () => settle(null));
+			socket.once('close', () => settle(null));
 			socket.connect(port, 'localhost');
 		});
 	}
 
 	private attachSocketListeners(socket: net.Socket): void {
-		socket.on('data', (raw: Buffer) => {
-			this.dataBuffer += raw.toString();
-			const lines = this.dataBuffer.split('\n');
-			this.dataBuffer = lines.pop() ?? '';
-
-			for (const line of lines) {
-				const parsed = parseJsonObject(line);
-				if (parsed == null) {
-					continue;
-				}
-
-				const command = typeof parsed.command === 'string' ? parsed.command : undefined;
-				if (command == null) {
-					continue;
-				}
-
-				const requestId = typeof parsed._requestId === 'string' ? parsed._requestId : undefined;
-				if (requestId) {
-					this.resolvePendingRequest(requestId, parsed);
-					continue;
-				}
-
-				for (const handler of this.messageHandlers) {
-					handler({ command, payload: parsed });
-				}
-			}
-		});
-
+		socket.on('data', (text: string) => this.handleData(text));
 		socket.on('close', () => {
 			this.destroySocket();
 			this.rejectPendingRequests();
@@ -213,6 +226,34 @@ export class StandaloneUnityConnection implements ICommandSender {
 			this.destroySocket();
 			this.rejectPendingRequests();
 		});
+	}
+
+	private handleData(text: string): void {
+		this.dataBuffer += text;
+		const lines = this.dataBuffer.split('\n');
+		this.dataBuffer = lines.pop() ?? '';
+
+		for (const line of lines) {
+			const parsed = parseJsonObject(line);
+			if (parsed == null) {
+				continue;
+			}
+
+			const command = typeof parsed.command === 'string' ? parsed.command : undefined;
+			if (command == null) {
+				continue;
+			}
+
+			const requestId = typeof parsed._requestId === 'string' ? parsed._requestId : undefined;
+			if (requestId) {
+				this.resolvePendingRequest(requestId, parsed);
+				continue;
+			}
+
+			for (const handler of this.messageHandlers) {
+				handler({ command, payload: parsed });
+			}
+		}
 	}
 
 	private write(payload: Record<string, unknown>): void {
