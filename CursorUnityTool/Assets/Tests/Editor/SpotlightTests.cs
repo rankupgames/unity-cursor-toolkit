@@ -34,7 +34,15 @@ namespace UnityCursorToolkit.Tests
 		{
 			previousSelection = Selection.objects;
 			previousScene = SceneManager.GetActiveScene();
+			if (string.IsNullOrEmpty(previousScene.path))
+			{
+				Assert.IsFalse(previousScene.isDirty, "Save the current scene before testing Spotlight.");
+				previousScene = EditorSceneManager.OpenScene("Assets/Scenes/SampleScene.unity", OpenSceneMode.Single);
+			}
+			assetFolder = "Assets/SpotlightFixture_" + Guid.NewGuid().ToString("N");
+			AssetDatabase.CreateFolder("Assets", assetFolder.Substring("Assets/".Length));
 			firstScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
+			Assert.IsTrue(EditorSceneManager.SaveScene(firstScene, assetFolder + "/First.unity"), "Cannot save the owned fixture scene.");
 			secondScene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Additive);
 			firstObject = new GameObject("SpotlightFixture");
 			secondObject = new GameObject("SpotlightFixture");
@@ -43,8 +51,6 @@ namespace UnityCursorToolkit.Tests
 			secondObject.SetActive(false);
 			firstComponent = firstObject.AddComponent<BoxCollider>();
 			secondComponent = firstObject.AddComponent<BoxCollider>();
-			assetFolder = "Assets/SpotlightFixture_" + Guid.NewGuid().ToString("N");
-			AssetDatabase.CreateFolder("Assets", assetFolder.Substring("Assets/".Length));
 			commandCalls = 0;
 		}
 
@@ -59,7 +65,11 @@ namespace UnityCursorToolkit.Tests
 			if (previousScene.IsValid() && previousScene.isLoaded) SceneManager.SetActiveScene(previousScene);
 			if (firstScene.IsValid() && firstScene.isLoaded) EditorSceneManager.CloseScene(firstScene, true);
 			if (secondScene.IsValid() && secondScene.isLoaded) EditorSceneManager.CloseScene(secondScene, true);
-			Assert.IsTrue(AssetDatabase.DeleteAsset(assetFolder), "The owned asset fixture was not removed.");
+			if (!string.IsNullOrEmpty(assetFolder))
+			{
+				Assert.IsTrue(AssetDatabase.DeleteAsset(assetFolder), "The owned asset fixture was not removed.");
+				assetFolder = null;
+			}
 		}
 
 		[TestCase("")]
@@ -121,9 +131,14 @@ namespace UnityCursorToolkit.Tests
 		{
 			object session = Search("Spotlight Fixture Command");
 			yield return Complete(session);
-			object result = Results(session).Single(item => (string)Field(item, "Title") == "Spotlight Fixture Command");
+			object result = Results(session).SingleOrDefault(item => (string)Field(item, "Title") == "Spotlight Fixture Command");
+			Assert.IsNotNull(result, "Matches: " + string.Join(", ", Results(session).Select(item => Field(item, "Id") + " title=" + Field(item, "Title"))) +
+				"; errors: " + string.Join(", ", (List<string>)Field(session, "Errors")));
 			Assert.AreEqual(0, commandCalls);
 			Assert.IsTrue(Success(Execute(result, "Execute")));
+			bool dispatchProcessed = false;
+			EditorApplication.delayCall += () => dispatchProcessed = true;
+			while (!dispatchProcessed) yield return null;
 			Assert.AreEqual(1, commandCalls);
 		}
 

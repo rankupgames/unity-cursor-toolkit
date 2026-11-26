@@ -46,6 +46,7 @@ namespace UnityCursorToolkit.Spotlight
 							{
 								if (item == null) continue;
 								string title = item.GetLabel(incomingContext, true);
+								if (providerId == "menu") title = title?.TrimEnd();
 								var target = providerId == "asset" ? item.ToObject() : null;
 								if (target != null)
 								{

@@ -124,8 +124,14 @@
       }
     ],
     "commands": [
-      { "command": "unity-cursor-toolkit.tests.list", "title": "Unity Toolkit: List Tests" },
-      { "command": "unity-cursor-toolkit.tests.run", "title": "Unity Toolkit: Run Tests" },
+      {
+        "command": "unity-cursor-toolkit.tests.list",
+        "title": "Unity Toolkit: List Tests"
+      },
+      {
+        "command": "unity-cursor-toolkit.tests.run",
+        "title": "Unity Toolkit: Run Tests"
+      },
       {
         "command": "unity-cursor-toolkit.doctor",
         "title": "Unity Toolkit: Unity CLI Doctor"
@@ -413,17 +419,20 @@
     "bump": "node scripts/bump-version.js && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
     "bump:minor": "npm version minor && npm run compile && npx vsce package --no-dependencies && (cursor --install-extension *.vsix 2>/dev/null || code --install-extension *.vsix)",
     "local": "npx vsce package --no-dependencies && (cursor --install-extension *.vsix --force 2>/dev/null || code --install-extension *.vsix --force)",
-    "audit": "npm audit"
+    "audit": "npm audit",
+    "unity:focus": "node scripts/focus-unity-editor.js",
+    "unity:watch-sessions": "node scripts/watch-play-sessions.js"
   },
   "overrides": {
     "ovsx": {
       "@vscode/vsce": "$@vscode/vsce"
-    }
+    },
+    "minimatch": "^11.0.2"
   },
   "devDependencies": {
     "@types/node": "^16.11.7",
     "@types/vscode": "^1.60.0",
-    "@vscode/vsce": "^4.0.0",
+    "@vscode/vsce": "^4.1.1",
     "esbuild": "^0.25.0",
     "fs-extra": "^10.0.0",
     "ovsx": "^0.10.11",

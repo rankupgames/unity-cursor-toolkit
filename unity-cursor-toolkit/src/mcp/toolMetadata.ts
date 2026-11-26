@@ -21,6 +21,7 @@ const MUTATING_TOOLS = {
 	build_trigger: true,
 	clear_console: true,
 	profiler_snapshot: true,
+	session_monitor: true,
 	unity_context: true,
 	viewport_stream: true
 } as const;
@@ -43,6 +44,7 @@ const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	editor_lifecycle: ['status'],
 	editor_validation: ['list', 'status'],
 	game_command: ['list', 'status'],
+	session_monitor: ['status', 'events', 'timeline', 'compare', 'read', 'watch', 'unwatch'],
 	profiler_snapshot: ['current', 'listSessions', 'readSession', 'readConsoleTranscript', 'discoverCounters'],
 	unity_context: ['query', 'read', 'summary'],
 	viewport_stream: ['status']
@@ -53,6 +55,7 @@ const DEFAULT_ACTIONS: Record<string, string> = {
 	editor_validation: 'sync_and_compile',
 	game_command: 'list',
 	profiler_snapshot: 'current',
+	session_monitor: 'status',
 	unity_context: 'summary',
 	viewport_stream: 'status'
 };

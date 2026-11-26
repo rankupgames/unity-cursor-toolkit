@@ -105,6 +105,14 @@ async function getUnusedPort() {
 	return port;
 }
 
+function isPortFree(port) {
+	return new Promise((resolve) => {
+		const probe = net.createServer();
+		probe.once('error', () => resolve(false));
+		probe.listen(port, '127.0.0.1', () => probe.close(() => resolve(true)));
+	});
+}
+
 function httpGet(url) {
 	return new Promise((resolve, reject) => {
 		http.get(url, (response) => {
@@ -282,6 +290,52 @@ async function testGameCommandBatchmode() {
 				assert.deepStrictEqual(JSON.parse(fs.readFileSync(payload.batchmode.argsPath, 'utf8')), { value: 42 });
 				fs.rmSync(path.dirname(payload.batchmode.resultPath), { recursive: true, force: true });
 			});
+		});
+
+		const { executeBatchmodePlan } = require(path.join(outDir, 'mcp', 'gameCommandBatchmode'));
+		const runOwnedChild = async (timeoutMs, signal) => {
+			const pidPath = path.join(fixture.tmpDir, `child-${Date.now()}.pid`);
+			const script = 'require("fs").writeFileSync(process.argv[1], String(process.pid)); setInterval(() => {}, 1000);';
+			const plan = { unityPath: process.execPath, args: ['-e', script, pidPath], resultPath: path.join(fixture.tmpDir, 'none.json'), logPath: path.join(fixture.tmpDir, 'none.log') };
+			const ready = new Promise((resolve, reject) => {
+				const watcher = fs.watch(fixture.tmpDir, () => {
+					if (fs.existsSync(pidPath) && fs.readFileSync(pidPath, 'utf8').length > 0) {
+						clearTimeout(timer);
+						watcher.close();
+						resolve();
+					}
+				});
+				const timer = setTimeout(() => {
+					watcher.close();
+					reject(new Error('Owned child did not signal readiness.'));
+				}, 10_000);
+			});
+			const pending = executeBatchmodePlan(plan, timeoutMs, signal);
+			await ready;
+			return { pending };
+		};
+		const exitObserved = result => result.exitCode != null || result.signal != null;
+
+		await testAsync('game_command batchmode abort terminates the owned child and resolves after it exits', async () => {
+			const controller = new AbortController();
+			const { pending } = await runOwnedChild(30_000, controller.signal);
+			controller.abort();
+			const result = await pending;
+
+			assert.strictEqual(result.success, false);
+			assert.strictEqual(result.terminationReason, 'cancelled');
+			assert.match(result.error, /cancelled; its owned process tree was terminated/);
+			assert.ok(exitObserved(result), 'result must come from the child close event');
+		});
+
+		await testAsync('game_command batchmode timeout reports timed_out after the owned child exits', async () => {
+			const { pending } = await runOwnedChild(5_000);
+			const result = await pending;
+
+			assert.strictEqual(result.success, false);
+			assert.strictEqual(result.terminationReason, 'timed_out');
+			assert.match(result.error, /timed out after 5000ms/);
+			assert.ok(exitObserved(result), 'result must come from the child close event');
 		});
 	} finally {
 		fs.rmSync(fixture.tmpDir, { recursive: true, force: true });
@@ -487,6 +541,32 @@ async function testViewportStreamMcpTools() {
 		assert.strictEqual(start.hostSession.input.kind, 'unityMcp');
 		assert.strictEqual(input.args.inputType, 'key');
 		assert.strictEqual(input.args.key, 'Space');
+		await tools.dispose();
+	});
+
+	await testAsync('viewport_stream listener recovers from a bind failure, shares concurrent starts, and closes on a stop race', async () => {
+		const tools = new ViewportStreamMcpTools({ send() {}, request: async () => ({ result: { success: true } }) });
+		const startStream = port => tools.handleToolCall('viewport_stream', { action: 'start', port });
+
+		const blocker = net.createServer();
+		const busyPort = await listenOnLocalhost(blocker);
+		const failed = parseToolJson(await startStream(busyPort));
+		await closeServer(blocker);
+		assert.strictEqual(failed.success, false);
+
+		const [first, second] = (await Promise.all([startStream(0), startStream(0)])).map(parseToolJson);
+		assert.strictEqual(first.success, false);
+		assert.match(first.error, /superseded/);
+		assert.strictEqual(second.success, true);
+		assert.strictEqual(typeof second.status.port, 'number');
+		assert.strictEqual((await httpGet(`http://127.0.0.1:${second.status.port}/status.json`)).statusCode, 200);
+		await tools.handleToolCall('viewport_stream', { action: 'stop' });
+
+		const racePort = await getUnusedPort();
+		const racingStart = startStream(racePort);
+		await tools.handleToolCall('viewport_stream', { action: 'stop' });
+		assert.strictEqual(parseToolJson(await racingStart).success, false);
+		assert.strictEqual(await isPortFree(racePort), true, 'a stop during start must not leave the listener open');
 		await tools.dispose();
 	});
 

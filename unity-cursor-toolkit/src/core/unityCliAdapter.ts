@@ -47,6 +47,27 @@ function failure(code: UnityCliErrorCode, message: string, recovery: string, out
 	return { binaryPath: output.binaryPath, exitCode: output.exitCode, signal: output.signal, stdout: output.stdout, stderr: output.stderr, ok: false, error: { code, message, recovery } };
 }
 
+/**
+ * Terminates the process tree rooted at a child this process spawned. POSIX callers must spawn with
+ * `detached: true` so the child leads its own process group. Returns false when delivery fails.
+ */
+export async function terminateOwnedProcessTree(pid: number, env: NodeJS.ProcessEnv): Promise<boolean> {
+	if (process.platform === 'win32') {
+		const systemRoot = env.SystemRoot || env.SYSTEMROOT;
+		if (!systemRoot) { return false; }
+		return new Promise<boolean>(done => execFile(path.join(systemRoot, 'System32', 'taskkill.exe'),
+			['/PID', String(pid), '/T', '/F'], { windowsHide: true, timeout: CLEANUP_TIMEOUT_MS }, error => done(!error)));
+	}
+	const signalGroup = (signal: NodeJS.Signals): boolean => {
+		try { process.kill(-pid, signal); return true; } catch (error) {
+			return (error as NodeJS.ErrnoException).code === 'ESRCH';
+		}
+	};
+	if (!signalGroup('SIGTERM')) { return false; }
+	await new Promise(done => setTimeout(done, 250));
+	return signalGroup('SIGKILL');
+}
+
 function resolveBinary(configuredPath: string | undefined, env: NodeJS.ProcessEnv): string | undefined {
 	const override = configuredPath?.trim() || env.UNITY_CURSOR_TOOLKIT_UNITY_CLI_PATH?.trim();
 	const candidates = override ? [override] : (env.PATH || env.Path || '').split(path.delimiter)
@@ -188,27 +209,9 @@ export class UnityCliAdapter {
 			const stop = async (reason: 'cancelled' | 'timed_out'): Promise<void> => {
 				if (finished || stopping) { return; }
 				stopping = true;
-				let terminated = false;
-				try {
-					if (!child.pid || (process.platform === 'win32' && exited)) {
-						terminated = closed;
-					} else if (process.platform === 'win32') {
-						const systemRoot = this.env.SystemRoot || this.env.SYSTEMROOT;
-						if (!systemRoot) { throw new Error('SystemRoot is missing; owned-process cleanup cannot run.'); }
-						const killed = await new Promise<boolean>(done => execFile(path.join(systemRoot, 'System32', 'taskkill.exe'),
-							['/PID', String(child.pid), '/T', '/F'], { windowsHide: true, timeout: CLEANUP_TIMEOUT_MS }, error => done(!error)));
-						terminated = killed && await waitForClose();
-					} else {
-						try { process.kill(-child.pid, 'SIGTERM'); } catch (error) {
-							if ((error as NodeJS.ErrnoException).code !== 'ESRCH') { throw error; }
-						}
-						await new Promise(done => setTimeout(done, 250));
-						try { process.kill(-child.pid, 'SIGKILL'); } catch (error) {
-							if ((error as NodeJS.ErrnoException).code !== 'ESRCH') { throw error; }
-						}
-						terminated = await waitForClose();
-					}
-				} catch { terminated = false; }
+				const terminated = !child.pid || (process.platform === 'win32' && exited)
+					? closed
+					: await terminateOwnedProcessTree(child.pid, this.env) && await waitForClose();
 				const result = terminated
 					? failure(reason, reason === 'timed_out' ? 'Unity CLI exceeded the caller deadline; its owned process tree was terminated.'
 						: 'Unity CLI was cancelled; its owned process tree was terminated.', 'Inspect partial artifacts before retrying.', output())
