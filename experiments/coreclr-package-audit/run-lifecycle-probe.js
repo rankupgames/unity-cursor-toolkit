@@ -31,7 +31,12 @@ async function main() {
 		if (statics) {
 			const sampleDependencies = JSON.parse(fs.readFileSync(path.resolve(__dirname, '../../CursorUnityTool/Packages/manifest.json'), 'utf8')).dependencies;
 			fs.writeFileSync(path.join(fixture, 'Packages/manifest.json'), JSON.stringify({ dependencies: Object.fromEntries(Object.entries(sampleDependencies).filter(([name]) => name.startsWith('com.unity.modules.'))) }));
-			fs.cpSync(path.resolve(__dirname, '../../CursorUnityTool/Assets'), path.join(fixture, 'Assets'), { recursive: true });
+			const sampleAssets = path.resolve(__dirname, '../../CursorUnityTool/Assets');
+			const excluded = ['Editor', 'Editor.meta', 'Tests', 'Tests.meta'].map(name => path.join(sampleAssets, name));
+			fs.cpSync(sampleAssets, path.join(fixture, 'Assets'), {
+				recursive: true,
+				filter: source => !excluded.includes(source)
+			});
 			fs.writeFileSync(path.join(fixture, 'Assets/StaticTransitionValues.cs'), 'using UnityEngine; public static class StaticTransitionValues { public static int Bug; public static int Reset; [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)] private static void ResetForPlay() { Reset = 0; } }');
 			fs.mkdirSync(path.join(fixture, 'Assets/StaticsExact/Editor'), { recursive: true });
 			fs.writeFileSync(path.join(fixture, 'Assets/StaticsExact/Editor/UCT.StaticsExactProof.asmdef'), JSON.stringify({ name: 'UCT.StaticsExactProof', includePlatforms: ['Editor'] }));

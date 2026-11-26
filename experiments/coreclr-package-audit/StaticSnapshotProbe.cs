@@ -55,18 +55,20 @@ public static class StaticSnapshotProbe
 			foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies()) if (assembly.GetName().Name == "UnityCursorToolkit.Editor") Collector = assembly.GetType("UnityCursorToolkit.Core.StaticSnapshotter", false);
 			Require(Collector != null, "snapshot_foundation");
 			CheckDifferences();
-			Configure("{\"enabled\":false}"); Require(Latest() == null && Capture() == null, "disabled_no_snapshot");
-			foreach (var invalid in new[] { "null", "1", "\"true\"", "[]", "{}" })
+			Disable(); Require(Latest() == null && Capture() == null, "disabled_no_snapshot");
+			foreach (var invalid in new[] { null, Array.Empty<string>(), new[] { "Assets/Unsafe" }, new[] { "" } })
 			{
-				Configure("{\"enabled\":" + invalid + "}");
-				Require(Reason(Latest()) == "invalid_configuration" && Capture() == null, "invalid_enabled_refused");
+				Configure(invalid, 1000, 10);
+				Require(Reason(Latest()) == "invalid_configuration" && Capture() == null, "invalid_allowlist_refused");
 			}
+			Configure(new[] { "UnityEngine.CoreModule", "UnityCursorToolkit.Editor" }, 1000, 10);
+			Require(Reason(Latest()) == "no_eligible_assemblies" && Capture() == null, "non_project_assemblies_refused");
 			SnapshotValues.Number = 31; SnapshotValues.Text = "snapshot fixture value"; SnapshotValues.Items = new int[3];
 			SnapshotValues.Custom = new SnapshotCustomCollection(); SnapshotValues.Large = new string('x', 4097);
 			string editorAssembly = typeof(SnapshotValues).Assembly.GetName().Name;
 			string runtimeAssembly = "Assembly-CSharp";
-			string allowlist = "[\"" + runtimeAssembly + "\",\"" + editorAssembly + "\",\"UnityEngine.CoreModule\",\"mscorlib\",\"UnityCursorToolkit.Editor\"]";
-			Configure(Settings(allowlist, 1000, 100));
+			string[] allowlist = { runtimeAssembly, editorAssembly, "UnityEngine.CoreModule", "mscorlib", "UnityCursorToolkit.Editor" };
+			Configure(allowlist, 1000, 100);
 			object before = Latest();
 			for (int attempt = 0; !Complete(before) && attempt < 3; attempt++) before = Capture();
 			Require(Complete(before), "complete_owned_snapshot");
@@ -85,25 +87,27 @@ public static class StaticSnapshotProbe
 			Application.logMessageReceived += warning;
 			try
 			{
-				Configure(Settings("[\"UCT.StaticsExactProof\"]", 1, 100));
+				Configure(new[] { "UCT.StaticsExactProof" }, 1, 100);
 				Require(!Complete(Latest()) && Reason(Latest()) == "field_cap" && Fields(Latest()).Count == 0 && warnings == 1, "reaching_cap_discards_and_warns_once");
 				warnings = 0;
-				Configure(Settings(allowlist, 1, 100));
+				Configure(allowlist, 1, 100);
 				Require(!Complete(Latest()) && Reason(Latest()) == "field_cap" && Fields(Latest()).Count == 0 && warnings == 1, "cap_discards_partial_and_warns_once");
-				warnings = 0; Configure(Settings("[\"UCT.StaticsBudgetProof\"]", 1000, 1));
+				warnings = 0; Configure(new[] { "UCT.StaticsBudgetProof" }, 1000, 1);
 				Require(!Complete(Latest()) && Reason(Latest()) == "time_budget" && Fields(Latest()).Count == 0 && warnings == 1, "time_budget_discards_partial_and_warns_once");
 			}
 			finally { Application.logMessageReceived -= warning; }
+			Configure(allowlist, 1000, 10);
 			var measurements = new List<string>();
 			for (int sample = 0; sample < 10; sample++)
 			{
-				var wall = Stopwatch.StartNew(); Configure(Settings(allowlist, 1000, 10)); wall.Stop();
-				var snapshot = Latest();
+				var wall = Stopwatch.StartNew();
+				object snapshot = Capture();
+				wall.Stop();
 				measurements.Add("{\"scanDurationMs\":" + ((double)Read(snapshot, "durationMs")).ToString(System.Globalization.CultureInfo.InvariantCulture)
-					+ ",\"totalConfigureMilliseconds\":" + wall.Elapsed.TotalMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture)
+					+ ",\"totalCaptureMilliseconds\":" + wall.Elapsed.TotalMilliseconds.ToString(System.Globalization.CultureInfo.InvariantCulture)
 					+ ",\"complete\":" + (Complete(snapshot) ? "true" : "false") + ",\"skippedReason\":\"" + Reason(snapshot) + "\",\"fieldCount\":" + Fields(snapshot).Count + "}");
 			}
-			Configure("{\"enabled\":false}"); Require(Latest() == null && Capture() == null, "hard_off_clears_latest");
+			Disable(); Require(Latest() == null && Capture() == null, "hard_off_clears_latest");
 			File.AppendAllText(Evidence, "{\"callback\":\"snapshotMeasurement\",\"pid\":" + Pid + ",\"editorVersion\":\"" + Application.unityVersion + "\",\"checks\":[\"" + string.Join("\",\"", Checks.ToArray()) + "\"],\"samples\":[" + string.Join(",", measurements.ToArray()) + "]}\n");
 			passed = true;
 		}
@@ -116,7 +120,7 @@ public static class StaticSnapshotProbe
 		}
 		finally
 		{
-			if (Collector != null) Configure("{\"enabled\":false}");
+			if (Collector != null) Disable();
 			File.AppendAllText(Evidence, "{\"callback\":\"complete\",\"pid\":" + Pid + ",\"passed\":" + (passed ? "true" : "false") + "}\n");
 			EditorApplication.Exit(passed ? 0 : 1);
 		}
@@ -155,7 +159,7 @@ public static class StaticSnapshotProbe
 			Record("{\"callback\":\"transitionStart\",\"pid\":" + Pid + ",\"originalOptionsEnabled\":" + (EditorSettings.enterPlayModeOptionsEnabled ? "true" : "false") + ",\"originalOptions\":" + (int)EditorSettings.enterPlayModeOptions + "}");
 			EditorSettings.enterPlayModeOptionsEnabled = true;
 			EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload | EnterPlayModeOptions.DisableSceneReload;
-			Configure(Settings("[\"Assembly-CSharp\"]", 1000, 100)); StaticTransitionValues.Bug = 31; StaticTransitionValues.Reset = 31;
+			Configure(new[] { "Assembly-CSharp" }, 1000, 10); StaticTransitionValues.Bug = 31; StaticTransitionValues.Reset = 31;
 			EditorApplication.playModeStateChanged -= ObserveTransition; EditorApplication.playModeStateChanged += ObserveTransition;
 			SetPhase(0); EditorApplication.isPlaying = true;
 		}
@@ -211,7 +215,6 @@ public static class StaticSnapshotProbe
 					Require(Complete(report), "entered_complete");
 					Require((string)Read(Entry(report, "StaticTransitionValues", "Bug"), "classification") == (phase == 0 ? "carried" : "reset"), phase == 0 ? "fast_bug_carried" : "mono_reset_observed");
 					Require((string)Read(report, "beforeTransition") == "ExitingEditMode", "before_survives_reload");
-					object previous = report; Configure(Settings("[\"Assembly-CSharp\"]", 1000, 100)); Require(ReferenceEquals(previous, Report()), "identical_config_preserves_diff");
 				}
 				SetPhase(phase + 1); EditorApplication.isPlaying = false;
 			}
@@ -219,18 +222,18 @@ public static class StaticSnapshotProbe
 			{
 				if (EditorApplication.isPlayingOrWillChangePlaymode || !events.Exists(x => x.callback == "transitionObserved" && x.round == Round(phase) && x.transition == "EnteredEditMode")) return;
 				RecordReport(events, phase, "EnteredEditMode"); events = ProofEvents(); CheckRound(events, Round(phase));
-				if (phase == 1) { Configure(Settings("[\"Assembly-CSharp\"]", 1, 100)); SetPhase(3); EditorApplication.isPlaying = true; }
+				if (phase == 1) { Configure(new[] { "Assembly-CSharp" }, 1, 100); SetPhase(3); EditorApplication.isPlaying = true; }
 				else if (phase == 4)
 				{
 					Require(events.FindAll(x => x.callback == "transitionReport" && x.round == "cap" && !x.complete).Count == 4, "cap_round_incomplete");
 					EditorSettings.enterPlayModeOptionsEnabled = false;
-					Configure(Settings("[\"Assembly-CSharp\"]", 1000, 100)); StaticTransitionValues.Bug = 31; StaticTransitionValues.Reset = 31;
+					Configure(new[] { "Assembly-CSharp" }, 1000, 10); StaticTransitionValues.Bug = 31; StaticTransitionValues.Reset = 31;
 					SetPhase(6); EditorApplication.isPlaying = true;
 				}
 				else
 				{
 					Require(Complete(Report()), "mono_exit_complete");
-					Configure("{\"enabled\":false}"); Require(Latest() == null && Report() == null && Capture() == null, "disable_clears_reports"); FinishTransitions(true);
+					Disable(); Require(Latest() == null && Report() == null && Capture() == null, "disable_clears_reports"); FinishTransitions(true);
 				}
 			}
 		}
@@ -242,7 +245,7 @@ public static class StaticSnapshotProbe
 		if (EditorApplication.isPlaying) { EditorApplication.isPlaying = false; EditorApplication.delayCall += () => FinishTransitions(false); return; }
 		var start = ProofEvents().Find(x => x.callback == "transitionStart");
 		if (start != null) { EditorSettings.enterPlayModeOptionsEnabled = start.originalOptionsEnabled; EditorSettings.enterPlayModeOptions = (EnterPlayModeOptions)start.originalOptions; }
-		if (Collector != null) Configure("{\"enabled\":false}");
+		if (Collector != null) Disable();
 		Record("{\"callback\":\"transitionMeasurement\",\"pid\":" + Pid + ",\"passed\":" + (passed ? "true" : "false") + ",\"check\":\"" + (passed ? "all_rounds" : FailedCheck) + "\"}");
 		Record("{\"callback\":\"complete\",\"pid\":" + Pid + ",\"passed\":" + (passed ? "true" : "false") + "}"); EditorApplication.Exit(passed ? 0 : 1);
 	}
@@ -259,8 +262,6 @@ public static class StaticSnapshotProbe
 			var parts = pair.Split(':'); object entry = Entry(report, "DiffFixture", parts[0]);
 			Require((string)Read(entry, "classification") == parts[1], "diff_" + parts[1]);
 		}
-		Require((string)Read(Entry(report, "DiffFixture", "Reset"), "beforeFingerprint") == "before"
-			&& (string)Read(Entry(report, "DiffFixture", "Reset"), "afterFingerprint") == "after", "diff_fingerprints");
 		Require(Complete(Compare(before, before, "EnteredPlayMode", "ExitingPlayMode")), "diff_same_snapshot");
 		Require(!Complete(Compare(null, after, "", "ExitingEditMode")), "diff_missing_before");
 		Require(!Complete(Compare(before, after, "EnteredPlayMode", "EnteredEditMode")), "diff_transition_gap");
@@ -296,7 +297,12 @@ public static class StaticSnapshotProbe
 		if (Environment.GetEnvironmentVariable("UCT_STATICS_TRANSITION_PROOF") != "1") return;
 		EditorApplication.playModeStateChanged -= ObserveTransition; EditorApplication.playModeStateChanged += ObserveTransition;
 	}
-	private static void Configure(string json) { Collector.GetMethod("Configure", Flags).Invoke(null, new object[] { json }); OrderObserver(); }
+	private static void Configure(string[] names, int fields, int milliseconds)
+	{
+		Collector.GetMethod("Configure", Flags).Invoke(null, new object[] { names, fields, milliseconds });
+		OrderObserver();
+	}
+	private static void Disable() { Collector.GetMethod("Disable", Flags).Invoke(null, null); }
 	private static object Capture() { return Collector.GetMethod("Capture", Flags).Invoke(null, null); }
 	private static object Latest() { return Collector.GetProperty("Latest", Flags).GetValue(null, null); }
 	private static object Read(object item, string name) { return item.GetType().GetField(name).GetValue(item); }
@@ -306,5 +312,4 @@ public static class StaticSnapshotProbe
 	private static object Entry(object snapshot, string type, string field) { foreach (var entry in Fields(snapshot)) if ((string)Read(entry, "type") == type && (string)Read(entry, "field") == field) return entry; throw new InvalidOperationException("entry_missing"); }
 	private static string Fingerprint(object snapshot, string type, string field) { return (string)Read(Entry(snapshot, type, field), "fingerprint"); }
 	private static string Unreadable(object snapshot, string type, string field) { return (string)Read(Entry(snapshot, type, field), "unreadableReason"); }
-	private static string Settings(string allowlist, int fields, int milliseconds) { return "{\"enabled\":true,\"assemblyAllowlist\":" + allowlist + ",\"maxFields\":" + fields + ",\"maxScanMilliseconds\":" + milliseconds + "}"; }
 }

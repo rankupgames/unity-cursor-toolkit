@@ -32,12 +32,12 @@ namespace UnityCursorToolkit.MCP
 			var result = new Inventory();
 			var timer = Stopwatch.StartNew();
 			bool truncated;
-			var userAssemblies = GetUserAssemblyNames(timer, result.maxDurationMs, out truncated);
+			var userAssemblies = GetUserAssemblyOutputs(timer, result.maxDurationMs, out truncated);
 			result.truncated = truncated;
 			foreach (var assembly in AssemblyEnumerator.GetLoaded())
 			{
 				if (result.truncated || timer.ElapsedMilliseconds >= result.maxDurationMs) { result.truncated = true; break; }
-				if (!userAssemblies.Contains(assembly.GetName().Name)) continue;
+				if (!userAssemblies.ContainsKey(assembly.GetName().Name)) continue;
 				if (result.assembliesScanned >= result.maxAssemblies) { result.truncated = true; break; }
 				result.assembliesScanned++;
 				Type[] types;
@@ -75,10 +75,10 @@ namespace UnityCursorToolkit.MCP
 			return result;
 		}
 
-		internal static HashSet<string> GetUserAssemblyNames(Stopwatch timer, int maxDurationMs, out bool truncated)
+		internal static Dictionary<string, string> GetUserAssemblyOutputs(Stopwatch timer, int maxDurationMs, out bool truncated)
 		{
 			truncated = false;
-			var userAssemblies = new HashSet<string>(StringComparer.Ordinal);
+			var userAssemblies = new Dictionary<string, string>(StringComparer.Ordinal);
 			string projectRoot = Directory.GetParent(Application.dataPath).FullName;
 			string assetsRoot = Path.GetFullPath(Application.dataPath) + Path.DirectorySeparatorChar;
 			var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
@@ -93,7 +93,11 @@ namespace UnityCursorToolkit.MCP
 					if (timer.ElapsedMilliseconds >= maxDurationMs) { truncated = true; break; }
 				}
 				if (truncated) break;
-				if (ownsAllSources) userAssemblies.Add(assembly.name);
+				if (ownsAllSources)
+				{
+					string output = Path.IsPathRooted(assembly.outputPath) ? assembly.outputPath : Path.Combine(projectRoot, assembly.outputPath);
+					userAssemblies.Add(assembly.name, Path.GetFullPath(output));
+				}
 			}
 			return userAssemblies;
 		}

@@ -4,22 +4,30 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Reflection;
-using Newtonsoft.Json.Linq;
-using UnityEngine;
+using System.IO;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityCursorToolkit.MCP;
 
 namespace UnityCursorToolkit.Core
 {
 	/// <summary>Opt-in fingerprints and latest-only transition diffs; no raw values or disk persistence.</summary>
 	[InitializeOnLoad]
-	internal static partial class StaticSnapshotter
+	internal static class StaticSnapshotter
 	{
 		private static StaticSnapshotState State => StaticSnapshotState.instance;
-		private static string[] assemblyAllowlist => State.assemblyAllowlist;
 		private static int maxFields => State.maxFields;
 		private static int maxScanMilliseconds => State.maxScanMilliseconds;
-		internal static Snapshot Latest { get => State.latestSnapshot; private set => State.latestSnapshot = value; }
+		internal static int Revision { get; private set; }
+		internal static Snapshot Latest
+		{
+			get => State.latestSnapshot;
+			private set
+			{
+				State.latestSnapshot = value;
+				Revision++;
+			}
+		}
 		internal static Diff LatestDiff => State.latestDiff;
 		internal static bool Enabled => State.enabled;
 
@@ -42,6 +50,7 @@ namespace UnityCursorToolkit.Core
 			if (!Enabled) return;
 			EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
 			EditorApplication.quitting += OnEditorQuitting;
+			CompilationPipeline.compilationStarted += OnCompilationStarted;
 		}
 
 		#if UNITY_7000_0_OR_NEWER
@@ -51,69 +60,107 @@ namespace UnityCursorToolkit.Core
 		{
 			EditorApplication.playModeStateChanged -= OnPlayModeStateChanged;
 			EditorApplication.quitting -= OnEditorQuitting;
+			CompilationPipeline.compilationStarted -= OnCompilationStarted;
 		}
 
-		private static void ClearState()
+		internal static void Disable()
 		{
 			DetachHooks();
 			var state = State;
 			state.enabled = false;
-			state.assemblyAllowlist = new string[0];
-			state.latestSnapshot = state.previousSnapshot = null;
+			state.assemblyNames = state.assemblyVersions = Array.Empty<string>();
+			Latest = null;
 			state.latestDiff = null;
 			state.previousTransition = "";
 		}
 
 		private static void OnEditorQuitting()
 		{
-			ClearState();
+			Disable();
 			UnityEngine.Object.DestroyImmediate(State);
 		}
 
-		internal static void Configure(string json)
+		// A new compilation invalidates the loaded binary identities selected by the user.
+		private static void OnCompilationStarted(object context)
 		{
-			try
+			Disable();
+			Latest = new Snapshot { skippedReason = "compilation_changed" };
+		}
+
+		/// <summary>Begin a new Editor capture with exact project assembly names and bounded scans.</summary>
+		internal static void Configure(string[] names, int fields, int milliseconds)
+		{
+			Disable();
+			if (names == null || names.Length == 0 || names.Length > 128 || fields < 1 || fields > 1000
+				|| milliseconds < 1 || milliseconds > 100)
 			{
-				var input = JObject.Parse(json);
-				if (input["enabled"]?.Type != JTokenType.Boolean) throw new InvalidOperationException();
-				if (!(bool)input["enabled"]) { ClearState(); return; }
-				var names = input["assemblyAllowlist"] as JArray;
-				if (names == null || names.Count > 128 || input["maxFields"]?.Type != JTokenType.Integer
-					|| input["maxScanMilliseconds"]?.Type != JTokenType.Integer) throw new InvalidOperationException();
-				int fields = (int)input["maxFields"], milliseconds = (int)input["maxScanMilliseconds"];
-				if (fields < 1 || fields > 1000 || milliseconds < 1 || milliseconds > 100) throw new InvalidOperationException();
-				var allowlist = new HashSet<string>(StringComparer.Ordinal);
-				foreach (var name in names)
-				{
-					if (name.Type != JTokenType.String) throw new InvalidOperationException();
-					string text = (string)name;
-					if (string.IsNullOrWhiteSpace(text) || text.Length > 128 || text.IndexOfAny(new[] { '/', '\\', '\r', '\n', '\0' }) >= 0) throw new InvalidOperationException();
-					allowlist.Add(text);
-				}
-				var sortedNames = new List<string>(allowlist); sortedNames.Sort(StringComparer.Ordinal);
-				var state = State;
-				bool unchanged = state.enabled && state.maxFields == fields && state.maxScanMilliseconds == milliseconds
-					&& new HashSet<string>(state.assemblyAllowlist, StringComparer.Ordinal).SetEquals(sortedNames);
-				if (!unchanged) ClearState();
-				state.assemblyAllowlist = sortedNames.ToArray();
-				state.maxFields = fields;
-				state.maxScanMilliseconds = milliseconds;
-				state.enabled = true;
-				InitializeLifecycle();
-				Capture();
+				Latest = new Snapshot { skippedReason = "invalid_configuration" };
+				return;
 			}
-			catch { ClearState(); Publish(new Snapshot { skippedReason = "invalid_configuration" }); }
+
+			var allowed = new HashSet<string>(StringComparer.Ordinal);
+			char[] invalidNameCharacters = { '/', '\\', '\r', '\n', '\0' };
+			foreach (string name in names)
+			{
+				if (string.IsNullOrWhiteSpace(name) || name.Length > 128 || name.IndexOfAny(invalidNameCharacters) >= 0)
+				{
+					Latest = new Snapshot { skippedReason = "invalid_configuration" };
+					return;
+				}
+				allowed.Add(name);
+			}
+			if (EditorApplication.isCompiling || EditorApplication.isUpdating)
+			{
+				Latest = new Snapshot { skippedReason = "editor_busy" };
+				return;
+			}
+
+			// CompilationPipeline materializes all source paths. Do this once on explicit opt-in.
+			const int discoveryLimitMs = 500;
+			var timer = Stopwatch.StartNew();
+			var outputs = StaticInventoryTool.GetUserAssemblyOutputs(timer, discoveryLimitMs, out bool truncated);
+			var comparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+			var selectedNames = new List<string>();
+			var selectedVersions = new List<string>();
+			foreach (System.Reflection.Assembly assembly in AssemblyEnumerator.GetLoaded())
+			{
+				string name = assembly.GetName().Name;
+				if (allowed.Contains(name) && outputs.TryGetValue(name, out string output) && !assembly.IsDynamic
+					&& !string.IsNullOrEmpty(assembly.Location) && string.Equals(Path.GetFullPath(assembly.Location), output, comparison))
+				{
+					selectedNames.Add(name);
+					selectedVersions.Add(assembly.ManifestModule.ModuleVersionId.ToString());
+				}
+			}
+			if (truncated || timer.ElapsedMilliseconds >= discoveryLimitMs)
+			{
+				Latest = new Snapshot { skippedReason = "assembly_discovery_budget" };
+				return;
+			}
+			if (selectedNames.Count == 0)
+			{
+				Latest = new Snapshot { skippedReason = "no_eligible_assemblies" };
+				return;
+			}
+
+			var state = State;
+			state.assemblyNames = selectedNames.ToArray();
+			state.assemblyVersions = selectedVersions.ToArray();
+			state.maxFields = fields;
+			state.maxScanMilliseconds = milliseconds;
+			state.enabled = true;
+			InitializeLifecycle();
+			Capture();
 		}
 
 		private static void OnPlayModeStateChanged(PlayModeStateChange transition)
 		{
-			if (!Enabled) return;
 			var state = State;
-			var snapshot = Capture();
-			state.latestDiff = Compare(state.previousSnapshot, snapshot, state.previousTransition, transition.ToString());
-			state.previousSnapshot = snapshot;
-			state.previousTransition = transition.ToString();
-			HotReloadHandler.BroadcastToClients("{\"command\":\"staticsReport\",\"report\":" + JsonUtility.ToJson(state.latestDiff) + "}");
+			Snapshot before = string.IsNullOrEmpty(state.previousTransition) ? null : Latest;
+			Snapshot after = Capture();
+			string nextTransition = transition.ToString();
+			state.latestDiff = Compare(before, after, state.previousTransition, nextTransition);
+			state.previousTransition = nextTransition;
 		}
 
 		internal static Snapshot Capture()
@@ -123,16 +170,15 @@ namespace UnityCursorToolkit.Core
 			var timer = Stopwatch.StartNew();
 			try
 			{
-				if (assemblyAllowlist.Length == 0) { result.complete = true; return Finish(result, timer); }
-				bool stopped;
-				var owned = StaticInventoryTool.GetUserAssemblyNames(timer, maxScanMilliseconds, out stopped);
-				if (stopped || Expired(timer)) return Skip(result, timer, "time_budget");
-				var allowed = new HashSet<string>(assemblyAllowlist, StringComparer.Ordinal);
-				foreach (var assembly in AssemblyEnumerator.GetLoaded())
+				var state = State;
+				int matched = 0;
+				foreach (System.Reflection.Assembly assembly in AssemblyEnumerator.GetLoaded())
 				{
 					if (Expired(timer)) return Skip(result, timer, "time_budget");
 					string name = assembly.GetName().Name;
-					if (!allowed.Contains(name) || !owned.Contains(name)) continue;
+					int index = Array.IndexOf(state.assemblyNames, name);
+					if (index < 0 || assembly.ManifestModule.ModuleVersionId.ToString() != state.assemblyVersions[index]) continue;
+					matched++;
 					// Unity reflection calls cannot be preempted; check the cooperative budget afterwards too.
 					var types = assembly.GetTypes();
 					if (Expired(timer)) return Skip(result, timer, "time_budget");
@@ -143,7 +189,6 @@ namespace UnityCursorToolkit.Core
 						if (Expired(timer)) return Skip(result, timer, "time_budget");
 						foreach (var field in fields)
 						{
-							if (result.fields.Count >= maxFields) return Skip(result, timer, "field_cap");
 							if (Expired(timer)) return Skip(result, timer, "time_budget");
 							var entry = new Entry { assembly = name, type = type.FullName ?? type.Name, field = field.Name };
 							if (entry.assembly.Length > 128 || entry.type.Length > 512 || entry.field.Length > 512) return Skip(result, timer, "identity_limit");
@@ -154,8 +199,7 @@ namespace UnityCursorToolkit.Core
 						}
 					}
 				}
-				result.fields.Sort((left, right) => string.CompareOrdinal(left.assembly + "/" + left.type + "/" + left.field, right.assembly + "/" + right.type + "/" + right.field));
-				if (Expired(timer)) return Skip(result, timer, "time_budget");
+				if (matched != state.assemblyNames.Length) return Skip(result, timer, "assembly_identity_changed");
 				result.complete = true;
 				return Finish(result, timer);
 			}
@@ -177,14 +221,8 @@ namespace UnityCursorToolkit.Core
 		private static Snapshot Finish(Snapshot result, Stopwatch timer)
 		{
 			result.durationMs = timer.Elapsed.TotalMilliseconds;
-			Publish(result);
-			return result;
-		}
-
-		private static void Publish(Snapshot result)
-		{
 			Latest = result;
-			HotReloadHandler.BroadcastToClients("{\"command\":\"staticsSnapshot\",\"snapshot\":" + JsonUtility.ToJson(result) + "}");
+			return result;
 		}
 
 		private static void Read(FieldInfo field, Entry entry)
@@ -265,7 +303,6 @@ namespace UnityCursorToolkit.Core
 				var identity = current ?? previous;
 				result.fields.Add(new Difference {
 					assembly = identity.assembly, type = identity.type, field = identity.field,
-					beforeFingerprint = previous?.fingerprint ?? "", afterFingerprint = current?.fingerprint ?? "",
 					beforeUnreadableReason = previous?.unreadableReason ?? "", afterUnreadableReason = current?.unreadableReason ?? "",
 					classification = !string.IsNullOrEmpty(previous?.unreadableReason) || !string.IsNullOrEmpty(current?.unreadableReason)
 						? "unreadable" : previous == null ? "added" : current == null ? "removed"
@@ -290,7 +327,7 @@ namespace UnityCursorToolkit.Core
 		internal sealed class Difference
 		{
 			public string assembly, type, field, classification;
-			public string beforeFingerprint, afterFingerprint, beforeUnreadableReason, afterUnreadableReason;
+			public string beforeUnreadableReason, afterUnreadableReason;
 		}
 
 		[Serializable]

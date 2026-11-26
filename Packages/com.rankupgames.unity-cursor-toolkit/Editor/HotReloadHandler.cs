@@ -1013,9 +1013,6 @@ public partial class HotReloadHandler : EditorWindow
                     case "getDebugPort":
                         UnityCursorToolkit.Debugging.DebugBridge.BroadcastDebugPort();
                         break;
-                    case "configureStatics":
-                        UnityCursorToolkit.Core.StaticSnapshotter.Configure(message);
-                        break;
                     case "mcpToolCall":
                         RouteMcpToolCall(message);
                         break;
