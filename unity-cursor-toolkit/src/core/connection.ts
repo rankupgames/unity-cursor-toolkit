@@ -32,6 +32,7 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 	public readonly onRuntimeCapabilitiesChanged = this.runtimeCapabilitiesChanged.event;
 	private runtimeCapabilities: RuntimeCapabilities | undefined;
 	private runtimeCapabilityError: RuntimeCapabilityError | undefined;
+	private verifiedProjectPath: string | undefined;
 
 	public getRuntimeCapabilities(): RuntimeCapabilities {
 		if (this.runtimeCapabilityError) throw this.runtimeCapabilityError;
@@ -39,10 +40,15 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 		throw new RuntimeCapabilityError('runtime', 'The runtime handshake is pending. Runtime features are unavailable. Connect to Unity first.');
 	}
 
-	public acceptProjectInfo(projectInfo: unknown): void {
+	public getVerifiedProjectPath(): string | undefined {
+		return this.verifiedProjectPath;
+	}
+
+	public acceptProjectInfo(projectInfo: unknown, verifiedProjectPath?: string): void {
 		if (this.runtimeCapabilities || this.runtimeCapabilityError) return;
 		try {
 			this.runtimeCapabilities = parseRuntimeCapabilities(projectInfo);
+			this.verifiedProjectPath = verifiedProjectPath;
 			console.info('[Connection] Runtime capabilities:', this.runtimeCapabilities);
 		} catch (error) {
 			if (!(error instanceof RuntimeCapabilityError)) throw error;
@@ -228,6 +234,7 @@ export class ConnectionManager implements IConnectionManager, vscode.Disposable 
 		if (next !== ConnectionState.Connected && (this.runtimeCapabilities || this.runtimeCapabilityError)) {
 			this.runtimeCapabilities = undefined;
 			this.runtimeCapabilityError = undefined;
+			this.verifiedProjectPath = undefined;
 			this.runtimeCapabilitiesChanged.fire();
 		}
 		if (this.state === next) {

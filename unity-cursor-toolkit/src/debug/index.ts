@@ -38,10 +38,18 @@ export class DebugModule implements IModule {
 	public async activate(ctx: ModuleContext): Promise<void> {
 		const status = new DebugStatusContributor();
 		let connectionGeneration = 0;
+		const requireLinkedEditor = () => {
+			const projectPath = getLinkedProjectPath();
+			if (!projectPath || ctx.connectionManager.getVerifiedProjectPath() !== projectPath) {
+				throw new Error('Use Start/Attach to connect to the linked Unity Editor before changing Code Optimization.');
+			}
+			return projectPath;
+		};
 		const readOptimization = async () => {
+			const projectPath = requireLinkedEditor();
 			const generation = connectionGeneration;
 			const mode = await requestOptimization(ctx.commandSender);
-			if (generation !== connectionGeneration) throw new Error('The Unity connection changed. Try again.');
+			if (generation !== connectionGeneration || projectPath !== requireLinkedEditor()) throw new Error('The Unity connection changed. Try again.');
 			status.mode = mode;
 			return mode;
 		};
@@ -100,12 +108,13 @@ export class DebugModule implements IModule {
 		ctx.registerCommand(SET_OPTIMIZATION, async () => {
 			const generation = connectionGeneration;
 			try {
+				const projectPath = requireLinkedEditor();
 				const mode = await readOptimization();
 				const target = await vscode.window.showQuickPick(['Debug', 'Release'], {
 					placeHolder: `Current mode: ${mode}. Changing it recompiles and reloads scripts.`
 				});
 				if ((target !== 'Debug' && target !== 'Release') || target === mode) return;
-				if (generation !== connectionGeneration) throw new Error('The Unity connection changed. Try again.');
+				if (generation !== connectionGeneration || projectPath !== requireLinkedEditor()) throw new Error('The Unity connection changed. Try again.');
 				const applied = await requestOptimization(ctx.commandSender, target);
 				if (generation === connectionGeneration) status.mode = applied;
 				void vscode.window.showInformationMessage(`Unity Code Optimization is ${applied}. Wait for Unity to reload scripts before attaching.`);

@@ -47,8 +47,9 @@ operations at every nesting level before planning or forwarding.
 
 ## Editor Code Optimization
 
-For Mono Editor breakpoints, use Debug mode. Run **Unity Toolkit: Set Code
-Optimization Mode** from the command palette or the Debug group in Quick Actions.
+For Mono Editor breakpoints, use Debug mode. Connect to the linked Unity Editor
+with **Start/Attach**, then run **Unity Toolkit: Set Code Optimization Mode**
+from the command palette or the Debug group in Quick Actions.
 The command reads the current mode and offers Debug and Release. The Editor attach
 configuration warns when it reads a mode other than Debug. Changing the mode
 recompiles and reloads scripts. Wait for Unity to reconnect before attaching.
