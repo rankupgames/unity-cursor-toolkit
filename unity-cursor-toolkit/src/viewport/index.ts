@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as vscode from 'vscode';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import type { IMessageHandler, IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { ConnectionState } from '../core/types';
 
@@ -593,7 +593,7 @@ class UnityViewportPanel {
 			disposable.dispose();
 		}
 
-		if (this.state.streaming) {
+		if (this.sessionId != null) {
 			await this.stopStream();
 		}
 	}
@@ -788,15 +788,15 @@ class UnityViewportPanel {
 	}
 
 	private async startStreamCore(): Promise<void> {
-		if (this.sessionId != null && this.state.streaming) {
+		if (this.disposed || (this.sessionId != null && this.state.streaming)) {
 			return;
 		}
 
-		if (await this.ensureUnityConnected() === false) {
+		if (await this.ensureUnityConnected() === false || this.disposed) {
 			return;
 		}
 
-		const sessionId = `${this.host}_${safeSessionSegment(this.mode)}_view_${Date.now()}`;
+		const sessionId = `${this.host}_${safeSessionSegment(this.mode)}_view_${randomUUID()}`;
 		this.sessionId = sessionId;
 		this.state.streaming = true;
 		this.state.frame = undefined;
@@ -822,6 +822,9 @@ class UnityViewportPanel {
 			}
 		});
 
+		if (this.sessionId !== sessionId) {
+			return;
+		}
 		const parsed = parseToolJson(response?.result);
 		if (parsed == null || parsed.success === false) {
 			this.state.streaming = false;
@@ -839,13 +842,15 @@ class UnityViewportPanel {
 		this.clearHealthTimer();
 		const sessionId = this.sessionId;
 		this.sessionId = undefined;
-		if (this.ctx.connectionManager.info.state === ConnectionState.Connected) {
+		if (sessionId != null && this.ctx.connectionManager.info.state === ConnectionState.Connected) {
 			await this.ctx.commandSender.request('mcpToolCall', {
 				toolName: 'viewport_stream',
-				args: { action: 'stop', sessionId: sessionId ?? '', host: this.host, view: this.mode }
+				args: { action: 'stop', sessionId, host: this.host }
 			});
 		}
-		this.setStatus('Stream stopped');
+		if (this.sessionId == null) {
+			this.setStatus('Stream stopped');
+		}
 	}
 
 	private async captureScreenshot(): Promise<void> {
