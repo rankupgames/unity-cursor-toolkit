@@ -1,0 +1,217 @@
+{
+  "recordedAt": "2026-11-26T23:59:50.348Z",
+  "scope": "same-host browser replay",
+  "platform": "windows-x64",
+  "source": {
+    "editor": "6000.3.9f1",
+    "revision": "7a9955a4f2fa",
+    "view": "scene",
+    "frames": 215,
+    "sourceWidth": 554,
+    "sourceHeight": 360,
+    "orderedJpegSha256": "dc9083e2f533ba713a22415381e309d9043c838921cf4cd7dedf7c66833ecdd4"
+  },
+  "runtime": {
+    "chrome": "158.0.8127.88",
+    "headless": true,
+    "exitCode": 0,
+    "ownedProcessesRemaining": 0
+  },
+  "method": {
+    "fps": 12,
+    "encodedWidth": 554,
+    "encodedHeight": 368,
+    "network": "same-host UDP ICE; no STUN or TURN",
+    "timing": "canvas frame submission to browser compositor submission, matched by sequence ID in the 8-pixel strip",
+    "rtpRate": "video payload and RTP headers over replay duration",
+    "input": "echoed control messages on ordered WebRTC data channel"
+  },
+  "summary": [
+    {
+      "codec": "video/H264",
+      "matched": 645,
+      "submitted": 645,
+      "medianTrialP95Ms": 26.5,
+      "p95RangeMs": [
+        25.3,
+        45.8
+      ],
+      "medianVideoRtpKbitPerSecond": 23
+    },
+    {
+      "codec": "video/VP8",
+      "matched": 642,
+      "submitted": 645,
+      "medianTrialP95Ms": 91.1,
+      "p95RangeMs": [
+        27.3,
+        91.6
+      ],
+      "medianVideoRtpKbitPerSecond": 96.3
+    }
+  ],
+  "trials": [
+    {
+      "round": 1,
+      "requested": "video/H264",
+      "negotiated": "video/H264",
+      "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+      "protocol": "udp",
+      "submitted": 215,
+      "encoded": 215,
+      "matched": 215,
+      "badMarkers": 0,
+      "receiverStatsDrops": 0,
+      "firstFrameMs": 29.1,
+      "p50Ms": 28.9,
+      "p95Ms": 45.8,
+      "decodeP95Ms": 0.4,
+      "payloadBytes": 39268,
+      "rtpHeaderBytes": 11761,
+      "meanEncodeMs": 1.367,
+      "controlEchoMs": [
+        0.8,
+        0.5,
+        0.7
+      ],
+      "encoderImplementation": null,
+      "powerEfficientEncoder": null,
+      "decoderImplementation": null
+    },
+    {
+      "round": 1,
+      "requested": "video/VP8",
+      "negotiated": "video/VP8",
+      "fmtp": null,
+      "protocol": "udp",
+      "submitted": 215,
+      "encoded": 214,
+      "matched": 214,
+      "badMarkers": 0,
+      "receiverStatsDrops": 0,
+      "firstFrameMs": 40.9,
+      "p50Ms": 90.1,
+      "p95Ms": 91.1,
+      "decodeP95Ms": 0.6,
+      "payloadBytes": 207681,
+      "rtpHeaderBytes": 8040,
+      "meanEncodeMs": 1.477,
+      "controlEchoMs": [
+        1,
+        0.8,
+        1.2
+      ],
+      "encoderImplementation": null,
+      "powerEfficientEncoder": null,
+      "decoderImplementation": null
+    },
+    {
+      "round": 2,
+      "requested": "video/VP8",
+      "negotiated": "video/VP8",
+      "fmtp": null,
+      "protocol": "udp",
+      "submitted": 215,
+      "encoded": 214,
+      "matched": 214,
+      "badMarkers": 0,
+      "receiverStatsDrops": 0,
+      "firstFrameMs": 24.9,
+      "p50Ms": 90.9,
+      "p95Ms": 91.6,
+      "decodeP95Ms": 0.4,
+      "payloadBytes": 207680,
+      "rtpHeaderBytes": 8040,
+      "meanEncodeMs": 1.369,
+      "controlEchoMs": [
+        0.5,
+        0.5,
+        0.6
+      ],
+      "encoderImplementation": null,
+      "powerEfficientEncoder": null,
+      "decoderImplementation": null
+    },
+    {
+      "round": 2,
+      "requested": "video/H264",
+      "negotiated": "video/H264",
+      "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+      "protocol": "udp",
+      "submitted": 215,
+      "encoded": 215,
+      "matched": 215,
+      "badMarkers": 0,
+      "receiverStatsDrops": 0,
+      "firstFrameMs": 26.1,
+      "p50Ms": 25.4,
+      "p95Ms": 26.5,
+      "decodeP95Ms": 0.8,
+      "payloadBytes": 39295,
+      "rtpHeaderBytes": 12124,
+      "meanEncodeMs": 1.526,
+      "controlEchoMs": [
+        0.8,
+        0.6,
+        1.3
+      ],
+      "encoderImplementation": null,
+      "powerEfficientEncoder": null,
+      "decoderImplementation": null
+    },
+    {
+      "round": 3,
+      "requested": "video/H264",
+      "negotiated": "video/H264",
+      "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+      "protocol": "udp",
+      "submitted": 215,
+      "encoded": 215,
+      "matched": 215,
+      "badMarkers": 0,
+      "receiverStatsDrops": 0,
+      "firstFrameMs": 8.4,
+      "p50Ms": 24.4,
+      "p95Ms": 25.3,
+      "decodeP95Ms": 0.8,
+      "payloadBytes": 39295,
+      "rtpHeaderBytes": 12124,
+      "meanEncodeMs": 1.433,
+      "controlEchoMs": [
+        0.8,
+        0.7,
+        0.7
+      ],
+      "encoderImplementation": null,
+      "powerEfficientEncoder": null,
+      "decoderImplementation": null
+    },
+    {
+      "round": 3,
+      "requested": "video/VP8",
+      "negotiated": "video/VP8",
+      "fmtp": null,
+      "protocol": "udp",
+      "submitted": 215,
+      "encoded": 214,
+      "matched": 214,
+      "badMarkers": 0,
+      "receiverStatsDrops": 0,
+      "firstFrameMs": 43.9,
+      "p50Ms": 26.8,
+      "p95Ms": 27.3,
+      "decodeP95Ms": 0.5,
+      "payloadBytes": 207680,
+      "rtpHeaderBytes": 8040,
+      "meanEncodeMs": 1.28,
+      "controlEchoMs": [
+        0.7,
+        0.9,
+        0.6
+      ],
+      "encoderImplementation": null,
+      "powerEfficientEncoder": null,
+      "decoderImplementation": null
+    }
+  ]
+}

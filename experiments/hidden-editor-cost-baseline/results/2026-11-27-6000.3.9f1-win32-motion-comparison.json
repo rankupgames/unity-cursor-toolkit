@@ -1,0 +1,435 @@
+{
+  "recordedAt": "2026-11-27T00:16:57.767Z",
+  "platform": "windows-x64",
+  "sourceCommit": "6a18f748681d78a54d564c5cfbdc090036133ed1",
+  "source": {
+    "editor": "6000.3.9f1",
+    "revision": "7a9955a4f2fa",
+    "view": "Scene View",
+    "frames": 56,
+    "distinctJpegHashes": 8,
+    "controls": {
+      "value": [
+        {
+          "action": 1,
+          "baselineSeq": 15,
+          "changedSeq": 17
+        },
+        {
+          "action": 2,
+          "baselineSeq": 24,
+          "changedSeq": 25
+        },
+        {
+          "action": 3,
+          "baselineSeq": 36,
+          "changedSeq": 37
+        }
+      ],
+      "Count": 3
+    },
+    "width": 554,
+    "height": 360,
+    "fps": 12,
+    "orderedJpegSha256": "e194ae513687d2f2bfe41b4c439c7aa34f3c6a3e6b518f908e3077671368df60"
+  },
+  "browser": {
+    "name": "Chrome",
+    "version": "158.0.8127.88",
+    "headless": true,
+    "compositionWidth": 554,
+    "compositionHeight": 368,
+    "hardwareEncoderIdentity": null
+  },
+  "method": {
+    "latency": "Replay submission to requestVideoFrameCallback compositor submission on the same Windows host, using sequence IDs in an eight-pixel strip",
+    "videoRate": "Multipart body for MJPEG; video RTP payload plus RTP headers for WebRTC",
+    "fidelity": "Eight matching samples, one per source JPEG hash. Pool 128x72 RGB errors against the corresponding delivered MJPEG video frame, excluding marker strip.",
+    "mjpegClock": "Minimum RTT of nine pings maps timestamps from the owned HTTP process to the browser clock",
+    "h264AndVp8BrowserBitrateCeiling": 1500000
+  },
+  "summary": [
+    {
+      "codec": "image/jpeg",
+      "matched": 168,
+      "submitted": 168,
+      "medianTrialP95Ms": 4.031,
+      "minTrialP95Ms": 3.819,
+      "maxTrialP95Ms": 4.1,
+      "medianVideoKbitsPerSecond": 952,
+      "pooledMseAgainstPresentedMjpeg": 0,
+      "psnrDbAgainstPresentedMjpeg": null,
+      "psnrDbAgainstSourceJpeg": 28.08
+    },
+    {
+      "codec": "video/H264",
+      "matched": 168,
+      "submitted": 168,
+      "medianTrialP95Ms": 11.1,
+      "minTrialP95Ms": 10.8,
+      "maxTrialP95Ms": 21.2,
+      "medianVideoKbitsPerSecond": 73,
+      "pooledMseAgainstPresentedMjpeg": 101.147,
+      "psnrDbAgainstPresentedMjpeg": 28.08,
+      "psnrDbAgainstSourceJpeg": 33.28
+    },
+    {
+      "codec": "video/VP8",
+      "matched": 165,
+      "submitted": 168,
+      "medianTrialP95Ms": 31.5,
+      "minTrialP95Ms": 24.7,
+      "maxTrialP95Ms": 33.7,
+      "medianVideoKbitsPerSecond": 209.2,
+      "pooledMseAgainstPresentedMjpeg": 7.1589,
+      "psnrDbAgainstPresentedMjpeg": 39.58,
+      "psnrDbAgainstSourceJpeg": 27.68
+    }
+  ],
+  "latencyAndRateTrials": [
+    {
+      "round": 1,
+      "codec": "image/jpeg",
+      "matched": 56,
+      "p95Ms": 4.1,
+      "payloadBytes": 555254,
+      "rtpHeaderBytes": 0,
+      "clockUncertaintyMs": 0.55
+    },
+    {
+      "round": 1,
+      "codec": "video/H264",
+      "matched": 56,
+      "p95Ms": 10.8,
+      "payloadBytes": 34735,
+      "rtpHeaderBytes": 7019
+    },
+    {
+      "round": 1,
+      "codec": "video/VP8",
+      "matched": 55,
+      "p95Ms": 31.5,
+      "payloadBytes": 117252,
+      "rtpHeaderBytes": 4792
+    },
+    {
+      "round": 2,
+      "codec": "video/H264",
+      "matched": 56,
+      "p95Ms": 11.1,
+      "payloadBytes": 34382,
+      "rtpHeaderBytes": 9311
+    },
+    {
+      "round": 2,
+      "codec": "video/VP8",
+      "matched": 55,
+      "p95Ms": 33.7,
+      "payloadBytes": 117250,
+      "rtpHeaderBytes": 4768
+    },
+    {
+      "round": 2,
+      "codec": "image/jpeg",
+      "matched": 56,
+      "p95Ms": 3.819,
+      "payloadBytes": 555310,
+      "rtpHeaderBytes": 0,
+      "clockUncertaintyMs": 0.45
+    },
+    {
+      "round": 3,
+      "codec": "video/VP8",
+      "matched": 55,
+      "p95Ms": 24.7,
+      "payloadBytes": 117249,
+      "rtpHeaderBytes": 4768
+    },
+    {
+      "round": 3,
+      "codec": "image/jpeg",
+      "matched": 56,
+      "p95Ms": 4.031,
+      "payloadBytes": 555310,
+      "rtpHeaderBytes": 0,
+      "clockUncertaintyMs": 0.3
+    },
+    {
+      "round": 3,
+      "codec": "video/H264",
+      "matched": 56,
+      "p95Ms": 21.2,
+      "payloadBytes": 34382,
+      "rtpHeaderBytes": 8179
+    }
+  ],
+  "fidelityCalibration": [
+    {
+      "codec": "image/jpeg",
+      "quality": [
+        {
+          "id": 9,
+          "sourceJpegMse": 105.2571,
+          "presentedMjpegMse": 0,
+          "meanRgbDifference": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": 17,
+          "sourceJpegMse": 116.5609,
+          "presentedMjpegMse": 0,
+          "meanRgbDifference": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": 18,
+          "sourceJpegMse": 116.8377,
+          "presentedMjpegMse": 0,
+          "meanRgbDifference": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": 19,
+          "sourceJpegMse": 117.1292,
+          "presentedMjpegMse": 0,
+          "meanRgbDifference": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": 20,
+          "sourceJpegMse": 117.256,
+          "presentedMjpegMse": 0,
+          "meanRgbDifference": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": 23,
+          "sourceJpegMse": 117.2156,
+          "presentedMjpegMse": 0,
+          "meanRgbDifference": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": 31,
+          "sourceJpegMse": 63.844,
+          "presentedMjpegMse": 0,
+          "meanRgbDifference": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "id": 47,
+          "sourceJpegMse": 55.0304,
+          "presentedMjpegMse": 0,
+          "meanRgbDifference": [
+            0,
+            0,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "codec": "video/H264",
+      "quality": [
+        {
+          "id": 9,
+          "sourceJpegMse": 26.9916,
+          "presentedMjpegMse": 105.9562,
+          "meanRgbDifference": [
+            -1.3668,
+            -0.8384,
+            0.0133
+          ]
+        },
+        {
+          "id": 17,
+          "sourceJpegMse": 31.7484,
+          "presentedMjpegMse": 115.6919,
+          "meanRgbDifference": [
+            -1.6707,
+            -0.9392,
+            -0.0009
+          ]
+        },
+        {
+          "id": 18,
+          "sourceJpegMse": 32.7637,
+          "presentedMjpegMse": 116.1155,
+          "meanRgbDifference": [
+            -1.668,
+            -0.9441,
+            -0.024
+          ]
+        },
+        {
+          "id": 19,
+          "sourceJpegMse": 33.3908,
+          "presentedMjpegMse": 116.5252,
+          "meanRgbDifference": [
+            -1.6647,
+            -0.9415,
+            -0.0194
+          ]
+        },
+        {
+          "id": 20,
+          "sourceJpegMse": 34.0762,
+          "presentedMjpegMse": 117.0806,
+          "meanRgbDifference": [
+            -1.6613,
+            -0.9421,
+            -0.0212
+          ]
+        },
+        {
+          "id": 23,
+          "sourceJpegMse": 34.1236,
+          "presentedMjpegMse": 117.2172,
+          "meanRgbDifference": [
+            -1.6612,
+            -0.9398,
+            -0.0161
+          ]
+        },
+        {
+          "id": 31,
+          "sourceJpegMse": 26.8409,
+          "presentedMjpegMse": 63.3242,
+          "meanRgbDifference": [
+            -1.1748,
+            -0.3735,
+            0.5802
+          ]
+        },
+        {
+          "id": 47,
+          "sourceJpegMse": 24.5348,
+          "presentedMjpegMse": 57.2653,
+          "meanRgbDifference": [
+            -1.0788,
+            -0.255,
+            1.0169
+          ]
+        }
+      ]
+    },
+    {
+      "codec": "video/VP8",
+      "quality": [
+        {
+          "id": 9,
+          "sourceJpegMse": 114.2138,
+          "presentedMjpegMse": 7.8162,
+          "meanRgbDifference": [
+            -0.6122,
+            -0.0141,
+            0.3961
+          ]
+        },
+        {
+          "id": 17,
+          "sourceJpegMse": 127.1374,
+          "presentedMjpegMse": 7.1967,
+          "meanRgbDifference": [
+            -0.5597,
+            0.1385,
+            0.8271
+          ]
+        },
+        {
+          "id": 18,
+          "sourceJpegMse": 127.0883,
+          "presentedMjpegMse": 7.1801,
+          "meanRgbDifference": [
+            -0.5689,
+            0.1379,
+            0.7219
+          ]
+        },
+        {
+          "id": 19,
+          "sourceJpegMse": 127.5784,
+          "presentedMjpegMse": 7.2585,
+          "meanRgbDifference": [
+            -0.5693,
+            0.1432,
+            0.7184
+          ]
+        },
+        {
+          "id": 20,
+          "sourceJpegMse": 127.9372,
+          "presentedMjpegMse": 7.3338,
+          "meanRgbDifference": [
+            -0.5699,
+            0.141,
+            0.7152
+          ]
+        },
+        {
+          "id": 23,
+          "sourceJpegMse": 127.9022,
+          "presentedMjpegMse": 7.3172,
+          "meanRgbDifference": [
+            -0.5702,
+            0.1411,
+            0.7169
+          ]
+        },
+        {
+          "id": 31,
+          "sourceJpegMse": 72.4657,
+          "presentedMjpegMse": 6.78,
+          "meanRgbDifference": [
+            -0.494,
+            0.3016,
+            0.9315
+          ]
+        },
+        {
+          "id": 47,
+          "sourceJpegMse": 64.0975,
+          "presentedMjpegMse": 6.3886,
+          "meanRgbDifference": [
+            -0.3123,
+            0.4389,
+            1.1045
+          ]
+        }
+      ]
+    }
+  ],
+  "shutdown": {
+    "unityExit": 0,
+    "comparisonBrowserExit": 0,
+    "fidelityBrowserExit": 0,
+    "ownedProcessesRemaining": 0
+  },
+  "pending": [
+    "matched delivered appearance across codecs",
+    "live bandwidth under motion on WAN",
+    "native hardware encoder identification",
+    "macOS"
+  ]
+}
