@@ -42,6 +42,7 @@
     "onCommand:unity-cursor-toolkit.remoteShell.stop",
     "onCommand:unity-cursor-toolkit.remoteShell.status",
     "onCommand:unity-cursor-toolkit.migration.scan",
+    "onCommand:unity-cursor-toolkit.debug.setCodeOptimization",
     "onCommand:unity-cursor-toolkit.doctor",
     "onCommand:unity-cursor-toolkit.tests.list",
     "onCommand:unity-cursor-toolkit.tests.run"
@@ -194,6 +195,10 @@
       {
         "command": "unity-cursor-toolkit.debug.attach",
         "title": "Unity Toolkit: Attach Debugger"
+      },
+      {
+        "command": "unity-cursor-toolkit.debug.setCodeOptimization",
+        "title": "Unity Toolkit: Set Code Optimization Mode"
       },
       {
         "command": "unity-cursor-toolkit.playMode.enter",

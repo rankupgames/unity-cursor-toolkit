@@ -15,6 +15,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using UnityEditor;
+using UnityEditor.Compilation;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
 using UnityCursorToolkit.Core;
@@ -67,7 +68,7 @@ namespace UnityCursorToolkit.MCP
 		private const int MaxReportedDirtyPaths = 50;
 
 		public string ToolName => "editor_lifecycle";
-		public string Description => "Inspect editor save state, save all open scenes and assets, or save and quit safely.";
+		public string Description => "Inspect editor state, save or quit safely, and read or change Code Optimization.";
 
 		public string HandleCommand(string argsJson)
 		{
@@ -82,9 +83,49 @@ namespace UnityCursorToolkit.MCP
 					return SaveProject(false);
 				case "saveAndQuit":
 					return SaveProject(true);
+				case "getCodeOptimization":
+					return GetCodeOptimization();
+				case "setCodeOptimization":
+					return SetCodeOptimization(EditorControlHelpers.GetString(args, "mode", ""));
 				default:
 					return EditorControlHelpers.JsonError($"Unknown action: {action}");
 			}
+		}
+
+		private static string GetCodeOptimization()
+		{
+			#if UNITY_2020_1_OR_NEWER
+			return "{\"success\":true,\"mode\":\"" + CompilationPipeline.codeOptimization
+				+ "\",\"editorVersion\":\"" + EditorControlHelpers.Escape(Application.unityVersion) + "\"}";
+			#else
+			return CodeOptimizationError("capability_unavailable", "This Editor does not expose Code Optimization.");
+			#endif
+		}
+
+		private static string SetCodeOptimization(string mode)
+		{
+			#if UNITY_2020_1_OR_NEWER
+			if (mode != "Debug" && mode != "Release")
+				return CodeOptimizationError("invalid_request", "Choose Debug or Release.");
+
+			CodeOptimization target = mode == "Debug" ? CodeOptimization.Debug : CodeOptimization.Release;
+			if (CompilationPipeline.codeOptimization == target) return GetCodeOptimization();
+			if (EditorApplication.isPlayingOrWillChangePlaymode || EditorApplication.isCompiling || EditorApplication.isUpdating)
+				return CodeOptimizationError("editor_busy", "Change Code Optimization while Unity is idle in Edit Mode.");
+
+			CompilationPipeline.codeOptimization = target;
+			return CompilationPipeline.codeOptimization == target
+				? GetCodeOptimization()
+				: CodeOptimizationError("code_optimization_unconfirmed", "Unity did not report the requested mode.");
+			#else
+			return GetCodeOptimization();
+			#endif
+		}
+
+		private static string CodeOptimizationError(string code, string message)
+		{
+			return "{\"success\":false,\"code\":\"" + code + "\",\"error\":\"" + EditorControlHelpers.Escape(message)
+				+ "\",\"editorVersion\":\"" + EditorControlHelpers.Escape(Application.unityVersion) + "\"}";
 		}
 
 		/// <summary>
@@ -430,6 +471,7 @@ namespace UnityCursorToolkit.MCP
 		private class ArgsWrapper
 		{
 			public string action;
+			public string mode;
 			public string menuPath;
 			public string path;
 			public string buildPath;
@@ -448,6 +490,7 @@ namespace UnityCursorToolkit.MCP
 				if (w != null)
 				{
 					if (w.action != null) d["action"] = w.action;
+					if (w.mode != null) d["mode"] = w.mode;
 					if (w.menuPath != null) d["menuPath"] = w.menuPath;
 					if (w.path != null) d["path"] = w.path;
 					if (w.buildPath != null)

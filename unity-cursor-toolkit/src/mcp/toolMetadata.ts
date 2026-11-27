@@ -41,7 +41,7 @@ const READ_ONLY_ACTIONS: Record<string, readonly string[]> = {
 	manage_scene: ['getHierarchy'],
 	manage_gameobject: ['find'],
 	manage_component: ['getProperties'],
-	editor_lifecycle: ['status'],
+	editor_lifecycle: ['status', 'getCodeOptimization'],
 	editor_validation: ['list', 'status'],
 	game_command: ['list', 'status'],
 	session_monitor: ['status', 'events', 'timeline', 'compare', 'read', 'watch', 'unwatch'],

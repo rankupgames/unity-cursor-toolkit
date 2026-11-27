@@ -171,7 +171,7 @@ APIs present in Unity 2019.4. Actual 2019.4 runtime proof remains pending.
 - `profiler_snapshot` read actions are allowed in read-only mode, including `readConsoleTranscript`. Saving or clearing retained profiler sessions is treated as mutating.
 - `game_command` read actions are `list` and `status`; scheduling and cancellation are mutating because they execute or stop game code.
 - `editor_validation` read actions are `list` and `status`; project-file synchronization and compile requests are mutating and support `dryRun`.
-- `editor_lifecycle` action `status` is read-only. `save` and `saveAndQuit` are mutating; `saveAndQuit` closes the editor only after dirty scenes and loaded persistent assets no longer report unsaved changes. Prefab Mode must be closed manually first.
+- `editor_lifecycle` actions `status` and `getCodeOptimization` are read-only. `save`, `saveAndQuit`, and `setCodeOptimization` are mutating. `saveAndQuit` closes the editor only after dirty scenes and loaded persistent assets no longer report unsaved changes. Prefab Mode must be closed manually first.
 - Never force-terminate a user editor process. If the bridge cannot save, leave Unity open unless the user explicitly accepts the unsaved-work risk.
 
 ## Runtime Game Commands

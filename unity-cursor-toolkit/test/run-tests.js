@@ -404,12 +404,15 @@ function testRuntimeCapabilities() {
 		console.info = (...args) => logs.push(args);
 		try {
 			assert.throws(() => conn.getRuntimeCapabilities(), RuntimeCapabilityError);
-			conn.acceptProjectInfo(fixtures[0][0]);
+			const verified = path.join(os.tmpdir(), 'uct-runtime-verified-project');
+			conn.acceptProjectInfo(fixtures[0][0], verified);
 			conn.acceptProjectInfo(fixtures[2][0]);
 			assert.strictEqual(conn.getRuntimeCapabilities().source, 'legacy');
+			assert.strictEqual(conn.getVerifiedProjectPath(), verified);
 			assert.strictEqual(logs.length, 1);
 			conn.disconnect();
 			assert.throws(() => conn.getRuntimeCapabilities(), RuntimeCapabilityError);
+			assert.strictEqual(conn.getVerifiedProjectPath(), undefined);
 			conn.acceptProjectInfo(fixtures[2][0]);
 			assert.strictEqual(conn.getRuntimeCapabilities().isCoreCLR, true);
 			assert.strictEqual(logs.length, 2);
@@ -461,6 +464,85 @@ async function testRuntimeConsumers() {
 			assert.deepStrictEqual(messages, ['capability_unavailable: IL patching is unavailable.']);
 			assert.deepStrictEqual(sent, []);
 		} finally { await module.deactivate(); conn.dispose(); vscode.window.showWarningMessage = oldWarning; }
+	});
+	await testAsync('Editor attach warns in Release and the mode command confirms the requested setting', async () => {
+		const { DebugModule } = require(path.join(outDir, 'debug/index'));
+		const project = require(path.join(outDir, 'project/projectHandler'));
+		const SET_MODE = 'unity-cursor-toolkit.debug.setCodeOptimization';
+		const conn = new ConnectionManager();
+		const module = new DebugModule();
+		const originalProjectPath = project.getLinkedProjectPath;
+		const originalProvider = vscode.debug.registerDebugConfigurationProvider;
+		const originalPick = vscode.window.showQuickPick;
+		const originalWarning = vscode.window.showWarningMessage;
+		const originalError = vscode.window.showErrorMessage;
+		const originalInfo = vscode.window.showInformationMessage;
+		const commands = new Map(), sent = [], warnings = [], errors = [];
+		let provider, status, mode = 'Release', unavailable = false;
+		const expectedProject = path.join(os.tmpdir(), 'uct-optimization-linked');
+		let linkedProject = expectedProject;
+		const config = { name: 'Attach to Unity Editor', type: 'unityCursorToolkit.debug', request: 'attach' };
+		project.getLinkedProjectPath = () => linkedProject;
+		vscode.debug.registerDebugConfigurationProvider = (_, value) => { provider = value; return { dispose() {} }; };
+		vscode.window.showQuickPick = async (choices) => { assert.deepStrictEqual(choices, ['Debug', 'Release']); return 'Debug'; };
+		vscode.window.showWarningMessage = async message => warnings.push(message);
+		vscode.window.showErrorMessage = async message => errors.push(message);
+		vscode.window.showInformationMessage = async () => undefined;
+		try {
+			conn.acceptProjectInfo({});
+			await module.activate({
+				connectionManager: conn,
+				registerCommand: (id, fn) => commands.set(id, fn),
+				registerStatusBarContributor: value => { status = value; },
+				commandSender: {
+					request: async (command, request) => {
+						assert.strictEqual(command, 'mcpToolCall');
+						assert.strictEqual(request.toolName, 'editor_lifecycle');
+						sent.push(request.args);
+						if (unavailable) return { result: { success: false, code: 'capability_unavailable', error: 'Code Optimization is unavailable.' } };
+						if (request.args.action === 'setCodeOptimization') mode = request.args.mode;
+						return { result: { success: true, editorVersion: '6000.3.9f1', mode } };
+					}
+				}
+			});
+			await commands.get(SET_MODE)();
+			assert.match(errors.pop(), /connect to the linked Unity Editor/);
+			assert.deepStrictEqual(sent, [], 'A direct viewport connection must not read or write Code Optimization');
+			linkedProject = null;
+			conn.disconnect();
+			conn.acceptProjectInfo({}, expectedProject);
+			linkedProject = expectedProject;
+			assert.strictEqual((await provider.resolveDebugConfiguration(undefined, config)).debugPort, 56000);
+			assert.deepStrictEqual(sent, [{ action: 'getCodeOptimization' }]);
+			assert.ok(warnings[0].includes('Unity Toolkit: Set Code Optimization Mode'));
+			assert.ok(status.getActions().find(action => action.command === SET_MODE).description.includes('Release'));
+			await commands.get(SET_MODE)();
+			assert.deepStrictEqual(sent.slice(1), [{ action: 'getCodeOptimization' }, { action: 'setCodeOptimization', mode: 'Debug' }]);
+			assert.ok(status.getActions().find(action => action.command === SET_MODE).description.includes('Debug'));
+			await provider.resolveDebugConfiguration(undefined, config);
+			assert.strictEqual(warnings.length, 1);
+			vscode.window.showQuickPick = async () => {
+				linkedProject = path.join(os.tmpdir(), 'uct-optimization-other-project');
+				return 'Release';
+			};
+			await commands.get(SET_MODE)();
+			assert.match(errors.pop(), /connect to the linked Unity Editor/);
+			assert.strictEqual(sent.filter(args => args.action === 'setCodeOptimization').length, 1);
+			linkedProject = expectedProject;
+			unavailable = true;
+			await commands.get(SET_MODE)();
+			assert.deepStrictEqual(errors, ['Code Optimization is unavailable.']);
+			assert.strictEqual(sent.filter(args => args.action === 'setCodeOptimization').length, 1);
+		} finally {
+			await module.deactivate();
+			conn.dispose();
+			project.getLinkedProjectPath = originalProjectPath;
+			vscode.debug.registerDebugConfigurationProvider = originalProvider;
+			vscode.window.showQuickPick = originalPick;
+			vscode.window.showWarningMessage = originalWarning;
+			vscode.window.showErrorMessage = originalError;
+			vscode.window.showInformationMessage = originalInfo;
+		}
 	});
 	await testAsync('debug capability callback reports launch configuration filesystem failures without unhandled rejections', async () => {
 		const { DebugModule } = require(path.join(outDir, 'debug/index'));
@@ -2831,12 +2913,15 @@ async function testUnityMcpTools() {
 		const tools = new UnityMcpTools({ send() {}, request: async () => null });
 		const editorLifecycle = tools.getTools().find((def) => def.name === 'editor_lifecycle');
 		assert.ok(editorLifecycle, 'editor_lifecycle tool exists');
-		assert.deepStrictEqual(editorLifecycle.inputSchema.properties.action.enum, ['status', 'save', 'saveAndQuit']);
+		assert.deepStrictEqual(editorLifecycle.inputSchema.properties.action.enum, ['status', 'save', 'saveAndQuit', 'getCodeOptimization', 'setCodeOptimization']);
+		assert.deepStrictEqual(editorLifecycle.inputSchema.properties.mode.enum, ['Debug', 'Release']);
 		assert.ok(editorLifecycle.inputSchema.properties.dryRun);
 	});
 
 	test('editor_lifecycle metadata keeps status readable and saveAndQuit destructive', () => {
 		assert.strictEqual(isMutatingToolCall('editor_lifecycle', { action: 'status' }), false);
+		assert.strictEqual(isMutatingToolCall('toolkit.editor_lifecycle', { action: 'getCodeOptimization' }), false);
+		assert.strictEqual(isMutatingToolCall('toolkit.editor_lifecycle', { action: 'setCodeOptimization', mode: 'Debug' }), true);
 		assert.strictEqual(isMutatingToolCall('editor_lifecycle', { action: 'save' }), true);
 		assert.strictEqual(isDestructiveToolCall('editor_lifecycle', { action: 'save' }), false);
 		assert.strictEqual(isDestructiveToolCall('editor_lifecycle', { action: 'saveAndQuit' }), true);
@@ -3303,6 +3388,12 @@ async function testStandaloneMcpServer() {
 			});
 			assert.strictEqual(blocked.result.isError, true);
 			assert.ok(blocked.result.content[0].text.includes('blocked'));
+
+			const optimizationWrite = await server.request('tools/call', {
+				name: 'toolkit.editor_lifecycle', arguments: { action: 'setCodeOptimization', mode: 'Debug' }
+			});
+			assert.strictEqual(optimizationWrite.result.isError, true);
+			assert.ok(optimizationWrite.result.content[0].text.includes('blocked'));
 
 			const dryRun = await server.request('tools/call', {
 				name: 'manage_gameobject',

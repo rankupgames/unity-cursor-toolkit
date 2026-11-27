@@ -32,6 +32,7 @@ export interface IConnectionManager {
 	readonly info: ConnectionInfo;
 	readonly onRuntimeCapabilitiesChanged: vscode.Event<void>;
 	getRuntimeCapabilities(): RuntimeCapabilities;
+	getVerifiedProjectPath(): string | undefined;
 	connect(): Promise<number | null>;
 	disconnect(): void;
 	send(command: string, payload?: Record<string, unknown>): void;

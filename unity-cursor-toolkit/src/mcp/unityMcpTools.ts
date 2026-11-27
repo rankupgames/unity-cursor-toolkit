@@ -148,15 +148,16 @@ export class UnityMcpTools implements IToolProvider {
 			{
 				name: 'editor_lifecycle',
 				title: 'Editor Lifecycle',
-				description: 'Inspect save state, save every open scene and project asset, or save and quit Unity safely.',
+				description: 'Inspect save state, save and quit Unity safely, or read and change Code Optimization.',
 				inputSchema: {
 					type: 'object',
 					properties: withDryRunProperty({
 						action: {
 							type: 'string',
-							enum: ['status', 'save', 'saveAndQuit'],
+							enum: ['status', 'save', 'saveAndQuit', 'getCodeOptimization', 'setCodeOptimization'],
 							description: 'Use saveAndQuit instead of terminating a user editor process.'
-						}
+						},
+						mode: { type: 'string', enum: ['Debug', 'Release'], description: 'Required for setCodeOptimization.' }
 					}),
 					required: ['action']
 				},

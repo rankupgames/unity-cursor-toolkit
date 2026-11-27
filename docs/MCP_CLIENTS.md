@@ -45,6 +45,23 @@ request IDs retain their existing behavior. `batch_execute` accepts toolkit
 operation names and their bare aliases, and refuses test tools or foreign-origin
 operations at every nesting level before planning or forwarding.
 
+## Editor Code Optimization
+
+For Mono Editor breakpoints, use Debug mode. Connect to the linked Unity Editor
+with **Start/Attach**, then run **Unity Toolkit: Set Code Optimization Mode**
+from the command palette or the Debug group in Quick Actions.
+The command reads the current mode and offers Debug and Release. The Editor attach
+configuration warns when it reads a mode other than Debug. Changing the mode
+recompiles and reloads scripts. Wait for Unity to reconnect before attaching.
+[Unity Code Optimization API](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityeditor/compilation/compilationpipeline/codeoptimization)
+
+Use `toolkit.editor_lifecycle` with `action: "getCodeOptimization"` to read
+`mode` and `editorVersion`. Use `action: "setCodeOptimization"` with `mode`
+set to `"Debug"` or `"Release"`. Preview a write with `dryRun: true`.
+Read-only MCP mode allows the read and blocks the write. Editors before Unity
+2020.1 return `capability_unavailable` for both actions. The mode changes and
+post-reload reads were verified on Windows Unity `6000.3.9f1`.
+
 ## Pipeline Discovery and Local Plans
 
 Use `pipeline.commands` with `action: "list"`, an absolute `projectPath`, and
@@ -266,10 +283,9 @@ then confirm that exact PID is foreground. It never replays a command.
 `editor_validation` with `action: "recover"` opens a bounded recovery episode. The
 monitor permits at most two focus attempts and stops on compiler errors, project/process
 mismatch or its deadline. Read-only servers do not foreground applications.
-Saved compiler diagnostics for the active request can report progress while the
-bridge is stalled. `compileSucceeded` requires the matching request, compiler
-diagnostics and a fresh post-reload main-thread observation. Sync-only completion
-and a responsive Editor do not prove compilation.
+`compileSucceeded` requires the matching request, compiler diagnostics and a fresh
+post-reload main-thread observation. Sync-only completion and a responsive Editor do
+not prove compilation.
 
 For an explicit operational focus on Node24:
 

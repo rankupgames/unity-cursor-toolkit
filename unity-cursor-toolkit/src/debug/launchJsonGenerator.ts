@@ -8,9 +8,10 @@ import * as path from 'path';
 import * as fs from 'fs';
 
 const DEBUG_TYPE = 'unityCursorToolkit.debug';
+export const UNITY_EDITOR_ATTACH_NAME = 'Attach to Unity Editor';
 
 const UNITY_EDITOR_CONFIG = {
-	name: 'Attach to Unity Editor',
+	name: UNITY_EDITOR_ATTACH_NAME,
 	type: DEBUG_TYPE,
 	request: 'attach',
 	debugPort: 56000
