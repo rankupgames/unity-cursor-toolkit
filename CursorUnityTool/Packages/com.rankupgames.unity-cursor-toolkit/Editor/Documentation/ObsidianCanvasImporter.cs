@@ -15,7 +15,7 @@ using UnityEngine;
 /// The search stops at the logical root of the canvas: Assets or Packages/&lt;name&gt;.
 /// Text nodes show their Markdown source as plain text.
 /// </summary>
-[ScriptedImporter(2, "canvas")]
+[ScriptedImporter(3, "canvas")]
 public sealed class ObsidianCanvasImporter : ScriptedImporter
 {
     private const float NodePadding = 8f;
