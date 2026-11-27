@@ -358,6 +358,102 @@ All five JPEG surfaces and Scene View input passed in each accepted run; the Pac
 
 Repeat with `--fixture --unity <Editor.exe> --version <exact-version> --revision <exact-revision> --template <bundled-URP-template.tgz> --hide --warm-runs 3`. The unmeasured first launch warms the fixture; subsequent launches use 15s idle and 60s Scene streaming at 12fps, quality 55. Status and start remain separate requests: use the owned Editor exclusively during measurement. Cleanup targets only the measured session ID. This exact fixture proof does not establish default-install, multi-window soak, or general Unity 7 support.
 
+### E2b -- Concurrent Unity 6 windows (2026-11-26)
+
+The [Windows Unity `6000.3.9f1` baseline](../experiments/hidden-editor-cost-baseline/results/2026-11-26-6000.3.9f1-win32-dual-window.json) uses one hidden Editor. The sampler ran Scene View alone for 45 seconds, then Scene View and Game View for 60 seconds with 60.242 seconds of overlap. Both phases used 12 requested FPS per view and JPEG quality 55.
+
+| View | Frames | Effective FPS | First JPEG | JPEG payload |
+| --- | ---: | ---: | ---: | ---: |
+| Scene alone | 539 | 11.96 | 79 ms | 1.36 Mbit/s |
+| Scene with Game | 718 | 11.92 | 246 ms | 1.35 Mbit/s |
+| Game with Scene | 718 | 11.92 | 236 ms | 0.51 Mbit/s |
+
+The Editor averaged 119.40% of one core and 2,760.36 MiB RSS with one view, then 119.03% and 2,762.32 MiB with two views. Both stream sessions stopped, and the Editor exited normally. First JPEG is the time from the sampler start request to receipt. Payload excludes transport framing and delivery to other clients.
+
+### E2c — Windows transport replay (2026-11-26)
+
+A hidden Unity `6000.3.9f1` Editor produced 215 Scene View JPEGs at `554×360` with 12 fps requested. Each transport replayed those same frames over loopback three times and decoded all 215. Timing starts at replay submission and ends when the complete decoded frame arrives. Bandwidth counts the application payload. Both JPEG receivers used the same decoder framing. [Trial data and codec options](../experiments/hidden-editor-cost-baseline/results/2026-11-26-6000.3.9f1-win32-transport-replay.json)
+
+| Path | Payload | First decoded frame | Frame p95 |
+| --- | ---: | ---: | ---: |
+| HTTP multipart MJPEG | 1.030 Mbit/s | 29.1 ms | 1.4 ms |
+| Length-prefixed JPEG over TCP | 1.024 Mbit/s | 30.2 ms | 1.4 ms |
+| NVENC H.264 in MPEG-TS over TCP | 0.102 Mbit/s | 178.9 ms | 173.6 ms |
+
+The table shows the median of three trials for each path. Binary JPEG reduced payload by 0.6%. H.264 reduced it by 90.1% and added about two frame intervals at 12 fps. Keep MJPEG for debugging. Carry NVENC H.264 forward to the WebRTC comparison and leave MPEG-TS out of the interactive path. On macOS, qualify VideoToolbox with hardware acceleration required. [Apple VideoToolbox encoder selection](https://developer.apple.com/documentation/videotoolbox/kvtvideoencoderspecification_requirehardwareacceleratedvideoencoder)
+
+During live capture, the existing viewport bridge acknowledged three Scene View drag requests in 23–53 ms. Keep input on the session-addressed bridge during the video comparison. Live input-to-display latency, visual quality, and WAN behavior still need measurement.
+
+### E2d -- Windows WebRTC replay (2026-11-26)
+
+Chrome `158.0.8127.88` replayed the same 215 Scene View frames in three trials per codec over same-host UDP. The source JPEGs were byte-identical, so these rates describe a static view. An eight-pixel strip carried frame IDs. Timing starts at canvas submission and ends at submission to the browser compositor. Video rates include RTP headers. [WebRTC trial data](../experiments/hidden-editor-cost-baseline/results/2026-11-26-6000.3.9f1-win32-webrtc-replay.json)
+
+| Codec | Matched frames | Median trial p95 | Trial p95 range | Median video rate |
+| --- | ---: | ---: | ---: | ---: |
+| H.264 | 645/645 | 26.5 ms | 25.3–45.8 ms | 23.0 kbit/s |
+| VP8 | 642/645 | 91.1 ms | 27.3–91.6 ms | 96.3 kbit/s |
+
+H.264 performed better in this static replay. The browser did not identify its encoder implementation. The ordered data channel echoed control messages in 0.5–1.3 ms during replay.
+
+### E2e -- Live Unity input over H.264 WebRTC (2026-11-27 UTC)
+
+Chrome sent three Scene View drags over an ordered WebRTC data channel. The sender forwarded pixel coordinates to the installed Toolkit bridge in a hidden Unity `6000.3.9f1` Editor. For each drag, the sampler verified four identical preceding JPEGs, then matched the first changed JPEG to a browser compositor frame by its sequence ID. Between 5.5% and 6.3% of sampled central pixels changed. [Live trial data](../experiments/hidden-editor-cost-baseline/results/2026-11-27-6000.3.9f1-win32-webrtc-live-input.json)
+
+| Drag | Unity acknowledgement | Changed Unity JPEG | Matching browser composition |
+| --- | ---: | ---: | ---: |
+| 1 | 234.9 ms | 338.2 ms | 364.2 ms |
+| 2 | 50.1 ms | 152.8 ms | 175.9 ms |
+| 3 | 39.9 ms | 142.4 ms | 179.3 ms |
+
+Unity timings start when the sender dispatches the bridge request. Browser composition timings start when the receiver sends the input. Canvas submission to browser composition took 13.5–23.7 ms across the three changed frames. This run used one Windows host and a headless browser.
+
+### E2f -- Moving Scene View comparison (2026-11-27 UTC)
+
+Three Unity Scene View drags produced 56 frames with eight distinct JPEGs at `554×360`. Each transport replayed that sequence three times at 12 fps on one Windows host. All three used the browser video compositor as the timing endpoint. The MJPEG sender clock was aligned to within 0.55 ms by the best round-trip sample. Video rates include multipart framing for MJPEG and RTP headers for WebRTC. [Motion trial data](../experiments/hidden-editor-cost-baseline/results/2026-11-27-6000.3.9f1-win32-motion-comparison.json)
+
+| Path | Matched frames | Median trial p95 | Median video rate | RGB PSNR vs presented MJPEG |
+| --- | ---: | ---: | ---: | ---: |
+| HTTP multipart MJPEG | 168/168 | 4.0 ms | 952.0 kbit/s | Reference |
+| H.264 WebRTC | 168/168 | 11.1 ms | 73.0 kbit/s | 28.08 dB |
+| VP8 WebRTC | 165/168 | 31.5 ms | 209.2 kbit/s | 39.58 dB |
+
+H.264 used 92% less video bandwidth than MJPEG and added about 7 ms at p95. VP8 stayed closer to the delivered MJPEG picture across the eight sampled frames. The RGB comparison used `128×72` samples with the sequence marker excluded. The full-resolution comparison below uses the original Unity JPEG as the reference.
+
+### E2g -- Windows H.264 hardware encoder (2026-11-27 UTC)
+
+Chrome `158.0.8127.88` encoded and presented all 392 frames in a longer replay of the moving Scene View sequence. The RTX 3080 driver reported 34 H.264 encoder session rows at `554×368` attributed to the owned Chrome processes. An FFmpeg NVENC control at the same dimensions verified the driver’s process matching. [Encoder evidence](../experiments/hidden-editor-cost-baseline/results/2026-11-27-6000.3.9f1-win32-webrtc-hardware-encoder.json) · [NVIDIA encoder telemetry](https://docs.nvidia.com/deploy/nvidia-smi/)
+
+WebRTC stats omitted the encoder identity. The Windows Video Encode utilization counter read zero for Chrome even with active NVIDIA sessions. The per-process NVIDIA session data establishes hardware use for this Chrome replay on driver `621.24`.
+
+### E2h -- Windows transport comparison at similar image quality (2026-11-27 UTC)
+
+Eight distinct frames from the same moving Scene View replay were scored at `554×360` against the original Unity JPEGs decoded by Chrome. JPEG was scored immediately after decoding, as in the debug viewer. WebRTC was scored after decoding the video, with the sequence strip cropped. Of eight pre-encoded FFmpeg JPEG levels, `-q:v 31` came within 1 dB of both WebRTC codecs on average RGB and luminance PSNR. Three repeat trials confirmed the match. [Calibration and trial data](../experiments/hidden-editor-cost-baseline/results/2026-11-27-6000.3.9f1-win32-quality-matched.json)
+
+| Path | Matched frames | RGB / luma PSNR | Median trial p95 | Median video rate |
+| --- | ---: | ---: | ---: | ---: |
+| Original HTTP multipart MJPEG | 168/168 | Exact source | 5.5 ms | 952.0 kbit/s |
+| Re-encoded HTTP multipart MJPEG | 168/168 | 32.32 / 33.05 dB | 5.1 ms | 364.9 kbit/s |
+| H.264 WebRTC | 168/168 | 31.78 / 32.13 dB | 14.8 ms | 73.0 kbit/s |
+| VP8 WebRTC | 165/168 | 31.73 / 32.07 dB | 31.2 ms | 209.2 kbit/s |
+
+At this quality, H.264 used 80% less bandwidth than re-encoded MJPEG and added 9.7 ms at p95. Latency ends at browser compositor submission. The MJPEG timing harness copies JPEG pixels to a local video track to use the same endpoint. Rates include multipart or RTP headers. The JPEG levels were generated before replay. PSNR describes this capture sequence and does not establish visual equivalence.
+
+Select H.264 over WebRTC for the Windows interactive spike. The RTX 3080 used NVENC in the driver check. On macOS, use hardware H.264 through VideoToolbox, pending native qualification. Keep MJPEG as the debug lane.
+
+### E2i -- Sustained Windows Scene and Game transport comparison (2026-11-27 UTC)
+
+One hidden Unity `6000.3.9f1` Editor captured Scene and Game View together for 64.1 seconds through one bridge client. It produced 759 Scene frames at `554×360` and 752 Game frames at `320×360`. The Editor averaged 111.8% of one logical core and 2,621 MiB of working set. A first run using two bridge clients delivered 5.81 fps per view. Both runs exited normally. In the retest, the six acknowledged Scene drags produced no changed JPEG, so both views were static during this test. E2e and E2h cover motion separately. [Capture and replay data](../experiments/hidden-editor-cost-baseline/results/2026-11-27-6000.3.9f1-win32-dual-view-transport.json)
+
+Each transport replayed 720 frames from each view for 60 seconds at 12 fps. All three displayed all 1,440 frames. CPU and memory are averages over the steady window. Browser figures include sender and receiver. Private memory is committed memory. Timing and bandwidth use the E2h endpoints.
+
+| Transport | Scene / Game p95 | Combined video | Chrome CPU / private memory | Node CPU / private memory |
+| --- | ---: | ---: | ---: | ---: |
+| HTTP multipart MJPEG | 7.8 / 4.5 ms | 1,432.7 kbit/s | 16.2% / 581 MiB | 0.65% / 19 MiB |
+| H.264 WebRTC | 61.3 / 61.7 ms | 21.1 kbit/s | 17.8% / 443 MiB | 0.06% / 17 MiB |
+| VP8 WebRTC | 63.5 / 64.1 ms | 140.7 kbit/s | 13.8% / 333 MiB | 0.00% / 19 MiB |
+
+H.264 had the lowest video rate. MJPEG reached the compositor sooner. These are one-host browser replay costs. They leave separate-host behavior and concurrent motion unmeasured. After H.264 finished, its disposable browser exceeded the normal close timeout and the harness stopped it. All owned browser processes were gone after the tests.
+
 ### E3 -- Player Viewport Service
 
 2026-06-10, Unity 6000.3.9f1, macOS 26.5.0. Build with `build:viewport-service -- --target macos --timeout 900`: **GREEN**; produced `CursorUnityTool/Builds/ViewportService/ViewportService.app`. The player answered toolkit `ping` on `127.0.0.1:55500`. `probe:viewport-service` returned Scene and Game frames at `640x360`, `host:"player"`, `captureMode:"camera"`, in-band data length `19892`, with scene input routed through the runtime layer. A later direct probe returned the same shape with data length `20564`. With the editor not running, installed Cursor rendered Player Scene View `1280x720 #1271` and Player Game View `1280x720 #465`, both with Connect tooltips reading "Attach to a running Viewport Service player bridge".

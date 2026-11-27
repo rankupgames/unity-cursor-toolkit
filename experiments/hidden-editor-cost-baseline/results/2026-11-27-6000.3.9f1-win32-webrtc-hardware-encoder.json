@@ -1,0 +1,77 @@
+{
+  "recordedAt": "2026-11-27T00:24:54.724Z",
+  "platform": "windows-x64",
+  "gpu": "NVIDIA GeForce RTX 3080, 621.24",
+  "source": {
+    "editor": "6000.3.9f1",
+    "revision": "7a9955a4f2fa",
+    "view": "Scene View",
+    "sourceFrames": 56,
+    "repetitions": 7,
+    "sourceWidth": 554,
+    "sourceHeight": 360,
+    "orderedJpegSha256": "e194ae513687d2f2bfe41b4c439c7aa34f3c6a3e6b518f908e3077671368df60"
+  },
+  "browser": {
+    "chrome": "158.0.8127.88",
+    "headless": true,
+    "codec": "video/H264",
+    "protocol": "udp",
+    "width": 554,
+    "height": 368,
+    "requestedFps": 12,
+    "encodedFrames": 392,
+    "presentedMatches": 392,
+    "encoderImplementation": null,
+    "powerEfficientEncoder": null,
+    "exitCode": 0,
+    "ownedProcessesRemaining": 0
+  },
+  "method": {
+    "driver": "nvidia-smi encodersessions -l 1, rows attributed to Chrome processes in the exact disposable profile",
+    "osCounter": "Win32_PerfFormattedData_GPUPerformanceCounters_GPUEngine Video Encode rows filtered to the same owned browser process set"
+  },
+  "observations": {
+    "ownedNvidiaEncoderRows": 34,
+    "ownedNvidiaEncoderSignature": {
+      "codec": "H.264",
+      "width": 554,
+      "height": 368
+    },
+    "ownGpuProcessObserved": true,
+    "windowsCounterObservations": 18,
+    "windowsPositiveSamples": 0
+  },
+  "controls": {
+    "nvidiaDriver": {
+      "gpu": "NVIDIA GeForce RTX 3080, 621.24",
+      "codecExit": 0,
+      "ownedPidMatchingRows": 8,
+      "signature": {
+        "codec": "H.264",
+        "width": 554,
+        "height": 368
+      }
+    },
+    "windowsEncodeEngine": {
+      "CodecExit": 0,
+      "SampleCount": 10,
+      "EncodeEngineSamples": [
+        2,
+        2,
+        2,
+        2,
+        1,
+        2,
+        1,
+        2,
+        1,
+        2
+      ],
+      "PositiveSamples": 10,
+      "Width": 1280,
+      "Height": 720,
+      "Fps": 30
+    }
+  }
+}

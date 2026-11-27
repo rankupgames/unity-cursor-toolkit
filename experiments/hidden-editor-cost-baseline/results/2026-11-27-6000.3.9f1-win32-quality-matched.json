@@ -1,0 +1,1762 @@
+{
+  "recordedAt": "2026-11-27T00:35:31.544Z",
+  "editor": {
+    "version": "6000.3.9f1",
+    "revision": "7a9955a4f2fa"
+  },
+  "host": {
+    "platform": "Windows x64",
+    "browser": "Chrome 158.0.8127.88 headless",
+    "ffmpeg": "8.1.2",
+    "network": "same host"
+  },
+  "source": {
+    "view": "Scene View",
+    "width": 554,
+    "height": 360,
+    "frames": 56,
+    "uniqueJpegs": 8,
+    "sceneDrags": 3,
+    "rate": 12,
+    "orderedJpegSha256": "e194ae513687d2f2bfe41b4c439c7aa34f3c6a3e6b518f908e3077671368df60"
+  },
+  "method": {
+    "reference": "Chrome-decoded original Unity JPEG, oriented for display, same frame ID",
+    "jpeg": "Score the delivered JPEG after browser decode. Ffmpeg calibration variants are pre-encoded from the same source JPEGs as yuvj420p. q:v 31 is the closest tested common level.",
+    "webrtc": "Score decoded video from the browser frame callback cropped to 554x360. RTP carries the eight-pixel marker strip; no STUN or TURN.",
+    "metric": "8 full-resolution unique content samples per trial. PSNR derived from pooled per-sample MSE (8-bit sRGB or Rec.709 luma coefficients); null PSNR denotes exact pixel agreement.",
+    "latency": "Replay submission to browser video compositor submission. MJPEG is parsed and decoded into a canvas captured as a local video track for the same endpoint. This adds a copy vs the actual MJPEG img viewer.",
+    "bandwidth": "Video bytes per scheduled replay duration; HTTP multipart framing or RTP headers included. TLS, IP/UDP/TCP, replay clock and data channel traffic excluded.",
+    "limits": "One capture sequence and one host. JPEG re-encoded ahead of time, not a Unity JPEG setting. PSNR similarity does not establish visual equivalence, or measure capture/encode costs in Unity.",
+    "qualitySampleIds": [
+      9,
+      17,
+      18,
+      19,
+      20,
+      23,
+      31,
+      47
+    ]
+  },
+  "summary": {
+    "jpeg:original": {
+      "submitted": 168,
+      "matched": 168,
+      "rgbPsnrDb": null,
+      "lumaPsnrDb": null,
+      "medianTrialP95Ms": 5.45,
+      "trialP95RangeMs": [
+        4.991,
+        5.94
+      ],
+      "medianVideoKbps": 951.96,
+      "maxQualityReadMs": 3.8
+    },
+    "jpeg:31": {
+      "submitted": 168,
+      "matched": 168,
+      "rgbPsnrDb": 32.315,
+      "lumaPsnrDb": 33.048,
+      "medianTrialP95Ms": 5.094,
+      "trialP95RangeMs": [
+        5.006,
+        5.13
+      ],
+      "medianVideoKbps": 364.877,
+      "maxQualityReadMs": 2
+    },
+    "video/H264": {
+      "submitted": 168,
+      "matched": 168,
+      "rgbPsnrDb": 31.777,
+      "lumaPsnrDb": 32.125,
+      "medianTrialP95Ms": 14.8,
+      "trialP95RangeMs": [
+        14.4,
+        23.4
+      ],
+      "medianVideoKbps": 72.962,
+      "maxQualityReadMs": 5.1
+    },
+    "video/VP8": {
+      "submitted": 168,
+      "matched": 165,
+      "rgbPsnrDb": 31.734,
+      "lumaPsnrDb": 32.072,
+      "medianTrialP95Ms": 31.2,
+      "trialP95RangeMs": [
+        27.5,
+        33.1
+      ],
+      "medianVideoKbps": 209.172,
+      "maxQualityReadMs": 1.6
+    }
+  },
+  "selectedJpegLevel": 31,
+  "comparisons": {
+    "video/H264": {
+      "withinOneDbOnBothAverages": true,
+      "rgbPsnrDeltaDb": -0.538,
+      "lumaPsnrDeltaDb": -0.923,
+      "medianVideoKbpsReductionPct": 80.004,
+      "medianTrialP95IncreaseMs": 9.706
+    },
+    "video/VP8": {
+      "withinOneDbOnBothAverages": true,
+      "rgbPsnrDeltaDb": -0.581,
+      "lumaPsnrDeltaDb": -0.976,
+      "medianVideoKbpsReductionPct": 42.673,
+      "medianTrialP95IncreaseMs": 26.106
+    }
+  },
+  "calibrationScores": {
+    "video/H264": {
+      "rgbPsnrDb": 31.78236330188939,
+      "lumaPsnrDb": 32.12676573290682
+    },
+    "jpeg:original": {
+      "rgbPsnrDb": null,
+      "lumaPsnrDb": null
+    },
+    "jpeg:2": {
+      "rgbPsnrDb": 50.94040837368398,
+      "lumaPsnrDb": 51.71031049805173
+    },
+    "jpeg:4": {
+      "rgbPsnrDb": 48.24023170282303,
+      "lumaPsnrDb": 48.83828466486846
+    },
+    "jpeg:6": {
+      "rgbPsnrDb": 46.15506621119791,
+      "lumaPsnrDb": 47.38245453871636
+    },
+    "jpeg:8": {
+      "rgbPsnrDb": 43.76007585256521,
+      "lumaPsnrDb": 44.02997254633106
+    },
+    "jpeg:12": {
+      "rgbPsnrDb": 40.16390520516776,
+      "lumaPsnrDb": 40.71661113286574
+    },
+    "jpeg:16": {
+      "rgbPsnrDb": 37.5847415847637,
+      "lumaPsnrDb": 38.562024261268554
+    },
+    "jpeg:24": {
+      "rgbPsnrDb": 33.96703372801373,
+      "lumaPsnrDb": 34.51822967583536
+    },
+    "jpeg:31": {
+      "rgbPsnrDb": 32.315455986644906,
+      "lumaPsnrDb": 33.04830798148549
+    },
+    "video/VP8": {
+      "rgbPsnrDb": 31.73402993305909,
+      "lumaPsnrDb": 32.07165191688019
+    }
+  },
+  "calibration": {
+    "completedAt": "2026-11-27T00:33:59.337Z",
+    "exitCode": 0,
+    "trials": [
+      {
+        "round": 1,
+        "requested": "video/H264",
+        "negotiated": "video/H264",
+        "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+        "protocol": "udp",
+        "submitted": 56,
+        "encoded": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "receiverStatsDrops": 0,
+        "firstFrameMs": 6.599999964237213,
+        "p50Ms": 22.199999976158324,
+        "p95Ms": 23.499999952316102,
+        "decodeP95Ms": 1.5,
+        "payloadBytes": 34735,
+        "rtpHeaderBytes": 7019,
+        "meanEncodeMs": 1.4642857142857142,
+        "controlEchoMs": [
+          1,
+          0.699999988079071,
+          0.5
+        ],
+        "encoderImplementation": null,
+        "powerEfficientEncoder": null,
+        "decoderImplementation": null,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 41.3250501403931,
+            "lumaMse": 36.52911821785249,
+            "readMs": 5.800000011920929
+          },
+          {
+            "id": 17,
+            "rgbMse": 44.87081996256184,
+            "lumaMse": 41.942877204512754,
+            "readMs": 2.400000035762787
+          },
+          {
+            "id": 18,
+            "rgbMse": 45.1589467174756,
+            "lumaMse": 42.23251489499117,
+            "readMs": 2.199999988079071
+          },
+          {
+            "id": 19,
+            "rgbMse": 45.584921112448185,
+            "lumaMse": 42.625771633325115,
+            "readMs": 2.5
+          },
+          {
+            "id": 20,
+            "rgbMse": 45.99074575478005,
+            "lumaMse": 43.001749181241316,
+            "readMs": 2.699999988079071
+          },
+          {
+            "id": 23,
+            "rgbMse": 46.155052480278115,
+            "lumaMse": 43.15331110148341,
+            "readMs": 3.299999952316284
+          },
+          {
+            "id": 31,
+            "rgbMse": 38.791385880465306,
+            "lumaMse": 35.73980520168748,
+            "readMs": 4.099999964237213
+          },
+          {
+            "id": 47,
+            "rgbMse": 37.21438360743415,
+            "lumaMse": 33.55684049449029,
+            "readMs": 3
+          }
+        ]
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:original",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 11.069799982118639,
+        "p50Ms": 3.596199982118378,
+        "p95Ms": 5.937999982121255,
+        "payloadBytes": 555279,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 4
+          },
+          {
+            "id": 17,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 18,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 2
+          },
+          {
+            "id": 19,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 2.200000047683716
+          },
+          {
+            "id": 20,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 2.100000023841858
+          },
+          {
+            "id": 23,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 2
+          },
+          {
+            "id": 31,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 47,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 2.100000023841858
+          }
+        ],
+        "clockUncertaintyMs": 0.6500000059604645
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:2",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.735699970196947,
+        "p50Ms": 3.406999970196921,
+        "p95Ms": 6.506999970199104,
+        "payloadBytes": 574108,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 0.5620671212728975,
+            "lumaMse": 0.4064852491268444,
+            "readMs": 2
+          },
+          {
+            "id": 17,
+            "rgbMse": 0.49600046797700226,
+            "lumaMse": 0.4209684918832508,
+            "readMs": 2
+          },
+          {
+            "id": 18,
+            "rgbMse": 0.49731247492980346,
+            "lumaMse": 0.4213773732988145,
+            "readMs": 2
+          },
+          {
+            "id": 19,
+            "rgbMse": 0.49779549405000667,
+            "lumaMse": 0.4216441450370804,
+            "readMs": 2
+          },
+          {
+            "id": 20,
+            "rgbMse": 0.49854091456077015,
+            "lumaMse": 0.42199707487883803,
+            "readMs": 2.099999964237213
+          },
+          {
+            "id": 23,
+            "rgbMse": 0.4990590319561439,
+            "lumaMse": 0.4219116615894271,
+            "readMs": 2
+          },
+          {
+            "id": 31,
+            "rgbMse": 0.5463263805321567,
+            "lumaMse": 0.4759212031391799,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 47,
+            "rgbMse": 0.5920828319294024,
+            "lumaMse": 0.5183387423018356,
+            "readMs": 1.800000011920929
+          }
+        ],
+        "clockUncertaintyMs": 0.5499999821186066
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:4",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.3803999701995053,
+        "p50Ms": 3.410899970196624,
+        "p95Ms": 5.249299970200809,
+        "payloadBytes": 510736,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 1.0395423853456345,
+            "lumaMse": 0.8349895962987013,
+            "readMs": 1.7000000476837158
+          },
+          {
+            "id": 17,
+            "rgbMse": 0.9480328252440166,
+            "lumaMse": 0.8330430823076372,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 18,
+            "rgbMse": 0.9504161652627356,
+            "lumaMse": 0.833911207805632,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 19,
+            "rgbMse": 0.9525304185051477,
+            "lumaMse": 0.8361275782430558,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 20,
+            "rgbMse": 0.9545644471185988,
+            "lumaMse": 0.8376217925386823,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 23,
+            "rgbMse": 0.9548669608236395,
+            "lumaMse": 0.8378123437073547,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 31,
+            "rgbMse": 0.9874214467174756,
+            "lumaMse": 0.8829141269117413,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 1.0135696617194812,
+            "lumaMse": 0.9009654688170711,
+            "readMs": 1.800000011920929
+          }
+        ],
+        "clockUncertaintyMs": 0.3499999940395355
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:6",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.8249999940417183,
+        "p50Ms": 3.3987999940400186,
+        "p95Ms": 5.18529999403836,
+        "payloadBytes": 478364,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 1.6749231180639124,
+            "lumaMse": 1.1890076593972099,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 17,
+            "rgbMse": 1.5725063511164594,
+            "lumaMse": 1.1894766544843802,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 18,
+            "rgbMse": 1.5815199224495253,
+            "lumaMse": 1.194200760651049,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 19,
+            "rgbMse": 1.5845233319962562,
+            "lumaMse": 1.1967050308141058,
+            "readMs": 1.7000000476837158
+          },
+          {
+            "id": 20,
+            "rgbMse": 1.5873228372777108,
+            "lumaMse": 1.1981467492481208,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 23,
+            "rgbMse": 1.5882955609038643,
+            "lumaMse": 1.197505155711815,
+            "readMs": 1.7999999523162842
+          },
+          {
+            "id": 31,
+            "rgbMse": 1.4776758256451397,
+            "lumaMse": 1.156927794875048,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 1.5417418772563176,
+            "lumaMse": 1.1824343167665372,
+            "readMs": 1.699999988079071
+          }
+        ],
+        "clockUncertaintyMs": 0.3499999940395355
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:8",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.3064999761554645,
+        "p50Ms": 3.3012999761631363,
+        "p95Ms": 5.425399976160406,
+        "payloadBytes": 437467,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 2.890287805856398,
+            "lumaMse": 2.6486364153959836,
+            "readMs": 1.5
+          },
+          {
+            "id": 17,
+            "rgbMse": 2.7751754913758524,
+            "lumaMse": 2.622903368026845,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 18,
+            "rgbMse": 2.7787538440968045,
+            "lumaMse": 2.6260874473421256,
+            "readMs": 2
+          },
+          {
+            "id": 19,
+            "rgbMse": 2.7744334135579622,
+            "lumaMse": 2.622405909000168,
+            "readMs": 2
+          },
+          {
+            "id": 20,
+            "rgbMse": 2.782382337210857,
+            "lumaMse": 2.627495730814449,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 23,
+            "rgbMse": 2.786849846236128,
+            "lumaMse": 2.6305071151144914,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 31,
+            "rgbMse": 2.557501002807862,
+            "lumaMse": 2.401650394506177,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 47,
+            "rgbMse": 2.54043321299639,
+            "lumaMse": 2.387415209049709,
+            "readMs": 1.899999976158142
+          }
+        ],
+        "clockUncertaintyMs": 0.3999999761581421
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:12",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.1554999582804157,
+        "p50Ms": 3.472699958278099,
+        "p95Ms": 5.975499958272849,
+        "payloadBytes": 369517,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 6.50637618665597,
+            "lumaMse": 5.548743017116241,
+            "readMs": 2
+          },
+          {
+            "id": 17,
+            "rgbMse": 6.384921112448188,
+            "lumaMse": 5.657267587223315,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 18,
+            "rgbMse": 6.400441235459286,
+            "lumaMse": 5.668139661167951,
+            "readMs": 1.7999999523162842
+          },
+          {
+            "id": 19,
+            "rgbMse": 6.408433614119534,
+            "lumaMse": 5.674410023766444,
+            "readMs": 2
+          },
+          {
+            "id": 20,
+            "rgbMse": 6.418602085840353,
+            "lumaMse": 5.678954997863508,
+            "readMs": 2.100000023841858
+          },
+          {
+            "id": 23,
+            "rgbMse": 6.423693007086509,
+            "lumaMse": 5.682879427238767,
+            "readMs": 2.100000023841858
+          },
+          {
+            "id": 31,
+            "rgbMse": 5.797539778045193,
+            "lumaMse": 5.143646152314936,
+            "readMs": 3.699999988079071
+          },
+          {
+            "id": 47,
+            "rgbMse": 5.753314279983955,
+            "lumaMse": 5.053133303561829,
+            "readMs": 1.800000011920929
+          }
+        ],
+        "clockUncertaintyMs": 0.4000000059604645
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:16",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.1673999702034052,
+        "p50Ms": 3.0511999701921013,
+        "p95Ms": 5.174499970198667,
+        "payloadBytes": 324237,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 12.091146877924857,
+            "lumaMse": 9.308492694933822,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 17,
+            "rgbMse": 11.42554987297767,
+            "lumaMse": 9.162844410593248,
+            "readMs": 2.100000023841858
+          },
+          {
+            "id": 18,
+            "rgbMse": 11.487678834068726,
+            "lumaMse": 9.181827957443613,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 19,
+            "rgbMse": 11.53678299237866,
+            "lumaMse": 9.216393676736232,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 20,
+            "rgbMse": 11.550613384142265,
+            "lumaMse": 9.226736581641763,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 23,
+            "rgbMse": 11.561711124481883,
+            "lumaMse": 9.220934650107873,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 31,
+            "rgbMse": 10.461418638855461,
+            "lumaMse": 8.640690042551041,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 10.603666934082096,
+            "lumaMse": 8.480325294160744,
+            "readMs": 1.800000011920929
+          }
+        ],
+        "clockUncertaintyMs": 0.5499999821186066
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:24",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 2.897599988071306,
+        "p50Ms": 2.90289998807566,
+        "p95Ms": 5.1429999880783726,
+        "payloadBytes": 247288,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 26.640851049605562,
+            "lumaMse": 23.24508515658024,
+            "readMs": 1.7999999523162842
+          },
+          {
+            "id": 17,
+            "rgbMse": 26.21722489637652,
+            "lumaMse": 23.096961634020918,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 18,
+            "rgbMse": 26.33422416098409,
+            "lumaMse": 23.182733436053393,
+            "readMs": 2
+          },
+          {
+            "id": 19,
+            "rgbMse": 26.408802981682044,
+            "lumaMse": 23.239415776197376,
+            "readMs": 2
+          },
+          {
+            "id": 20,
+            "rgbMse": 26.469997660114988,
+            "lumaMse": 23.283002253578072,
+            "readMs": 2.100000023841858
+          },
+          {
+            "id": 23,
+            "rgbMse": 26.521757587912823,
+            "lumaMse": 23.316001597915406,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 31,
+            "rgbMse": 25.305682577884745,
+            "lumaMse": 22.63222489771032,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 47,
+            "rgbMse": 24.77480278112047,
+            "lumaMse": 21.805368027353534,
+            "readMs": 2.199999988079071
+          }
+        ],
+        "clockUncertaintyMs": 0.44999998807907104
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:31",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.0929999761647196,
+        "p50Ms": 2.846399976158864,
+        "p95Ms": 4.7505999761633575,
+        "payloadBytes": 212845,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 38.613917301778315,
+            "lumaMse": 32.15707269410268,
+            "readMs": 3.600000023841858
+          },
+          {
+            "id": 17,
+            "rgbMse": 38.85158276507555,
+            "lumaMse": 32.95557833524886,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 18,
+            "rgbMse": 38.99032791817088,
+            "lumaMse": 33.09830301069385,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 19,
+            "rgbMse": 39.1078219013237,
+            "lumaMse": 33.207122680141175,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 20,
+            "rgbMse": 39.24988969113518,
+            "lumaMse": 33.27278920150562,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 23,
+            "rgbMse": 39.30585974060703,
+            "lumaMse": 33.32586624103602,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 31,
+            "rgbMse": 35.836856531621876,
+            "lumaMse": 30.268346256219225,
+            "readMs": 1.7000000476837158
+          },
+          {
+            "id": 47,
+            "rgbMse": 35.27200996122476,
+            "lumaMse": 29.54854367942737,
+            "readMs": 1.800000011920929
+          }
+        ],
+        "clockUncertaintyMs": 0.3999999761581421
+      },
+      {
+        "round": 1,
+        "requested": "video/VP8",
+        "negotiated": "video/VP8",
+        "fmtp": null,
+        "protocol": "udp",
+        "submitted": 56,
+        "encoded": 55,
+        "matched": 55,
+        "badMarkers": 0,
+        "receiverStatsDrops": 0,
+        "firstFrameMs": 21.69999995231774,
+        "p50Ms": 21.299999976159597,
+        "p95Ms": 38.09999997615523,
+        "decodeP95Ms": 1,
+        "payloadBytes": 117248,
+        "rtpHeaderBytes": 4768,
+        "meanEncodeMs": 1.4363636363636363,
+        "controlEchoMs": [
+          0.6000000238418579,
+          0.5,
+          0.800000011920929
+        ],
+        "encoderImplementation": null,
+        "powerEfficientEncoder": null,
+        "decoderImplementation": null,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 40.79340653830726,
+            "lumaMse": 36.97156389522063,
+            "readMs": 1.300000011920929
+          },
+          {
+            "id": 17,
+            "rgbMse": 45.70465971386549,
+            "lumaMse": 42.44888790644329,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 18,
+            "rgbMse": 45.82964132905469,
+            "lumaMse": 42.680952809731316,
+            "readMs": 1.4000000357627869
+          },
+          {
+            "id": 19,
+            "rgbMse": 46.264422048402196,
+            "lumaMse": 43.10982410730317,
+            "readMs": 1.399999976158142
+          },
+          {
+            "id": 20,
+            "rgbMse": 46.62654599545394,
+            "lumaMse": 43.427056489003036,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 23,
+            "rgbMse": 46.738310603021795,
+            "lumaMse": 43.51025080628607,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 31,
+            "rgbMse": 39.34913089985292,
+            "lumaMse": 36.31299446744601,
+            "readMs": 1.300000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 37.64721887952935,
+            "lumaMse": 34.39171475010852,
+            "readMs": 1.600000023841858
+          }
+        ]
+      }
+    ]
+  },
+  "validation": {
+    "completedAt": "2026-11-27T00:35:31.544Z",
+    "exitCode": 0,
+    "trials": [
+      {
+        "round": 1,
+        "requested": "video/H264",
+        "negotiated": "video/H264",
+        "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+        "protocol": "udp",
+        "submitted": 56,
+        "encoded": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "receiverStatsDrops": 0,
+        "firstFrameMs": 23.299999999999955,
+        "p50Ms": 22.000000023841494,
+        "p95Ms": 23.400000011921293,
+        "decodeP95Ms": 0.6,
+        "payloadBytes": 34735,
+        "rtpHeaderBytes": 7019,
+        "meanEncodeMs": 1.4464285714285714,
+        "controlEchoMs": [
+          0.800000011920929,
+          0.800000011920929,
+          0.699999988079071
+        ],
+        "encoderImplementation": null,
+        "powerEfficientEncoder": null,
+        "decoderImplementation": null,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 41.3250501403931,
+            "lumaMse": 36.52911821785249,
+            "readMs": 5.100000023841858
+          },
+          {
+            "id": 17,
+            "rgbMse": 44.87081996256184,
+            "lumaMse": 41.942877204512754,
+            "readMs": 2.900000035762787
+          },
+          {
+            "id": 18,
+            "rgbMse": 45.1589467174756,
+            "lumaMse": 42.23251489499117,
+            "readMs": 2.800000011920929
+          },
+          {
+            "id": 19,
+            "rgbMse": 45.584921112448185,
+            "lumaMse": 42.625771633325115,
+            "readMs": 2.800000011920929
+          },
+          {
+            "id": 20,
+            "rgbMse": 45.99074575478005,
+            "lumaMse": 43.001749181241316,
+            "readMs": 2.800000011920929
+          },
+          {
+            "id": 23,
+            "rgbMse": 46.155052480278115,
+            "lumaMse": 43.15331110148341,
+            "readMs": 3
+          },
+          {
+            "id": 31,
+            "rgbMse": 38.791385880465306,
+            "lumaMse": 35.73980520168748,
+            "readMs": 3
+          },
+          {
+            "id": 47,
+            "rgbMse": 37.21438360743415,
+            "lumaMse": 33.55684049449029,
+            "readMs": 2.599999964237213
+          }
+        ]
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:original",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 10.079600017880693,
+        "p50Ms": 3.35420001788043,
+        "p95Ms": 5.450100017882505,
+        "payloadBytes": 555277,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 3.800000011920929
+          },
+          {
+            "id": 17,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 18,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 19,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 20,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 23,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 31,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.899999976158142
+          }
+        ],
+        "clockUncertaintyMs": 0.45000001788139343
+      },
+      {
+        "round": 1,
+        "requested": "jpeg:31",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.331700017881303,
+        "p50Ms": 3.264800017881498,
+        "p95Ms": 5.005600017881079,
+        "payloadBytes": 212845,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 38.613917301778315,
+            "lumaMse": 32.15707269410268,
+            "readMs": 1.7999999523162842
+          },
+          {
+            "id": 17,
+            "rgbMse": 38.85158276507555,
+            "lumaMse": 32.95557833524886,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 18,
+            "rgbMse": 38.99032791817088,
+            "lumaMse": 33.09830301069385,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 19,
+            "rgbMse": 39.1078219013237,
+            "lumaMse": 33.207122680141175,
+            "readMs": 1.7999999523162842
+          },
+          {
+            "id": 20,
+            "rgbMse": 39.24988969113518,
+            "lumaMse": 33.27278920150562,
+            "readMs": 1.7999999523162842
+          },
+          {
+            "id": 23,
+            "rgbMse": 39.30585974060703,
+            "lumaMse": 33.32586624103602,
+            "readMs": 1.7999999523162842
+          },
+          {
+            "id": 31,
+            "rgbMse": 35.836856531621876,
+            "lumaMse": 30.268346256219225,
+            "readMs": 1.600000023841858
+          },
+          {
+            "id": 47,
+            "rgbMse": 35.27200996122476,
+            "lumaMse": 29.54854367942737,
+            "readMs": 1.699999988079071
+          }
+        ],
+        "clockUncertaintyMs": 0.29999998211860657
+      },
+      {
+        "round": 1,
+        "requested": "video/VP8",
+        "negotiated": "video/VP8",
+        "fmtp": null,
+        "protocol": "udp",
+        "submitted": 56,
+        "encoded": 55,
+        "matched": 55,
+        "badMarkers": 0,
+        "receiverStatsDrops": 0,
+        "firstFrameMs": 27.200000047683716,
+        "p50Ms": 26.800000023842586,
+        "p95Ms": 27.500000023843313,
+        "decodeP95Ms": 0.8,
+        "payloadBytes": 117249,
+        "rtpHeaderBytes": 4768,
+        "meanEncodeMs": 1.309090909090909,
+        "controlEchoMs": [
+          0.5999999642372131,
+          0.8999999761581421,
+          1
+        ],
+        "encoderImplementation": null,
+        "powerEfficientEncoder": null,
+        "decoderImplementation": null,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 40.79340653830726,
+            "lumaMse": 36.97156389522063,
+            "readMs": 1.300000011920929
+          },
+          {
+            "id": 17,
+            "rgbMse": 45.70465971386549,
+            "lumaMse": 42.44888790644329,
+            "readMs": 1.2999999523162842
+          },
+          {
+            "id": 18,
+            "rgbMse": 45.82964132905469,
+            "lumaMse": 42.680952809731316,
+            "readMs": 1.399999976158142
+          },
+          {
+            "id": 19,
+            "rgbMse": 46.264422048402196,
+            "lumaMse": 43.10982410730317,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 20,
+            "rgbMse": 46.62654599545394,
+            "lumaMse": 43.427056489003036,
+            "readMs": 1.2999999523162842
+          },
+          {
+            "id": 23,
+            "rgbMse": 46.738310603021795,
+            "lumaMse": 43.51025080628607,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 31,
+            "rgbMse": 39.34913089985292,
+            "lumaMse": 36.31299446744601,
+            "readMs": 1.300000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 37.64721887952935,
+            "lumaMse": 34.39171475010852,
+            "readMs": 1.300000011920929
+          }
+        ]
+      },
+      {
+        "round": 2,
+        "requested": "jpeg:original",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 5.939600029803842,
+        "p50Ms": 3.3480000298040977,
+        "p95Ms": 5.939600029803842,
+        "payloadBytes": 555310,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 17,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 18,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 19,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 20,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 23,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 31,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          }
+        ],
+        "clockUncertaintyMs": 0.29999998211860657
+      },
+      {
+        "round": 2,
+        "requested": "jpeg:31",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.0097000059613492,
+        "p50Ms": 3.0623000059604237,
+        "p95Ms": 5.093600005966437,
+        "payloadBytes": 212845,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 38.613917301778315,
+            "lumaMse": 32.15707269410268,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 17,
+            "rgbMse": 38.85158276507555,
+            "lumaMse": 32.95557833524886,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 18,
+            "rgbMse": 38.99032791817088,
+            "lumaMse": 33.09830301069385,
+            "readMs": 2
+          },
+          {
+            "id": 19,
+            "rgbMse": 39.1078219013237,
+            "lumaMse": 33.207122680141175,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 20,
+            "rgbMse": 39.24988969113518,
+            "lumaMse": 33.27278920150562,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 23,
+            "rgbMse": 39.30585974060703,
+            "lumaMse": 33.32586624103602,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 31,
+            "rgbMse": 35.836856531621876,
+            "lumaMse": 30.268346256219225,
+            "readMs": 2
+          },
+          {
+            "id": 47,
+            "rgbMse": 35.27200996122476,
+            "lumaMse": 29.54854367942737,
+            "readMs": 1.7999999523162842
+          }
+        ],
+        "clockUncertaintyMs": 0.5999999940395355
+      },
+      {
+        "round": 2,
+        "requested": "video/VP8",
+        "negotiated": "video/VP8",
+        "fmtp": null,
+        "protocol": "udp",
+        "submitted": 56,
+        "encoded": 55,
+        "matched": 55,
+        "badMarkers": 0,
+        "receiverStatsDrops": 0,
+        "firstFrameMs": 32.90000003576279,
+        "p50Ms": 16.30000001192093,
+        "p95Ms": 33.10000004768517,
+        "decodeP95Ms": 0.8,
+        "payloadBytes": 117253,
+        "rtpHeaderBytes": 4792,
+        "meanEncodeMs": 1.4545454545454546,
+        "controlEchoMs": [
+          0.7000000476837158,
+          0.699999988079071,
+          0.800000011920929
+        ],
+        "encoderImplementation": null,
+        "powerEfficientEncoder": null,
+        "decoderImplementation": null,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 40.79340653830726,
+            "lumaMse": 36.97156389522063,
+            "readMs": 1.2000000476837158
+          },
+          {
+            "id": 17,
+            "rgbMse": 45.70465971386549,
+            "lumaMse": 42.44888790644329,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 18,
+            "rgbMse": 45.82964132905469,
+            "lumaMse": 42.680952809731316,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 19,
+            "rgbMse": 46.264422048402196,
+            "lumaMse": 43.10982410730317,
+            "readMs": 1.5999999642372131
+          },
+          {
+            "id": 20,
+            "rgbMse": 46.62654599545394,
+            "lumaMse": 43.427056489003036,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 23,
+            "rgbMse": 46.738310603021795,
+            "lumaMse": 43.51025080628607,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 31,
+            "rgbMse": 39.34913089985292,
+            "lumaMse": 36.31299446744601,
+            "readMs": 1.399999976158142
+          },
+          {
+            "id": 47,
+            "rgbMse": 37.64721887952935,
+            "lumaMse": 34.39171475010852,
+            "readMs": 1.2000000476837158
+          }
+        ]
+      },
+      {
+        "round": 2,
+        "requested": "video/H264",
+        "negotiated": "video/H264",
+        "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+        "protocol": "udp",
+        "submitted": 56,
+        "encoded": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "receiverStatsDrops": 0,
+        "firstFrameMs": 14.30000000000291,
+        "p50Ms": 14.000000047686626,
+        "p95Ms": 14.800000011920929,
+        "decodeP95Ms": 1.8,
+        "payloadBytes": 34382,
+        "rtpHeaderBytes": 9877,
+        "meanEncodeMs": 1.482142857142857,
+        "controlEchoMs": [
+          0.8999999761581421,
+          0.7000000476837158,
+          0.800000011920929
+        ],
+        "encoderImplementation": null,
+        "powerEfficientEncoder": null,
+        "decoderImplementation": null,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 41.929233520524136,
+            "lumaMse": 36.7357872380073,
+            "readMs": 4
+          },
+          {
+            "id": 17,
+            "rgbMse": 44.87571032223559,
+            "lumaMse": 41.94822061539487,
+            "readMs": 2.399999976158142
+          },
+          {
+            "id": 18,
+            "rgbMse": 45.167233253108705,
+            "lumaMse": 42.23878381284895,
+            "readMs": 2.300000011920929
+          },
+          {
+            "id": 19,
+            "rgbMse": 45.593398181575076,
+            "lumaMse": 42.631632463483946,
+            "readMs": 2.5
+          },
+          {
+            "id": 20,
+            "rgbMse": 45.99977269688461,
+            "lumaMse": 43.007659494301656,
+            "readMs": 2.399999976158142
+          },
+          {
+            "id": 23,
+            "rgbMse": 46.16329556090386,
+            "lumaMse": 43.15939418163057,
+            "readMs": 2.5
+          },
+          {
+            "id": 31,
+            "rgbMse": 38.7843110709988,
+            "lumaMse": 35.74765042720122,
+            "readMs": 2.599999964237213
+          },
+          {
+            "id": 47,
+            "rgbMse": 37.19963230378393,
+            "lumaMse": 33.555660188191844,
+            "readMs": 2.300000011920929
+          }
+        ]
+      },
+      {
+        "round": 3,
+        "requested": "jpeg:31",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 3.631600023836654,
+        "p50Ms": 3.2802000238370965,
+        "p95Ms": 5.129900023835944,
+        "payloadBytes": 212845,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 38.613917301778315,
+            "lumaMse": 32.15707269410268,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 17,
+            "rgbMse": 38.85158276507555,
+            "lumaMse": 32.95557833524886,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 18,
+            "rgbMse": 38.99032791817088,
+            "lumaMse": 33.09830301069385,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 19,
+            "rgbMse": 39.1078219013237,
+            "lumaMse": 33.207122680141175,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 20,
+            "rgbMse": 39.24988969113518,
+            "lumaMse": 33.27278920150562,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 23,
+            "rgbMse": 39.30585974060703,
+            "lumaMse": 33.32586624103602,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 31,
+            "rgbMse": 35.836856531621876,
+            "lumaMse": 30.268346256219225,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 35.27200996122476,
+            "lumaMse": 29.54854367942737,
+            "readMs": 1.899999976158142
+          }
+        ],
+        "clockUncertaintyMs": 0.550000011920929
+      },
+      {
+        "round": 3,
+        "requested": "video/VP8",
+        "negotiated": "video/VP8",
+        "fmtp": null,
+        "protocol": "udp",
+        "submitted": 56,
+        "encoded": 55,
+        "matched": 55,
+        "badMarkers": 0,
+        "receiverStatsDrops": 0,
+        "firstFrameMs": 47.60000003575988,
+        "p50Ms": 30.10000001192384,
+        "p95Ms": 31.19999999999709,
+        "decodeP95Ms": 0.8,
+        "payloadBytes": 117248,
+        "rtpHeaderBytes": 4768,
+        "meanEncodeMs": 1.4545454545454546,
+        "controlEchoMs": [
+          0.5,
+          0.6000000238418579,
+          0.5
+        ],
+        "encoderImplementation": null,
+        "powerEfficientEncoder": null,
+        "decoderImplementation": null,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 40.79340653830726,
+            "lumaMse": 36.97156389522063,
+            "readMs": 1.2999999523162842
+          },
+          {
+            "id": 17,
+            "rgbMse": 45.70465971386549,
+            "lumaMse": 42.44888790644329,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 18,
+            "rgbMse": 45.82964132905469,
+            "lumaMse": 42.680952809731316,
+            "readMs": 1.300000011920929
+          },
+          {
+            "id": 19,
+            "rgbMse": 46.264422048402196,
+            "lumaMse": 43.10982410730317,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 20,
+            "rgbMse": 46.62654599545394,
+            "lumaMse": 43.427056489003036,
+            "readMs": 1.199999988079071
+          },
+          {
+            "id": 23,
+            "rgbMse": 46.738310603021795,
+            "lumaMse": 43.51025080628607,
+            "readMs": 1.399999976158142
+          },
+          {
+            "id": 31,
+            "rgbMse": 39.34913089985292,
+            "lumaMse": 36.31299446744601,
+            "readMs": 1.300000011920929
+          },
+          {
+            "id": 47,
+            "rgbMse": 37.64721887952935,
+            "lumaMse": 34.39171475010852,
+            "readMs": 1.399999976158142
+          }
+        ]
+      },
+      {
+        "round": 3,
+        "requested": "video/H264",
+        "negotiated": "video/H264",
+        "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+        "protocol": "udp",
+        "submitted": 56,
+        "encoded": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "receiverStatsDrops": 0,
+        "firstFrameMs": 30.19999999999709,
+        "p50Ms": 13.30000000000291,
+        "p95Ms": 14.400000011919474,
+        "decodeP95Ms": 0.9,
+        "payloadBytes": 34382,
+        "rtpHeaderBytes": 8179,
+        "meanEncodeMs": 1.2857142857142858,
+        "controlEchoMs": [
+          0.5,
+          0.6000000238418579,
+          0.5
+        ],
+        "encoderImplementation": null,
+        "powerEfficientEncoder": null,
+        "decoderImplementation": null,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 41.929233520524136,
+            "lumaMse": 36.7357872380073,
+            "readMs": 2.100000023841858
+          },
+          {
+            "id": 17,
+            "rgbMse": 44.87571032223559,
+            "lumaMse": 41.94822061539487,
+            "readMs": 2.5
+          },
+          {
+            "id": 18,
+            "rgbMse": 45.167233253108705,
+            "lumaMse": 42.23878381284895,
+            "readMs": 2.5
+          },
+          {
+            "id": 19,
+            "rgbMse": 45.593398181575076,
+            "lumaMse": 42.631632463483946,
+            "readMs": 2.399999976158142
+          },
+          {
+            "id": 20,
+            "rgbMse": 45.99977269688461,
+            "lumaMse": 43.007659494301656,
+            "readMs": 2.800000011920929
+          },
+          {
+            "id": 23,
+            "rgbMse": 46.16329556090386,
+            "lumaMse": 43.15939418163057,
+            "readMs": 2.699999988079071
+          },
+          {
+            "id": 31,
+            "rgbMse": 38.7843110709988,
+            "lumaMse": 35.74765042720122,
+            "readMs": 2.699999988079071
+          },
+          {
+            "id": 47,
+            "rgbMse": 37.19963230378393,
+            "lumaMse": 33.555660188191844,
+            "readMs": 2.900000035762787
+          }
+        ]
+      },
+      {
+        "round": 3,
+        "requested": "jpeg:original",
+        "negotiated": "image/jpeg",
+        "protocol": "http-multipart",
+        "submitted": 56,
+        "matched": 56,
+        "badMarkers": 0,
+        "firstFrameMs": 5.357400029803102,
+        "p50Ms": 3.298600029811496,
+        "p95Ms": 4.990800029801903,
+        "payloadBytes": 555310,
+        "rtpHeaderBytes": 0,
+        "quality": [
+          {
+            "id": 9,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 17,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.899999976158142
+          },
+          {
+            "id": 18,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 19,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.9000000357627869
+          },
+          {
+            "id": 20,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.800000011920929
+          },
+          {
+            "id": 23,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 31,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.699999988079071
+          },
+          {
+            "id": 47,
+            "rgbMse": 0,
+            "lumaMse": 0,
+            "readMs": 1.7999999523162842
+          }
+        ],
+        "clockUncertaintyMs": 0.4000000059604645
+      }
+    ]
+  }
+}

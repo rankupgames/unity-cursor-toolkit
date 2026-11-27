@@ -1,0 +1,1029 @@
+{
+  "browserCleanup": {
+    "profilesRemoved": 4,
+    "ownedProcessesRemaining": 0,
+    "checkedAt": "2026-11-27T00:53:58.1125494Z"
+  },
+  "recordedAt": "2026-11-27T00:53:58.229Z",
+  "platform": "Windows x64",
+  "browser": "Chrome 158.0.8127.88 headless",
+  "editor": {
+    "version": "6000.3.9f1",
+    "revision": "7a9955a4f2fa"
+  },
+  "source": {
+    "overlapSeconds": 64.117,
+    "acknowledgedSceneDrags": 6,
+    "firstCaptureTwoClients": {
+      "scene": {
+        "frames": 362,
+        "effectiveFps": 5.81,
+        "uniqueJpegs": 1
+      },
+      "game": {
+        "frames": 362,
+        "effectiveFps": 5.81,
+        "uniqueJpegs": 1
+      }
+    },
+    "retestOneClient": [
+      {
+        "view": "scene",
+        "frames": 759,
+        "unique": 1
+      },
+      {
+        "view": "game",
+        "frames": 752,
+        "unique": 1
+      }
+    ],
+    "averageEditorPercentOfCore": 111.81,
+    "averageEditorWorkingSetMiB": 2621.05,
+    "editorExitedNormally": true,
+    "views": {
+      "scene": {
+        "width": 554,
+        "height": 360,
+        "unique": 1,
+        "fileHash": "f6c723869f5616aada7cf44b06db3b578600273a3ac28d8eea8616d6931b4a3b",
+        "captureSpanMs": 61188.97607421875
+      },
+      "game": {
+        "width": 320,
+        "height": 360,
+        "unique": 1,
+        "fileHash": "6fdd68e21131e4268a07622b8de7327fb21825022a8d5844ec60f697e1c40b7f",
+        "captureSpanMs": 61248.400146484375
+      }
+    }
+  },
+  "replay": {
+    "serializedTransportLanes": true,
+    "concurrentViews": true,
+    "framesPerView": 720,
+    "durationSeconds": 60,
+    "requestedFps": 12,
+    "sameHost": true
+  },
+  "methods": {
+    "timing": "From each view replay submission to browser video compositor submission. MJPEG is decoded and copied to a local video track for the common timing endpoint. The WebRTC lane appends an eight-pixel marker strip.",
+    "bandwidth": "Bytes over a scheduled replay interval, HTTP multipart or RTP video including headers. Network layer and WebRTC data channel bytes excluded.",
+    "process": "Cumulative CPU of the exact replay browser process tree and Node process across Windows snapshots. 100% means one logical core. Process start time guards PID reuse. Private bytes are private committed memory. Working sets may count shared pages more than once.",
+    "scope": "One trial per transport, one host. Timings start after Unity capture. Browser totals combine sender and receiver and replay scaffolding. This does not measure a native production encoder or separate hosts."
+  },
+  "transports": {
+    "mjpeg": {
+      "views": {
+        "scene": {
+          "round": 1,
+          "requested": "image/jpeg",
+          "negotiated": "image/jpeg",
+          "protocol": "http-multipart",
+          "submitted": 720,
+          "matched": 720,
+          "badMarkers": 0,
+          "firstFrameMs": 8.061500023841745,
+          "p50Ms": 4.153400023846189,
+          "p95Ms": 7.773200023839308,
+          "payloadBytes": 7758525,
+          "rtpHeaderBytes": 0,
+          "quality": [],
+          "clockUncertaintyMs": 0.800000011920929,
+          "videoKbps": 1034.47
+        },
+        "game": {
+          "round": 1,
+          "requested": "image/jpeg",
+          "negotiated": "image/jpeg",
+          "protocol": "http-multipart",
+          "submitted": 720,
+          "matched": 720,
+          "badMarkers": 0,
+          "firstFrameMs": 5.3324999821187475,
+          "p50Ms": 2.5804999821193633,
+          "p95Ms": 4.500399982120143,
+          "payloadBytes": 2987085,
+          "rtpHeaderBytes": 0,
+          "quality": [],
+          "clockUncertaintyMs": 0.8499999940395355,
+          "videoKbps": 398.278
+        }
+      },
+      "samples": 49,
+      "observedSeconds": 54.983,
+      "resources": {
+        "chrome": {
+          "averagePercentOfCore": 16.2,
+          "averagePrivateMiB": 580.82,
+          "peakPrivateMiB": 672.42,
+          "averageWorkingSetMiB": 902.47,
+          "processSetChanges": 5
+        },
+        "node": {
+          "averagePercentOfCore": 0.65,
+          "averagePrivateMiB": 19.42,
+          "peakPrivateMiB": 22.14,
+          "averageWorkingSetMiB": 40,
+          "processSetChanges": 0
+        }
+      },
+      "browserExit": {
+        "code": 0,
+        "signal": null
+      },
+      "combinedVideoKbps": 1432.748,
+      "sampleEvidence": [
+        {
+          "at": "2026-11-27T00:49:24.5996866Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 441.48
+        },
+        {
+          "at": "2026-11-27T00:49:25.6831786Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 438.09
+        },
+        {
+          "at": "2026-11-27T00:49:26.7626789Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 456.39
+        },
+        {
+          "at": "2026-11-27T00:49:27.8016572Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 456.82
+        },
+        {
+          "at": "2026-11-27T00:49:28.8914079Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 460.51
+        },
+        {
+          "at": "2026-11-27T00:49:30.0137977Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 477.77
+        },
+        {
+          "at": "2026-11-27T00:49:31.2222981Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 497.18
+        },
+        {
+          "at": "2026-11-27T00:49:32.4322975Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 518.94
+        },
+        {
+          "at": "2026-11-27T00:49:33.4919709Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 538.17
+        },
+        {
+          "at": "2026-11-27T00:49:34.6434709Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 557.16
+        },
+        {
+          "at": "2026-11-27T00:49:35.7249709Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 577.94
+        },
+        {
+          "at": "2026-11-27T00:49:36.9639698Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 599.31
+        },
+        {
+          "at": "2026-11-27T00:49:38.2814703Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 621.46
+        },
+        {
+          "at": "2026-11-27T00:49:39.4709737Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 643.5
+        },
+        {
+          "at": "2026-11-27T00:49:40.7754728Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 652
+        },
+        {
+          "at": "2026-11-27T00:49:42.0329716Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 653.21
+        },
+        {
+          "at": "2026-11-27T00:49:43.2439865Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 654.5
+        },
+        {
+          "at": "2026-11-27T00:49:44.4299710Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 655.72
+        },
+        {
+          "at": "2026-11-27T00:49:45.6249733Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 656.92
+        },
+        {
+          "at": "2026-11-27T00:49:46.7199709Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 657.99
+        },
+        {
+          "at": "2026-11-27T00:49:47.7979714Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 659.3
+        },
+        {
+          "at": "2026-11-27T00:49:48.8944708Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 660.81
+        },
+        {
+          "at": "2026-11-27T00:49:49.9894709Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 662.24
+        },
+        {
+          "at": "2026-11-27T00:49:51.0894767Z",
+          "ownedChromeProcesses": 12,
+          "chromePrivateMiB": 672.42
+        },
+        {
+          "at": "2026-11-27T00:49:52.1454718Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 597.54
+        },
+        {
+          "at": "2026-11-27T00:49:53.1844710Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 598.37
+        },
+        {
+          "at": "2026-11-27T00:49:54.3289780Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 599.43
+        },
+        {
+          "at": "2026-11-27T00:49:55.4044712Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 576.61
+        },
+        {
+          "at": "2026-11-27T00:49:56.4674717Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 576.6
+        },
+        {
+          "at": "2026-11-27T00:49:57.5114729Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 577.37
+        },
+        {
+          "at": "2026-11-27T00:49:58.5859716Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 577.87
+        },
+        {
+          "at": "2026-11-27T00:49:59.9204715Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 578.85
+        },
+        {
+          "at": "2026-11-27T00:50:01.1929729Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 579.43
+        },
+        {
+          "at": "2026-11-27T00:50:02.4754710Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 580.03
+        },
+        {
+          "at": "2026-11-27T00:50:03.5654739Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 580.93
+        },
+        {
+          "at": "2026-11-27T00:50:04.7559743Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 581.63
+        },
+        {
+          "at": "2026-11-27T00:50:05.8979716Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 582.57
+        },
+        {
+          "at": "2026-11-27T00:50:07.0544725Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 583.21
+        },
+        {
+          "at": "2026-11-27T00:50:08.2604787Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 584.02
+        },
+        {
+          "at": "2026-11-27T00:50:09.4039714Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 585.03
+        },
+        {
+          "at": "2026-11-27T00:50:10.5164717Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 585.69
+        },
+        {
+          "at": "2026-11-27T00:50:11.6489719Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 586.57
+        },
+        {
+          "at": "2026-11-27T00:50:12.8439727Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 587.4
+        },
+        {
+          "at": "2026-11-27T00:50:14.0499712Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 580.48
+        },
+        {
+          "at": "2026-11-27T00:50:15.2074744Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 580.98
+        },
+        {
+          "at": "2026-11-27T00:50:16.2844727Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 581.48
+        },
+        {
+          "at": "2026-11-27T00:50:17.4444709Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 581.95
+        },
+        {
+          "at": "2026-11-27T00:50:18.5299762Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 582.43
+        },
+        {
+          "at": "2026-11-27T00:50:19.5829716Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 583.88
+        }
+      ]
+    },
+    "h264": {
+      "views": {
+        "scene": {
+          "round": 1,
+          "requested": "video/H264",
+          "negotiated": "video/H264",
+          "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+          "protocol": "udp",
+          "submitted": 720,
+          "encoded": 720,
+          "matched": 720,
+          "badMarkers": 0,
+          "receiverStatsDrops": 0,
+          "firstFrameMs": 11.499999988079026,
+          "p50Ms": 44.49999998807834,
+          "p95Ms": 61.299999988077616,
+          "decodeP95Ms": 0.9,
+          "payloadBytes": 86170,
+          "rtpHeaderBytes": 26055,
+          "meanEncodeMs": 1.4416666666666667,
+          "controlEchoMs": [
+            0.699999988079071,
+            1.5,
+            0.5
+          ],
+          "encoderImplementation": null,
+          "powerEfficientEncoder": null,
+          "decoderImplementation": null,
+          "quality": [],
+          "videoKbps": 14.963
+        },
+        "game": {
+          "round": 1,
+          "requested": "video/H264",
+          "negotiated": "video/H264",
+          "fmtp": "level-asymmetry-allowed=1;packetization-mode=1;profile-level-id=42001f",
+          "protocol": "udp",
+          "submitted": 720,
+          "encoded": 720,
+          "matched": 720,
+          "badMarkers": 0,
+          "receiverStatsDrops": 0,
+          "firstFrameMs": 28.899999988079117,
+          "p50Ms": 44.99999998808198,
+          "p95Ms": 61.700000011922384,
+          "decodeP95Ms": 0.9,
+          "payloadBytes": 19571,
+          "rtpHeaderBytes": 26700,
+          "meanEncodeMs": 1.4236111111111112,
+          "controlEchoMs": [
+            0.800000011920929,
+            2.699999988079071,
+            0.5
+          ],
+          "encoderImplementation": null,
+          "powerEfficientEncoder": null,
+          "decoderImplementation": null,
+          "quality": [],
+          "videoKbps": 6.169
+        }
+      },
+      "samples": 46,
+      "observedSeconds": 55.293,
+      "resources": {
+        "chrome": {
+          "averagePercentOfCore": 17.83,
+          "averagePrivateMiB": 442.83,
+          "peakPrivateMiB": 509.49,
+          "averageWorkingSetMiB": 584.89,
+          "processSetChanges": 7
+        },
+        "node": {
+          "averagePercentOfCore": 0.06,
+          "averagePrivateMiB": 17.37,
+          "peakPrivateMiB": 20.66,
+          "averageWorkingSetMiB": 37.4,
+          "processSetChanges": 0
+        }
+      },
+      "browserExit": {
+        "code": null,
+        "signal": "SIGTERM"
+      },
+      "combinedVideoKbps": 21.132,
+      "sampleEvidence": [
+        {
+          "at": "2026-11-27T00:50:35.5579738Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 502.51
+        },
+        {
+          "at": "2026-11-27T00:50:36.7049702Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 509.49
+        },
+        {
+          "at": "2026-11-27T00:50:37.9149715Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 509.07
+        },
+        {
+          "at": "2026-11-27T00:50:39.1604722Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 509.43
+        },
+        {
+          "at": "2026-11-27T00:50:40.4054704Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 498.35
+        },
+        {
+          "at": "2026-11-27T00:50:41.6279722Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 470.07
+        },
+        {
+          "at": "2026-11-27T00:50:42.9484776Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 470.46
+        },
+        {
+          "at": "2026-11-27T00:50:44.2199725Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 469.48
+        },
+        {
+          "at": "2026-11-27T00:50:45.5224733Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 469.7
+        },
+        {
+          "at": "2026-11-27T00:50:46.8489725Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 469.79
+        },
+        {
+          "at": "2026-11-27T00:50:48.0854718Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 469.94
+        },
+        {
+          "at": "2026-11-27T00:50:49.3999717Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 470.16
+        },
+        {
+          "at": "2026-11-27T00:50:50.6834731Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 470.26
+        },
+        {
+          "at": "2026-11-27T00:50:51.9914765Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 471.37
+        },
+        {
+          "at": "2026-11-27T00:50:53.2989720Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 471.45
+        },
+        {
+          "at": "2026-11-27T00:50:54.6644703Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 472.03
+        },
+        {
+          "at": "2026-11-27T00:50:55.9269725Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 472.86
+        },
+        {
+          "at": "2026-11-27T00:50:57.1689799Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 473.11
+        },
+        {
+          "at": "2026-11-27T00:50:58.3784732Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 473.2
+        },
+        {
+          "at": "2026-11-27T00:50:59.6289720Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 473.4
+        },
+        {
+          "at": "2026-11-27T00:51:00.8649713Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 473.98
+        },
+        {
+          "at": "2026-11-27T00:51:02.1639717Z",
+          "ownedChromeProcesses": 10,
+          "chromePrivateMiB": 443.17
+        },
+        {
+          "at": "2026-11-27T00:51:03.4019719Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 408.84
+        },
+        {
+          "at": "2026-11-27T00:51:04.6229712Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 408.9
+        },
+        {
+          "at": "2026-11-27T00:51:05.7789728Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 409.06
+        },
+        {
+          "at": "2026-11-27T00:51:07.0084786Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 409.49
+        },
+        {
+          "at": "2026-11-27T00:51:08.1934729Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 409.58
+        },
+        {
+          "at": "2026-11-27T00:51:09.4104744Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 409.66
+        },
+        {
+          "at": "2026-11-27T00:51:10.6174709Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 409.89
+        },
+        {
+          "at": "2026-11-27T00:51:11.8604716Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 409.96
+        },
+        {
+          "at": "2026-11-27T00:51:12.9954714Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 410.16
+        },
+        {
+          "at": "2026-11-27T00:51:14.1499715Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 410.07
+        },
+        {
+          "at": "2026-11-27T00:51:15.2944708Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 410.51
+        },
+        {
+          "at": "2026-11-27T00:51:16.5209711Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 410.57
+        },
+        {
+          "at": "2026-11-27T00:51:17.6939713Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 410.8
+        },
+        {
+          "at": "2026-11-27T00:51:18.8774717Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 410.88
+        },
+        {
+          "at": "2026-11-27T00:51:20.0729732Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 410.5
+        },
+        {
+          "at": "2026-11-27T00:51:21.2189714Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 411.17
+        },
+        {
+          "at": "2026-11-27T00:51:22.3899775Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 411.71
+        },
+        {
+          "at": "2026-11-27T00:51:23.5664717Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 411.45
+        },
+        {
+          "at": "2026-11-27T00:51:24.7754724Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 411.98
+        },
+        {
+          "at": "2026-11-27T00:51:26.0374720Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 411.74
+        },
+        {
+          "at": "2026-11-27T00:51:27.2639716Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 412.27
+        },
+        {
+          "at": "2026-11-27T00:51:28.4514739Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 412.19
+        },
+        {
+          "at": "2026-11-27T00:51:29.6374733Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 411.96
+        },
+        {
+          "at": "2026-11-27T00:51:30.8509722Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 413.34
+        }
+      ]
+    },
+    "vp8": {
+      "views": {
+        "scene": {
+          "round": 1,
+          "requested": "video/VP8",
+          "negotiated": "video/VP8",
+          "fmtp": null,
+          "protocol": "udp",
+          "submitted": 720,
+          "encoded": 720,
+          "matched": 720,
+          "badMarkers": 0,
+          "receiverStatsDrops": 0,
+          "firstFrameMs": 46.79999996423726,
+          "p50Ms": 47.09999996423721,
+          "p95Ms": 63.5,
+          "decodeP95Ms": 0.5,
+          "payloadBytes": 714868,
+          "rtpHeaderBytes": 23837,
+          "meanEncodeMs": 1.4861111111111112,
+          "controlEchoMs": [
+            1.0999999642372131,
+            0.5,
+            0.5
+          ],
+          "encoderImplementation": null,
+          "powerEfficientEncoder": null,
+          "decoderImplementation": null,
+          "quality": [],
+          "videoKbps": 98.494
+        },
+        "game": {
+          "round": 1,
+          "requested": "video/VP8",
+          "negotiated": "video/VP8",
+          "fmtp": null,
+          "protocol": "udp",
+          "submitted": 720,
+          "encoded": 720,
+          "matched": 720,
+          "badMarkers": 0,
+          "receiverStatsDrops": 0,
+          "firstFrameMs": 47.5,
+          "p50Ms": 47.700000011920565,
+          "p95Ms": 64.1000000119202,
+          "decodeP95Ms": 0.2,
+          "payloadBytes": 291615,
+          "rtpHeaderBytes": 24919,
+          "meanEncodeMs": 0.8652777777777778,
+          "controlEchoMs": [
+            1.600000023841858,
+            0.5,
+            0.5
+          ],
+          "encoderImplementation": null,
+          "powerEfficientEncoder": null,
+          "decoderImplementation": null,
+          "quality": [],
+          "videoKbps": 42.205
+        }
+      },
+      "samples": 48,
+      "observedSeconds": 54.448,
+      "resources": {
+        "chrome": {
+          "averagePercentOfCore": 13.83,
+          "averagePrivateMiB": 332.6,
+          "peakPrivateMiB": 437.5,
+          "averageWorkingSetMiB": 900.2,
+          "processSetChanges": 5
+        },
+        "node": {
+          "averagePercentOfCore": 0,
+          "averagePrivateMiB": 19.18,
+          "peakPrivateMiB": 23.12,
+          "averageWorkingSetMiB": 39.27,
+          "processSetChanges": 0
+        }
+      },
+      "browserExit": {
+        "code": 0,
+        "signal": null
+      },
+      "combinedVideoKbps": 140.699,
+      "sampleEvidence": [
+        {
+          "at": "2026-11-27T00:52:23.2061824Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 437.5
+        },
+        {
+          "at": "2026-11-27T00:52:24.3271828Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 435.84
+        },
+        {
+          "at": "2026-11-27T00:52:25.4501817Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 436.2
+        },
+        {
+          "at": "2026-11-27T00:52:26.5776839Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 416.51
+        },
+        {
+          "at": "2026-11-27T00:52:27.7266823Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 406.91
+        },
+        {
+          "at": "2026-11-27T00:52:28.8786818Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 385.11
+        },
+        {
+          "at": "2026-11-27T00:52:30.0476866Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 374.87
+        },
+        {
+          "at": "2026-11-27T00:52:31.2381812Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 357.29
+        },
+        {
+          "at": "2026-11-27T00:52:32.4176808Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 356.51
+        },
+        {
+          "at": "2026-11-27T00:52:33.6661818Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 356.74
+        },
+        {
+          "at": "2026-11-27T00:52:34.8596856Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 357
+        },
+        {
+          "at": "2026-11-27T00:52:36.1016822Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 357.25
+        },
+        {
+          "at": "2026-11-27T00:52:37.4516826Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 357.58
+        },
+        {
+          "at": "2026-11-27T00:52:38.6401841Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 357.8
+        },
+        {
+          "at": "2026-11-27T00:52:39.8486832Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 358.2
+        },
+        {
+          "at": "2026-11-27T00:52:41.0861826Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 358.42
+        },
+        {
+          "at": "2026-11-27T00:52:42.3076811Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 359.13
+        },
+        {
+          "at": "2026-11-27T00:52:43.5496814Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 359.35
+        },
+        {
+          "at": "2026-11-27T00:52:44.6696799Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 360.41
+        },
+        {
+          "at": "2026-11-27T00:52:46.0191807Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 360.65
+        },
+        {
+          "at": "2026-11-27T00:52:47.2591810Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 360.98
+        },
+        {
+          "at": "2026-11-27T00:52:48.4986836Z",
+          "ownedChromeProcesses": 12,
+          "chromePrivateMiB": 373.96
+        },
+        {
+          "at": "2026-11-27T00:52:49.6141844Z",
+          "ownedChromeProcesses": 11,
+          "chromePrivateMiB": 358
+        },
+        {
+          "at": "2026-11-27T00:52:50.7141809Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 289.63
+        },
+        {
+          "at": "2026-11-27T00:52:51.8146842Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 289.93
+        },
+        {
+          "at": "2026-11-27T00:52:52.9311843Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 290.07
+        },
+        {
+          "at": "2026-11-27T00:52:54.0031809Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 290.3
+        },
+        {
+          "at": "2026-11-27T00:52:55.0686814Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 290.76
+        },
+        {
+          "at": "2026-11-27T00:52:56.2666870Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 290.92
+        },
+        {
+          "at": "2026-11-27T00:52:57.3691846Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 291.16
+        },
+        {
+          "at": "2026-11-27T00:52:58.4841812Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 291.65
+        },
+        {
+          "at": "2026-11-27T00:52:59.5711822Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 291.91
+        },
+        {
+          "at": "2026-11-27T00:53:00.6711823Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 292.03
+        },
+        {
+          "at": "2026-11-27T00:53:01.7786807Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 292.3
+        },
+        {
+          "at": "2026-11-27T00:53:02.9556820Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 292.4
+        },
+        {
+          "at": "2026-11-27T00:53:04.0626826Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 292.63
+        },
+        {
+          "at": "2026-11-27T00:53:05.2236811Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 293.09
+        },
+        {
+          "at": "2026-11-27T00:53:06.3111803Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 293.17
+        },
+        {
+          "at": "2026-11-27T00:53:07.4646810Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 293.4
+        },
+        {
+          "at": "2026-11-27T00:53:08.5976822Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 293.6
+        },
+        {
+          "at": "2026-11-27T00:53:09.6946804Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 294.02
+        },
+        {
+          "at": "2026-11-27T00:53:10.8321878Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 295.1
+        },
+        {
+          "at": "2026-11-27T00:53:11.9541850Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 295.45
+        },
+        {
+          "at": "2026-11-27T00:53:13.0471806Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 295.54
+        },
+        {
+          "at": "2026-11-27T00:53:14.2061813Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 295.63
+        },
+        {
+          "at": "2026-11-27T00:53:15.3976825Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 295.73
+        },
+        {
+          "at": "2026-11-27T00:53:16.5551820Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 295.96
+        },
+        {
+          "at": "2026-11-27T00:53:17.6546827Z",
+          "ownedChromeProcesses": 8,
+          "chromePrivateMiB": 296.3
+        }
+      ]
+    }
+  }
+}

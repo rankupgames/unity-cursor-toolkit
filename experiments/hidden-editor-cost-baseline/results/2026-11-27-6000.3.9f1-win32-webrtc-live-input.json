@@ -1,0 +1,79 @@
+{
+  "recordedAt": "2026-11-27T00:07:58.433Z",
+  "platform": "windows-x64",
+  "sourceCommit": "6a18f748681d78a54d564c5cfbdc090036133ed1",
+  "source": {
+    "editor": "6000.3.9f1",
+    "editorRevision": "7a9955a4f2fa",
+    "view": "scene",
+    "mode": "editorWindow",
+    "live": true,
+    "width": 554,
+    "height": 360,
+    "requestedFps": 12,
+    "jpegQuality": 55,
+    "verifiedHiddenSamples": 4,
+    "pixelsPerPoint": 1,
+    "nativeFrames": 91
+  },
+  "receiver": {
+    "chrome": "158.0.8127.88",
+    "headless": true,
+    "codec": "video/H264",
+    "encoderImplementation": null,
+    "powerEfficientEncoder": null,
+    "matchedFrames": 49,
+    "markerReadErrors": 0
+  },
+  "method": {
+    "input": "Browser receiver sends Scene View drag over ordered WebRTC data channel; sender dispatches to the session-addressed viewport bridge in the owned Unity Editor",
+    "change": "Four preceding JPEGs share a hash. Count the first later JPEG with a different hash and require at least 2 percent of pixels in a downsampled central crop to change by at least 12 channel levels.",
+    "presentation": "Eight-pixel sequence marker matches native JPEG to requestVideoFrameCallback presentationTime",
+    "network": "same-host UDP ICE without STUN or TURN",
+    "scope": "Browser compositor submission on one Windows host"
+  },
+  "samples": [
+    {
+      "action": 1,
+      "baselineSeq": 55,
+      "changedSeq": 58,
+      "editorAcknowledgementMs": 234.89,
+      "nativeInputToChangedJpegMs": 338.21,
+      "changedRegionPercent": 6.25,
+      "inputToCompositorMs": 364.2,
+      "canvasToCompositorMs": 13.5
+    },
+    {
+      "action": 2,
+      "baselineSeq": 70,
+      "changedSeq": 72,
+      "editorAcknowledgementMs": 50.085,
+      "nativeInputToChangedJpegMs": 152.794,
+      "changedRegionPercent": 5.694,
+      "inputToCompositorMs": 175.9,
+      "canvasToCompositorMs": 15.8
+    },
+    {
+      "action": 3,
+      "baselineSeq": 84,
+      "changedSeq": 86,
+      "editorAcknowledgementMs": 39.867,
+      "nativeInputToChangedJpegMs": 142.351,
+      "changedRegionPercent": 5.486,
+      "inputToCompositorMs": 179.3,
+      "canvasToCompositorMs": 23.7
+    }
+  ],
+  "shutdown": {
+    "editorCode": 0,
+    "browserCode": 0,
+    "normalEditorQuit": true,
+    "ownedEditorPrefsRemaining": 0,
+    "ownedProcessesRemaining": 0
+  },
+  "pending": [
+    "hardware encoder identification",
+    "WAN and macOS",
+    "physical display latency and matched visual quality"
+  ]
+}

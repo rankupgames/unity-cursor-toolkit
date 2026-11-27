@@ -1,0 +1,97 @@
+{
+  "observedAt": "2026-11-26T22:30:34.230Z",
+  "editorVersion": "6000.3.9f1",
+  "revision": "7a9955a4f2fa",
+  "platform": "windows-x64",
+  "cpu": "Intel Core i7-9700K",
+  "gpu": "NVIDIA GeForce RTX 3080",
+  "graphicsDriver": "32.0.16.2124",
+  "os": "Windows 10 Enterprise 19045",
+  "templateSha256": "b78fb4cd033d264b842f7f8b10c3e613f0dfc9a825c03cd7e91919521d8ae27e",
+  "method": {
+    "captureMode": "editorWindow",
+    "transport": "Toolkit TCP viewportFrame with JPEG base64 payload",
+    "requestedFpsPerView": 12,
+    "jpegQuality": 55,
+    "scope": "One warmed disposable Editor. A 15-second idle sample and 45-second Scene View stream preceded 60-second Scene View and Game View streams. Both phases used the same sampler. CPU uses process-time deltas in one-core percent and memory uses working-set RSS.",
+    "windowsHiddenConfirmed": true,
+    "runner": "Existing Editor window capture spike with a local wrapper for the measurement phases."
+  },
+  "sourceHashes": {
+    "runner": "490ef5341e2382186796f10b3d6e5415f2a54cf586a9708eecf8c56228be7a80",
+    "sampler": "d695767cce23617969e2abaf53e7fdf246d093aae625504474730e7fcfc917d4",
+    "spike": "b2dc7f3df9df1e354008976e55f374eafab09fcd54e4245f93d4a4905f8a1679",
+    "capture": "5189ee91b4c865338671c4220fe80459ea57dd53572eb7455875068d28d6911f",
+    "stream": "a9cf7168f81b14590942d735ef50f1fecdc1f699f8f2e8ff59c80631fa081752"
+  },
+  "idle": {
+    "processCpuAvgPercent": 108.3,
+    "processRssAvgMiB": 2724.7,
+    "processRssPeakMiB": 2750.8,
+    "cpuSampleCount": 2
+  },
+  "singleScene": {
+    "view": "scene",
+    "elapsedSeconds": 45.066278,
+    "dimensions": [
+      "554x360"
+    ],
+    "frames": 539,
+    "effectiveFps": 11.96,
+    "firstJpegMs": 79,
+    "jpegBase64Bytes": 7660268,
+    "payloadMbitPerSecond": 1.36,
+    "resources": {
+      "processCpuAvgPercent": 119.4,
+      "processRssAvgMiB": 2760.36,
+      "processRssPeakMiB": 2764.4,
+      "cpuSampleCount": 8
+    }
+  },
+  "simultaneous": {
+    "overlapSeconds": 60.242,
+    "views": [
+      {
+        "view": "scene",
+        "elapsedSeconds": 60.256808,
+        "dimensions": [
+          "554x360"
+        ],
+        "frames": 718,
+        "effectiveFps": 11.92,
+        "firstJpegMs": 246,
+        "jpegBase64Bytes": 10204216,
+        "payloadMbitPerSecond": 1.35
+      },
+      {
+        "view": "game",
+        "elapsedSeconds": 60.24395,
+        "dimensions": [
+          "320x360"
+        ],
+        "frames": 718,
+        "effectiveFps": 11.92,
+        "firstJpegMs": 236,
+        "jpegBase64Bytes": 3859968,
+        "payloadMbitPerSecond": 0.51
+      }
+    ],
+    "resources": {
+      "processCpuAvgPercent": 119.03,
+      "processRssAvgMiB": 2762.32,
+      "processRssPeakMiB": 2784.3,
+      "cpuSampleCount": 11
+    }
+  },
+  "shutdown": {
+    "exitCode": 0,
+    "quittingObserved": true,
+    "ownedProcessesRemaining": 0,
+    "ownedPreferenceKeysRemaining": 0
+  },
+  "limits": [
+    "Frame payload excludes transport framing and broadcast traffic to other clients.",
+    "First JPEG is request to receipt in the local sampler. Decode, rendering and input round-trip were not measured.",
+    "This run measures the JPEG baseline on one Windows host. Candidate encoders and longer sustained tests remain open."
+  ]
+}
