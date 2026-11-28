@@ -1,6 +1,6 @@
 import * as fs from 'fs/promises';
 import * as vscode from 'vscode';
-import { createHash, randomUUID } from 'crypto';
+import { createHash, randomBytes } from 'crypto';
 import type { IMessageHandler, IModule, ModuleContext, IStatusBarContributor, QuickAccessAction } from '../core/interfaces';
 import { ConnectionState } from '../core/types';
 
@@ -796,7 +796,7 @@ class UnityViewportPanel {
 			return;
 		}
 
-		const sessionId = `${this.host}_${safeSessionSegment(this.mode)}_view_${randomUUID()}`;
+		const sessionId = `${this.host}_${safeSessionSegment(this.mode)}_view_${randomBytes(16).toString('hex')}`;
 		this.sessionId = sessionId;
 		this.state.streaming = true;
 		this.state.frame = undefined;
@@ -843,9 +843,10 @@ class UnityViewportPanel {
 		const sessionId = this.sessionId;
 		this.sessionId = undefined;
 		if (sessionId != null && this.ctx.connectionManager.info.state === ConnectionState.Connected) {
+			// A host can add a default view on the Editor and broaden the stop selector.
 			await this.ctx.commandSender.request('mcpToolCall', {
 				toolName: 'viewport_stream',
-				args: { action: 'stop', sessionId, host: this.host }
+				args: { action: 'stop', sessionId }
 			});
 		}
 		if (this.sessionId == null) {
