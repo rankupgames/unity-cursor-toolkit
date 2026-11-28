@@ -11,6 +11,11 @@ Use this for flows such as login steps, server selection, menu navigation, missi
 
 ## Game Flow in the Editor
 
+Projects can call `GameFlowProjectState.SetSource` from Editor code to supply
+cached display text. Return null while state is unavailable and pass null to
+remove the source. The window reads it on the Editor thread when controls are
+enabled and shows it alongside route progress.
+
 Open **Tools > Unity Cursor Toolkit > Game Flow** and enable the controls
 for the current Editor session. The window lists project commands named
 `flow.*` or `*.flow.*` and commands with authored destinations. Each command
