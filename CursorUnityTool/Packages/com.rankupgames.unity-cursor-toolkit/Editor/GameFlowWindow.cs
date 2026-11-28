@@ -11,8 +11,9 @@ namespace UnityCursorToolkit
 		private const string EnabledKey = "UnityCursorToolkit.GameFlow.Enabled";
 		private const string RunIdKey = "UnityCursorToolkit.GameFlow.RunId";
 		private const int MaximumProjectStateLength = 512;
-		private string commandName;
-		private string destinationId;
+		[SerializeField] private string commandName;
+		[SerializeField] private string destinationId;
+		[SerializeField] private bool customArgumentsSelected;
 		private string arguments = "{}";
 		private AgentCommandRunSnapshot run;
 		private Label projectState;
@@ -98,14 +99,24 @@ namespace UnityCursorToolkit
 
 			int selected = Array.FindIndex(commands, command => command.Name == commandName);
 			string[] names = Array.ConvertAll(commands, command => command.Name);
+			if (selected < 0 && !string.IsNullOrEmpty(commandName))
+			{
+				selected = names.Length;
+				Array.Resize(ref names, names.Length + 1);
+				names[selected] = commandName + " (Unavailable)";
+			}
 			using (new EditorGUI.DisabledScope(IsRunning))
 			{
 				int index = EditorGUILayout.Popup("Command", Math.Max(0, selected), names);
+				if (index == commands.Length)
+					return;
+
 				AgentCommandDescriptor command = commands[index];
 				if (commandName != command.Name)
 				{
 					commandName = command.Name;
 					destinationId = null;
+					customArgumentsSelected = false;
 					arguments = "{}";
 				}
 
@@ -129,11 +140,11 @@ namespace UnityCursorToolkit
 		private string DrawArguments(AgentCommandDescriptor command)
 		{
 			var destinations = command.FlowDestinations;
-			if (destinations.Count > 0)
+			if (destinations.Count > 0 || !string.IsNullOrEmpty(destinationId))
 			{
 				var choices = new string[destinations.Count + 1];
 				choices[0] = "Custom arguments";
-				int selected = destinationId == null ? 1 : 0;
+				int selected = !string.IsNullOrEmpty(destinationId) ? -1 : customArgumentsSelected ? 0 : 1;
 				for (int i = 0; i < destinations.Count; i++)
 				{
 					GameFlowDestination item = destinations[i];
@@ -144,17 +155,29 @@ namespace UnityCursorToolkit
 						selected = i + 1;
 				}
 
+				if (selected < 0)
+				{
+					selected = choices.Length;
+					Array.Resize(ref choices, choices.Length + 1);
+					choices[selected] = destinationId + " (Unavailable)";
+				}
+
 				selected = EditorGUILayout.Popup("Destination", selected, choices);
+				if (selected == destinations.Count + 1)
+					return null;
+
 				if (selected > 0)
 				{
 					GameFlowDestination item = destinations[selected - 1];
 					destinationId = item.Id;
+					customArgumentsSelected = false;
 					if (string.IsNullOrEmpty(item.UnavailableReason))
 						return item.ArgumentsJson;
 					EditorGUILayout.HelpBox(item.UnavailableReason, MessageType.Info);
 					return null;
 				}
-				destinationId = string.Empty;
+				destinationId = null;
+				customArgumentsSelected = true;
 			}
 
 			EditorGUILayout.LabelField("Arguments (JSON)");
