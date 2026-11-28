@@ -14,7 +14,7 @@ using UnityEngine;
 /// Imports native .excalidraw documents as <see cref="ExcalidrawDrawing"/> assets.
 /// Rotation, hand-drawn roughness and embeddables are not imported. Obsidian resolves image assets through its file map.
 /// </summary>
-[ScriptedImporter(4, "excalidraw")]
+[ScriptedImporter(5, "excalidraw")]
 public sealed class ExcalidrawImporter : ScriptedImporter
 {
     private const string IconFileName = "ExcalidrawIcon.png";
@@ -30,7 +30,8 @@ public sealed class ExcalidrawImporter : ScriptedImporter
             parse(File.ReadAllText(MarkdownInspector.SourcePath(ctx.assetPath)), drawing);
         }
         catch (System.Exception exception) when (exception is Newtonsoft.Json.JsonException || exception is IOException
-            || exception is System.UnauthorizedAccessException || exception is System.ArgumentException)
+            || exception is InvalidDataException || exception is System.UnauthorizedAccessException
+            || exception is System.ArgumentException)
         {
             drawing.Elements.Clear();
             drawing.ContentBounds = default(Rect);
