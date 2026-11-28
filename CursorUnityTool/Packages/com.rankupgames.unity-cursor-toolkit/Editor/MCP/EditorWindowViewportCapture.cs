@@ -83,7 +83,7 @@ namespace UnityCursorToolkit.MCP
 			RenderTexture previousActive = RenderTexture.active;
 			try
 			{
-				object parent = GetHostView(window);
+				var parent = GetHostView(window) as UnityEngine.Object;
 				if (parent == null)
 				{
 					error = "EditorWindow.m_Parent HostView unavailable.";
@@ -98,36 +98,56 @@ namespace UnityCursorToolkit.MCP
 				}
 
 				RepaintImmediately(window);
+				if (window == null)
+				{
+					error = "EditorWindow closed during repaint.";
+					return false;
+				}
+				if (parent == null || !object.ReferenceEquals(parent, GetHostView(window)))
+				{
+					error = "EditorWindow host changed during repaint.";
+					return false;
+				}
+
+				Rect windowPosition = window.position;
+				if (!(windowPosition.width > 0f && windowPosition.height > 0f)
+					|| float.IsInfinity(windowPosition.width) || float.IsInfinity(windowPosition.height))
+				{
+					error = "EditorWindow capture bounds are unavailable.";
+					return false;
+				}
+
 				float ppp = EditorGUIUtility.pixelsPerPoint;
-					int sourceWidth = Mathf.Max(8, Mathf.RoundToInt(window.position.width * ppp));
-					int sourceHeight = Mathf.Max(8, Mathf.RoundToInt(window.position.height * ppp));
-					Vector2Int outputSize = FitWithin(sourceWidth, sourceHeight, maxWidth, maxHeight);
-					bool flipVertical = ShouldFlipReadbackVertically(view);
-					CaptureResources resources = GetResources(view ?? string.Empty, sourceWidth, sourceHeight, outputSize.x, outputSize.y, flipVertical);
+				int sourceWidth = Mathf.Max(8, Mathf.RoundToInt(windowPosition.width * ppp));
+				int sourceHeight = Mathf.Max(8, Mathf.RoundToInt(windowPosition.height * ppp));
+				Vector2Int outputSize = FitWithin(sourceWidth, sourceHeight, maxWidth, maxHeight);
+				bool flipVertical = ShouldFlipReadbackVertically(view);
+				CaptureResources resources = GetResources(view ?? string.Empty, sourceWidth, sourceHeight, outputSize.x, outputSize.y, flipVertical);
 
-					grab.Invoke(parent, new object[] { resources.captureRt, new Rect(0f, 0f, sourceWidth, sourceHeight) });
+				// GUIView expects points even when the target texture is sized in pixels.
+				grab.Invoke(parent, new object[] { resources.captureRt, new Rect(0f, 0f, windowPosition.width, windowPosition.height) });
 
-					RenderTexture readRt = resources.captureRt;
-					if (resources.scaledRt != null)
-					{
-						Vector2 scale = flipVertical ? new Vector2(1f, -1f) : Vector2.one;
-						Vector2 offset = flipVertical ? new Vector2(0f, 1f) : Vector2.zero;
-						Graphics.Blit(resources.captureRt, resources.scaledRt, scale, offset);
-						readRt = resources.scaledRt;
-					}
+				RenderTexture readRt = resources.captureRt;
+				if (resources.scaledRt != null)
+				{
+					Vector2 scale = flipVertical ? new Vector2(1f, -1f) : Vector2.one;
+					Vector2 offset = flipVertical ? new Vector2(0f, 1f) : Vector2.zero;
+					Graphics.Blit(resources.captureRt, resources.scaledRt, scale, offset);
+					readRt = resources.scaledRt;
+				}
 
 				RenderTexture.active = readRt;
 				resources.texture.ReadPixels(new Rect(0f, 0f, resources.outputWidth, resources.outputHeight), 0, 0);
 				resources.texture.Apply();
 
-					frame = new Frame
-					{
-						bytes = resources.texture.EncodeToJPG(Mathf.Clamp(quality, 1, 100)),
-						width = resources.outputWidth,
-						height = resources.outputHeight,
-						flippedVertical = flipVertical
-					};
-					return true;
+				frame = new Frame
+				{
+					bytes = resources.texture.EncodeToJPG(Mathf.Clamp(quality, 1, 100)),
+					width = resources.outputWidth,
+					height = resources.outputHeight,
+					flippedVertical = flipVertical
+				};
+				return true;
 			}
 			catch (Exception ex)
 			{
