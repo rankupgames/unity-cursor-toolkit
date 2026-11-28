@@ -11,49 +11,28 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 jobs:
   check-changes:
     runs-on: ubuntu-latest
     outputs:
-      has_changes: ${{ steps.changes.outputs.has_changes }}
       build_version: ${{ steps.version.outputs.build_version }}
     steps:
-      - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-
-      - name: Check for changes since last build
-        id: changes
-        run: |
-          echo "has_changes=true" >> "$GITHUB_OUTPUT"
-          if [ "${{ github.event_name }}" = "schedule" ]; then
-            echo "Friday scheduled run, building VS Code and OpenVSX packages"
-          else
-            echo "Non-scheduled run, building extension packages"
-          fi
-
       - name: Compute version
         id: version
-        if: steps.changes.outputs.has_changes == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
-          TODAY=$(date -u +%m%d%y)
-          TODAY_ISO=$(date -u +%Y-%m-%d)
-
-          DAILY_RUNS=$(gh api "repos/${{ github.repository }}/actions/runs?created=>=${TODAY_ISO}&per_page=100" \
-            --jq '[.workflow_runs[] | select(.name == "Extension Build")] | length' 2>/dev/null || echo "0")
-          DAILY_INCREMENT=${DAILY_RUNS:-0}
-
-          BUILD_VERSION="0.7.${DAILY_INCREMENT}${TODAY}"
+          case "$GITHUB_RUN_NUMBER" in
+            ''|0*|*[!0-9]*)
+              echo "::error::A positive GitHub run number is required"
+              exit 1
+              ;;
+          esac
+          BUILD_VERSION="0.8.${GITHUB_RUN_NUMBER}"
           echo "build_version=${BUILD_VERSION}" >> "$GITHUB_OUTPUT"
           echo "Version: ${BUILD_VERSION}"
 
   build:
     needs: check-changes
-    if: needs.check-changes.outputs.has_changes == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -155,7 +134,7 @@ jobs:
     environment:
       name: release-approval
     needs: [check-changes, build]
-    if: needs.check-changes.outputs.has_changes == 'true' && github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -214,7 +193,7 @@ jobs:
     environment:
       name: release-approval
     needs: [check-changes, build]
-    if: needs.check-changes.outputs.has_changes == 'true' && github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     continue-on-error: true
     permissions:

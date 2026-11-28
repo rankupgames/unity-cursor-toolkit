@@ -357,7 +357,7 @@ unity-cursor-toolkit/
 - **Cursor** -- Native support
 - **Zed** -- Via standalone MCP server (see `zed/`)
 
-CI and release workflows publish separate VS Code Marketplace and OpenVSX VSIX artifacts. Publishing fails loudly when `VSCE_PAT` or `OVSX_PAT` repository secrets are missing, so a green release means both registry uploads were attempted with valid credentials.
+GitHub Actions builds separate VS Code Marketplace and Open VSX packages. Publishing requires release approval. See the [build and release guide](docs/CI.md) for the workflow and registry setup.
 
 ## Contributing
 
