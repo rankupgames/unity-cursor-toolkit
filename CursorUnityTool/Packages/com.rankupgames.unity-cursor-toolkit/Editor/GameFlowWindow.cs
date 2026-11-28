@@ -10,11 +10,13 @@ namespace UnityCursorToolkit
 	{
 		private const string EnabledKey = "UnityCursorToolkit.GameFlow.Enabled";
 		private const string RunIdKey = "UnityCursorToolkit.GameFlow.RunId";
-		private string commandName;
-		private string destinationId;
+		private const int MaximumProjectStateLength = 512;
+		[SerializeField] private string commandName;
+		[SerializeField] private string destinationId;
+		[SerializeField] private bool customArgumentsSelected;
 		private string arguments = "{}";
 		private AgentCommandRunSnapshot run;
-		private Vector2 scrollPosition;
+		private Label projectState;
 
 		private bool IsRunning => run != null &&
 			(run.Status == AgentCommandStatus.Pending || run.Status == AgentCommandStatus.Running);
@@ -29,6 +31,7 @@ namespace UnityCursorToolkit
 		{
 			if (IsRunning)
 				RefreshRun(run.RunId);
+			RefreshProjectState();
 			Repaint();
 		}
 
@@ -45,21 +48,44 @@ namespace UnityCursorToolkit
 				SessionState.SetBool(EnabledKey, change.newValue);
 				if (!change.newValue)
 					CancelRun();
+				RefreshProjectState();
 				Repaint();
 			});
 			rootVisualElement.Add(enableControls);
-			var commands = new IMGUIContainer(DrawContent);
-			commands.style.flexGrow = 1;
-			rootVisualElement.Add(commands);
+			var content = new ScrollView(ScrollViewMode.Vertical);
+			content.style.flexGrow = 1;
+			rootVisualElement.Add(content);
+			projectState = new Label { name = "game-flow-project-state" };
+			projectState.style.whiteSpace = WhiteSpace.Normal;
+			content.Add(projectState);
+			content.Add(new IMGUIContainer(DrawContent));
+			RefreshProjectState();
+		}
+
+		private void RefreshProjectState()
+		{
+			var source = GameFlowProjectState.Source;
+			bool visible = source != null && SessionState.GetBool(EnabledKey, false);
+			string state = string.Empty;
+			if (visible)
+			{
+				try { state = source(); }
+				catch (Exception) { state = null; }
+
+				if (string.IsNullOrWhiteSpace(state))
+					state = "Project state unavailable.";
+				else if (state.Length > MaximumProjectStateLength)
+					state = state.Substring(0, MaximumProjectStateLength);
+			}
+			projectState.text = state;
+			projectState.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
 		}
 
 		private void DrawContent()
 		{
-			scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 			if (SessionState.GetBool(EnabledKey, false))
 				DrawCommands();
 			DrawResult();
-			EditorGUILayout.EndScrollView();
 		}
 
 		private void DrawCommands()
@@ -73,14 +99,24 @@ namespace UnityCursorToolkit
 
 			int selected = Array.FindIndex(commands, command => command.Name == commandName);
 			string[] names = Array.ConvertAll(commands, command => command.Name);
+			if (selected < 0 && !string.IsNullOrEmpty(commandName))
+			{
+				selected = names.Length;
+				Array.Resize(ref names, names.Length + 1);
+				names[selected] = commandName + " (Unavailable)";
+			}
 			using (new EditorGUI.DisabledScope(IsRunning))
 			{
 				int index = EditorGUILayout.Popup("Command", Math.Max(0, selected), names);
+				if (index == commands.Length)
+					return;
+
 				AgentCommandDescriptor command = commands[index];
 				if (commandName != command.Name)
 				{
 					commandName = command.Name;
 					destinationId = null;
+					customArgumentsSelected = false;
 					arguments = "{}";
 				}
 
@@ -104,11 +140,11 @@ namespace UnityCursorToolkit
 		private string DrawArguments(AgentCommandDescriptor command)
 		{
 			var destinations = command.FlowDestinations;
-			if (destinations.Count > 0)
+			if (destinations.Count > 0 || !string.IsNullOrEmpty(destinationId))
 			{
 				var choices = new string[destinations.Count + 1];
 				choices[0] = "Custom arguments";
-				int selected = destinationId == null ? 1 : 0;
+				int selected = !string.IsNullOrEmpty(destinationId) ? -1 : customArgumentsSelected ? 0 : 1;
 				for (int i = 0; i < destinations.Count; i++)
 				{
 					GameFlowDestination item = destinations[i];
@@ -119,17 +155,29 @@ namespace UnityCursorToolkit
 						selected = i + 1;
 				}
 
+				if (selected < 0)
+				{
+					selected = choices.Length;
+					Array.Resize(ref choices, choices.Length + 1);
+					choices[selected] = destinationId + " (Unavailable)";
+				}
+
 				selected = EditorGUILayout.Popup("Destination", selected, choices);
+				if (selected == destinations.Count + 1)
+					return null;
+
 				if (selected > 0)
 				{
 					GameFlowDestination item = destinations[selected - 1];
 					destinationId = item.Id;
+					customArgumentsSelected = false;
 					if (string.IsNullOrEmpty(item.UnavailableReason))
 						return item.ArgumentsJson;
 					EditorGUILayout.HelpBox(item.UnavailableReason, MessageType.Info);
 					return null;
 				}
-				destinationId = string.Empty;
+				destinationId = null;
+				customArgumentsSelected = true;
 			}
 
 			EditorGUILayout.LabelField("Arguments (JSON)");
