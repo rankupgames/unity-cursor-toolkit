@@ -10,11 +10,12 @@ namespace UnityCursorToolkit
 	{
 		private const string EnabledKey = "UnityCursorToolkit.GameFlow.Enabled";
 		private const string RunIdKey = "UnityCursorToolkit.GameFlow.RunId";
+		private const int MaximumProjectStateLength = 512;
 		private string commandName;
 		private string destinationId;
 		private string arguments = "{}";
 		private AgentCommandRunSnapshot run;
-		private Vector2 scrollPosition;
+		private Label projectState;
 
 		private bool IsRunning => run != null &&
 			(run.Status == AgentCommandStatus.Pending || run.Status == AgentCommandStatus.Running);
@@ -29,6 +30,7 @@ namespace UnityCursorToolkit
 		{
 			if (IsRunning)
 				RefreshRun(run.RunId);
+			RefreshProjectState();
 			Repaint();
 		}
 
@@ -45,21 +47,44 @@ namespace UnityCursorToolkit
 				SessionState.SetBool(EnabledKey, change.newValue);
 				if (!change.newValue)
 					CancelRun();
+				RefreshProjectState();
 				Repaint();
 			});
 			rootVisualElement.Add(enableControls);
-			var commands = new IMGUIContainer(DrawContent);
-			commands.style.flexGrow = 1;
-			rootVisualElement.Add(commands);
+			var content = new ScrollView(ScrollViewMode.Vertical);
+			content.style.flexGrow = 1;
+			rootVisualElement.Add(content);
+			projectState = new Label { name = "game-flow-project-state" };
+			projectState.style.whiteSpace = WhiteSpace.Normal;
+			content.Add(projectState);
+			content.Add(new IMGUIContainer(DrawContent));
+			RefreshProjectState();
+		}
+
+		private void RefreshProjectState()
+		{
+			var source = GameFlowProjectState.Source;
+			bool visible = source != null && SessionState.GetBool(EnabledKey, false);
+			string state = string.Empty;
+			if (visible)
+			{
+				try { state = source(); }
+				catch (Exception) { state = null; }
+
+				if (string.IsNullOrWhiteSpace(state))
+					state = "Project state unavailable.";
+				else if (state.Length > MaximumProjectStateLength)
+					state = state.Substring(0, MaximumProjectStateLength);
+			}
+			projectState.text = state;
+			projectState.style.display = visible ? DisplayStyle.Flex : DisplayStyle.None;
 		}
 
 		private void DrawContent()
 		{
-			scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 			if (SessionState.GetBool(EnabledKey, false))
 				DrawCommands();
 			DrawResult();
-			EditorGUILayout.EndScrollView();
 		}
 
 		private void DrawCommands()
