@@ -15,7 +15,6 @@ namespace UnityCursorToolkit
 		private string destinationId;
 		private string arguments = "{}";
 		private AgentCommandRunSnapshot run;
-		private Vector2 scrollPosition;
 		private Label projectState;
 
 		private bool IsRunning => run != null &&
@@ -52,13 +51,14 @@ namespace UnityCursorToolkit
 				Repaint();
 			});
 			rootVisualElement.Add(enableControls);
+			var content = new ScrollView(ScrollViewMode.Vertical);
+			content.style.flexGrow = 1;
+			rootVisualElement.Add(content);
 			projectState = new Label { name = "game-flow-project-state" };
 			projectState.style.whiteSpace = WhiteSpace.Normal;
-			rootVisualElement.Add(projectState);
+			content.Add(projectState);
+			content.Add(new IMGUIContainer(DrawContent));
 			RefreshProjectState();
-			var commands = new IMGUIContainer(DrawContent);
-			commands.style.flexGrow = 1;
-			rootVisualElement.Add(commands);
 		}
 
 		private void RefreshProjectState()
@@ -82,11 +82,9 @@ namespace UnityCursorToolkit
 
 		private void DrawContent()
 		{
-			scrollPosition = EditorGUILayout.BeginScrollView(scrollPosition);
 			if (SessionState.GetBool(EnabledKey, false))
 				DrawCommands();
 			DrawResult();
-			EditorGUILayout.EndScrollView();
 		}
 
 		private void DrawCommands()
