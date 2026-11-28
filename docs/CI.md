@@ -2,10 +2,13 @@
 
 GitHub Actions validates and packages the extension on pull requests and pushes
 to main and Version-* branches. The weekly build runs on Friday at 11:00 UTC.
+The Extension Build workflow versions its packages as `0.8.<run number>`.
+New runs advance the version even across date changes. A rerun keeps the same
+version, so use a new run to build a new version.
 The release-approval environment controls publication to Open VSX and VS Code
-Marketplace. A VS Code Marketplace failure does not block Open VSX.
-Marketplace uses Trusted Publishing policies for ci.yml and release.yml in the
-release-approval environment.
+Marketplace. Open VSX uses the `OVSX_PAT` secret. VS Code Marketplace uses
+Trusted Publishing policies for `ci.yml` and `release.yml` in the
+`release-approval` environment. Check each publishing job for its result.
 
 The tag release workflow builds both VSIX files and attaches them to the GitHub
 release. The release notes link to the UPM package in the tagged source.
